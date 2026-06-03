@@ -23,12 +23,12 @@ defmodule GibberingWeb.GameLiveTest do
       assert html =~ "<svg"
     end
 
-    test "renders one rect per tile", %{conn: conn} do
+    test "renders isometric polygon tiles for each map cell", %{conn: conn} do
       {view, _game_id} = mount_game(conn)
       html = render(view)
-      # 5x5 grid → at least 25 tile rects (there may be more for entities/overlays).
-      rect_count = html |> String.split("<rect") |> length() |> Kernel.-(1)
-      assert rect_count >= 25
+      # 5x5 grid = 25 tile polygons; move overlays add more when active.
+      polygon_count = html |> String.split("<polygon") |> length() |> Kernel.-(1)
+      assert polygon_count >= 25
     end
   end
 

@@ -37,7 +37,7 @@ defmodule Gibbering.GameFixtures do
 
     tiles =
       for x <- 0..(width - 1), y <- 0..(height - 1), into: %{} do
-        {{x, y}, %{texture: "grass", walkable: true}}
+        {{x, y}, %{texture: "grass", walkable: true, decoration: nil}}
       end
 
     entities = %{
@@ -45,8 +45,10 @@ defmodule Gibbering.GameFixtures do
         name: "Test Hero",
         type: "hero",
         sprite: "hero.png",
-        x: 2, y: 2,
-        hp: 10, max_hp: 10,
+        x: 2,
+        y: 2,
+        hp: 10,
+        max_hp: 10,
         tags: [],
         stats: %{"speed" => 30}
       },
@@ -54,8 +56,10 @@ defmodule Gibbering.GameFixtures do
         name: "Test Goblin",
         type: "monster",
         sprite: "goblin.png",
-        x: 3, y: 3,
-        hp: 5, max_hp: 5,
+        x: 3,
+        y: 3,
+        hp: 5,
+        max_hp: 5,
         tags: [],
         stats: %{}
       }
@@ -107,7 +111,7 @@ defmodule Gibbering.GameFixtures do
 
       state = with_tile(state, {2, 1}, walkable: false, texture: "stone")
   """
-  def with_tile(state, {x, y} = pos, attrs) do
+  def with_tile(state, pos, attrs) do
     existing = Map.get(state.grid_tiles, pos, %{texture: "grass", walkable: true})
     tile = Map.merge(existing, Map.new(attrs))
     %{state | grid_tiles: Map.put(state.grid_tiles, pos, tile)}
@@ -147,8 +151,10 @@ defmodule Gibbering.GameFixtures do
       name: "Test Hero",
       type: "hero",
       sprite: "hero.png",
-      x: 2, y: 2,
-      hp: 10, max_hp: 10,
+      x: 2,
+      y: 2,
+      hp: 10,
+      max_hp: 10,
       tags: [],
       stats: %{"speed" => 30},
       campaign_id: campaign.id
@@ -158,8 +164,10 @@ defmodule Gibbering.GameFixtures do
       name: "Test Goblin",
       type: "monster",
       sprite: "goblin.png",
-      x: 3, y: 3,
-      hp: 5, max_hp: 5,
+      x: 3,
+      y: 3,
+      hp: 5,
+      max_hp: 5,
       tags: [],
       stats: %{},
       campaign_id: campaign.id
