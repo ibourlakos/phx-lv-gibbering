@@ -41,6 +41,27 @@ docker compose exec app mix ecto.setup
 
 See [docs/dev-setup.md](docs/dev-setup.md) for the full reference.
 
+## Issue Tracker
+
+Issues live in `.issues/`, one file per aspect. Current aspects: `ops.md`.  
+The next issue number is in `.issues/counter` (plain integer, one per line).
+
+**To add an issue:** read `counter`, use that number, append the entry to the right aspect file, increment `counter`, commit as `chore: add issue #N`.  
+**To close an issue:** change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, commit as `chore: close issue #N`.
+
+Issue format:
+```
+## #N · Title
+**Status:** open
+**Opened:** YYYY-MM-DD
+**Priority:** high | medium | low
+
+Description.
+
+**Acceptance criteria**
+- [ ] ...
+```
+
 ## Claude Instructions
 
 - Be concise in responses.
