@@ -53,8 +53,10 @@ defmodule Gibbering.Engine.RulesTest do
         name: "Paladin",
         type: "hero",
         sprite: "paladin.png",
-        x: 2, y: 1,
-        hp: 10, max_hp: 10,
+        x: 2,
+        y: 1,
+        hp: 10,
+        max_hp: 10,
         tags: [],
         stats: %{"speed" => 30}
       }
@@ -96,8 +98,10 @@ defmodule Gibbering.Engine.RulesTest do
         name: "Barrel",
         type: "object",
         sprite: "barrel.png",
-        x: 2, y: 3,
-        hp: 2, max_hp: 2,
+        x: 2,
+        y: 3,
+        hp: 2,
+        max_hp: 2,
         tags: ["destructible"],
         stats: %{}
       }
@@ -112,8 +116,10 @@ defmodule Gibbering.Engine.RulesTest do
         name: "Rogue",
         type: "hero",
         sprite: "rogue.png",
-        x: 2, y: 3,
-        hp: 8, max_hp: 8,
+        x: 2,
+        y: 3,
+        hp: 8,
+        max_hp: 8,
         tags: [],
         stats: %{}
       }
