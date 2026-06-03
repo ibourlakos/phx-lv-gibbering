@@ -7,23 +7,27 @@ defmodule GibberingWeb.GameLive do
   def mount(%{"id" => game_id}, _session, socket) do
     game_id = String.to_integer(game_id)
 
-    case Registry.lookup(Gibbering.GameRegistry, game_id) do
-      [] -> GameServer.start_link(game_id)
-      _ -> :ok
+    case ensure_game_server(game_id) do
+      :ok ->
+        if connected?(socket) do
+          Phoenix.PubSub.subscribe(Gibbering.PubSub, GameServer.topic(game_id))
+        end
+
+        state = GameServer.get_state(game_id)
+
+        {:ok,
+         socket
+         |> assign(:game_id, game_id)
+         |> assign(:game_state, state)
+         |> assign(:valid_targets, [])
+         |> assign(:log, [])}
+
+      {:error, reason} ->
+        {:ok,
+         socket
+         |> put_flash(:error, "Game #{game_id} could not be loaded: #{inspect(reason)}")
+         |> redirect(to: "/")}
     end
-
-    if connected?(socket) do
-      Phoenix.PubSub.subscribe(Gibbering.PubSub, GameServer.topic(game_id))
-    end
-
-    state = GameServer.get_state(game_id)
-
-    {:ok,
-     socket
-     |> assign(:game_id, game_id)
-     |> assign(:game_state, state)
-     |> assign(:valid_targets, [])
-     |> assign(:log, [])}
   end
 
   @impl true
@@ -73,6 +77,28 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_info({:state_updated, new_state}, socket) do
     {:noreply, assign(socket, game_state: new_state)}
+  end
+
+  # ---------------------------------------------------------------------------
+  # GameServer lifecycle
+  # ---------------------------------------------------------------------------
+
+  # Uses GenServer.start/3 (not start_link) so a crash in GameServer.init does
+  # not propagate an exit signal to the LiveView process.
+  defp ensure_game_server(game_id) do
+    case Registry.lookup(Gibbering.GameRegistry, game_id) do
+      [_] ->
+        :ok
+
+      [] ->
+        case GenServer.start(Gibbering.Engine.GameServer, game_id,
+               name: {:via, Registry, {Gibbering.GameRegistry, game_id}}
+             ) do
+          {:ok, _pid} -> :ok
+          {:error, {:already_started, _pid}} -> :ok
+          {:error, reason} -> {:error, reason}
+        end
+    end
   end
 
   # ---------------------------------------------------------------------------
