@@ -46,30 +46,26 @@
         />
       <% end %>
 
-      <%!-- Attack target overlay --%>
-      <%= for target_id <- @valid_targets do %>
-        <% t = state.entities[target_id] %>
-        <rect
-          x={t.x * ts} y={t.y * ts}
-          width={ts} height={ts}
-          fill="rgba(231,76,60,0.35)"
-          stroke="#e74c3c" stroke-width="2"
-          phx-click="attack"
-          phx-value-id={target_id}
-          style="cursor: crosshair;"
-        />
-      <% end %>
-
       <%!-- Entity layer --%>
       <%= for {id, entity} <- state.entities do %>
         <% is_active = id == active_id %>
         <% is_selected = id == state.selected_id %>
+        <% is_target = id in @valid_targets %>
         <g
           id={"entity-#{id}"}
-          phx-click="select_entity"
+          phx-click={if is_target, do: "attack", else: "select_entity"}
           phx-value-id={id}
-          style={"cursor: #{if entity.type == "hero", do: "pointer", else: "default"};"}
+          style={"cursor: #{if is_target, do: "crosshair", else: if(entity.type == "hero", do: "pointer", else: "default")};"}
         >
+          <%!-- Attack target highlight (rendered inside entity group, so always on top) --%>
+          <%= if is_target do %>
+            <rect
+              x={entity.x * ts} y={entity.y * ts}
+              width={ts} height={ts}
+              fill="rgba(231,76,60,0.35)"
+              stroke="#e74c3c" stroke-width="2"
+            />
+          <% end %>
           <%= if is_selected do %>
             <rect
               x={entity.x * ts - 1} y={entity.y * ts - 1}
