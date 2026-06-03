@@ -1,0 +1,23 @@
+FROM elixir:1.18.4-otp-27-alpine
+
+RUN apk add --no-cache \
+    build-base \
+    git \
+    nodejs \
+    npm \
+    inotify-tools
+
+RUN mix local.hex --force && mix local.rebar --force
+
+WORKDIR /app
+
+# Deps installed as a separate layer so they cache between code changes
+COPY mix.exs mix.lock ./
+RUN mix deps.get --only dev
+
+COPY assets/package*.json assets/
+RUN npm install --prefix assets
+
+COPY . .
+
+CMD ["mix", "phx.server"]
