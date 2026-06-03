@@ -10,6 +10,7 @@ Named after the Gibbering Mouther (SRD-legal aberration). The architecture is th
 
 - [Architecture](docs/architecture.md) — module map, ruleset behaviour, SVG pipeline, data pipeline
 - [Dev Setup](docs/dev-setup.md) — prerequisites, workflow, DB ops, Docker housekeeping
+- [Testing](docs/testing.md) — three-layer strategy, fixtures, TDD workflow, running tests
 - [Legal](docs/legal.md) — content licenses, assets, data sources, privacy, LegalGuard scope
 - [Git Policy](docs/git-policy.md) — conventional commits, branch naming, LFS for binary assets
 

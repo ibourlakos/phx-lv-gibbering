@@ -4,7 +4,6 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     environment:
-      MIX_ENV: dev
       DATABASE_URL: ecto://gibbering:gibbering@db/gibbering_dev
       SECRET_KEY_BASE: dev_secret_key_base_changeme_in_prod
       PHX_HOST: localhost
@@ -14,7 +13,6 @@ services:
       - .:/app
       - deps_cache:/app/deps
       - build_cache:/app/_build
-      - npm_cache:/app/assets/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -41,4 +39,3 @@ volumes:
   db_data:
   deps_cache:
   build_cache:
-  npm_cache:

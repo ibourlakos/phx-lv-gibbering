@@ -7,17 +7,19 @@ RUN apk add --no-cache \
     npm \
     inotify-tools
 
+RUN addgroup -S -g 1000 app && adduser -S -u 1000 -G app app
+
 RUN mix local.hex --force && mix local.rebar --force
 
 WORKDIR /app
+RUN chown app:app /app
 
-# Deps installed as a separate layer so they cache between code changes
-COPY mix.exs mix.lock ./
-RUN mix deps.get --only dev
+USER app
 
-COPY assets/package*.json assets/
-RUN npm install --prefix assets
+# Deps cached separately from source so rebuilds are fast
+COPY --chown=app:app mix.exs mix.lock ./
+RUN mix deps.get
 
-COPY . .
+COPY --chown=app:app . .
 
 CMD ["mix", "phx.server"]
