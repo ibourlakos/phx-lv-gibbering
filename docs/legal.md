@@ -8,7 +8,7 @@
 
 **Status: Covered.**
 
-Uses D&D 5e SRD 5.1 under CC-BY-4.0 (irrevocable). See `.claude/brainstorming/initial-gemini.md` for the full breakdown of what is and is not safe.
+Uses D&D 5e SRD 5.1 under CC-BY-4.0 (irrevocable). See `.claude/brainstorming/01-initial-gemini.md` for the full breakdown of what is and is not safe.
 
 `Gibbering.Pipeline.LegalGuard` filters WotC Product Identity at ingestion time.
 

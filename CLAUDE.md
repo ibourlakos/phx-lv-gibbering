@@ -28,9 +28,9 @@ Any unresolved legal issue is a blocker. See [docs/legal.md](docs/legal.md) for 
 
 | File | Topic |
 |---|---|
-| `.claude/brainstorming/initial-gemini.md` | Stack selection, engine naming, SVG approach, SRD pipeline |
-| `.claude/brainstorming/splitting-the-grimoire.md` | Engine vs. ruleset separation; Ruleset behaviour pattern |
-| `.claude/brainstorming/the-proving-grounds.md` | Prototype v0 — what's built, what was validated, what's missing |
+| `.claude/brainstorming/01-initial-gemini.md` | Stack selection, engine naming, SVG approach, SRD pipeline |
+| `.claude/brainstorming/02-splitting-the-grimoire.md` | Engine vs. ruleset separation; Ruleset behaviour pattern |
+| `.claude/brainstorming/03-the-proving-grounds.md` | Prototype v0 — what's built, what was validated, what's missing |
 
 ## Dev Setup (short form)
 
