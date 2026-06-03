@@ -1,0 +1,16 @@
+{
+  "name": "Gibbering Engine",
+  "dockerComposeFile": "../compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/app",
+  // Don't replace the container's CMD — let Phoenix server start normally.
+  "overrideCommand": false,
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "JakeBecker.elixir-ls"
+      ]
+    }
+  }
+}
