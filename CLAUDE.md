@@ -11,6 +11,7 @@ Named after the Gibbering Mouther (SRD-legal aberration). The architecture is th
 - [Architecture](docs/architecture.md) — module map, ruleset behaviour, SVG pipeline, data pipeline
 - [Dev Setup](docs/dev-setup.md) — prerequisites, workflow, DB ops, Docker housekeeping
 - [Testing](docs/testing.md) — three-layer strategy, fixtures, TDD workflow, running tests
+- [Workflow](docs/workflow.md) — the full dev sequence: Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
 - [Legal](docs/legal.md) — content licenses, assets, data sources, privacy, LegalGuard scope
 - [Git Policy](docs/git-policy.md) — conventional commits, branch naming, LFS for binary assets
 
@@ -31,6 +32,7 @@ Any unresolved legal issue is a blocker. See [docs/legal.md](docs/legal.md) for 
 | `.claude/brainstorming/01-initial-gemini.md` | Stack selection, engine naming, SVG approach, SRD pipeline |
 | `.claude/brainstorming/02-splitting-the-grimoire.md` | Engine vs. ruleset separation; Ruleset behaviour pattern |
 | `.claude/brainstorming/03-the-proving-grounds.md` | Prototype v0 — what's built, what was validated, what's missing |
+| `.claude/brainstorming/04-dst-aesthetic-sprites.md` | Visual overhaul: DST aesthetic, 2:1 dimetric isometric, SVG sprite pipeline |
 
 ## Dev Setup (short form)
 
@@ -45,11 +47,13 @@ See [docs/dev-setup.md](docs/dev-setup.md) for the full reference.
 
 ## Issue Tracker
 
-Issues live in `.issues/`, one file per aspect. Current aspects: `ops.md`.  
-The next issue number is in `.issues/counter` (plain integer, one per line).
+Issues live in `.issues/`. Start at [`.issues/README.md`](.issues/README.md) for the full index and open issue list.
 
-**To add an issue:** read `counter`, use that number, append the entry to the right aspect file, increment `counter`, commit as `chore: add issue #N`.  
-**To close an issue:** change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, commit as `chore: close issue #N`.
+- **Counter:** `.issues/counter` (plain integer — next number to use)
+- **Aspects:** `ops.md` (infra/tooling), `discovery.md` (epics/unknowns from brainstorming)
+
+**To add an issue:** read `counter`, use that number, append the entry to the right aspect file, increment `counter`, add a row to the open issues table in `README.md`, commit as `chore: add issue #N`.  
+**To close an issue:** change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, remove the row from the open issues table in `README.md`, commit as `chore: close issue #N`.
 
 Issue format:
 ```
@@ -67,8 +71,10 @@ Description.
 ## Claude Instructions
 
 - Be concise in responses.
+- **Follow [docs/workflow.md](docs/workflow.md) for every non-trivial change.** The sequence is: Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit. Never skip the Legal gate or the Verify phase.
 - Dev environment is fully Docker-based. Never assume local Elixir/Node installs. All `mix` commands go through `docker compose exec app mix`.
 - Keep [docs/dev-setup.md](docs/dev-setup.md) up-to-date when tools, versions, or workflows change.
 - Maintain Docker hygiene: avoid leaving dangling images or stopped containers. Prefer `docker compose down` over `docker stop`, use named volumes, and document prune commands when adding new services.
 - Legal is a hard blocker. Before committing any asset (image, font, data file) or adding a data source/dependency, verify its license against [docs/legal.md](docs/legal.md). When in doubt, flag it rather than proceed.
 - Follow [docs/git-policy.md](docs/git-policy.md) for all commits: conventional commits format (`type(scope): subject`), one logical change per commit, never commit directly to `main`. Binary assets require Git LFS — do not commit them until LFS is configured.
+- Tests live in three layers — see [docs/testing.md](docs/testing.md). Always start at the lowest applicable layer (pure functions first). Run `mix precommit` before every commit.
