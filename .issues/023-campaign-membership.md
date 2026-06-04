@@ -1,7 +1,8 @@
 # #23 · Campaign membership and DM assignment
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** architecture, gameplay
 
@@ -25,9 +26,9 @@ Brainstorming doc `05-initial-data-entities.md` identifies `campaign_members` an
 - No spectator role in campaign_members (future).
 
 **Acceptance criteria**
-- [ ] `campaigns.dm_id` FK present in migration
-- [ ] `campaign_members` table with unique index on `(campaign_id, user_id)`
-- [ ] `Gibbering.Campaigns` context: `join_campaign/2`, `member?/2`, `list_campaigns_for_user/1`
-- [ ] Seeds wire up a DM user and `campaign_members` row
-- [ ] Lobby redirects non-members to `/` with error flash
-- [ ] Home page only shows campaigns the current user is a member of (or all if no user)
+- [x] `campaigns.dm_id` FK present in migration
+- [x] `campaign_members` table with unique index on `(campaign_id, user_id)`
+- [x] `Gibbering.Campaigns` context: `join_campaign/2`, `member?/2`, `list_campaigns_for_user/1`
+- [x] Seeds wire up a DM user and `campaign_members` row
+- [x] Lobby redirects non-members to `/` with error flash
+- [x] Home page shows all campaigns with Join/Play depending on membership
