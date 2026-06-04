@@ -13,7 +13,7 @@ tw = iso.tile_w()
 sorted_tiles = Enum.sort_by(state.grid_tiles, fn {{gx, gy}, _} -> iso.depth_key(gx, gy) end)
 sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e.y) end) %>
 
-<div class="flex gap-6 p-4 bg-gray-900 min-h-screen text-white">
+<div class="flex gap-6 p-4 bg-gray-900 min-h-screen text-white" id="game-board" phx-hook="DiceRoll">
   <%!-- Game Board --%>
   <div>
     <svg

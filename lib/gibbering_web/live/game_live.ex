@@ -51,13 +51,27 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("attack", %{"id" => target_id}, socket) do
     target_id = String.to_integer(target_id)
-    target_name = socket.assigns.game_state.entities[target_id].name
+    state = socket.assigns.game_state
+    target_name = state.entities[target_id].name
+
+    attacker_id = state.selected_id
+    attacker_name = if attacker_id, do: state.entities[attacker_id].name, else: "?"
+
     new_state = GameServer.attack_entity(socket.assigns.game_id, target_id)
+
+    damage =
+      if Map.has_key?(new_state.entities, target_id) do
+        state.entities[target_id].hp - new_state.entities[target_id].hp
+      else
+        state.entities[target_id].hp
+      end
+
+    dice_result = max(min(damage, 6), 1)
 
     log_entry =
       if Map.has_key?(new_state.entities, target_id) do
         hp = new_state.entities[target_id].hp
-        "#{target_name} hit! #{hp} HP remaining."
+        "#{attacker_name} hits #{target_name} for #{damage}! (#{hp} HP left)"
       else
         "#{target_name} destroyed!"
       end
@@ -65,7 +79,8 @@ defmodule GibberingWeb.GameLive do
     {:noreply,
      socket
      |> assign(game_state: new_state, valid_targets: [])
-     |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)}
+     |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
+     |> push_event("roll_dice", %{result: dice_result, label: "#{attacker_name} attacks!"})}
   end
 
   @impl true

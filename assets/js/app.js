@@ -24,10 +24,152 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
+// ---------------------------------------------------------------------------
+// DiceRoll hook — animates a tumbling SVG d6 across the viewport on attacks.
+// The server fires push_event("roll_dice", %{result: N, label: "..."}).
+// ---------------------------------------------------------------------------
+
+const DICE_FACES = {
+  1: [[32, 32]],
+  2: [[18, 18], [46, 46]],
+  3: [[18, 18], [32, 32], [46, 46]],
+  4: [[18, 18], [46, 18], [18, 46], [46, 46]],
+  5: [[18, 18], [46, 18], [32, 32], [18, 46], [46, 46]],
+  6: [[18, 14], [46, 14], [18, 32], [46, 32], [18, 50], [46, 50]],
+}
+
+function buildDiceFaceSVG(n) {
+  const dots = (DICE_FACES[n] || DICE_FACES[1])
+    .map(([cx, cy]) => `<circle cx="${cx}" cy="${cy}" r="5.5" fill="#111" opacity="0.85"/>`)
+    .join("")
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <rect x="4" y="4" width="56" height="56" rx="10" fill="#f5e6c8" stroke="#2a1a08" stroke-width="3"/>
+    <rect x="6" y="6" width="52" height="52" rx="8" fill="#fff8e8"/>
+    ${dots}
+  </svg>`
+}
+
+function rollDiceAnimation(result, label) {
+  const overlay = document.createElement("div")
+  overlay.id = "dice-roll-overlay"
+  overlay.style.cssText = `
+    position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+    overflow: hidden;
+  `
+
+  const container = document.createElement("div")
+  container.style.cssText = `
+    position: absolute; will-change: transform;
+    width: 64px; height: 64px;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.7));
+  `
+  container.innerHTML = buildDiceFaceSVG(result)
+
+  const label_el = document.createElement("div")
+  label_el.style.cssText = `
+    position: absolute; font-size: 22px; font-weight: 900;
+    color: #f1c40f; text-shadow: 0 2px 8px #000, 0 0 20px #f39c12;
+    font-family: serif; white-space: nowrap;
+    opacity: 0; transition: opacity 0.25s;
+    pointer-events: none;
+  `
+  label_el.textContent = `${label} — ${result}`
+
+  overlay.appendChild(container)
+  overlay.appendChild(label_el)
+  document.body.appendChild(overlay)
+
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const fromLeft = Math.random() > 0.5
+
+  const startX = fromLeft ? -80 : vw + 80
+  const startY = vh * 0.2 + Math.random() * vh * 0.4
+  const landX = vw / 2 - 32
+  const landY = vh / 2 - 32
+  const endX = fromLeft ? vw + 80 : -80
+  const endY = startY + (Math.random() - 0.5) * 200
+
+  const duration = 700
+  const start = performance.now()
+  let phase = "flying"
+  let landTime = null
+
+  function ease(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t }
+
+  function step(now) {
+    if (phase === "flying") {
+      const t = Math.min((now - start) / duration, 1)
+      const e = ease(t)
+      const x = startX + (landX - startX) * e
+      const y = startY + (landY - startY) * e
+      const rot = (fromLeft ? 1 : -1) * 720 * e
+      container.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`
+
+      if (t >= 1) {
+        phase = "landed"
+        landTime = now
+        container.style.transform = `translate(${landX}px, ${landY}px) rotate(0deg)`
+
+        // bounce effect via CSS
+        container.style.transition = "transform 0.18s cubic-bezier(.36,.07,.19,.97)"
+        container.style.transform = `translate(${landX}px, ${landY + 18}px) scale(1.12)`
+        setTimeout(() => {
+          container.style.transform = `translate(${landX}px, ${landY}px) scale(1)`
+        }, 180)
+
+        // show label
+        label_el.style.left = `${landX - 60}px`
+        label_el.style.top = `${landY + 72}px`
+        label_el.style.opacity = "1"
+
+        // switch to result face immediately on land
+        container.innerHTML = buildDiceFaceSVG(result)
+      }
+      if (phase === "flying") requestAnimationFrame(step)
+      else setTimeout(() => requestAnimationFrame(step), 300)
+    } else if (phase === "landed") {
+      const held = now - landTime
+      if (held < 900) {
+        requestAnimationFrame(step)
+      } else {
+        // slide out
+        phase = "leaving"
+        const leaveStart = now
+        requestAnimationFrame(function leave(n) {
+          const t = Math.min((n - leaveStart) / 400, 1)
+          const e = ease(t)
+          const x = landX + (endX - landX) * e
+          const y = landY + (endY - landY) * e
+          container.style.transition = "none"
+          container.style.transform = `translate(${x}px, ${y}px) rotate(${(fromLeft ? 1 : -1) * 360 * e}deg)`
+          label_el.style.opacity = `${1 - e}`
+          if (t < 1) requestAnimationFrame(leave)
+          else overlay.remove()
+        })
+      }
+    }
+  }
+
+  container.style.transform = `translate(${startX}px, ${startY}px) rotate(0deg)`
+  requestAnimationFrame(step)
+}
+
+const Hooks = {
+  DiceRoll: {
+    mounted() {
+      this.handleEvent("roll_dice", ({result, label}) => {
+        rollDiceAnimation(result, label || "Rolled")
+      })
+    }
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
+  hooks: Hooks,
 })
 
 // Show progress bar on live navigation and form submits
