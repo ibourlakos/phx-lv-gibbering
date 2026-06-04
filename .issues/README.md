@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 23 (see `counter`)
+**Next issue number:** 25 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -42,6 +42,8 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#19](019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | `bug` `architecture` | medium |
 | [#20](020-spells-defined-not-castable.md) | Spells are defined but not castable | `gameplay` `rules` | medium |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
+| [#23](023-campaign-membership.md) | Campaign membership and DM assignment | `architecture` `gameplay` | high |
+| [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 
 ---
 
