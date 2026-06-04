@@ -138,7 +138,9 @@ defmodule Gibbering.Engine.RulesTest do
     test "reduces target hp by at least 1" do
       state = build_state()
       updated = Rules.attack(state, hero_id(), monster_id())
-      assert updated.entities[monster_id()].hp < state.entities[monster_id()].hp
+      original_hp = state.entities[monster_id()].hp
+      new_hp = get_in(updated.entities, [monster_id(), :hp]) || 0
+      assert new_hp < original_hp
     end
 
     test "hp cannot drop below 0" do
