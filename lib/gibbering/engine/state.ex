@@ -35,6 +35,8 @@ defmodule Gibbering.Engine.State do
            name: e.name,
            type: e.type,
            sprite: e.sprite,
+           race: e.race || "human",
+           class: e.class || "fighter",
            x: e.x,
            y: e.y,
            hp: e.hp,

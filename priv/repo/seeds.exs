@@ -52,31 +52,76 @@ tiles =
 
 Repo.insert_all(GridTile, tiles)
 
-# Warrior
+# Human Fighter
 Repo.insert!(%Entity{
-  name: "Warrior",
+  name: "Aldric",
   type: "hero",
-  sprite: "warrior",
+  sprite: "human_fighter",
+  race: "human",
+  class: "fighter",
   x: 2,
   y: 5,
   hp: 20,
   max_hp: 20,
   tags: ["player_controlled"],
-  stats: %{"speed" => 30, "strength" => 16},
+  stats: %{
+    "speed" => 30,
+    "strength" => 17,
+    "dexterity" => 13,
+    "constitution" => 15,
+    "intelligence" => 9,
+    "wisdom" => 11,
+    "charisma" => 9
+  },
   campaign_id: campaign.id
 })
 
-# Wizard
+# Elf Wizard
 Repo.insert!(%Entity{
-  name: "Wizard",
+  name: "Sylvara",
   type: "hero",
-  sprite: "wizard",
+  sprite: "elf_wizard",
+  race: "elf",
+  class: "wizard",
   x: 2,
   y: 7,
   hp: 12,
   max_hp: 12,
   tags: ["player_controlled"],
-  stats: %{"speed" => 25, "intelligence" => 18},
+  stats: %{
+    "speed" => 30,
+    "strength" => 8,
+    "dexterity" => 14,
+    "constitution" => 13,
+    "intelligence" => 20,
+    "wisdom" => 15,
+    "charisma" => 10,
+    "spells" => ["fire_bolt", "mage_hand", "magic_missile", "sleep"]
+  },
+  campaign_id: campaign.id
+})
+
+# Gnome Rogue
+Repo.insert!(%Entity{
+  name: "Zippik",
+  type: "hero",
+  sprite: "gnome_rogue",
+  race: "gnome",
+  class: "rogue",
+  x: 3,
+  y: 6,
+  hp: 16,
+  max_hp: 16,
+  tags: ["player_controlled"],
+  stats: %{
+    "speed" => 25,
+    "strength" => 10,
+    "dexterity" => 18,
+    "constitution" => 13,
+    "intelligence" => 16,
+    "wisdom" => 12,
+    "charisma" => 12
+  },
   campaign_id: campaign.id
 })
 

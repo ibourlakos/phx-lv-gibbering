@@ -3,11 +3,15 @@ defmodule Gibbering.Entity do
   import Ecto.Changeset
 
   @valid_types ~w(hero monster object)
+  @valid_races ~w(human elf gnome)
+  @valid_classes ~w(fighter wizard rogue)
 
   schema "entities" do
     field :name, :string
     field :type, :string
     field :sprite, :string
+    field :race, :string, default: "human"
+    field :class, :string, default: "fighter"
     field :x, :integer
     field :y, :integer
     field :hp, :integer
@@ -22,8 +26,10 @@ defmodule Gibbering.Entity do
 
   def changeset(entity, attrs) do
     entity
-    |> cast(attrs, [:name, :type, :sprite, :x, :y, :hp, :max_hp, :tags, :stats, :campaign_id])
+    |> cast(attrs, [:name, :type, :sprite, :race, :class, :x, :y, :hp, :max_hp, :tags, :stats, :campaign_id])
     |> validate_required([:name, :type, :sprite, :x, :y, :hp, :max_hp, :campaign_id])
     |> validate_inclusion(:type, @valid_types)
+    |> validate_inclusion(:race, @valid_races)
+    |> validate_inclusion(:class, @valid_classes)
   end
 end
