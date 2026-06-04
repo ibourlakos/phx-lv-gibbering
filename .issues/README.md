@@ -29,7 +29,6 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
 | [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` | medium |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
-| [#7](007-movement-distance-algorithm.md) | Movement distance algorithm is wrong for D&D 5e | `bug` `rules` `gameplay` | high |
 | [#8](008-string-to-existing-atom-crash.md) | `String.to_existing_atom` crash in data pipeline parser | `bug` | medium |
 | [#9](009-tile-walkable-nil-crash.md) | `tile_walkable?` crashes on missing tile coordinates | `bug` | medium |
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` | low |
@@ -54,5 +53,6 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
 | [#18](018-player-session-identity.md) | Player session identity: persistent UUID per browser session | `architecture` `gameplay` |
+| [#7](007-movement-distance-algorithm.md) | Movement distance algorithm is wrong for D&D 5e | `bug` `rules` `gameplay` |
 | [#22](022-user-accounts-and-auth.md) | User accounts and authentication (player/dm/support roles) | `architecture` `gameplay` `ops` |
 | [#23](023-campaign-membership.md) | Campaign membership and DM assignment | `architecture` `gameplay` |

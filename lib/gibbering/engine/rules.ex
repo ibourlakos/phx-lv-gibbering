@@ -10,7 +10,7 @@ defmodule Gibbering.Engine.Rules do
         y <- (entity.y - max_tiles)..(entity.y + max_tiles),
         {x, y} != {entity.x, entity.y},
         in_bounds?(x, y, state),
-        manhattan(entity.x, entity.y, x, y) <= max_tiles,
+        chebyshev(entity.x, entity.y, x, y) <= max_tiles,
         walkable?(state, x, y),
         not occupied_by_hero?(state, x, y),
         do: {x, y}
@@ -23,7 +23,7 @@ defmodule Gibbering.Engine.Rules do
     state.entities
     |> Enum.filter(fn {id, target} ->
       id != entity_id and
-        manhattan(entity.x, entity.y, target.x, target.y) <= 1 and
+        chebyshev(entity.x, entity.y, target.x, target.y) <= 1 and
         ("destructible" in target.tags or target.type == "monster")
     end)
     |> Enum.map(fn {id, _} -> id end)
@@ -61,7 +61,7 @@ defmodule Gibbering.Engine.Rules do
 
   defp maybe_destroy(state, _id, _hp), do: state
 
-  defp manhattan(x1, y1, x2, y2), do: abs(x1 - x2) + abs(y1 - y2)
+  defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
 
   defp in_bounds?(x, y, state),
     do: x >= 0 and x < state.map_width and y >= 0 and y < state.map_height

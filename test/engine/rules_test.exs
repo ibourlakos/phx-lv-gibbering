@@ -12,8 +12,7 @@ defmodule Gibbering.Engine.RulesTest do
   describe "valid_moves/2" do
     test "returns tiles within movement range" do
       state = build_state()
-      # Hero at (2,2) with speed 30 → max 6 tiles via manhattan distance.
-      # On a 5x5 map the farthest reachable corners are all within range.
+      # Hero at (2,2) with speed 30 → max 6 tiles. Chebyshev range = octagonal.
       moves = Rules.valid_moves(state, hero_id())
       assert {0, 2} in moves
       assert {4, 2} in moves
@@ -27,7 +26,7 @@ defmodule Gibbering.Engine.RulesTest do
       refute {2, 2} in moves
     end
 
-    test "respects manhattan distance cap" do
+    test "respects chebyshev distance cap" do
       # Hero speed 30 → 6 tiles. Place hero at (0,0) on a big map.
       state =
         build_state(map_width: 15, map_height: 15)
@@ -35,10 +34,12 @@ defmodule Gibbering.Engine.RulesTest do
 
       moves = Rules.valid_moves(state, hero_id())
 
-      # Every returned tile must be within 6 steps.
-      assert Enum.all?(moves, fn {x, y} -> abs(x) + abs(y) <= 6 end)
-      # (7, 0) is 7 steps away — should NOT be reachable.
+      # Every returned tile must be within Chebyshev distance 6.
+      assert Enum.all?(moves, fn {x, y} -> max(abs(x), abs(y)) <= 6 end)
+      # (7, 0) is Chebyshev distance 7 — not reachable.
       refute {7, 0} in moves
+      # (6, 6) is Chebyshev distance 6 — reachable (diagonal costs same as orthogonal in 5e).
+      assert {6, 6} in moves
     end
 
     test "excludes unwalkable tiles" do
@@ -82,13 +83,19 @@ defmodule Gibbering.Engine.RulesTest do
 
   describe "valid_targets/2" do
     test "returns empty list when no enemies are adjacent" do
-      # Monster at (3,3), hero at (2,2) — manhattan distance 2, not adjacent.
-      state = build_state()
+      # Monster at (4,4), hero at (2,2) — Chebyshev distance 2, not adjacent.
+      state = build_state() |> with_entity(monster_id(), x: 4, y: 4)
       assert Rules.valid_targets(state, hero_id()) == []
     end
 
-    test "returns monster id when monster is adjacent (distance 1)" do
+    test "returns monster id when monster is adjacent orthogonally" do
       state = build_state() |> with_entity(monster_id(), x: 2, y: 3)
+      targets = Rules.valid_targets(state, hero_id())
+      assert monster_id() in targets
+    end
+
+    test "returns monster id when monster is adjacent diagonally (5e melee includes diagonals)" do
+      state = build_state() |> with_entity(monster_id(), x: 3, y: 3)
       targets = Rules.valid_targets(state, hero_id())
       assert monster_id() in targets
     end
