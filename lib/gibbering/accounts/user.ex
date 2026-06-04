@@ -18,7 +18,9 @@ defmodule Gibbering.Accounts.User do
     |> cast(attrs, [:username, :password, :role])
     |> validate_required([:username, :password, :role])
     |> validate_length(:username, min: 3, max: 20)
-    |> validate_format(:username, ~r/^[a-zA-Z0-9_]+$/, message: "only letters, numbers, underscores")
+    |> validate_format(:username, ~r/^[a-zA-Z0-9_]+$/,
+      message: "only letters, numbers, underscores"
+    )
     |> validate_length(:password, min: 6, max: 72)
     |> validate_inclusion(:role, @valid_roles)
     |> unique_constraint(:username)

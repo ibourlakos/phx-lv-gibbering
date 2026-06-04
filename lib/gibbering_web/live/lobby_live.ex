@@ -1,29 +1,37 @@
 defmodule GibberingWeb.LobbyLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.{Repo, Campaign, Entity}
+  alias Gibbering.{Repo, Campaign, Entity, Campaigns}
   alias Gibbering.Data.{Races, Classes}
 
   @impl true
   def mount(%{"id" => campaign_id}, _session, socket) do
     campaign_id = String.to_integer(campaign_id)
+    user = socket.assigns.current_user
 
-    campaign =
-      Campaign
-      |> Repo.get!(campaign_id)
-      |> Repo.preload(:entities)
+    unless Campaigns.member?(campaign_id, user.id) do
+      {:ok,
+       socket
+       |> put_flash(:error, "You are not a member of that campaign.")
+       |> redirect(to: "/")}
+    else
+      campaign =
+        Campaign
+        |> Repo.get!(campaign_id)
+        |> Repo.preload(:entities)
 
-    if connected?(socket) do
-      Phoenix.PubSub.subscribe(Gibbering.PubSub, lobby_topic(campaign_id))
+      if connected?(socket) do
+        Phoenix.PubSub.subscribe(Gibbering.PubSub, lobby_topic(campaign_id))
+      end
+
+      {:ok,
+       socket
+       |> assign(:campaign, campaign)
+       |> assign(:editing_id, nil)
+       |> assign(:edit_form, %{})
+       |> assign(:races, Races.all())
+       |> assign(:classes, Classes.all())}
     end
-
-    {:ok,
-     socket
-     |> assign(:campaign, campaign)
-     |> assign(:editing_id, nil)
-     |> assign(:edit_form, %{})
-     |> assign(:races, Races.all())
-     |> assign(:classes, Classes.all())}
   end
 
   @impl true

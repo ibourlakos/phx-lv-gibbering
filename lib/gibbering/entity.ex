@@ -26,7 +26,20 @@ defmodule Gibbering.Entity do
 
   def changeset(entity, attrs) do
     entity
-    |> cast(attrs, [:name, :type, :sprite, :race, :class, :x, :y, :hp, :max_hp, :tags, :stats, :campaign_id])
+    |> cast(attrs, [
+      :name,
+      :type,
+      :sprite,
+      :race,
+      :class,
+      :x,
+      :y,
+      :hp,
+      :max_hp,
+      :tags,
+      :stats,
+      :campaign_id
+    ])
     |> validate_required([:name, :type, :sprite, :x, :y, :hp, :max_hp, :campaign_id])
     |> validate_inclusion(:type, @valid_types)
     |> validate_inclusion(:race, @valid_races)

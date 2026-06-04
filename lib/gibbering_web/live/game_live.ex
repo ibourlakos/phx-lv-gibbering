@@ -2,31 +2,40 @@ defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
   alias Gibbering.Engine.{GameServer, State}
+  alias Gibbering.Campaigns
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
     game_id = String.to_integer(game_id)
+    user = socket.assigns.current_user
 
-    case ensure_game_server(game_id) do
-      :ok ->
-        if connected?(socket) do
-          Phoenix.PubSub.subscribe(Gibbering.PubSub, GameServer.topic(game_id))
-        end
+    if not Campaigns.member?(game_id, user.id) do
+      {:ok,
+       socket
+       |> put_flash(:error, "You are not a member of that campaign.")
+       |> redirect(to: "/")}
+    else
+      case ensure_game_server(game_id) do
+        :ok ->
+          if connected?(socket) do
+            Phoenix.PubSub.subscribe(Gibbering.PubSub, GameServer.topic(game_id))
+          end
 
-        state = GameServer.get_state(game_id)
+          state = GameServer.get_state(game_id)
 
-        {:ok,
-         socket
-         |> assign(:game_id, game_id)
-         |> assign(:game_state, state)
-         |> assign(:valid_targets, [])
-         |> assign(:log, [])}
+          {:ok,
+           socket
+           |> assign(:game_id, game_id)
+           |> assign(:game_state, state)
+           |> assign(:valid_targets, [])
+           |> assign(:log, [])}
 
-      {:error, reason} ->
-        {:ok,
-         socket
-         |> put_flash(:error, "Game #{game_id} could not be loaded: #{inspect(reason)}")
-         |> redirect(to: "/")}
+        {:error, reason} ->
+          {:ok,
+           socket
+           |> put_flash(:error, "Game #{game_id} could not be loaded: #{inspect(reason)}")
+           |> redirect(to: "/")}
+      end
     end
   end
 
@@ -186,7 +195,16 @@ defmodule GibberingWeb.GameLive do
       <ellipse cx="32" cy="60" rx="14" ry="5" fill="rgba(0,0,0,0.4)" />
       <path d="M26,22 L20,58 L44,58 L38,22 Z" fill="#6040a0" stroke="#111" stroke-width="2" />
       <line x1="32" y1="26" x2="30" y2="54" stroke="#7a55b8" stroke-width="1.5" />
-      <rect x="26" y="19" width="12" height="6" rx="2" fill="#7b5ea7" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="26"
+        y="19"
+        width="12"
+        height="6"
+        rx="2"
+        fill="#7b5ea7"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <ellipse cx="32" cy="14" rx="10" ry="10" fill="#c9a87c" stroke="#111" stroke-width="2" />
       <circle cx="28" cy="14" r="1.5" fill="#111" />
       <circle cx="36" cy="14" r="1.5" fill="#111" />
@@ -236,7 +254,16 @@ defmodule GibberingWeb.GameLive do
       <ellipse cx="32" cy="60" rx="14" ry="5" fill="rgba(0,0,0,0.4)" />
       <path d="M26,22 L20,58 L44,58 L38,22 Z" fill="#6040a0" stroke="#111" stroke-width="2" />
       <line x1="32" y1="26" x2="30" y2="54" stroke="#7a55b8" stroke-width="1.5" />
-      <rect x="26" y="19" width="12" height="6" rx="2" fill="#7b5ea7" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="26"
+        y="19"
+        width="12"
+        height="6"
+        rx="2"
+        fill="#7b5ea7"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <ellipse cx="32" cy="14" rx="10" ry="10" fill="#c9a87c" stroke="#111" stroke-width="2" />
       <%!-- brown hair showing --%>
       <path d="M22,14 Q24,8 32,7 Q40,8 42,14" fill="#6b3a1f" stroke="#111" stroke-width="1.5" />
@@ -256,8 +283,26 @@ defmodule GibberingWeb.GameLive do
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="16" ry="5" fill="rgba(0,0,0,0.4)" />
       <%!-- legs --%>
-      <rect x="21" y="44" width="8" height="15" rx="2" fill="#3d2a1a" stroke="#111" stroke-width="1.5" />
-      <rect x="35" y="44" width="8" height="15" rx="2" fill="#3d2a1a" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="21"
+        y="44"
+        width="8"
+        height="15"
+        rx="2"
+        fill="#3d2a1a"
+        stroke="#111"
+        stroke-width="1.5"
+      />
+      <rect
+        x="35"
+        y="44"
+        width="8"
+        height="15"
+        rx="2"
+        fill="#3d2a1a"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <%!-- leather torso --%>
       <rect x="19" y="22" width="26" height="24" rx="3" fill="#6b4c38" stroke="#111" stroke-width="2" />
       <line x1="32" y1="22" x2="32" y2="46" stroke="#4a3020" stroke-width="1" />
@@ -265,13 +310,34 @@ defmodule GibberingWeb.GameLive do
       <ellipse cx="14" cy="30" rx="5" ry="8" fill="#5a3d28" stroke="#111" stroke-width="1.5" />
       <ellipse cx="50" cy="30" rx="5" ry="8" fill="#5a3d28" stroke="#111" stroke-width="1.5" />
       <%!-- daggers --%>
-      <line x1="10" y1="20" x2="12" y2="44" stroke="#b0b8c0" stroke-width="2.5" stroke-linecap="round" />
+      <line
+        x1="10"
+        y1="20"
+        x2="12"
+        y2="44"
+        stroke="#b0b8c0"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
       <rect x="8" y="28" width="6" height="2" rx="1" fill="#888" stroke="#111" stroke-width="1" />
-      <line x1="53" y1="20" x2="51" y2="44" stroke="#b0b8c0" stroke-width="2.5" stroke-linecap="round" />
+      <line
+        x1="53"
+        y1="20"
+        x2="51"
+        y2="44"
+        stroke="#b0b8c0"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
       <rect x="49" y="28" width="6" height="2" rx="1" fill="#888" stroke="#111" stroke-width="1" />
       <%!-- head with hood --%>
       <ellipse cx="32" cy="14" rx="10" ry="10" fill="#c9a87c" stroke="#111" stroke-width="2" />
-      <path d="M22,14 Q22,4 32,3 Q42,4 42,14 L42,18 Q36,16 32,16 Q28,16 22,18 Z" fill="#3d2a1a" stroke="#111" stroke-width="1.5" />
+      <path
+        d="M22,14 Q22,4 32,3 Q42,4 42,14 L42,18 Q36,16 32,16 Q28,16 22,18 Z"
+        fill="#3d2a1a"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <circle cx="28" cy="15" r="1.5" fill="#111" />
       <circle cx="36" cy="15" r="1.5" fill="#111" />
     </g>
@@ -319,7 +385,16 @@ defmodule GibberingWeb.GameLive do
       <path d="M24,22 L20,58" stroke="#7050c0" stroke-width="1" />
       <path d="M40,22 L44,58" stroke="#7050c0" stroke-width="1" />
       <line x1="32" y1="26" x2="32" y2="58" stroke="#7a55b8" stroke-width="1.5" />
-      <rect x="26" y="19" width="12" height="6" rx="2" fill="#8060c0" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="26"
+        y="19"
+        width="12"
+        height="6"
+        rx="2"
+        fill="#8060c0"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <%!-- elven face: tall, pale, pointed ears --%>
       <ellipse cx="32" cy="13" rx="9" ry="12" fill="#dbbf8a" stroke="#111" stroke-width="2" />
       <polygon points="23,10 20,4 25,10" fill="#dbbf8a" stroke="#111" stroke-width="1.5" />
@@ -343,8 +418,26 @@ defmodule GibberingWeb.GameLive do
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="14" ry="4" fill="rgba(0,0,0,0.4)" />
       <%!-- long legs --%>
-      <rect x="22" y="44" width="7" height="16" rx="2" fill="#2a3a30" stroke="#111" stroke-width="1.5" />
-      <rect x="35" y="44" width="7" height="16" rx="2" fill="#2a3a30" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="22"
+        y="44"
+        width="7"
+        height="16"
+        rx="2"
+        fill="#2a3a30"
+        stroke="#111"
+        stroke-width="1.5"
+      />
+      <rect
+        x="35"
+        y="44"
+        width="7"
+        height="16"
+        rx="2"
+        fill="#2a3a30"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <%!-- shadow cloak body --%>
       <path d="M20,22 L14,58 L50,58 L44,22 Z" fill="#1e2e28" stroke="#111" stroke-width="2" />
       <path d="M20,22 L16,58" stroke="#2e4038" stroke-width="1" />
@@ -353,13 +446,30 @@ defmodule GibberingWeb.GameLive do
       <ellipse cx="14" cy="30" rx="4" ry="7" fill="#2a3a30" stroke="#111" stroke-width="1.5" />
       <ellipse cx="50" cy="30" rx="4" ry="7" fill="#2a3a30" stroke="#111" stroke-width="1.5" />
       <%!-- curved elven blades --%>
-      <path d="M10,44 Q8,32 12,20" stroke="#c8d8e0" stroke-width="2.5" fill="none" stroke-linecap="round" />
-      <path d="M54,44 Q56,32 52,20" stroke="#c8d8e0" stroke-width="2.5" fill="none" stroke-linecap="round" />
+      <path
+        d="M10,44 Q8,32 12,20"
+        stroke="#c8d8e0"
+        stroke-width="2.5"
+        fill="none"
+        stroke-linecap="round"
+      />
+      <path
+        d="M54,44 Q56,32 52,20"
+        stroke="#c8d8e0"
+        stroke-width="2.5"
+        fill="none"
+        stroke-linecap="round"
+      />
       <%!-- elven head with hood --%>
       <ellipse cx="32" cy="13" rx="9" ry="12" fill="#dbbf8a" stroke="#111" stroke-width="2" />
       <polygon points="23,10 20,4 25,10" fill="#dbbf8a" stroke="#111" stroke-width="1.5" />
       <polygon points="41,10 44,4 39,10" fill="#dbbf8a" stroke="#111" stroke-width="1.5" />
-      <path d="M23,10 Q23,2 32,1 Q41,2 41,10 L42,16 Q36,14 32,14 Q28,14 22,16 Z" fill="#1e2e28" stroke="#111" stroke-width="1.5" />
+      <path
+        d="M23,10 Q23,2 32,1 Q41,2 41,10 L42,16 Q36,14 32,14 Q28,14 22,16 Z"
+        fill="#1e2e28"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <circle cx="28" cy="13" r="1.5" fill="#111" />
       <circle cx="36" cy="13" r="1.5" fill="#111" />
     </g>
@@ -389,7 +499,16 @@ defmodule GibberingWeb.GameLive do
       <circle cx="28" cy="26" r="1.5" fill="#111" />
       <circle cx="36" cy="26" r="1.5" fill="#111" />
       <path d="M22,22 L22,14 Q32,8 42,14 L42,22" fill="#8b4513" stroke="#111" stroke-width="2" />
-      <rect x="20" y="13" width="24" height="6" rx="2" fill="#7a3a10" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="20"
+        y="13"
+        width="24"
+        height="6"
+        rx="2"
+        fill="#7a3a10"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <%!-- cheeks --%>
       <circle cx="26" cy="28" r="2.5" fill="#e8706a" fill-opacity="0.5" />
       <circle cx="38" cy="28" r="2.5" fill="#e8706a" fill-opacity="0.5" />
@@ -405,7 +524,16 @@ defmodule GibberingWeb.GameLive do
       <%!-- tiny legs hidden under robe --%>
       <path d="M24,38 L20,60 L44,60 L40,38 Z" fill="#7040c0" stroke="#111" stroke-width="2" />
       <line x1="32" y1="40" x2="32" y2="60" stroke="#8050d0" stroke-width="1.5" />
-      <rect x="24" y="35" width="16" height="6" rx="2" fill="#9060d0" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="24"
+        y="35"
+        width="16"
+        height="6"
+        rx="2"
+        fill="#9060d0"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <%!-- big round head --%>
       <ellipse cx="32" cy="26" rx="12" ry="12" fill="#d4956a" stroke="#111" stroke-width="2" />
       <%!-- oversized eyes --%>
@@ -421,7 +549,15 @@ defmodule GibberingWeb.GameLive do
       <ellipse cx="32" cy="20" rx="13" ry="4" fill="#5030b0" stroke="#111" stroke-width="1.5" />
       <circle cx="32" cy="2" r="3" fill="#f0d060" stroke="#111" stroke-width="1" />
       <%!-- tiny elaborate staff --%>
-      <line x1="48" y1="20" x2="46" y2="62" stroke="#6a4810" stroke-width="2.5" stroke-linecap="round" />
+      <line
+        x1="48"
+        y1="20"
+        x2="46"
+        y2="62"
+        stroke="#6a4810"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
       <ellipse cx="48" cy="18" rx="5" ry="5" fill="#f0c060" stroke="#111" stroke-width="1.5" />
       <circle cx="48" cy="18" r="2" fill="white" />
     </g>
@@ -434,8 +570,26 @@ defmodule GibberingWeb.GameLive do
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="12" ry="4" fill="rgba(0,0,0,0.4)" />
       <%!-- short legs --%>
-      <rect x="23" y="48" width="7" height="12" rx="2" fill="#3a2a20" stroke="#111" stroke-width="1.5" />
-      <rect x="34" y="48" width="7" height="12" rx="2" fill="#3a2a20" stroke="#111" stroke-width="1.5" />
+      <rect
+        x="23"
+        y="48"
+        width="7"
+        height="12"
+        rx="2"
+        fill="#3a2a20"
+        stroke="#111"
+        stroke-width="1.5"
+      />
+      <rect
+        x="34"
+        y="48"
+        width="7"
+        height="12"
+        rx="2"
+        fill="#3a2a20"
+        stroke="#111"
+        stroke-width="1.5"
+      />
       <%!-- gnome body with packs and gadgets --%>
       <rect x="19" y="30" width="26" height="20" rx="3" fill="#5d4037" stroke="#111" stroke-width="2" />
       <rect x="23" y="30" width="6" height="8" rx="1" fill="#4a3020" stroke="#111" stroke-width="1" />

@@ -12,8 +12,14 @@ defmodule Gibbering.Data.Classes do
       spellcasting: false,
       spells: [],
       features: [
-        %{name: "Second Wind", description: "Once per short rest, use a bonus action to regain 1d10+level HP."},
-        %{name: "Action Surge", description: "Once per short rest, take one additional action on your turn."},
+        %{
+          name: "Second Wind",
+          description: "Once per short rest, use a bonus action to regain 1d10+level HP."
+        },
+        %{
+          name: "Action Surge",
+          description: "Once per short rest, take one additional action on your turn."
+        },
         %{name: "Fighting Style: Defense", description: "+1 AC while wearing armor."}
       ],
       stats: %{
@@ -37,9 +43,18 @@ defmodule Gibbering.Data.Classes do
       spellcasting: true,
       spells: ["fire_bolt", "mage_hand", "magic_missile", "sleep"],
       features: [
-        %{name: "Arcane Recovery", description: "Once per day after a short rest, recover expended spell slots."},
-        %{name: "Spellcasting", description: "Cast spells using Intelligence as your spellcasting ability."},
-        %{name: "Ritual Casting", description: "Cast wizard spells as rituals if they have the ritual tag."}
+        %{
+          name: "Arcane Recovery",
+          description: "Once per day after a short rest, recover expended spell slots."
+        },
+        %{
+          name: "Spellcasting",
+          description: "Cast spells using Intelligence as your spellcasting ability."
+        },
+        %{
+          name: "Ritual Casting",
+          description: "Cast wizard spells as rituals if they have the ritual tag."
+        }
       ],
       stats: %{
         "strength" => 8,
@@ -62,9 +77,18 @@ defmodule Gibbering.Data.Classes do
       spellcasting: false,
       spells: [],
       features: [
-        %{name: "Sneak Attack", description: "Deal 1d6 extra damage when you have advantage or a flanking ally."},
-        %{name: "Thieves' Cant", description: "A secret mix of dialect, jargon, and code understood by rogues."},
-        %{name: "Expertise", description: "Double proficiency bonus for two skills of your choice."}
+        %{
+          name: "Sneak Attack",
+          description: "Deal 1d6 extra damage when you have advantage or a flanking ally."
+        },
+        %{
+          name: "Thieves' Cant",
+          description: "A secret mix of dialect, jargon, and code understood by rogues."
+        },
+        %{
+          name: "Expertise",
+          description: "Double proficiency bonus for two skills of your choice."
+        }
       ],
       stats: %{
         "strength" => 10,

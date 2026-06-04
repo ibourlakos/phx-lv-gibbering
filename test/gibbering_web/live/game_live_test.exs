@@ -7,12 +7,14 @@ defmodule GibberingWeb.GameLiveTest do
   import Gibbering.GameFixtures
   import Gibbering.AccountsFixtures
 
+  alias Gibbering.{Campaigns}
   alias Gibbering.Engine.{GameServer, State}
 
   defp mount_game(conn) do
     user = register_user()
     conn = log_in_user(conn, user)
     game_id = insert_campaign()
+    Campaigns.join_campaign(game_id, user.id)
     # Pre-start the server so the LiveView mounts against an already-running game.
     start_supervised!({GameServer, game_id})
     {:ok, view, _html} = live(conn, "/game/#{game_id}")
