@@ -1,5 +1,7 @@
 # Architecture
 
+> **See also:** [Data Model](data-model.md) — full schema reference for the DB tables, runtime State struct, and static reference data modules.
+
 ## Overview
 
 The Gibbering Engine is a deliberate architectural aberration: a 2D tactical game that runs entirely server-side, streaming SVG diffs to the browser over a LiveView WebSocket. No client-side game framework. No manual WebSocket code. The server is the game.

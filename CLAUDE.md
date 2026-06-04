@@ -9,6 +9,7 @@ Named after the Gibbering Mouther (SRD-legal aberration). The architecture is th
 ## Docs
 
 - [Architecture](docs/architecture.md) — module map, ruleset behaviour, SVG pipeline, data pipeline
+- [Data Model](docs/data-model.md) — DB schema, runtime State struct, static reference data
 - [Dev Setup](docs/dev-setup.md) — prerequisites, workflow, DB ops, Docker housekeeping
 - [Testing](docs/testing.md) — three-layer strategy, fixtures, TDD workflow, running tests
 - [Workflow](docs/workflow.md) — the full dev sequence: Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
@@ -50,17 +51,20 @@ See [docs/dev-setup.md](docs/dev-setup.md) for the full reference.
 Issues live in `.issues/`. Start at [`.issues/README.md`](.issues/README.md) for the full index and open issue list.
 
 - **Counter:** `.issues/counter` (plain integer — next number to use)
-- **Aspects:** `ops.md` (infra/tooling), `discovery.md` (epics/unknowns from brainstorming)
+- **One file per issue:** `.issues/<N>-<slug>.md` (open and closed issues both kept)
+- **Tags:** `bug`, `rules`, `architecture`, `legal`, `ops`, `discovery`, `rendering`, `gameplay`
 
-**To add an issue:** read `counter`, use that number, append the entry to the right aspect file, increment `counter`, add a row to the open issues table in `README.md`, commit as `chore: add issue #N`.  
-**To close an issue:** change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, remove the row from the open issues table in `README.md`, commit as `chore: close issue #N`.
+**To add an issue:** read `counter`, use that number, create `.issues/<N>-<slug>.md`, increment `counter`, add a row to the open issues table in `.issues/README.md`, commit as `chore: add issue #N`.  
+**To close an issue:** in the issue file change `**Status:** open` → `**Status:** closed` and add `**Closed:** YYYY-MM-DD`, move its row from Open to Closed in `.issues/README.md`, commit as `chore: close issue #N`.
 
-Issue format:
+Issue file format (`.issues/<N>-<slug>.md`):
 ```
-## #N · Title
-**Status:** open
+# #N · Title
+**Status:** open | closed
 **Opened:** YYYY-MM-DD
+**Closed:** YYYY-MM-DD   ← only when closed
 **Priority:** high | medium | low
+**Tags:** tag1, tag2
 
 Description.
 
