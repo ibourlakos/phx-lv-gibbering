@@ -39,11 +39,9 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#14](014-ruleset-behaviour-vs-protocol.md) | `Gibbering.Ruleset`: behaviour vs protocol | `discovery` `architecture` | medium |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk understated in brainstorm | `legal` | medium |
-| [#18](018-player-session-identity.md) | Player session identity: persistent UUID per browser session | `architecture` `gameplay` | high |
 | [#19](019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | `bug` `architecture` | medium |
 | [#20](020-spells-defined-not-castable.md) | Spells are defined but not castable | `gameplay` `rules` | medium |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
-| [#22](022-user-accounts-and-auth.md) | User accounts and authentication (player/dm/support roles) | `architecture` `gameplay` `ops` | high |
 
 ---
 
@@ -54,3 +52,5 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
+| [#18](018-player-session-identity.md) | Player session identity: persistent UUID per browser session | `architecture` `gameplay` |
+| [#22](022-user-accounts-and-auth.md) | User accounts and authentication (player/dm/support roles) | `architecture` `gameplay` `ops` |

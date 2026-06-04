@@ -1,6 +1,7 @@
 # #18 · Player session identity: persistent UUID per browser session
 
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-05
 **Opened:** 2026-06-05
 **Priority:** high
 **Tags:** architecture, gameplay

@@ -1,7 +1,8 @@
 # #22 · User accounts and authentication
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** architecture, gameplay, ops
 
