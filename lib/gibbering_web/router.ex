@@ -19,6 +19,7 @@ defmodule GibberingWeb.Router do
 
     get "/", PageController, :home
     live "/game/:id", GameLive
+    live "/lobby/:id", LobbyLive
   end
 
   # Other scopes may use custom stacks.

@@ -147,7 +147,7 @@ defmodule GibberingWeb.GameLive do
   # ---------------------------------------------------------------------------
 
   # Legacy sprites kept for backwards compat
-  defp entity_sprite(%{sprite: "warrior"} = assigns) do
+  def entity_sprite(%{sprite: "warrior"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="18" ry="6" fill="rgba(0,0,0,0.4)" />
@@ -165,7 +165,7 @@ defmodule GibberingWeb.GameLive do
     """
   end
 
-  defp entity_sprite(%{sprite: "wizard"} = assigns) do
+  def entity_sprite(%{sprite: "wizard"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="14" ry="5" fill="rgba(0,0,0,0.4)" />
@@ -184,7 +184,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Human Fighter — stocky build, blue plate armour, brown hair, sword+shield
-  defp entity_sprite(%{sprite: "human_fighter"} = assigns) do
+  def entity_sprite(%{sprite: "human_fighter"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="18" ry="6" fill="rgba(0,0,0,0.4)" />
@@ -215,7 +215,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Human Wizard — robes, tall hat, warm skin, oak staff
-  defp entity_sprite(%{sprite: "human_wizard"} = assigns) do
+  def entity_sprite(%{sprite: "human_wizard"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="14" ry="5" fill="rgba(0,0,0,0.4)" />
@@ -236,7 +236,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Human Rogue — leather armour, hood, twin daggers, dark tones
-  defp entity_sprite(%{sprite: "human_rogue"} = assigns) do
+  def entity_sprite(%{sprite: "human_rogue"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="16" ry="5" fill="rgba(0,0,0,0.4)" />
@@ -264,7 +264,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Elf Fighter — slender plate, high cheekbones, pointed ears, silver-green armour
-  defp entity_sprite(%{sprite: "elf_fighter"} = assigns) do
+  def entity_sprite(%{sprite: "elf_fighter"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="16" ry="5" fill="rgba(0,0,0,0.4)" />
@@ -295,7 +295,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Elf Wizard — flowing silver-purple robes, long silver hair, arcane staff with gem
-  defp entity_sprite(%{sprite: "elf_wizard"} = assigns) do
+  def entity_sprite(%{sprite: "elf_wizard"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="14" ry="5" fill="rgba(0,0,0,0.4)" />
@@ -323,7 +323,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Elf Rogue — shadow cloak, curved blades, graceful posture
-  defp entity_sprite(%{sprite: "elf_rogue"} = assigns) do
+  def entity_sprite(%{sprite: "elf_rogue"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="14" ry="4" fill="rgba(0,0,0,0.4)" />
@@ -352,7 +352,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Gnome Fighter — very short, round head, big helm, oversized axes
-  defp entity_sprite(%{sprite: "gnome_fighter"} = assigns) do
+  def entity_sprite(%{sprite: "gnome_fighter"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="15" ry="5" fill="rgba(0,0,0,0.4)" />
@@ -383,7 +383,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Gnome Wizard — tiny pointy hat, big eyes, oversized robes, elaborate staff
-  defp entity_sprite(%{sprite: "gnome_wizard"} = assigns) do
+  def entity_sprite(%{sprite: "gnome_wizard"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="12" ry="4" fill="rgba(0,0,0,0.4)" />
@@ -414,7 +414,7 @@ defmodule GibberingWeb.GameLive do
   end
 
   # Gnome Rogue — tiny figure, big goggles, pack of gadgets, short knives
-  defp entity_sprite(%{sprite: "gnome_rogue"} = assigns) do
+  def entity_sprite(%{sprite: "gnome_rogue"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="12" ry="4" fill="rgba(0,0,0,0.4)" />
@@ -446,7 +446,7 @@ defmodule GibberingWeb.GameLive do
     """
   end
 
-  defp entity_sprite(%{sprite: "rock"} = assigns) do
+  def entity_sprite(%{sprite: "rock"} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       <ellipse cx="32" cy="60" rx="22" ry="7" fill="rgba(0,0,0,0.4)" />
@@ -469,7 +469,7 @@ defmodule GibberingWeb.GameLive do
     """
   end
 
-  defp entity_sprite(assigns) do
+  def entity_sprite(assigns) do
     ~H"""
     <rect
       x={@x + 8}
