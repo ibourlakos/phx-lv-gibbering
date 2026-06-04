@@ -29,6 +29,41 @@
     </script>
   </head>
   <body>
+    <nav class="bg-gray-950 border-b border-gray-800 px-4 py-2 flex items-center justify-between text-sm">
+      <a href="/" class="text-yellow-400 font-bold tracking-tight">⚔ Gibbering</a>
+      <div class="flex items-center gap-4">
+        <%= if assigns[:current_user] do %>
+          <span class="text-gray-400">
+            <span class="text-white font-medium">{@current_user.username}</span>
+            <span class={[
+              "ml-2 text-xs px-1.5 py-0.5 rounded-full font-medium",
+              case @current_user.role do
+                "dm" -> "bg-yellow-700 text-yellow-200"
+                "support" -> "bg-blue-700 text-blue-200"
+                _ -> "bg-gray-700 text-gray-300"
+              end
+            ]}>
+              {@current_user.role}
+            </span>
+          </span>
+          <form action="/logout" method="post" class="inline">
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+            <input type="hidden" name="_method" value="delete" />
+            <button type="submit" class="text-gray-500 hover:text-white transition-colors">
+              Log out
+            </button>
+          </form>
+        <% else %>
+          <a href="/login" class="text-gray-400 hover:text-white transition-colors">Log in</a>
+          <a
+            href="/register"
+            class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold px-3 py-1 rounded-lg transition-colors"
+          >
+            Register
+          </a>
+        <% end %>
+      </div>
+    </nav>
     {@inner_content}
   </body>
 </html>

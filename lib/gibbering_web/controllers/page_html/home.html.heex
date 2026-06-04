@@ -9,7 +9,8 @@
 
       <%= if @campaigns == [] do %>
         <p class="text-gray-500 text-sm">
-          No campaigns yet. Run <code class="bg-gray-700 px-1 rounded">mix ecto.setup</code> to seed one.
+          No campaigns yet. Run <code class="bg-gray-700 px-1 rounded">mix ecto.setup</code>
+          to seed one.
         </p>
       <% else %>
         <%= for campaign <- @campaigns do %>

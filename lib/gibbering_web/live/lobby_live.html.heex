@@ -1,10 +1,10 @@
 <% campaign = @campaign
 heroes = Enum.filter(campaign.entities, &(&1.type == "hero"))
-player_id = @player_id
-my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_id end) %>
+me = @current_user
+is_dm = me.role in ["dm", "support"]
+my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id end) %>
 
 <div class="min-h-screen bg-gray-900 text-white p-6">
-
   <%!-- Header --%>
   <div class="max-w-4xl mx-auto">
     <div class="flex items-center justify-between mb-8">
@@ -43,10 +43,11 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <%= for entity <- heroes do %>
         <% claimed_by = Map.get(entity.stats, "claimed_by")
-           is_mine = claimed_by == player_id
-           is_taken = claimed_by != nil and not is_mine
-           is_editing = @editing_id == entity.id
-           hp_pct = if entity.max_hp > 0, do: round(entity.hp / entity.max_hp * 100), else: 0 %>
+        claimer_name = Map.get(entity.stats, "claimed_by_name")
+        is_mine = claimed_by == me.id
+        is_taken = claimed_by != nil and not is_mine
+        is_editing = @editing_id == entity.id
+        hp_pct = if entity.max_hp > 0, do: round(entity.hp / entity.max_hp * 100), else: 0 %>
 
         <div class={[
           "rounded-xl border-2 p-4 transition-all",
@@ -88,8 +89,11 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
               </span>
             <% end %>
             <%= if is_taken do %>
-              <span class="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full flex-shrink-0">
-                Taken
+              <span
+                class="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full flex-shrink-0"
+                title={claimer_name}
+              >
+                {claimer_name || "Taken"}
               </span>
             <% end %>
           </div>
@@ -106,7 +110,9 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
             </div>
             <div class="bg-gray-700 rounded p-1">
               <div class="text-xs text-gray-400">
-                {if entity.class == "wizard", do: "INT", else: if(entity.class == "rogue", do: "DEX", else: "STR")}
+                {if entity.class == "wizard",
+                  do: "INT",
+                  else: if(entity.class == "rogue", do: "DEX", else: "STR")}
               </div>
               <div class="text-sm font-bold">
                 {cond do
@@ -132,7 +138,11 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
             <div class="flex flex-wrap gap-1 mb-3">
               <%= for spell <- Map.get(entity.stats, "spells", []) do %>
                 <span class="text-xs bg-purple-900 text-purple-200 px-1.5 py-0.5 rounded">
-                  {spell |> String.replace("_", " ") |> String.split() |> Enum.map(&String.capitalize/1) |> Enum.join(" ")}
+                  {spell
+                  |> String.replace("_", " ")
+                  |> String.split()
+                  |> Enum.map(&String.capitalize/1)
+                  |> Enum.join(" ")}
                 </span>
               <% end %>
             </div>
@@ -140,7 +150,11 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
 
           <%!-- Edit form (inline) --%>
           <%= if is_editing do %>
-            <form phx-submit="save_slot" phx-value-entity-id={entity.id} class="space-y-2 mb-3 border-t border-gray-700 pt-3">
+            <form
+              phx-submit="save_slot"
+              phx-value-entity-id={entity.id}
+              class="space-y-2 mb-3 border-t border-gray-700 pt-3"
+            >
               <input
                 type="text"
                 name="name"
@@ -219,27 +233,30 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
             <% end %>
 
             <%!-- DM remove --%>
-            <button
-              phx-click="remove_slot"
-              phx-value-id={entity.id}
-              class="text-gray-600 hover:text-red-400 text-sm px-2 py-1.5"
-              title="Remove (DM)"
-            >
-              ✕
-            </button>
+            <%= if is_dm do %>
+              <button
+                phx-click="remove_slot"
+                phx-value-id={entity.id}
+                class="text-gray-600 hover:text-red-400 text-sm px-2 py-1.5"
+                title="Remove slot (DM)"
+              >
+                ✕
+              </button>
+            <% end %>
           </div>
         </div>
       <% end %>
 
-      <%!-- Add slot card --%>
-      <button
-        phx-click="add_slot"
-        class="rounded-xl border-2 border-dashed border-gray-700 p-4 flex flex-col items-center justify-center gap-2 hover:border-gray-500 hover:bg-gray-800 transition-all min-h-40"
-      >
-        <span class="text-4xl text-gray-600">+</span>
-        <span class="text-gray-500 text-sm">Add Character Slot</span>
-        <span class="text-gray-600 text-xs">(DM)</span>
-      </button>
+      <%!-- Add slot card — DM only --%>
+      <%= if is_dm do %>
+        <button
+          phx-click="add_slot"
+          class="rounded-xl border-2 border-dashed border-gray-700 p-4 flex flex-col items-center justify-center gap-2 hover:border-gray-500 hover:bg-gray-800 transition-all min-h-40"
+        >
+          <span class="text-4xl text-gray-600">+</span>
+          <span class="text-gray-500 text-sm">Add Character Slot</span>
+        </button>
+      <% end %>
     </div>
 
     <%!-- Race & Class Reference --%>
@@ -255,7 +272,10 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
             <p class="text-xs text-gray-400 mb-1">{race.description}</p>
             <div class="flex flex-wrap gap-1">
               <%= for trait <- race.traits do %>
-                <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded" title={trait.description}>
+                <span
+                  class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
+                  title={trait.description}
+                >
                   {trait.name}
                 </span>
               <% end %>
@@ -268,7 +288,9 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
       </div>
 
       <div class="bg-gray-800 rounded-lg p-4">
-        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Classes</h2>
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">
+          Classes
+        </h2>
         <%= for {key, cls} <- @classes do %>
           <div class="mb-3">
             <div class="flex items-center gap-2 mb-1">
@@ -278,12 +300,17 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
               >
                 {cls.name}
               </span>
-              <span class="text-xs text-gray-500">d{cls.hit_die |> String.trim_leading("d")} HP</span>
+              <span class="text-xs text-gray-500">
+                d{cls.hit_die |> String.trim_leading("d")} HP
+              </span>
             </div>
             <p class="text-xs text-gray-400 mb-1">{cls.description}</p>
             <div class="flex flex-wrap gap-1">
               <%= for feat <- cls.features do %>
-                <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded" title={feat.description}>
+                <span
+                  class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
+                  title={feat.description}
+                >
                   {feat.name}
                 </span>
               <% end %>
@@ -295,6 +322,5 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == player_i
         <% end %>
       </div>
     </div>
-
   </div>
 </div>

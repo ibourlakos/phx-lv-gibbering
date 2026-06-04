@@ -1,0 +1,71 @@
+<Layouts.flash_group flash={@flash} />
+<div class="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-yellow-400">The Gibbering Engine</h1>
+      <p class="text-gray-400 mt-1 text-sm">Create your account</p>
+    </div>
+
+    <div class="bg-gray-800 rounded-2xl p-6">
+      <%= if @error do %>
+        <div class="bg-red-900 border border-red-600 text-red-200 rounded-lg px-4 py-3 text-sm mb-4">
+          {@error}
+        </div>
+      <% end %>
+
+      <form action="/register" method="post" class="space-y-4">
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+
+        <div>
+          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">
+            Username
+          </label>
+          <input
+            type="text"
+            name="user[username]"
+            autocomplete="username"
+            placeholder="3–20 chars, letters/numbers/_"
+            class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-yellow-400 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            name="user[password]"
+            autocomplete="new-password"
+            placeholder="At least 6 characters"
+            class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-yellow-400 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-400 uppercase tracking-wider mb-1">Role</label>
+          <select
+            name="user[role]"
+            class="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-yellow-400 focus:outline-none"
+          >
+            <option value="player">Player — joins campaigns, plays a character</option>
+            <option value="dm">DM — runs campaigns, controls the game world</option>
+            <option value="support">Support — internal/admin access</option>
+          </select>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold rounded-lg py-2.5 text-sm transition-colors"
+        >
+          Create Account
+        </button>
+      </form>
+
+      <p class="text-center text-gray-500 text-sm mt-4">
+        Already have an account?
+        <a href="/login" class="text-yellow-400 hover:text-yellow-300">Log in</a>
+      </p>
+    </div>
+  </div>
+</div>

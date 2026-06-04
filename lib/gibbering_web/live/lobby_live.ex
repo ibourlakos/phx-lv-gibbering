@@ -5,15 +5,13 @@ defmodule GibberingWeb.LobbyLive do
   alias Gibbering.Data.{Races, Classes}
 
   @impl true
-  def mount(%{"id" => campaign_id}, session, socket) do
+  def mount(%{"id" => campaign_id}, _session, socket) do
     campaign_id = String.to_integer(campaign_id)
 
     campaign =
       Campaign
       |> Repo.get!(campaign_id)
       |> Repo.preload(:entities)
-
-    player_id = get_player_id(session)
 
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Gibbering.PubSub, lobby_topic(campaign_id))
@@ -22,7 +20,6 @@ defmodule GibberingWeb.LobbyLive do
     {:ok,
      socket
      |> assign(:campaign, campaign)
-     |> assign(:player_id, player_id)
      |> assign(:editing_id, nil)
      |> assign(:edit_form, %{})
      |> assign(:races, Races.all())
@@ -32,19 +29,21 @@ defmodule GibberingWeb.LobbyLive do
   @impl true
   def handle_event("claim_slot", %{"id" => entity_id}, socket) do
     entity_id = String.to_integer(entity_id)
-    player_id = socket.assigns.player_id
-
+    user = socket.assigns.current_user
     entity = Repo.get!(Entity, entity_id)
 
     already_claimed =
       Enum.any?(socket.assigns.campaign.entities, fn e ->
-        e.id != entity_id and Map.get(e.stats, "claimed_by") == player_id
+        e.id != entity_id and Map.get(e.stats, "claimed_by") == user.id
       end)
 
     if already_claimed do
       {:noreply, put_flash(socket, :error, "You already hold a slot in this party.")}
     else
-      stats = Map.put(entity.stats, "claimed_by", player_id)
+      stats =
+        entity.stats
+        |> Map.put("claimed_by", user.id)
+        |> Map.put("claimed_by_name", user.username)
 
       entity
       |> Entity.changeset(%{stats: stats})
@@ -59,7 +58,7 @@ defmodule GibberingWeb.LobbyLive do
   def handle_event("release_slot", %{"id" => entity_id}, socket) do
     entity_id = String.to_integer(entity_id)
     entity = Repo.get!(Entity, entity_id)
-    stats = Map.delete(entity.stats, "claimed_by")
+    stats = entity.stats |> Map.delete("claimed_by") |> Map.delete("claimed_by_name")
 
     entity
     |> Entity.changeset(%{stats: stats})
@@ -141,40 +140,44 @@ defmodule GibberingWeb.LobbyLive do
 
   @impl true
   def handle_event("add_slot", _, socket) do
-    heroes =
-      Enum.filter(socket.assigns.campaign.entities, &(&1.type == "hero"))
+    if socket.assigns.current_user.role not in ["dm", "support"] do
+      {:noreply, put_flash(socket, :error, "Only the DM can add character slots.")}
+    else
+      heroes = Enum.filter(socket.assigns.campaign.entities, &(&1.type == "hero"))
+      count = length(heroes)
 
-    count = length(heroes)
-    start_x = rem(count, 3) + 1
-    start_y = div(count, 3) * 2 + 3
+      Repo.insert!(%Entity{
+        name: "Adventurer #{count + 1}",
+        type: "hero",
+        sprite: "human_fighter",
+        race: "human",
+        class: "fighter",
+        x: rem(count, 3) + 1,
+        y: div(count, 3) * 2 + 3,
+        hp: 20,
+        max_hp: 20,
+        tags: ["player_controlled"],
+        stats: %{"speed" => 30},
+        campaign_id: socket.assigns.campaign.id
+      })
 
-    Repo.insert!(%Entity{
-      name: "Adventurer #{count + 1}",
-      type: "hero",
-      sprite: "human_fighter",
-      race: "human",
-      class: "fighter",
-      x: start_x,
-      y: start_y,
-      hp: 20,
-      max_hp: 20,
-      tags: ["player_controlled"],
-      stats: %{"speed" => 30},
-      campaign_id: socket.assigns.campaign.id
-    })
-
-    broadcast_refresh(socket.assigns.campaign.id)
-    {:noreply, reload_campaign(socket)}
+      broadcast_refresh(socket.assigns.campaign.id)
+      {:noreply, reload_campaign(socket)}
+    end
   end
 
   @impl true
   def handle_event("remove_slot", %{"id" => entity_id}, socket) do
-    entity_id = String.to_integer(entity_id)
-    entity = Repo.get!(Entity, entity_id)
-    Repo.delete!(entity)
+    if socket.assigns.current_user.role not in ["dm", "support"] do
+      {:noreply, put_flash(socket, :error, "Only the DM can remove character slots.")}
+    else
+      entity_id = String.to_integer(entity_id)
+      entity = Repo.get!(Entity, entity_id)
+      Repo.delete!(entity)
 
-    broadcast_refresh(socket.assigns.campaign.id)
-    {:noreply, reload_campaign(socket) |> assign(editing_id: nil, edit_form: %{})}
+      broadcast_refresh(socket.assigns.campaign.id)
+      {:noreply, reload_campaign(socket) |> assign(editing_id: nil, edit_form: %{})}
+    end
   end
 
   @impl true
@@ -185,10 +188,6 @@ defmodule GibberingWeb.LobbyLive do
   # ---------------------------------------------------------------------------
   # Private helpers
   # ---------------------------------------------------------------------------
-
-  defp get_player_id(session) do
-    Map.get(session, "_csrf_token") || :crypto.strong_rand_bytes(8) |> Base.encode16()
-  end
 
   defp lobby_topic(campaign_id), do: "lobby:#{campaign_id}"
 
