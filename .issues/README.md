@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 63 (see `counter`)
+**Next issue number:** 64 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -25,6 +25,7 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#1](001-establish-git-remote.md) | Establish git remote | `ops` | high |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
 | [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` | medium |
