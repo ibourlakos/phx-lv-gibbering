@@ -99,6 +99,26 @@ Databases:
 
 ---
 
+## Playwright Smoke Tests
+
+Playwright runs as a separate Docker service under the `smoke` profile, targeting the running dev app. No extra Mix environment or database needed — the dev DB and dev app are used.
+
+**Prerequisite:** the dev app must be running and seeded (`mix ecto.setup`).
+
+```bash
+# Run the full smoke suite (headless Chromium, inside Docker)
+docker compose --profile smoke run --rm playwright
+
+# Re-run without re-fetching npm deps (faster if node_modules is cached)
+docker compose --profile smoke run --rm playwright npx playwright test
+
+# Screenshots on failure land in test/smoke/screenshots/
+```
+
+Tests live in `test/smoke/tests/`. They cover auth flows, the characters roster, character creation modal, lobby navigation, and the game SVG board.
+
+---
+
 ## SRD Data Pipeline
 
 ```bash
