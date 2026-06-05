@@ -33,6 +33,7 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | File | Topic | Status |
 |---|---|---|
 | [`docs/brainstorming/06-investigate-initial-high-level-dnd-semantics.md`](docs/brainstorming/06-investigate-initial-high-level-dnd-semantics.md) | D&D 5e semantic graph: actors, spells, items, conditions, action resolution | exploration |
+| [`docs/brainstorming/07-player-character-creation.md`](docs/brainstorming/07-player-character-creation.md) | Player character creation flow and personal character collection | exploration |
 
 ## Dev Setup (short form)
 

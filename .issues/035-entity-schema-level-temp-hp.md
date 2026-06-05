@@ -1,7 +1,8 @@
 # #35 · Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward`
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** architecture, rules
 

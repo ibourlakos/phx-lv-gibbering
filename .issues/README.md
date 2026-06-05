@@ -52,7 +52,6 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
-| [#35](035-entity-schema-level-temp-hp.md) | Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward` | `architecture` `rules` | high |
 | [#36](036-scene-phase-state-machine.md) | Scene phase state machine in `SceneServer` | `architecture` `rules` | high |
 | [#37](037-runtime-entity-map-extensions.md) | Runtime entity map: `action_economy`, `resources`, `conditions` fields | `architecture` `rules` | high |
 | [#38](038-dnd5e-stats-module.md) | `DnD5e.Stats`: derived stat computation module | `rules` `architecture` | high |
@@ -87,3 +86,4 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#7](007-movement-distance-algorithm.md) | Movement distance algorithm is wrong for D&D 5e | `bug` `rules` `gameplay` |
 | [#22](022-user-accounts-and-auth.md) | User accounts and authentication (player/dm/support roles) | `architecture` `gameplay` `ops` |
 | [#23](023-campaign-membership.md) | Campaign membership and DM assignment | `architecture` `gameplay` |
+| [#35](035-entity-schema-level-temp-hp.md) | Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward` | `architecture` `rules` |

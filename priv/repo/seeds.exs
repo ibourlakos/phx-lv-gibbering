@@ -97,7 +97,7 @@ tiles =
 
 Repo.insert_all(GridTile, tiles)
 
-# Human Fighter
+# Human Fighter — L3, CR n/a
 Repo.insert!(%Entity{
   name: "Aldric",
   type: "hero",
@@ -106,8 +106,9 @@ Repo.insert!(%Entity{
   class: "fighter",
   x: 2,
   y: 5,
-  hp: 20,
-  max_hp: 20,
+  hp: 28,
+  max_hp: 28,
+  level: 3,
   tags: ["player_controlled"],
   stats: %{
     "speed" => 30,
@@ -116,12 +117,25 @@ Repo.insert!(%Entity{
     "constitution" => 15,
     "intelligence" => 9,
     "wisdom" => 11,
-    "charisma" => 9
+    "charisma" => 9,
+    "equipped_weapon" => %{
+      "key" => "longsword",
+      "damage_dice" => "1d8",
+      "damage_type" => "slashing",
+      "attack_ability" => "strength",
+      "properties" => ["versatile"]
+    },
+    "equipped_armor" => %{
+      "key" => "chain_mail",
+      "base_ac" => 16,
+      "armor_category" => "heavy",
+      "stealth_disadvantage" => true
+    }
   },
   campaign_id: campaign.id
 })
 
-# Elf Wizard
+# Elf Wizard — L3, CR n/a
 Repo.insert!(%Entity{
   name: "Sylvara",
   type: "hero",
@@ -130,8 +144,9 @@ Repo.insert!(%Entity{
   class: "wizard",
   x: 2,
   y: 7,
-  hp: 12,
-  max_hp: 12,
+  hp: 18,
+  max_hp: 18,
+  level: 3,
   tags: ["player_controlled"],
   stats: %{
     "speed" => 30,
@@ -141,12 +156,25 @@ Repo.insert!(%Entity{
     "intelligence" => 20,
     "wisdom" => 15,
     "charisma" => 10,
-    "spells" => ["fire_bolt", "mage_hand", "magic_missile", "sleep"]
+    "spells" => ["fire_bolt", "mage_hand", "magic_missile", "sleep"],
+    "equipped_weapon" => %{
+      "key" => "quarterstaff",
+      "damage_dice" => "1d6",
+      "damage_type" => "bludgeoning",
+      "attack_ability" => "strength",
+      "properties" => ["versatile"]
+    },
+    "equipped_armor" => %{
+      "key" => "no_armor",
+      "base_ac" => nil,
+      "armor_category" => "none",
+      "stealth_disadvantage" => false
+    }
   },
   campaign_id: campaign.id
 })
 
-# Gnome Rogue
+# Gnome Rogue — L3, CR n/a
 Repo.insert!(%Entity{
   name: "Zippik",
   type: "hero",
@@ -155,8 +183,9 @@ Repo.insert!(%Entity{
   class: "rogue",
   x: 3,
   y: 6,
-  hp: 16,
-  max_hp: 16,
+  hp: 22,
+  max_hp: 22,
+  level: 3,
   tags: ["player_controlled"],
   stats: %{
     "speed" => 25,
@@ -165,12 +194,63 @@ Repo.insert!(%Entity{
     "constitution" => 13,
     "intelligence" => 16,
     "wisdom" => 12,
-    "charisma" => 12
+    "charisma" => 12,
+    "equipped_weapon" => %{
+      "key" => "shortsword",
+      "damage_dice" => "1d6",
+      "damage_type" => "piercing",
+      "attack_ability" => "dexterity",
+      "properties" => ["finesse", "light"]
+    },
+    "equipped_armor" => %{
+      "key" => "leather_armor",
+      "base_ac" => 11,
+      "armor_category" => "light",
+      "stealth_disadvantage" => false
+    }
   },
   campaign_id: campaign.id
 })
 
-# The Rock
+# Goblin — CR 1/4, 50 XP
+Repo.insert!(%Entity{
+  name: "Snaggle",
+  type: "monster",
+  sprite: "goblin",
+  x: 7,
+  y: 4,
+  hp: 7,
+  max_hp: 7,
+  level: 1,
+  challenge_rating: Decimal.new("0.25"),
+  xp_reward: 50,
+  tags: [],
+  stats: %{
+    "speed" => 30,
+    "strength" => 8,
+    "dexterity" => 14,
+    "constitution" => 10,
+    "intelligence" => 10,
+    "wisdom" => 8,
+    "charisma" => 8,
+    "equipped_weapon" => %{
+      "key" => "scimitar",
+      "damage_dice" => "1d6",
+      "damage_type" => "slashing",
+      "attack_ability" => "dexterity",
+      "properties" => ["finesse", "light"]
+    },
+    "equipped_armor" => %{
+      "key" => "leather_armor",
+      "base_ac" => 11,
+      "armor_category" => "light",
+      "stealth_disadvantage" => false
+    }
+  },
+  campaign_id: campaign.id
+})
+
+# The Rock — object, no CR
 Repo.insert!(%Entity{
   name: "The Rock",
   type: "object",
