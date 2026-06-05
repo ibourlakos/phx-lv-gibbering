@@ -59,10 +59,20 @@ defmodule Gibbering.Engine.State do
           level: e.level,
           temp_hp: e.temp_hp,
           tags: e.tags,
-          stats: e.stats
+          stats: e.stats,
+          speed: (e.stats || %{})["speed"] || 30
         }
 
-        {e.id, Stats.hydrate_entity(base)}
+        ruleset = Gibbering.Rulesets.DnD5e
+
+        hydrated =
+          base
+          |> Map.put(:action_economy, ruleset.initial_action_economy(base))
+          |> Map.put(:resources, ruleset.initial_resources(base))
+          |> Map.put(:conditions, [])
+          |> Stats.hydrate_entity()
+
+        {e.id, hydrated}
       end)
 
     hero_ids =
@@ -120,6 +130,15 @@ defmodule Gibbering.Engine.State do
 
   def advance_turn(%__MODULE__{} = state) do
     next = rem(state.active_index + 1, max(length(state.turn_order), 1))
-    %{state | active_index: next, selected_id: nil, valid_moves: []}
+    next_id = Enum.at(state.turn_order, next)
+
+    entities =
+      if next_id && Map.has_key?(state.entities, next_id) do
+        Map.update!(state.entities, next_id, &state.ruleset.advance_turn/1)
+      else
+        state.entities
+      end
+
+    %{state | active_index: next, selected_id: nil, valid_moves: [], entities: entities}
   end
 end

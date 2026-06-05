@@ -33,7 +33,13 @@ defmodule Gibbering.Rulesets.DnD5e do
   @impl Gibbering.Ruleset
   def initial_action_economy(entity) do
     speed = Stats.speed(entity)
-    %{action: 1, bonus_action: 1, reaction: 1, movement: speed}
+
+    %{
+      action: :available,
+      bonus_action: :available,
+      reaction: :available,
+      movement_remaining: speed
+    }
   end
 
   @impl Gibbering.Ruleset
@@ -41,10 +47,10 @@ defmodule Gibbering.Rulesets.DnD5e do
     speed = Stats.speed(entity)
 
     Map.put(entity, :action_economy, %{
-      action: 1,
-      bonus_action: 1,
-      reaction: 1,
-      movement: speed
+      action: :available,
+      bonus_action: :available,
+      reaction: :available,
+      movement_remaining: speed
     })
   end
 end
