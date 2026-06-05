@@ -37,6 +37,7 @@ defmodule GibberingWeb.Router do
 
     live_session :authenticated,
       on_mount: [{GibberingWeb.UserAuth, :ensure_authenticated}] do
+      live "/characters", CharactersLive
       live "/game/:id", GameLive
       live "/lobby/:id", LobbyLive
     end
