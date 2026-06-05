@@ -1,7 +1,8 @@
 # #45 · Attack roll vs AC (replace bare 1d6 in `Rules.attack/3`)
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** rules, gameplay
 

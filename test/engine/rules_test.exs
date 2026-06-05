@@ -138,50 +138,115 @@ defmodule Gibbering.Engine.RulesTest do
   end
 
   # ---------------------------------------------------------------------------
-  # attack/3
+  # attack/4
   # ---------------------------------------------------------------------------
 
-  describe "attack/3" do
-    test "reduces target hp by at least 1" do
+  describe "attack/4 — roll mechanics" do
+    test "natural 20 is always a hit regardless of AC" do
+      # Give target extremely high AC — nat 20 still hits
+      state = build_state() |> with_entity(monster_id(), armor_class: 30)
+      {result, _new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      assert result == :critical
+      assert details.hit == true
+      assert details.critical == true
+      assert details.roll == 20
+    end
+
+    test "natural 1 is always a miss regardless of modifiers" do
+      # Give attacker absurdly high stats — nat 1 still misses
+      state =
+        build_state()
+        |> with_entity(hero_id(), proficiency_bonus: 99, ability_modifiers: %{"strength" => 99})
+
+      {result, _new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 1)
+      assert result == :miss
+      assert details.hit == false
+      assert details.critical == false
+    end
+
+    test "hits when d20 + attack_bonus >= target AC" do
+      # Hero: str 16 (+3), level 1 (prof +2) → attack bonus +5
+      # Monster: AC 13 (light armor base 11 + dex +2)
+      # Roll 8 → 8 + 5 = 13 >= 13 → hit
       state = build_state()
-      updated = Rules.attack(state, hero_id(), monster_id())
+      {result, _new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 8)
+      assert result == :hit
+      assert details.hit == true
+      assert details.total == 8 + details.bonus
+    end
+
+    test "misses when d20 + attack_bonus < target AC" do
+      # Hero attack bonus +5, monster AC 13.
+      # Roll 7 → 7 + 5 = 12 < 13 → miss (and roll 7 is not a nat-1 so it's a "real" miss)
+      state = build_state()
+      {result, _new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 7)
+      assert result == :miss
+      assert details.hit == false
+    end
+
+    test "critical hit doubles damage dice count" do
+      state = build_state()
+      {_result, _new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      # Normal 1d8 → critical = 2d8 → damage >= 2
+      assert details.damage >= 2
+    end
+
+    test "miss deals no damage and does not change target hp" do
+      state = build_state()
       original_hp = state.entities[monster_id()].hp
-      new_hp = get_in(updated.entities, [monster_id(), :hp]) || 0
+      {_result, new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 1)
+      assert details.damage == nil
+      assert new_state.entities[monster_id()].hp == original_hp
+    end
+
+    test "returns roll details with expected keys" do
+      state = build_state()
+      {_result, _new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 15)
+      assert Map.has_key?(details, :roll)
+      assert Map.has_key?(details, :bonus)
+      assert Map.has_key?(details, :total)
+      assert Map.has_key?(details, :target_ac)
+      assert Map.has_key?(details, :hit)
+      assert Map.has_key?(details, :critical)
+      assert Map.has_key?(details, :damage)
+    end
+  end
+
+  describe "attack/4 — state effects" do
+    test "reduces target hp on hit" do
+      state = build_state()
+      original_hp = state.entities[monster_id()].hp
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
       assert new_hp < original_hp
     end
 
     test "hp cannot drop below 0" do
       state = build_state() |> with_entity(monster_id(), hp: 1)
-      updated = Rules.attack(state, hero_id(), monster_id())
-      # Either gone or hp == 0; never negative.
-      hp = get_in(updated.entities, [monster_id(), :hp])
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      hp = get_in(new_state.entities, [monster_id(), :hp])
       assert hp == nil or hp >= 0
     end
 
     test "removes entity from state when hp reaches 0" do
       state = build_state() |> with_entity(monster_id(), hp: 1)
-      updated = Rules.attack(state, hero_id(), monster_id())
-      refute Map.has_key?(updated.entities, monster_id())
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      refute Map.has_key?(new_state.entities, monster_id())
     end
 
     test "converts destructible entity tile to rubble on death" do
-      state =
-        build_state()
-        |> with_entity(monster_id(), hp: 1, tags: ["destructible"])
-
+      state = build_state() |> with_entity(monster_id(), hp: 1, tags: ["destructible"])
       monster_pos = {state.entities[monster_id()].x, state.entities[monster_id()].y}
-      updated = Rules.attack(state, hero_id(), monster_id())
-
-      assert updated.grid_tiles[monster_pos].texture == "rubble"
-      assert updated.grid_tiles[monster_pos].walkable == true
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      assert new_state.grid_tiles[monster_pos].texture == "rubble"
+      assert new_state.grid_tiles[monster_pos].walkable == true
     end
 
     test "does not turn tile to rubble for non-destructible entity" do
       state = build_state() |> with_entity(monster_id(), hp: 1)
       monster_pos = {state.entities[monster_id()].x, state.entities[monster_id()].y}
-      updated = Rules.attack(state, hero_id(), monster_id())
-
-      tile = updated.grid_tiles[monster_pos]
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      tile = new_state.grid_tiles[monster_pos]
       refute tile.texture == "rubble"
     end
   end

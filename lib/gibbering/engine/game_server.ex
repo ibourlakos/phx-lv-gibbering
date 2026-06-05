@@ -92,9 +92,8 @@ defmodule Gibbering.Engine.GameServer do
   def handle_call({:attack, target_id}, _from, state) do
     new_state =
       if state.selected_id do
-        state
-        |> Rules.attack(state.selected_id, target_id)
-        |> State.advance_turn()
+        {_result, after_attack, _details} = Rules.attack(state, state.selected_id, target_id)
+        State.advance_turn(after_attack)
       else
         state
       end

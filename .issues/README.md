@@ -60,7 +60,6 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#42](042-condition-struct.md) | `Condition` struct + runtime application via active effects registry | `rules` `gameplay` | medium |
 | [#43](043-action-economy-tracking.md) | Action economy tracking + `advance_turn` reset | `rules` `gameplay` | medium |
 | [#44](044-spell-slots-resource-pools.md) | Spell slots + class resource pools in `resources` map | `rules` `gameplay` | medium |
-| [#45](045-attack-roll-vs-ac.md) | Attack roll vs AC (replace bare 1d6 in `Rules.attack/3`) | `rules` `gameplay` | high |
 | [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` | low |
 | [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` | low |
 | [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` | low |
@@ -87,3 +86,4 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#23](023-campaign-membership.md) | Campaign membership and DM assignment | `architecture` `gameplay` |
 | [#35](035-entity-schema-level-temp-hp.md) | Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward` | `architecture` `rules` |
 | [#38](038-dnd5e-stats-module.md) | `DnD5e.Stats`: derived stat computation module | `rules` `architecture` |
+| [#45](045-attack-roll-vs-ac.md) | Attack roll vs AC (replace bare 1d6 in `Rules.attack/3`) | `rules` `gameplay` |

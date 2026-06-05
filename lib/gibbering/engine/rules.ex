@@ -1,5 +1,6 @@
 defmodule Gibbering.Engine.Rules do
   alias Gibbering.Engine.State
+  alias Gibbering.Rulesets.DnD5e.Stats
 
   @doc "Returns [{x,y}] the entity can move to this turn."
   def valid_moves(%State{} = state, entity_id) do
@@ -29,15 +30,74 @@ defmodule Gibbering.Engine.Rules do
     |> Enum.map(fn {id, _} -> id end)
   end
 
-  @doc "Apply a basic melee attack. Returns updated state."
-  def attack(%State{} = state, _attacker_id, target_id) do
-    target = state.entities[target_id]
-    damage = Enum.random(1..6)
-    new_hp = max(target.hp - damage, 0)
+  @doc """
+  Resolve a melee attack from attacker against target.
 
-    state
-    |> put_entity_hp(target_id, new_hp)
-    |> maybe_destroy(target_id, new_hp)
+  Returns `{result, new_state, roll_details}` where result is
+  `:hit | :miss | :critical`.
+
+  Pass `roll: n` in opts to fix the d20 value (for testing).
+  """
+  def attack(%State{} = state, attacker_id, target_id, opts \\ []) do
+    attacker = state.entities[attacker_id]
+    target = state.entities[target_id]
+
+    roll = Keyword.get(opts, :roll, Enum.random(1..20))
+    bonus = attack_bonus_for(attacker)
+    target_ac = Map.get(target, :armor_class, 10)
+
+    {hit, critical} =
+      cond do
+        roll == 20 -> {true, true}
+        roll == 1 -> {false, false}
+        roll + bonus >= target_ac -> {true, false}
+        true -> {false, false}
+      end
+
+    {damage, new_state} =
+      if hit do
+        dmg = roll_damage(attacker, critical)
+        new_hp = max(target.hp - dmg, 0)
+        s = state |> put_entity_hp(target_id, new_hp) |> maybe_destroy(target_id, new_hp)
+        {dmg, s}
+      else
+        {nil, state}
+      end
+
+    result = if critical, do: :critical, else: if(hit, do: :hit, else: :miss)
+
+    details = %{
+      roll: roll,
+      bonus: bonus,
+      total: roll + bonus,
+      target_ac: target_ac,
+      hit: hit,
+      critical: critical,
+      damage: damage
+    }
+
+    {result, new_state, details}
+  end
+
+  defp attack_bonus_for(attacker) do
+    prof =
+      Map.get(attacker, :proficiency_bonus, Stats.proficiency_bonus(Map.get(attacker, :level, 1)))
+
+    mods = Map.get(attacker, :ability_modifiers, %{})
+    str_mod = Map.get(mods, "strength", 0)
+    str_mod + prof
+  end
+
+  defp roll_damage(attacker, critical) do
+    weapon = get_in(attacker, [:stats, "equipped_weapon"])
+    {dice_count, die_size} = parse_dice(weapon["damage_dice"] || "1d4")
+    count = if critical, do: dice_count * 2, else: dice_count
+    Enum.sum(for _ <- 1..count, do: Enum.random(1..die_size))
+  end
+
+  defp parse_dice(dice_str) do
+    [count, size] = String.split(dice_str, "d")
+    {String.to_integer(count), String.to_integer(size)}
   end
 
   defp put_entity_hp(state, id, hp) do

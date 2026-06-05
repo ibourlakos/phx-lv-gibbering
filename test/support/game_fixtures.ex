@@ -10,6 +10,7 @@ defmodule Gibbering.GameFixtures do
   """
 
   alias Gibbering.Engine.State
+  alias Gibbering.Rulesets.DnD5e.Stats
   alias Gibbering.{Repo, Campaign, GridTile, Entity}
 
   # ---------------------------------------------------------------------------
@@ -40,29 +41,66 @@ defmodule Gibbering.GameFixtures do
         {{x, y}, %{texture: "grass", walkable: true, decoration: nil}}
       end
 
-    entities = %{
-      @hero_id => %{
-        name: "Test Hero",
-        type: "hero",
-        sprite: "hero.png",
-        x: 2,
-        y: 2,
-        hp: 10,
-        max_hp: 10,
-        tags: [],
-        stats: %{"speed" => 30}
-      },
-      @monster_id => %{
-        name: "Test Goblin",
-        type: "monster",
-        sprite: "goblin.png",
-        x: 3,
-        y: 3,
-        hp: 5,
-        max_hp: 5,
-        tags: [],
-        stats: %{}
+    hero_base = %{
+      name: "Test Hero",
+      type: "hero",
+      sprite: "hero.png",
+      race: "human",
+      class: "fighter",
+      level: 1,
+      temp_hp: 0,
+      x: 2,
+      y: 2,
+      hp: 10,
+      max_hp: 10,
+      tags: [],
+      stats: %{
+        "speed" => 30,
+        "strength" => 16,
+        "dexterity" => 12,
+        "constitution" => 14,
+        "intelligence" => 10,
+        "wisdom" => 10,
+        "charisma" => 10,
+        "equipped_weapon" => %{
+          "key" => "longsword",
+          "damage_dice" => "1d8",
+          "damage_type" => "slashing",
+          "attack_ability" => "strength",
+          "properties" => []
+        },
+        "equipped_armor" => %{"base_ac" => 16, "armor_category" => "heavy"}
       }
+    }
+
+    monster_base = %{
+      name: "Test Goblin",
+      type: "monster",
+      sprite: "goblin.png",
+      race: "human",
+      class: "fighter",
+      level: 1,
+      temp_hp: 0,
+      x: 3,
+      y: 3,
+      hp: 5,
+      max_hp: 5,
+      tags: [],
+      stats: %{
+        "speed" => 30,
+        "strength" => 8,
+        "dexterity" => 14,
+        "constitution" => 10,
+        "intelligence" => 10,
+        "wisdom" => 8,
+        "charisma" => 8,
+        "equipped_armor" => %{"base_ac" => 11, "armor_category" => "light"}
+      }
+    }
+
+    entities = %{
+      @hero_id => Stats.hydrate_entity(hero_base),
+      @monster_id => Stats.hydrate_entity(monster_base)
     }
 
     base = %State{
