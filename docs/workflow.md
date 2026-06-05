@@ -43,7 +43,7 @@ Use a brainstorm file when the problem is too wide or ambiguous to scope into an
 | **Commit** | Brainstorm doc + all new issue files | `chore: brainstorm #N → issues #X–Y` |
 | **Close** | Once all extracted issues are closed or deferred, delete the file, remove from CLAUDE.md | `chore: close brainstorm #N` |
 
-**Gate before Commit:** No open question without a decision or explicit deferral.
+**Gate before Commit:** No open question without a decision or explicit deferral. No [docs](./docs) need updating.
 
 **Gate before Close:** All extracted issues are closed or deferred in `docs/issues/`.
 
@@ -151,6 +151,11 @@ Apply to paths A, B, C only.
 
 **Trigger:** A question that requires prototyping, research, or external input to answer.  
 **Action:** Open a discovery issue. Do not proceed until the question is answered.
+
+### Up-to-date docs gate
+
+**Trigger:** Any incoming updates that have affected the architecture, the data model, or testing policy.
+**Action:** Read `docs/{architecture,data-model,testing}.md` and update them.
 
 ---
 
