@@ -51,24 +51,29 @@ See [docs/dev-setup.md](docs/dev-setup.md) for the full reference.
 
 ## Issue Tracker
 
-Issues live in `.issues/`. Start at [`.issues/README.md`](.issues/README.md) for the full index and open issue list.
+Issues live in `docs/issues/`. Start at [`docs/issues/README.md`](docs/issues/README.md) for the full index and open issue list.
 
-- **Counter:** `.issues/counter` (plain integer — next number to use)
-- **One file per issue:** `.issues/<N>-<slug>.md` (open and closed issues both kept)
-- **Tags:** `bug`, `rules`, `architecture`, `legal`, `ops`, `discovery`, `rendering`, `gameplay`
-- **Statuses:** `open` (backlog) → `wip` (active branch or session) → `closed`; `deferred` (explicitly parked — requires a reason) can transition back to `open` when unblocked
+- **Counter:** `docs/issues/counter` (plain integer — next number to use)
+- **One file per issue:** `docs/issues/<N>-<slug>.md` (all issues kept regardless of status)
+- **Tags:** `bug`, `rules`, `architecture`, `legal`, `ops`, `discovery`, `rendering`, `gameplay`, `ui`, `security`, `admin`
+- **Statuses:** `open` (backlog) → `in-progress` (active branch) → `closed`; `deferred` (intentionally parked), `blocked` (external dependency), `cancelled` (won't do) are side-tracks that can return to `open` when resolved
 
-**To add an issue:** read `counter`, use that number, create `.issues/<N>-<slug>.md`, increment `counter`, add a row to the open issues table in `.issues/README.md`, commit as `chore: add issue #N`.  
-**To close an issue:** in the issue file change `**Status:** open` → `**Status:** closed` and add `**Closed:** YYYY-MM-DD`, move its row from Open to Closed in `.issues/README.md`, commit as `chore: close issue #N`.  
-**To defer an issue:** change `**Status:** open` → `**Status:** deferred`, add `**Deferred because:** <reason>`, move its row from Open to Deferred in `.issues/README.md`, commit as `chore: defer issue #N`.
+**To add an issue:** read `counter`, use that number, create `docs/issues/<N>-<slug>.md`, increment `counter`, add a row to the open issues table in `docs/issues/README.md`, commit as `chore: add issue #N`.  
+**To close an issue:** change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, move its row from Open to Closed in `docs/issues/README.md`, commit as `chore: close issue #N`.  
+**To defer an issue:** change status → `deferred`, add `**Deferred because:** <reason>`, move its row to Deferred, commit as `chore: defer issue #N`.  
+**To block an issue:** change status → `blocked`, add `**Blocked by:** <issue # or description>`, move its row to Blocked, commit as `chore: block issue #N`.  
+**To cancel an issue:** change status → `cancelled`, add `**Cancelled:** YYYY-MM-DD` and `**Cancelled because:** <reason>`, move its row to Cancelled, commit as `chore: cancel issue #N`.
 
-Issue file format (`.issues/<N>-<slug>.md`):
+Issue file format (`docs/issues/<N>-<slug>.md`):
 ```
 # #N · Title
-**Status:** open | wip | deferred | closed
+**Status:** open | in-progress | deferred | blocked | cancelled | closed
 **Opened:** YYYY-MM-DD
-**Closed:** YYYY-MM-DD        ← only when closed
-**Deferred because:** <reason> ← only when deferred
+**Closed:** YYYY-MM-DD              ← only when closed
+**Deferred because:** <reason>      ← only when deferred
+**Blocked by:** <issue # or desc>   ← only when blocked
+**Cancelled:** YYYY-MM-DD           ← only when cancelled
+**Cancelled because:** <reason>     ← only when cancelled
 **Priority:** high | medium | low
 **Tags:** tag1, tag2
 

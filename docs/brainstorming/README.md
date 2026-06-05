@@ -41,7 +41,7 @@ A question left neither decided nor deferred is not settled. Do not proceed to T
 
 ### 4. Triage
 
-Translate each settled decision into one or more issues in `.issues/`. Each issue gets acceptance criteria. Update the brainstorm document to reference the opened issue numbers and note that issues have been filed.
+Translate each settled decision into one or more issues in `docs/issues/`. Each issue gets acceptance criteria. Update the brainstorm document to reference the opened issue numbers and note that issues have been filed.
 
 ### 5. Commit
 
@@ -55,7 +55,7 @@ chore: brainstorm #N → issues #X–Y
 
 ### 6. Close
 
-Once all issues extracted from this brainstorm are closed or deferred in `.issues/`, the brainstorm has served its purpose:
+Once all issues extracted from this brainstorm are closed or deferred in `docs/issues/`, the brainstorm has served its purpose:
 
 1. Delete the `<NN>-<slug>.md` file
 2. Remove its row from the brainstorming log in [CLAUDE.md](../../CLAUDE.md)

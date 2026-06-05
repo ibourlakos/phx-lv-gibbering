@@ -413,20 +413,20 @@ Static reference data (pure Elixir modules, no DB, no process):
 
 | Issue | Gap |
 |---|---|
-| [#12](../.issues/012-persistence-strategy.md) | `Engine.State` never written back to DB — SceneServer restart resets all positions and HP |
-| [#19](../.issues/019-lobby-edits-stale-gameserver.md) | Lobby edits persist to DB but a running SceneServer holds a stale snapshot |
-| [#24](../.issues/024-grid-data-jsonb.md) | `grid_tiles` uses one row per cell; planned migration to JSONB on `campaigns` |
-| [#35](../.issues/035-entity-schema-level-temp-hp.md) | `entities` table missing `level`, `temp_hp`, `challenge_rating`, `xp_reward` columns |
-| [#36](../.issues/036-scene-phase-state-machine.md) | `GameServer` has no phase field; no scene state machine; rename to `SceneServer` |
-| [#37](../.issues/037-runtime-entity-map-extensions.md) | Runtime entity map missing `action_economy`, `resources`, `conditions` extensions |
-| [#38](../.issues/038-dnd5e-stats-module.md) | No derived stat computation (`ability_modifier`, `proficiency_bonus`, `armor_class`) |
-| [#39](../.issues/039-ruleset-behaviour.md) | No `Gibbering.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
-| [#40](../.issues/040-rule-modifier-predicate-evaluator.md) | No `RuleModifier` struct or predicate evaluator — rules hardcoded in `Rules` module |
-| [#41](../.issues/041-spell-struct.md) | `Data.Spells` is a flat map; no `%Spell{}` struct with structured fields |
-| [#42](../.issues/042-condition-struct.md) | No `%Condition{}` struct; conditions not applied to entities at runtime |
-| [#43](../.issues/043-action-economy-tracking.md) | No action economy tracking; no `advance_turn` reset |
-| [#44](../.issues/044-spell-slots-resource-pools.md) | No spell slot or class resource tracking |
-| [#45](../.issues/045-attack-roll-vs-ac.md) | `Rules.attack/3` rolls 1d6 with no attack roll, no AC check, no modifiers |
-| [#46](../.issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
-| [#47](../.issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
-| [#48](../.issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |
+| [#12](issues/012-persistence-strategy.md) | `Engine.State` never written back to DB — SceneServer restart resets all positions and HP |
+| [#19](issues/019-lobby-edits-stale-gameserver.md) | Lobby edits persist to DB but a running SceneServer holds a stale snapshot |
+| [#24](issues/024-grid-data-jsonb.md) | `grid_tiles` uses one row per cell; planned migration to JSONB on `campaigns` |
+| [#35](issues/035-entity-schema-level-temp-hp.md) | `entities` table missing `level`, `temp_hp`, `challenge_rating`, `xp_reward` columns |
+| [#36](issues/036-scene-phase-state-machine.md) | `GameServer` has no phase field; no scene state machine; rename to `SceneServer` |
+| [#37](issues/037-runtime-entity-map-extensions.md) | Runtime entity map missing `action_economy`, `resources`, `conditions` extensions |
+| [#38](issues/038-dnd5e-stats-module.md) | No derived stat computation (`ability_modifier`, `proficiency_bonus`, `armor_class`) |
+| [#39](issues/039-ruleset-behaviour.md) | No `Gibbering.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
+| [#40](issues/040-rule-modifier-predicate-evaluator.md) | No `RuleModifier` struct or predicate evaluator — rules hardcoded in `Rules` module |
+| [#41](issues/041-spell-struct.md) | `Data.Spells` is a flat map; no `%Spell{}` struct with structured fields |
+| [#42](issues/042-condition-struct.md) | No `%Condition{}` struct; conditions not applied to entities at runtime |
+| [#43](issues/043-action-economy-tracking.md) | No action economy tracking; no `advance_turn` reset |
+| [#44](issues/044-spell-slots-resource-pools.md) | No spell slot or class resource tracking |
+| [#45](issues/045-attack-roll-vs-ac.md) | `Rules.attack/3` rolls 1d6 with no attack roll, no AC check, no modifiers |
+| [#46](issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
+| [#47](issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
+| [#48](issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |

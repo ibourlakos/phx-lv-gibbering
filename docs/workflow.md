@@ -45,7 +45,7 @@ Use a brainstorm file when the problem is too wide or ambiguous to scope into an
 
 **Gate before Commit:** No open question without a decision or explicit deferral.
 
-**Gate before Close:** All extracted issues are closed or deferred in `.issues/`.
+**Gate before Close:** All extracted issues are closed or deferred in `docs/issues/`.
 
 ---
 
@@ -53,7 +53,7 @@ Use a brainstorm file when the problem is too wide or ambiguous to scope into an
 
 ### Issue phase
 
-Open a `.issues/` entry. Write acceptance criteria as checkboxes — these drive the tests. Follow the format in [CLAUDE.md](../CLAUDE.md#issue-tracker) exactly.
+Open a `docs/issues/` entry. Write acceptance criteria as checkboxes — these drive the tests. Follow the format in [CLAUDE.md](../CLAUDE.md#issue-tracker) exactly.
 
 ### Branch phase
 
@@ -102,7 +102,7 @@ git commit -m "feat(scope): description
 Closes #N."
 ```
 
-Close the issue: set `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, move its row in `.issues/README.md`, commit as `chore: close issue #N`.
+Close the issue: set `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, move its row in `docs/issues/README.md`, commit as `chore: close issue #N`.
 
 ---
 

@@ -1,8 +1,8 @@
 # Issue Tracker
 
-**Next issue number:** 64 (see `counter`)
+**Next issue number:** 76 (see `counter`)
 
-One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
+One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
 ---
 
@@ -12,12 +12,15 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 |---|---|
 | `bug` | Code correctness — crashes, wrong behaviour, wrong output |
 | `rules` | D&D 5e SRD rules fidelity |
-| `architecture` | Structural design decisions — process model, data model, abstractions |
+| `architecture` | Structural design — process model, data model, abstractions |
 | `legal` | Licensing, IP, asset compliance |
 | `ops` | Infrastructure, tooling, CI/CD, deployment |
-| `discovery` | Open questions, design unknowns, and deferred design explorations that need scoping or structured discussion before any code task can be derived |
+| `discovery` | Open questions and design unknowns that need scoping before any code task can be derived |
 | `rendering` | SVG pipeline, isometric projection, visual layers |
-| `gameplay` | Game feel, mechanics, player experience |
+| `gameplay` | Game mechanics, player experience, game feel |
+| `ui` | LiveView/frontend — components, forms, navigation, non-SVG views |
+| `security` | Auth, authorization, access control, permissions |
+| `admin` | Admin app — support users, moderation, LiveDashboard, catalogue management |
 
 ---
 
@@ -26,6 +29,16 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | # | Title | Tags | Priority |
 |---|---|---|---|
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
+| [#64](064-admin-router-scope-and-pipeline.md) | Admin router scope and pipeline | `architecture` `ops` | medium |
+| [#65](065-support-users-schema-and-auth.md) | `support_users` schema, migration, context, and auth | `architecture` `ops` | medium |
+| [#66](066-support-audit-log.md) | Support audit log | `architecture` `ops` | medium |
+| [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | `architecture` `gameplay` | medium |
+| [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring page | `ops` `architecture` | low |
+| [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` | low |
+| [#72](072-drop-users-role-column.md) | Drop `users.role` column | `architecture` | high |
+| [#73](073-static-reference-data-to-db.md) | Migrate static reference data to DB tables | `architecture` `ops` | medium |
+| [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
+| [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` | medium |
 | [#1](001-establish-git-remote.md) | Establish git remote | `ops` | high |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
 | [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` | medium |
@@ -80,6 +93,22 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#60](060-umbrella-restructure-for-admin-app.md) | Umbrella restructure for independent admin app deployment | `discovery` `architecture` `ops` | low |
 | [#61](061-catalogue-entry-versioning.md) | Catalogue entry versioning | `discovery` `architecture` | low |
 | [#62](062-multi-environment-infra.md) | Multi-environment infrastructure (QA + production) | `ops` `architecture` | low |
+| [#70](070-ugc-content-schema-and-moderation.md) | UGC content schema, `content_trust` flag, and moderation queue | `architecture` `gameplay` | low |
+| [#71](071-admin-catalogue-crud.md) | Admin catalogue CRUD | `architecture` `gameplay` | low |
+
+---
+
+## Blocked Issues
+
+| # | Title | Tags | Priority | Blocked by |
+|---|---|---|---|---|
+
+---
+
+## Cancelled Issues
+
+| # | Title | Tags |
+|---|---|---|
 
 ---
 

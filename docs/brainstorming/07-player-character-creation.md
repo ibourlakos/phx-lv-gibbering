@@ -259,17 +259,17 @@ All work items from this exploration have been filed:
 
 | Issue | Title |
 |---|---|
-| [#49](.issues/049-backgrounds-catalogue-module.md) | Backgrounds catalogue module |
-| [#50](.issues/050-character-schema-and-context.md) | Character schema and context |
-| [#51](.issues/051-character-collection-liveview.md) | Character collection LiveView (`/characters`) |
-| [#52](.issues/052-character-creation-modal.md) | Character creation multi-step modal |
-| [#53](.issues/053-composable-svg-appearance-system.md) | Composable SVG appearance system |
-| [#54](.issues/054-campaign-character-schema.md) | CampaignCharacter schema |
-| [#55](.issues/055-bidirectional-campaign-joining.md) | Bidirectional campaign joining |
-| [#56](.issues/056-character-template-merge-logic.md) | Character template → live entity merge logic |
-| [#57](.issues/057-dm-character-adjustment-ui.md) | DM character adjustment UI |
-| [#58](.issues/058-point-buy-ability-scores.md) | Point buy ability scores *(deferred)* |
-| [#59](.issues/059-character-export-import.md) | Character export/import with versioning *(deferred)* |
+| [#49](../issues/049-backgrounds-catalogue-module.md) | Backgrounds catalogue module |
+| [#50](../issues/050-character-schema-and-context.md) | Character schema and context |
+| [#51](../issues/051-character-collection-liveview.md) | Character collection LiveView (`/characters`) |
+| [#52](../issues/052-character-creation-modal.md) | Character creation multi-step modal |
+| [#53](../issues/053-composable-svg-appearance-system.md) | Composable SVG appearance system |
+| [#54](../issues/054-campaign-character-schema.md) | CampaignCharacter schema |
+| [#55](../issues/055-bidirectional-campaign-joining.md) | Bidirectional campaign joining |
+| [#56](../issues/056-character-template-merge-logic.md) | Character template → live entity merge logic |
+| [#57](../issues/057-dm-character-adjustment-ui.md) | DM character adjustment UI |
+| [#58](../issues/058-point-buy-ability-scores.md) | Point buy ability scores *(deferred)* |
+| [#59](../issues/059-character-export-import.md) | Character export/import with versioning *(deferred)* |
 
 The DST-fidelity sprite discussion also opened a rendering architecture thread — see brainstorm [#08](08-isometric-rendering-depth-viewport.md) for viewport zoom/pan, elevation, and volumetric effects.
 
