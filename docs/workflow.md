@@ -7,15 +7,34 @@ The sequence we follow for every change — from first idea to merged commit.
 ## Overview
 
 ```
-Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
+Brainstorm → Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
 ```
 
-Not every change needs every phase. A typo fix skips Explore and Issue. A new mechanic
-runs all eight. Use judgement; the gates are the non-negotiables.
+Not every change needs every phase. A typo fix skips everything up to Branch. A new mechanic
+runs all nine. Use judgement; the gates are the non-negotiables.
 
 ---
 
-## Phase 0 — Explore
+## Phase 0 — Brainstorm
+
+**What:** Free-form exploration of an idea before it's ready to become an issue. Use this when the problem space is fuzzy, the approach is unknown, or multiple systems are involved and you don't yet know what questions to ask.
+
+**When to open a brainstorm file:**
+- The idea spans more than one subsystem and you can't write acceptance criteria yet.
+- You need to map a domain (e.g. D&D 5e conditions) before designing a data model.
+- You're evaluating competing approaches and need to think out loud first.
+
+**Rules:**
+- Create a file in `docs/brainstorming/` using the current counter value: `<NN>-<slug>.md` (zero-padded to two digits).
+- Increment `docs/brainstorming/counter` after creating the file. Never reuse a number.
+- Add a row to the brainstorming log table in [CLAUDE.md](../CLAUDE.md).
+- A brainstorm file lives until its questions are either answered (→ extracted as issues) or dead (→ deleted). It is not a permanent document.
+
+**Output:** A `docs/brainstorming/<NN>-<slug>.md` file. When the file's open questions have been extracted as issues, delete the file.
+
+---
+
+## Phase 1 — Explore
 
 **What:** Talk through the idea. Identify unknowns, risks, and legal exposure before writing a line.
 
@@ -24,25 +43,25 @@ runs all eight. Use judgement; the gates are the non-negotiables.
 - Does this cross more than two modules or change a shared interface? → Architecture discussion first.
 - Is this well-understood enough to write acceptance criteria? → If not, open a discovery issue and stop.
 
-**Output:** Either "ready to implement" or a discovery issue in `.issues/discovery.md`.
+**Output:** Either "ready to implement" or a discovery issue in `.issues/`.
 
 ---
 
-## Phase 1 — Issue
+## Phase 2 — Issue
 
 **What:** Open or update a `.issues/` entry with acceptance criteria that can become test cases.
 
 **Rules:**
 - Every non-trivial change gets an issue. Trivial = one file, no behaviour change.
 - Acceptance criteria drive the tests. Write them as checkboxes before touching code.
-- Pick the right aspect file: `ops.md` for infra/tooling, `discovery.md` for design unknowns/epics.
+- Use tag `discovery` for design unknowns/epics, `ops` for infra/tooling.
 - Follow the format in [CLAUDE.md](../CLAUDE.md#issue-tracker) exactly — counter, status, priority.
 
 **Output:** An open issue with `**Acceptance criteria**` checkboxes.
 
 ---
 
-## Phase 2 — Branch
+## Phase 3 — Branch
 
 **What:** Create a branch that matches the change type.
 
@@ -57,7 +76,7 @@ Branch naming is in [docs/git-policy.md](git-policy.md). Never commit directly t
 
 ---
 
-## Phase 3 — Red (Write tests first)
+## Phase 4 — Red (Write tests first)
 
 **What:** Write failing tests *before* any production code. This phase ends when `mix test` shows red.
 
@@ -100,7 +119,7 @@ Copy the `use` + `import` header from the nearest similar file.
 
 ---
 
-## Phase 4 — Green (Implement)
+## Phase 5 — Green (Implement)
 
 **What:** Write the minimum production code to make the failing tests pass.
 
@@ -114,7 +133,7 @@ Copy the `use` + `import` header from the nearest similar file.
 
 ---
 
-## Phase 5 — Refactor
+## Phase 6 — Refactor
 
 **What:** Improve the code without changing behavior.
 
@@ -126,7 +145,7 @@ Copy the `use` + `import` header from the nearest similar file.
 
 ---
 
-## Phase 6 — Verify
+## Phase 7 — Verify
 
 **What:** Run the pre-commit gate. This must pass before any commit.
 
@@ -146,7 +165,7 @@ Fix every failure before moving on. A red precommit is a hard stop.
 
 ---
 
-## Phase 7 — Commit & Close
+## Phase 8 — Commit & Close
 
 **What:** Commit the work and close the issue.
 
@@ -199,8 +218,9 @@ These are non-negotiable checkpoints that can pause any phase.
 
 | Phase | Command / artifact | Done when |
 |---|---|---|
+| Brainstorm | `docs/brainstorming/<NN>-<slug>.md` | Open questions extracted as issues |
 | Explore | Conversation | Decision made |
-| Issue | `.issues/*.md` + `counter` | Acceptance criteria written |
+| Issue | `.issues/<N>-<slug>.md` + `counter` | Acceptance criteria written |
 | Branch | `git checkout -b <type>/<name>` | Branch exists |
 | Red | `mix test` | Tests fail for the right reason |
 | Green | `mix test` | All tests pass |

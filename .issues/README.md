@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 31 (see `counter`)
+**Next issue number:** 35 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -15,7 +15,7 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | `architecture` | Structural design decisions — process model, data model, abstractions |
 | `legal` | Licensing, IP, asset compliance |
 | `ops` | Infrastructure, tooling, CI/CD, deployment |
-| `discovery` | Open questions and design unknowns that need scoping before they become tasks |
+| `discovery` | Open questions, design unknowns, and deferred design explorations that need scoping or structured discussion before any code task can be derived |
 | `rendering` | SVG pipeline, isometric projection, visual layers |
 | `gameplay` | Game feel, mechanics, player experience |
 
@@ -48,6 +48,17 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#29](029-srd-data-ingestion-pipeline.md) | SRD data ingestion pipeline | `architecture` `ops` | medium |
 | [#30](030-conditions-status-effects-model.md) | Conditions and status effects engine model | `rules` `architecture` | medium |
+| [#31](031-rule-modifier-predicate-decomposition.md) | Trigger/predicate/effect decomposition for RuleModifier | `discovery` `rules` `architecture` | high |
+| [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
+| [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
+| [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
+
+---
+
+## Deferred Issues
+
+| # | Title | Tags | Priority |
+|---|---|---|---|
 
 ---
 

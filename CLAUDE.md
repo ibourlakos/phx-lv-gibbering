@@ -12,7 +12,7 @@ Named after the Gibbering Mouther (SRD-legal aberration). The architecture is th
 - [Data Model](docs/data-model.md) — DB schema, runtime State struct, static reference data
 - [Dev Setup](docs/dev-setup.md) — prerequisites, workflow, DB ops, Docker housekeeping
 - [Testing](docs/testing.md) — three-layer strategy, fixtures, TDD workflow, running tests
-- [Workflow](docs/workflow.md) — the full dev sequence: Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
+- [Workflow](docs/workflow.md) — the full dev sequence: Brainstorm → Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
 - [Legal](docs/legal.md) — content licenses, assets, data sources, privacy, LegalGuard scope
 - [Git Policy](docs/git-policy.md) — conventional commits, branch naming, LFS for binary assets
 
@@ -52,16 +52,19 @@ Issues live in `.issues/`. Start at [`.issues/README.md`](.issues/README.md) for
 - **Counter:** `.issues/counter` (plain integer — next number to use)
 - **One file per issue:** `.issues/<N>-<slug>.md` (open and closed issues both kept)
 - **Tags:** `bug`, `rules`, `architecture`, `legal`, `ops`, `discovery`, `rendering`, `gameplay`
+- **Statuses:** `open` (backlog) → `wip` (active branch or session) → `closed`; `deferred` (explicitly parked — requires a reason) can transition back to `open` when unblocked
 
 **To add an issue:** read `counter`, use that number, create `.issues/<N>-<slug>.md`, increment `counter`, add a row to the open issues table in `.issues/README.md`, commit as `chore: add issue #N`.  
-**To close an issue:** in the issue file change `**Status:** open` → `**Status:** closed` and add `**Closed:** YYYY-MM-DD`, move its row from Open to Closed in `.issues/README.md`, commit as `chore: close issue #N`.
+**To close an issue:** in the issue file change `**Status:** open` → `**Status:** closed` and add `**Closed:** YYYY-MM-DD`, move its row from Open to Closed in `.issues/README.md`, commit as `chore: close issue #N`.  
+**To defer an issue:** change `**Status:** open` → `**Status:** deferred`, add `**Deferred because:** <reason>`, move its row from Open to Deferred in `.issues/README.md`, commit as `chore: defer issue #N`.
 
 Issue file format (`.issues/<N>-<slug>.md`):
 ```
 # #N · Title
-**Status:** open | closed
+**Status:** open | wip | deferred | closed
 **Opened:** YYYY-MM-DD
-**Closed:** YYYY-MM-DD   ← only when closed
+**Closed:** YYYY-MM-DD        ← only when closed
+**Deferred because:** <reason> ← only when deferred
 **Priority:** high | medium | low
 **Tags:** tag1, tag2
 
@@ -74,7 +77,8 @@ Description.
 ## Claude Instructions
 
 - Be concise in responses.
-- **Follow [docs/workflow.md](docs/workflow.md) for every non-trivial change.** The sequence is: Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit. Never skip the Legal gate or the Verify phase.
+- If you feel that my feedback, ideas, or suggestions are getting out hand, keep me checked.
+- **Follow [docs/workflow.md](docs/workflow.md) for every non-trivial change.** The sequence is: Brainstorm → Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit. Never skip the Legal gate or the Verify phase.
 - Dev environment is fully Docker-based. Never assume local Elixir/Node installs. All `mix` commands go through `docker compose exec app mix`.
 - Keep [docs/dev-setup.md](docs/dev-setup.md) up-to-date when tools, versions, or workflows change.
 - Maintain Docker hygiene: avoid leaving dangling images or stopped containers. Prefer `docker compose down` over `docker stop`, use named volumes, and document prune commands when adding new services.
