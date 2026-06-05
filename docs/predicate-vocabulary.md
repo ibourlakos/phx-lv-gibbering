@@ -54,6 +54,47 @@ in any other phase — conservative, never denies a mechanic on a technicality.
 
 ---
 
+## `%RuleModifier{}` Struct
+
+```elixir
+defstruct [
+  :id,        # atom — unique identifier, e.g. :sneak_attack
+  :name,      # string — human-readable label
+  :trigger,   # see Trigger Vocabulary below
+  :predicate, # see Predicate Vocabulary below
+  :effect,    # see Effect Vocabulary below
+  stacking: :additive   # :additive | :named_bonus | :binary_flag
+]
+```
+
+### Trigger Vocabulary
+
+| Trigger | Fires when |
+|---|---|
+| `{:on_attack, :melee \| :ranged \| :ranged_spell \| :melee_spell \| :any}` | entity makes an attack of the given type |
+| `:on_being_attacked` | entity is the target of an attack |
+| `{:on_damage_received, damage_type \| :any}` | entity takes damage of the given type |
+| `:on_turn_start` | start of this entity's turn |
+| `:on_saving_throw` | entity makes a saving throw |
+| `:passive` | re-evaluated on every pipeline pass; always active while predicate holds |
+
+### Effect Vocabulary
+
+| Effect | Meaning |
+|---|---|
+| `{:add_damage_dice, dice_string, name_key}` | roll additional dice and add to damage; e.g. `{:add_damage_dice, "1d6", :sneak_attack}` |
+| `{:add_bonus, :damage \| :attack \| :save, integer}` | flat integer bonus to damage, attack roll, or saving throw |
+| `{:add_to_roll, dice_string}` | roll additional dice and add to the triggering d20 roll (Bless) |
+| `{:grant_advantage, :attack_rolls \| :saving_throws \| :ability_checks}` | entity has advantage on rolls of this type |
+| `{:impose_disadvantage, :attack_rolls \| :saving_throws \| :ability_checks}` | entity has disadvantage |
+| `{:grant_resistance, damage_type \| :all}` | halve damage of this type |
+| `{:grant_immunity, damage_type \| :all}` | negate damage of this type |
+| `{:force_critical_hit}` | attack against this entity is treated as a critical hit |
+| `{:set_speed, integer}` | override entity speed (e.g. `0` for paralysis) |
+| `{:apply_condition, condition_key}` | add a condition to the entity |
+
+---
+
 ## Group 1 — Structural Combinators
 
 No context fields required.

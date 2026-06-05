@@ -1,7 +1,8 @@
 # #31 · Trigger/predicate/effect decomposition for RuleModifier
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** discovery, rules, architecture
 
@@ -29,7 +30,9 @@ The Gibbering Engine needs a machine-readable representation of D&D 5e rules tha
 - Conditions become `ActiveEffect` entries whose `modifiers` are lists of `%RuleModifier{}` structs (#30)
 
 **Acceptance criteria**
-- [ ] Full primitive predicate vocabulary enumerated and documented
-- [ ] Effect layering order documented
-- [ ] Stacking rule for named bonuses decided
-- [ ] `%RuleModifier{}` struct shape finalised (ready for implementation)
+- [x] Full primitive predicate vocabulary enumerated and documented
+- [x] Effect layering order documented
+- [x] Stacking rule for named bonuses decided
+- [x] `%RuleModifier{}` struct shape finalised (ready for implementation)
+
+See [docs/predicate-vocabulary.md](../predicate-vocabulary.md) for the complete reference.
