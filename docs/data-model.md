@@ -15,10 +15,9 @@ Managed by `Gibbering.Accounts.User`.
 | `id` | serial | PK |
 | `username` | string | unique, 3–20 chars, `[a-zA-Z0-9_]` |
 | `password_hash` | string | pbkdf2-sha512 via `pbkdf2_elixir` |
-| `role` | string | `"player"` \| `"dm"` \| `"support"` |
 | `inserted_at` / `updated_at` | naive_datetime | Ecto timestamps |
 
-The `password` field is a virtual (cast-only) field; it never reaches the DB.
+The `password` field is a virtual (cast-only) field; it never reaches the DB. DM role is campaign-scoped (`campaigns.dm_id`); support users live in a separate `support_users` table (issue [#65](issues/065-support-users-schema-and-auth.md)).
 
 ---
 

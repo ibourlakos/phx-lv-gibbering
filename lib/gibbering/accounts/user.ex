@@ -2,27 +2,23 @@ defmodule Gibbering.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @valid_roles ~w(player dm support)
-
   schema "users" do
     field :username, :string
     field :password, :string, virtual: true
     field :password_hash, :string
-    field :role, :string, default: "player"
 
     timestamps()
   end
 
   def registration_changeset(user, attrs) do
     user
-    |> cast(attrs, [:username, :password, :role])
-    |> validate_required([:username, :password, :role])
+    |> cast(attrs, [:username, :password])
+    |> validate_required([:username, :password])
     |> validate_length(:username, min: 3, max: 20)
     |> validate_format(:username, ~r/^[a-zA-Z0-9_]+$/,
       message: "only letters, numbers, underscores"
     )
     |> validate_length(:password, min: 6, max: 72)
-    |> validate_inclusion(:role, @valid_roles)
     |> unique_constraint(:username)
     |> hash_password()
   end

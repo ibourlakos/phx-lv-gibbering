@@ -38,16 +38,6 @@
           </a>
           <span class="text-gray-400">
             <span class="text-white font-medium">{@current_user.username}</span>
-            <span class={[
-              "ml-2 text-xs px-1.5 py-0.5 rounded-full font-medium",
-              case @current_user.role do
-                "dm" -> "bg-yellow-700 text-yellow-200"
-                "support" -> "bg-blue-700 text-blue-200"
-                _ -> "bg-gray-700 text-gray-300"
-              end
-            ]}>
-              {@current_user.role}
-            </span>
           </span>
           <form action="/logout" method="post" class="inline">
             <input type="hidden" name="_csrf_token" value={get_csrf_token()} />

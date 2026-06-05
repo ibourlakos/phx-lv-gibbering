@@ -148,7 +148,7 @@ defmodule GibberingWeb.LobbyLive do
 
   @impl true
   def handle_event("add_slot", _, socket) do
-    if socket.assigns.current_user.role not in ["dm", "support"] do
+    if socket.assigns.current_user.id != socket.assigns.campaign.dm_id do
       {:noreply, put_flash(socket, :error, "Only the DM can add character slots.")}
     else
       heroes = Enum.filter(socket.assigns.campaign.entities, &(&1.type == "hero"))
@@ -176,7 +176,7 @@ defmodule GibberingWeb.LobbyLive do
 
   @impl true
   def handle_event("remove_slot", %{"id" => entity_id}, socket) do
-    if socket.assigns.current_user.role not in ["dm", "support"] do
+    if socket.assigns.current_user.id != socket.assigns.campaign.dm_id do
       {:noreply, put_flash(socket, :error, "Only the DM can remove character slots.")}
     else
       entity_id = String.to_integer(entity_id)
