@@ -1,6 +1,7 @@
 # #29 · SRD data ingestion pipeline
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** medium
 **Tags:** architecture, ops
 
@@ -15,8 +16,8 @@ Key design questions:
 - How do ingested monster stat blocks link to live `game_sessions.live_entities`?
 
 **Acceptance criteria**
-- [ ] Static reference tables designed (or JSONB blobs decided) and migrated
-- [ ] Mix task `mix gibbering.ingest` fetches/parses Open5e SRD data and seeds the DB
-- [ ] LegalGuard validation runs at ingest time and logs/skips Product Identity entries
-- [ ] At least monsters and spells are queryable from the engine at runtime
-- [ ] License of Open5e data source verified and recorded in `docs/legal.md`
+- [x] Static reference tables designed (or JSONB blobs decided) and migrated
+- [x] Mix task `mix gibbering.ingest` fetches/parses Open5e SRD data and seeds the DB
+- [x] LegalGuard validation runs at ingest time and logs/skips Product Identity entries
+- [x] At least monsters and spells are queryable from the engine at runtime
+- [x] License of Open5e data source verified and recorded in `docs/legal.md`

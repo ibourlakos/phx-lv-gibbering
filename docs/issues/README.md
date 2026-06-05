@@ -55,7 +55,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#26](026-fog-of-war-ownership.md) | Fog-of-war ownership: ruleset or engine? | `discovery` `architecture` `rendering` | medium |
 | [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
-| [#29](029-srd-data-ingestion-pipeline.md) | SRD data ingestion pipeline | `architecture` `ops` | medium |
 | [#30](030-conditions-status-effects-model.md) | Conditions and status effects engine model | `rules` `architecture` | medium |
 | [#31](031-rule-modifier-predicate-decomposition.md) | Trigger/predicate/effect decomposition for RuleModifier | `discovery` `rules` `architecture` | high |
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
@@ -116,6 +115,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#8](008-string-to-existing-atom-crash.md) | `String.to_existing_atom` crash in data pipeline parser | `bug` |
 | [#9](009-tile-walkable-nil-crash.md) | `tile_walkable?` crashes on missing tile coordinates | `bug` |
 | [#73](073-static-reference-data-to-db.md) | Migrate static reference data to DB tables | `architecture` `ops` |
+| [#29](029-srd-data-ingestion-pipeline.md) | SRD data ingestion pipeline | `architecture` `ops` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
