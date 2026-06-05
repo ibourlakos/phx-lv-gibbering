@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 76 (see `counter`)
+**Next issue number:** 79 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -37,6 +37,9 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` | low |
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
 | [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` | medium |
+| [#76](076-accounts-context-integration-tests.md) | `Accounts` context integration tests | `architecture` `ops` | medium |
+| [#77](077-catalogue-cache-genserver-tests.md) | `Catalogue.Cache` GenServer tests | `architecture` `ops` | medium |
+| [#78](078-game-live-event-handler-tests.md) | `GameLive` event handler integration tests | `gameplay` `architecture` | medium |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` | low |
