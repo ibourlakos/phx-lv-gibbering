@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 79 (see `counter`)
+**Next issue number:** 86 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -72,6 +72,13 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` | medium |
 | [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | `architecture` `rules` | medium |
 | [#57](057-dm-character-adjustment-ui.md) | DM character adjustment UI (campaign prep) | `gameplay` `rendering` | medium |
+| [#79](079-data-items-catalogue-module.md) | `Data.Items` catalogue module | `rules` `gameplay` | low |
+| [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | `discovery` `architecture` `gameplay` | low |
+| [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture | `discovery` `rendering` `architecture` | low |
+| [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` | low |
+| [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
+| [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
+| [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 
 ---
 
