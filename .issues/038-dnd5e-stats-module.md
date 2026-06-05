@@ -1,7 +1,8 @@
 # #38 · `DnD5e.Stats`: derived stat computation module
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** rules, architecture
 

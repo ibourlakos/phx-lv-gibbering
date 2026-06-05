@@ -1,5 +1,6 @@
 defmodule Gibbering.Engine.State do
   alias Gibbering.Campaign
+  alias Gibbering.Rulesets.DnD5e.Stats
 
   defstruct [
     :campaign_id,
@@ -30,20 +31,23 @@ defmodule Gibbering.Engine.State do
     entities =
       campaign.entities
       |> Map.new(fn e ->
-        {e.id,
-         %{
-           name: e.name,
-           type: e.type,
-           sprite: e.sprite,
-           race: e.race || "human",
-           class: e.class || "fighter",
-           x: e.x,
-           y: e.y,
-           hp: e.hp,
-           max_hp: e.max_hp,
-           tags: e.tags,
-           stats: e.stats
-         }}
+        base = %{
+          name: e.name,
+          type: e.type,
+          sprite: e.sprite,
+          race: e.race || "human",
+          class: e.class || "fighter",
+          x: e.x,
+          y: e.y,
+          hp: e.hp,
+          max_hp: e.max_hp,
+          level: e.level,
+          temp_hp: e.temp_hp,
+          tags: e.tags,
+          stats: e.stats
+        }
+
+        {e.id, Stats.hydrate_entity(base)}
       end)
 
     hero_ids =
