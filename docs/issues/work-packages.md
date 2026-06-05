@@ -49,6 +49,7 @@ _D&D 5e logic: modifiers, conditions, economy, spells. Depends on WP-B._
 | #40 | `RuleModifier` struct + predicate evaluator + modifier pipeline | medium |
 | #30 | Conditions and status effects engine model | medium |
 | #41 | `Spell` struct completion + `Data.Spells` migration | medium |
+| #79 | `Data.Items` catalogue module (weapons, armour, consumables) | low |
 | #42 | `Condition` struct + runtime application via active effects | medium |
 | #43 | Action economy tracking + `advance_turn` reset | medium |
 | #44 | Spell slots + class resource pools in `resources` map | medium |
@@ -57,7 +58,7 @@ _D&D 5e logic: modifiers, conditions, economy, spells. Depends on WP-B._
 | #47 | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | low |
 | #48 | Saving throw pipeline | low |
 
-#31 is a design gate — resolve before writing any `RuleModifier` code. Ordering: #37 → (#40, #43, #44) → (#30, #42) → (#41, #20). #47 is a cleanup that can happen any time after #40.
+#31 is a design gate — resolve before writing any `RuleModifier` code. Ordering: #37 → (#40, #43, #44) → (#30, #42) → (#41, #79, #20). #47 is a cleanup that can happen any time after #40. #79 can be done any time alongside #41 — both are pure catalogue data modules with no rule engine dependency.
 
 ---
 
@@ -115,12 +116,16 @@ _SVG pipeline bugs and discovery. Mostly depends on WP-B for data shape clarity.
 | #25 | Ruleset UI declaration: action buttons + stat panels (discovery) | medium |
 | #26 | Fog-of-war ownership: ruleset or engine? (discovery) | medium |
 | #34 | Active effect visual representation and animation (discovery) | medium |
+| #81 | Viewport zoom/pan architecture (discovery) | low |
+| #82 | Z-axis elevation — projection, depth sorting, and LOS (discovery) | low |
+| #83 | Volumetric spell effect rendering (discovery) | low |
+| #84 | LOD sprite detail levels for zoom (discovery) | low |
 | #10 | Isometric `origin_x` formula breaks on non-square maps | low |
 | #21 | Dice roll cycling faces | low |
 | #27 | Tile decoration storage (discovery) | low |
 | #28 | Multi-tile entity footprints (discovery) | low |
 
-The four discovery issues (#25, #26, #27, #28) are design questions that should be answered before writing rendering code. #13 is an independent bug fix.
+Discovery issues (#25, #26, #27, #28, #81, #82, #83, #84) must be answered before writing the corresponding rendering code. #13 and #10 are independent bug fixes. #84 (LOD) should be resolved after or alongside #81 (viewport zoom) since zoom thresholds are jointly determined. #83 (volumetric effects) is best after #82 (elevation) but can ship flat (z=0 only) first.
 
 ---
 
@@ -135,6 +140,8 @@ _No strict phase placement. Resolve in parallel or as needed._
 | #32 | DM override event schema and god-mode mechanics | Discovery |
 | #33 | Templates governance model | Discovery |
 | #63 | Playwright smoke tests + smoke Docker env | Ops |
+| #80 | Inventory and loot container system | Discovery — depends on #79 + #40 (RuleModifier pipeline) |
+| #85 | Content creation tools — design and scope | Discovery — spans WP-E admin shell and future player UGC |
 
 ---
 
@@ -146,4 +153,4 @@ WP-A  →  WP-B  →  WP-C  →  WP-D  →  WP-G (#78)
               ↘  WP-F discoveries (parallel; rendering code gates on WP-C shape)
 ```
 
-Highest-leverage near-term move: close #1 and #72 (quick housekeeping), resolve the #3 and #14 design decisions (they gate #39 and #12), then land WP-B as a milestone before touching rules or admin code.
+WP-A and WP-B are closed. Next on the critical path: resolve #31 (RuleModifier design gate) to unblock WP-C. WP-E (Admin App) can start in parallel with WP-C — #65 is its foundation. WP-G issues #76 and #77 are free-floating and can be picked up any time.
