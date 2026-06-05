@@ -56,6 +56,68 @@ Membership gates access: `/lobby/:id` and `/game/:id` redirect non-members to `/
 
 ---
 
+### `races`
+
+Managed by `Gibbering.Catalogue.Race`. Primary key is `key` (string). Seeded from `Gibbering.Data.Races.seed_data/0`. Runtime reads go through `Gibbering.Catalogue.Cache`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | e.g. `"human"`, `"elf"`, `"gnome"` |
+| `name` | string | display name |
+| `description` | text | |
+| `speed` | integer | base movement speed in feet |
+| `stat_bonuses` | JSONB map | `%{"strength" => 1, ...}` |
+| `traits` | JSONB array of maps | racial trait objects `%{"name" => ..., "description" => ...}` |
+| `darkvision` | boolean | |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+---
+
+### `classes`
+
+Managed by `Gibbering.Catalogue.Class`. Primary key is `key` (string). Seeded from `Gibbering.Data.Classes.seed_data/0`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | e.g. `"fighter"`, `"wizard"`, `"rogue"` |
+| `name` | string | |
+| `description` | text | |
+| `hit_die` | string | e.g. `"d10"` |
+| `base_hp` | integer | HP at level 1 |
+| `primary_stats` | `string[]` | |
+| `saving_throws` | `string[]` | |
+| `armor_proficiencies` | `string[]` | |
+| `weapon_proficiencies` | `string[]` | |
+| `spellcasting` | boolean | |
+| `spells` | `string[]` | default spell keys for spellcasting classes |
+| `features` | JSONB array of maps | class feature objects |
+| `stats` | JSONB map | default stat block |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+---
+
+### `spells`
+
+Managed by `Gibbering.Catalogue.Spell`. Primary key is `key` (string). Seeded from `Gibbering.Data.Spells.seed_data/0`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | e.g. `"fire_bolt"`, `"magic_missile"` |
+| `name` | string | |
+| `level` | integer | 0 = cantrip |
+| `school` | string | e.g. `"evocation"`, `"illusion"` |
+| `casting_time` | string | e.g. `"1 action"` |
+| `range` | string | numeric feet `"120"`, or named `"touch"`, `"cone_15"`, `"cube_15"` |
+| `description` | text | |
+| `damage_dice` | string | nullable — e.g. `"1d10"`, `"3d6"` |
+| `damage_type` | string | nullable — SRD type string e.g. `"fire"` |
+| `attack_type` | string | nullable — `"ranged"`, `"save"`, `"aoe"`, `"auto"`, `"touch"`, `"utility"` |
+| `save` | string | nullable — saving throw stat e.g. `"dexterity"` |
+| `tags` | `string[]` | e.g. `["offensive", "aoe"]` |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+---
+
 ### `grid_tiles`
 
 Managed by `Gibbering.GridTile`. One row per tile cell.
