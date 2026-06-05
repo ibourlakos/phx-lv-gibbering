@@ -1,5 +1,7 @@
 defmodule Gibbering.EntityTest do
-  use Gibbering.DataCase, async: true
+  use ExUnit.Case, async: true
+
+  import Gibbering.DataCase, only: [errors_on: 1]
 
   alias Gibbering.Entity
 

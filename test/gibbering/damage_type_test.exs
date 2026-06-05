@@ -21,4 +21,16 @@ defmodule Gibbering.DamageTypeTest do
       assert {:error, :unknown} = DamageType.cast("")
     end
   end
+
+  describe "all/0" do
+    test "returns all 13 SRD damage type atoms" do
+      all = DamageType.all()
+      assert length(all) == 13
+      assert Enum.all?(all, &is_atom/1)
+
+      for type <- @srd_types do
+        assert String.to_atom(type) in all
+      end
+    end
+  end
 end
