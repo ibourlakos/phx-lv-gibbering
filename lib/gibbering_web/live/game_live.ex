@@ -107,23 +107,7 @@ defmodule GibberingWeb.GameLive do
   # SceneServer lifecycle
   # ---------------------------------------------------------------------------
 
-  # Uses GenServer.start/3 (not start_link) so a crash in SceneServer.init does
-  # not propagate an exit signal to the LiveView process.
-  defp ensure_game_server(game_id) do
-    case Registry.lookup(Gibbering.GameRegistry, game_id) do
-      [_] ->
-        :ok
-
-      [] ->
-        case GenServer.start(Gibbering.Engine.SceneServer, game_id,
-               name: {:via, Registry, {Gibbering.GameRegistry, game_id}}
-             ) do
-          {:ok, _pid} -> :ok
-          {:error, {:already_started, _pid}} -> :ok
-          {:error, reason} -> {:error, reason}
-        end
-    end
-  end
+  defp ensure_game_server(game_id), do: SceneServer.ensure_started(game_id)
 
   # ---------------------------------------------------------------------------
   # Tile helpers (DST palette)

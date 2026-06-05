@@ -14,6 +14,7 @@ defmodule Gibbering.Application do
       {DNSCluster, query: Application.get_env(:gibbering, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Gibbering.PubSub},
       {Registry, keys: :unique, name: Gibbering.GameRegistry},
+      {DynamicSupervisor, name: Gibbering.SceneSupervisor, strategy: :one_for_one},
       GibberingWeb.Endpoint
     ]
 

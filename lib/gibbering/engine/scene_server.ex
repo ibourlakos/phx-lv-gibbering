@@ -33,6 +33,25 @@ defmodule Gibbering.Engine.SceneServer do
 
   def topic(game_id), do: @topic_prefix <> to_string(game_id)
 
+  @doc """
+  Ensures a SceneServer for `game_id` is running under the SceneSupervisor.
+  If one is already registered, returns `:ok` immediately.
+  Returns `:ok` or `{:error, reason}`.
+  """
+  def ensure_started(game_id) do
+    case Registry.lookup(Gibbering.GameRegistry, game_id) do
+      [_] ->
+        :ok
+
+      [] ->
+        case DynamicSupervisor.start_child(Gibbering.SceneSupervisor, {__MODULE__, game_id}) do
+          {:ok, _pid} -> :ok
+          {:error, {:already_started, _pid}} -> :ok
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
   # --- GenServer callbacks ---
 
   @impl true
