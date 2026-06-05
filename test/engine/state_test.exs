@@ -55,6 +55,27 @@ defmodule Gibbering.Engine.StateTest do
       assert advanced.selected_id == nil
       assert advanced.valid_moves == []
     end
+
+    test "resets action_economy for the entity whose turn begins" do
+      state =
+        with_entity(build_state(), hero_id(),
+          action_economy: %{
+            action: :spent,
+            bonus_action: :spent,
+            reaction: :spent,
+            movement_remaining: 0
+          }
+        )
+
+      advanced = State.advance_turn(state)
+
+      assert advanced.entities[hero_id()].action_economy == %{
+               action: :available,
+               bonus_action: :available,
+               reaction: :available,
+               movement_remaining: 30
+             }
+    end
   end
 
   describe "from_campaign/1" do
@@ -143,6 +164,86 @@ defmodule Gibbering.Engine.StateTest do
 
       state = State.from_campaign(campaign)
       assert state.turn_order == [1]
+    end
+
+    test "hydrates entities with action_economy, resources, and conditions" do
+      entities = [
+        %Gibbering.Entity{
+          id: 10,
+          name: "Wizard",
+          type: "hero",
+          sprite: "w.png",
+          x: 0,
+          y: 0,
+          hp: 8,
+          max_hp: 8,
+          level: 1,
+          temp_hp: 0,
+          class: "wizard",
+          race: "human",
+          tags: [],
+          stats: %{"speed" => 35},
+          campaign_id: 1
+        }
+      ]
+
+      campaign = %Gibbering.Campaign{
+        id: 1,
+        name: "T",
+        map_width: 1,
+        map_height: 1,
+        tile_size: 32,
+        tiles: [],
+        entities: entities
+      }
+
+      entity = State.from_campaign(campaign).entities[10]
+
+      assert entity.action_economy == %{
+               action: :available,
+               bonus_action: :available,
+               reaction: :available,
+               movement_remaining: 35
+             }
+
+      assert %{spell_slots: _} = entity.resources
+      assert entity.conditions == []
+    end
+
+    test "non-spellcasting entities get empty resources map" do
+      entities = [
+        %Gibbering.Entity{
+          id: 5,
+          name: "Fighter",
+          type: "hero",
+          sprite: "f.png",
+          x: 0,
+          y: 0,
+          hp: 12,
+          max_hp: 12,
+          level: 1,
+          temp_hp: 0,
+          class: "fighter",
+          race: "human",
+          tags: [],
+          stats: %{},
+          campaign_id: 1
+        }
+      ]
+
+      campaign = %Gibbering.Campaign{
+        id: 1,
+        name: "T",
+        map_width: 1,
+        map_height: 1,
+        tile_size: 32,
+        tiles: [],
+        entities: entities
+      }
+
+      entity = State.from_campaign(campaign).entities[5]
+      assert entity.resources == %{}
+      assert entity.conditions == []
     end
   end
 end

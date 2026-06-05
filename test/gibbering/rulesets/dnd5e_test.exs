@@ -50,30 +50,38 @@ defmodule Gibbering.Rulesets.DnD5eTest do
     test "returns full action economy based on entity speed" do
       ae = DnD5e.initial_action_economy(entity(speed: 30))
 
-      assert ae == %{action: 1, bonus_action: 1, reaction: 1, movement: 30}
+      assert ae == %{
+               action: :available,
+               bonus_action: :available,
+               reaction: :available,
+               movement_remaining: 30
+             }
     end
 
-    test "uses entity speed as movement value" do
+    test "uses entity speed as movement_remaining value" do
       ae = DnD5e.initial_action_economy(entity(speed: 25))
-      assert ae.movement == 25
+      assert ae.movement_remaining == 25
     end
 
     test "falls back to 30 when speed is absent" do
       ae = DnD5e.initial_action_economy(%{class: "fighter"})
-      assert ae.movement == 30
+      assert ae.movement_remaining == 30
     end
   end
 
   describe "advance_turn/1" do
     test "resets action_economy to full values" do
-      spent = entity(speed: 30) |> Map.put(:action_economy, %{action: 0, movement: 0})
+      spent =
+        entity(speed: 30)
+        |> Map.put(:action_economy, %{action: :spent, bonus_action: :spent, movement_remaining: 0})
+
       refreshed = DnD5e.advance_turn(spent)
 
       assert refreshed.action_economy == %{
-               action: 1,
-               bonus_action: 1,
-               reaction: 1,
-               movement: 30
+               action: :available,
+               bonus_action: :available,
+               reaction: :available,
+               movement_remaining: 30
              }
     end
 
