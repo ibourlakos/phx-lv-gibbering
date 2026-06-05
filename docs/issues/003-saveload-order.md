@@ -1,6 +1,7 @@
 # #3 · Save/load: before or after Ruleset behaviour split
 
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-05
 **Opened:** 2026-06-04
 **Priority:** medium
 **Tags:** discovery, architecture

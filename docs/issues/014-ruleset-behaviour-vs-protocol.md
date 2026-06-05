@@ -1,6 +1,7 @@
 # #14 · `Gibbering.Ruleset`: behaviour vs protocol
 
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-05
 **Opened:** 2026-06-04
 **Priority:** medium
 **Tags:** discovery, architecture

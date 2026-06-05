@@ -38,13 +38,9 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
 | [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` | medium |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
-| [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` | medium |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` | low |
-| [#11](011-supervision-tree-design.md) | Supervision tree design for GameServer processes | `architecture` | high |
-| [#12](012-persistence-strategy.md) | Persistence strategy: game state → Postgres | `architecture` | high |
 | [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | `bug` `rendering` | medium |
-| [#14](014-ruleset-behaviour-vs-protocol.md) | `Gibbering.Ruleset`: behaviour vs protocol | `discovery` `architecture` | medium |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk understated in brainstorm | `legal` | medium |
 | [#19](019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | `bug` `architecture` | medium |
@@ -60,9 +56,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
-| [#36](036-scene-phase-state-machine.md) | Scene phase state machine in `SceneServer` | `architecture` `rules` | high |
 | [#37](037-runtime-entity-map-extensions.md) | Runtime entity map: `action_economy`, `resources`, `conditions` fields | `architecture` `rules` | high |
-| [#39](039-ruleset-behaviour.md) | `Gibbering.Ruleset` behaviour + `DnD5e` implementation shell | `architecture` | high |
 | [#40](040-rule-modifier-predicate-evaluator.md) | `RuleModifier` struct + predicate evaluator + modifier pipeline | `rules` `architecture` | medium |
 | [#41](041-spell-struct.md) | `Spell` struct completion + `Data.Spells` migration | `rules` `gameplay` | medium |
 | [#42](042-condition-struct.md) | `Condition` struct + runtime application via active effects registry | `rules` `gameplay` | medium |
@@ -116,6 +110,12 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#9](009-tile-walkable-nil-crash.md) | `tile_walkable?` crashes on missing tile coordinates | `bug` |
 | [#73](073-static-reference-data-to-db.md) | Migrate static reference data to DB tables | `architecture` `ops` |
 | [#29](029-srd-data-ingestion-pipeline.md) | SRD data ingestion pipeline | `architecture` `ops` |
+| [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` |
+| [#11](011-supervision-tree-design.md) | Supervision tree design for SceneServer processes | `architecture` |
+| [#12](012-persistence-strategy.md) | Persistence strategy: game state → Postgres | `architecture` |
+| [#14](014-ruleset-behaviour-vs-protocol.md) | `Gibbering.Ruleset`: behaviour vs protocol | `discovery` `architecture` |
+| [#36](036-scene-phase-state-machine.md) | Scene phase state machine in `SceneServer` | `architecture` `rules` |
+| [#39](039-ruleset-behaviour.md) | `Gibbering.Ruleset` behaviour + `DnD5e` implementation shell | `architecture` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |

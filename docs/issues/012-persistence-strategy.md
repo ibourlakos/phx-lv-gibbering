@@ -1,6 +1,7 @@
 # #12 · Persistence strategy: game state → Postgres
 
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-05
 **Opened:** 2026-06-04
 **Priority:** high
 **Tags:** architecture

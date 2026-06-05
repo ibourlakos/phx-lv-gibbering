@@ -1,6 +1,7 @@
 # #11 · Supervision tree design for GameServer processes
 
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-05
 **Opened:** 2026-06-04
 **Priority:** high
 **Tags:** architecture
