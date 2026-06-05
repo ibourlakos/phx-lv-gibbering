@@ -77,6 +77,7 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#58](058-point-buy-ability-scores.md) | Point buy ability score method | `gameplay` `rules` | low |
 | [#59](059-character-export-import.md) | Character export/import with versioned serialization | `architecture` `gameplay` | low |
 | [#60](060-umbrella-restructure-for-admin-app.md) | Umbrella restructure for independent admin app deployment | `discovery` `architecture` `ops` | low |
+| [#61](061-catalogue-entry-versioning.md) | Catalogue entry versioning | `discovery` `architecture` | low |
 
 ---
 
