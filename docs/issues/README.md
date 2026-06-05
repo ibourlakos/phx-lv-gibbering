@@ -35,7 +35,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | `architecture` `gameplay` | medium |
 | [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring page | `ops` `architecture` | low |
 | [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` | low |
-| [#73](073-static-reference-data-to-db.md) | Migrate static reference data to DB tables | `architecture` `ops` | medium |
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
 | [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` | medium |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
@@ -116,6 +115,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#72](072-drop-users-role-column.md) | Drop `users.role` column | `architecture` |
 | [#8](008-string-to-existing-atom-crash.md) | `String.to_existing_atom` crash in data pipeline parser | `bug` |
 | [#9](009-tile-walkable-nil-crash.md) | `tile_walkable?` crashes on missing tile coordinates | `bug` |
+| [#73](073-static-reference-data-to-db.md) | Migrate static reference data to DB tables | `architecture` `ops` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
