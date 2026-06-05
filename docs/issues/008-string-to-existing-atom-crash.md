@@ -1,7 +1,8 @@
 # #8 · `String.to_existing_atom` crash in data pipeline parser
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-04
+**Closed:** 2026-06-05
 **Priority:** medium
 **Tags:** bug
 
@@ -10,6 +11,6 @@
 Fix: use a pattern-matched safe conversion against a known allow-list, or a `Map.fetch/2` from a module attribute that declares all valid damage types at compile time.
 
 **Acceptance criteria**
-- [ ] Damage type conversion never raises on valid SRD damage type strings
-- [ ] Unknown damage type strings produce a tagged error tuple, not a crash
-- [ ] Unit tests cover all SRD core damage types and at least one unknown string
+- [x] Damage type conversion never raises on valid SRD damage type strings
+- [x] Unknown damage type strings produce a tagged error tuple, not a crash
+- [x] Unit tests cover all SRD core damage types and at least one unknown string

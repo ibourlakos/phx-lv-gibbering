@@ -1,7 +1,8 @@
 # #9 · `tile_walkable?` crashes on missing tile coordinates
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-04
+**Closed:** 2026-06-05
 **Priority:** medium
 **Tags:** bug
 
@@ -10,5 +11,5 @@
 Fix: `tile_walkable?` should pattern-match or use `Map.get/3` with a default and return `false` when the tile is missing.
 
 **Acceptance criteria**
-- [ ] `tile_walkable?` returns `false` for any coordinate not present in `grid_tiles`
-- [ ] Unit tests cover in-bounds walkable tile, in-bounds wall tile, and missing tile
+- [x] `tile_walkable?` returns `false` for any coordinate not present in `grid_tiles`
+- [x] Unit tests cover in-bounds walkable tile, in-bounds wall tile, and missing tile

@@ -41,8 +41,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
 | [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` | medium |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
-| [#8](008-string-to-existing-atom-crash.md) | `String.to_existing_atom` crash in data pipeline parser | `bug` | medium |
-| [#9](009-tile-walkable-nil-crash.md) | `tile_walkable?` crashes on missing tile coordinates | `bug` | medium |
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` | low |
 | [#11](011-supervision-tree-design.md) | Supervision tree design for GameServer processes | `architecture` | high |
 | [#12](012-persistence-strategy.md) | Persistence strategy: game state → Postgres | `architecture` | high |
@@ -116,6 +114,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 |---|---|---|
 | [#1](001-establish-git-remote.md) | Establish git remote | `ops` |
 | [#72](072-drop-users-role-column.md) | Drop `users.role` column | `architecture` |
+| [#8](008-string-to-existing-atom-crash.md) | `String.to_existing_atom` crash in data pipeline parser | `bug` |
+| [#9](009-tile-walkable-nil-crash.md) | `tile_walkable?` crashes on missing tile coordinates | `bug` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
