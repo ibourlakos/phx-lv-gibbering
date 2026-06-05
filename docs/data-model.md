@@ -118,6 +118,32 @@ Managed by `Gibbering.Catalogue.Spell`. Primary key is `key` (string). Seeded fr
 
 ---
 
+### `monsters`
+
+Managed by `Gibbering.Catalogue.Monster`. Primary key is `key` (string = Open5e slug). Populated by `mix gibbering.ingest` (Open5e API, CC-BY-4.0). Runtime reads via `Gibbering.Catalogue.Cache`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | Open5e slug e.g. `"goblin"`, `"ancient-red-dragon"` |
+| `name` | string | |
+| `size` | string | `"Tiny"` \| `"Small"` \| `"Medium"` \| `"Large"` \| `"Huge"` \| `"Gargantuan"` |
+| `monster_type` | string | `"aberration"`, `"beast"`, `"humanoid"`, etc. |
+| `alignment` | string | |
+| `armor_class` | integer | |
+| `hit_points` | integer | average HP |
+| `hit_dice` | string | e.g. `"2d6"` |
+| `speed` | JSONB map | `%{"walk" => "30 ft.", "swim" => "40 ft."}` |
+| `strength` … `charisma` | integer | ability scores |
+| `challenge_rating` | string | `"1/4"`, `"1"`, `"10"` etc. |
+| `xp_reward` | integer | XP on defeat |
+| `source_license` | string | `"CC-BY-4.0"` |
+| `stat_block` | JSONB map | saving throws, skills, damage tags, actions, special abilities |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+Indexes on `monster_type` and `challenge_rating` for encounter-building queries.
+
+---
+
 ### `grid_tiles`
 
 Managed by `Gibbering.GridTile`. One row per tile cell.

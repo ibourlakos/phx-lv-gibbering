@@ -50,7 +50,7 @@ Fonts: check [Google Fonts](https://fonts.google.com) (OFL — permissive) or [F
 
 | Source | License / Terms | Notes |
 |---|---|---|
-| Open5e API | CC-BY-4.0 (mirrors SRD data) | Verify their ToS; do not cache in a way that re-distributes their infrastructure |
+| Open5e API | CC-BY-4.0 (mirrors SRD data) — **Verified ✓** | `mix gibbering.ingest` fetches monsters from `https://api.open5e.com`. Data is SRD 5.1 content re-served under CC-BY-4.0. Open5e is an open-source project (https://github.com/open5e/open5e-api). Attribution: "Data sourced from Open5e (open5e.com), licensed CC-BY-4.0." |
 | 5e-database (GitHub) | CC-BY-4.0 | Safe for local ingestion |
 | D&D Beyond / Roll20 / Foundry data exports | Proprietary | **Never ingest** |
 | Homebrew wikis (Fandom, etc.) | Mixed — often All Rights Reserved | **Do not ingest without per-item verification** |

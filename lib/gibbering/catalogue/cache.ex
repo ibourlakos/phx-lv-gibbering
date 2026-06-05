@@ -6,11 +6,12 @@ defmodule Gibbering.Catalogue.Cache do
   @races_table :catalogue_races
   @classes_table :catalogue_classes
   @spells_table :catalogue_spells
+  @monsters_table :catalogue_monsters
 
   def start_link(_), do: GenServer.start_link(__MODULE__, [], name: __MODULE__)
 
   def init(_) do
-    for t <- [@races_table, @classes_table, @spells_table] do
+    for t <- [@races_table, @classes_table, @spells_table, @monsters_table] do
       :ets.new(t, [:named_table, :set, :protected, read_concurrency: true])
     end
 
@@ -43,9 +44,17 @@ defmodule Gibbering.Catalogue.Cache do
     end
   end
 
+  def get_monster(key) do
+    case :ets.lookup(@monsters_table, key) do
+      [{_, m}] -> m
+      [] -> nil
+    end
+  end
+
   def list_races, do: :ets.tab2list(@races_table) |> Enum.map(&elem(&1, 1))
   def list_classes, do: :ets.tab2list(@classes_table) |> Enum.map(&elem(&1, 1))
   def list_spells, do: :ets.tab2list(@spells_table) |> Enum.map(&elem(&1, 1))
+  def list_monsters, do: :ets.tab2list(@monsters_table) |> Enum.map(&elem(&1, 1))
 
   def races_map, do: list_races() |> Map.new(&{&1.key, &1})
   def classes_map, do: list_classes() |> Map.new(&{&1.key, &1})
@@ -73,6 +82,10 @@ defmodule Gibbering.Catalogue.Cache do
 
     for spell <- Catalogue.list_spells() do
       :ets.insert(@spells_table, {spell.key, spell})
+    end
+
+    for monster <- Catalogue.list_monsters() do
+      :ets.insert(@monsters_table, {monster.key, monster})
     end
   end
 end

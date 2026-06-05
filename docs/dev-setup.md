@@ -102,10 +102,15 @@ Databases:
 ## SRD Data Pipeline
 
 ```bash
-docker compose exec app mix gibbering.seed_srd
+docker compose exec app mix gibbering.ingest
 ```
 
-Fetches D&D 5e SRD data, filters WotC Product Identity, and inserts into `monsters` + `spells`.
+Fetches D&D 5e SRD monsters from the Open5e API (CC-BY-4.0), filters WotC Product Identity via `LegalGuard`, and upserts into the `monsters` table. The task is idempotent — re-running skips already-present entries.
+
+```bash
+# Dry run — fetch and parse without writing to DB
+docker compose exec app mix gibbering.ingest --dry-run
+```
 
 ---
 
