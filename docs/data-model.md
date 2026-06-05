@@ -15,10 +15,9 @@ Managed by `Gibbering.Accounts.User`.
 | `id` | serial | PK |
 | `username` | string | unique, 3–20 chars, `[a-zA-Z0-9_]` |
 | `password_hash` | string | pbkdf2-sha512 via `pbkdf2_elixir` |
-| `role` | string | `"player"` \| `"dm"` \| `"support"` |
 | `inserted_at` / `updated_at` | naive_datetime | Ecto timestamps |
 
-The `password` field is a virtual (cast-only) field; it never reaches the DB.
+The `password` field is a virtual (cast-only) field; it never reaches the DB. DM role is campaign-scoped (`campaigns.dm_id`); support users live in a separate `support_users` table (issue [#65](issues/065-support-users-schema-and-auth.md)).
 
 ---
 
@@ -54,6 +53,94 @@ Join table. Managed by `Gibbering.CampaignMember`. Context: `Gibbering.Campaigns
 Unique index on `(campaign_id, user_id)`. Index on `user_id` for membership lookups.
 
 Membership gates access: `/lobby/:id` and `/game/:id` redirect non-members to `/`.
+
+---
+
+### `races`
+
+Managed by `Gibbering.Catalogue.Race`. Primary key is `key` (string). Seeded from `Gibbering.Data.Races.seed_data/0`. Runtime reads go through `Gibbering.Catalogue.Cache`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | e.g. `"human"`, `"elf"`, `"gnome"` |
+| `name` | string | display name |
+| `description` | text | |
+| `speed` | integer | base movement speed in feet |
+| `stat_bonuses` | JSONB map | `%{"strength" => 1, ...}` |
+| `traits` | JSONB array of maps | racial trait objects `%{"name" => ..., "description" => ...}` |
+| `darkvision` | boolean | |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+---
+
+### `classes`
+
+Managed by `Gibbering.Catalogue.Class`. Primary key is `key` (string). Seeded from `Gibbering.Data.Classes.seed_data/0`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | e.g. `"fighter"`, `"wizard"`, `"rogue"` |
+| `name` | string | |
+| `description` | text | |
+| `hit_die` | string | e.g. `"d10"` |
+| `base_hp` | integer | HP at level 1 |
+| `primary_stats` | `string[]` | |
+| `saving_throws` | `string[]` | |
+| `armor_proficiencies` | `string[]` | |
+| `weapon_proficiencies` | `string[]` | |
+| `spellcasting` | boolean | |
+| `spells` | `string[]` | default spell keys for spellcasting classes |
+| `features` | JSONB array of maps | class feature objects |
+| `stats` | JSONB map | default stat block |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+---
+
+### `spells`
+
+Managed by `Gibbering.Catalogue.Spell`. Primary key is `key` (string). Seeded from `Gibbering.Data.Spells.seed_data/0`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | e.g. `"fire_bolt"`, `"magic_missile"` |
+| `name` | string | |
+| `level` | integer | 0 = cantrip |
+| `school` | string | e.g. `"evocation"`, `"illusion"` |
+| `casting_time` | string | e.g. `"1 action"` |
+| `range` | string | numeric feet `"120"`, or named `"touch"`, `"cone_15"`, `"cube_15"` |
+| `description` | text | |
+| `damage_dice` | string | nullable — e.g. `"1d10"`, `"3d6"` |
+| `damage_type` | string | nullable — SRD type string e.g. `"fire"` |
+| `attack_type` | string | nullable — `"ranged"`, `"save"`, `"aoe"`, `"auto"`, `"touch"`, `"utility"` |
+| `save` | string | nullable — saving throw stat e.g. `"dexterity"` |
+| `tags` | `string[]` | e.g. `["offensive", "aoe"]` |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+---
+
+### `monsters`
+
+Managed by `Gibbering.Catalogue.Monster`. Primary key is `key` (string = Open5e slug). Populated by `mix gibbering.ingest` (Open5e API, CC-BY-4.0). Runtime reads via `Gibbering.Catalogue.Cache`.
+
+| Column | Type | Notes |
+|---|---|---|
+| `key` | string PK | Open5e slug e.g. `"goblin"`, `"ancient-red-dragon"` |
+| `name` | string | |
+| `size` | string | `"Tiny"` \| `"Small"` \| `"Medium"` \| `"Large"` \| `"Huge"` \| `"Gargantuan"` |
+| `monster_type` | string | `"aberration"`, `"beast"`, `"humanoid"`, etc. |
+| `alignment` | string | |
+| `armor_class` | integer | |
+| `hit_points` | integer | average HP |
+| `hit_dice` | string | e.g. `"2d6"` |
+| `speed` | JSONB map | `%{"walk" => "30 ft.", "swim" => "40 ft."}` |
+| `strength` … `charisma` | integer | ability scores |
+| `challenge_rating` | string | `"1/4"`, `"1"`, `"10"` etc. |
+| `xp_reward` | integer | XP on defeat |
+| `source_license` | string | `"CC-BY-4.0"` |
+| `stat_block` | JSONB map | saving throws, skills, damage tags, actions, special abilities |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+Indexes on `monster_type` and `challenge_rating` for encounter-building queries.
 
 ---
 
@@ -413,20 +500,20 @@ Static reference data (pure Elixir modules, no DB, no process):
 
 | Issue | Gap |
 |---|---|
-| [#12](../.issues/012-persistence-strategy.md) | `Engine.State` never written back to DB — SceneServer restart resets all positions and HP |
-| [#19](../.issues/019-lobby-edits-stale-gameserver.md) | Lobby edits persist to DB but a running SceneServer holds a stale snapshot |
-| [#24](../.issues/024-grid-data-jsonb.md) | `grid_tiles` uses one row per cell; planned migration to JSONB on `campaigns` |
-| [#35](../.issues/035-entity-schema-level-temp-hp.md) | `entities` table missing `level`, `temp_hp`, `challenge_rating`, `xp_reward` columns |
-| [#36](../.issues/036-scene-phase-state-machine.md) | `GameServer` has no phase field; no scene state machine; rename to `SceneServer` |
-| [#37](../.issues/037-runtime-entity-map-extensions.md) | Runtime entity map missing `action_economy`, `resources`, `conditions` extensions |
-| [#38](../.issues/038-dnd5e-stats-module.md) | No derived stat computation (`ability_modifier`, `proficiency_bonus`, `armor_class`) |
-| [#39](../.issues/039-ruleset-behaviour.md) | No `Gibbering.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
-| [#40](../.issues/040-rule-modifier-predicate-evaluator.md) | No `RuleModifier` struct or predicate evaluator — rules hardcoded in `Rules` module |
-| [#41](../.issues/041-spell-struct.md) | `Data.Spells` is a flat map; no `%Spell{}` struct with structured fields |
-| [#42](../.issues/042-condition-struct.md) | No `%Condition{}` struct; conditions not applied to entities at runtime |
-| [#43](../.issues/043-action-economy-tracking.md) | No action economy tracking; no `advance_turn` reset |
-| [#44](../.issues/044-spell-slots-resource-pools.md) | No spell slot or class resource tracking |
-| [#45](../.issues/045-attack-roll-vs-ac.md) | `Rules.attack/3` rolls 1d6 with no attack roll, no AC check, no modifiers |
-| [#46](../.issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
-| [#47](../.issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
-| [#48](../.issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |
+| [#12](issues/012-persistence-strategy.md) | `Engine.State` never written back to DB — SceneServer restart resets all positions and HP |
+| [#19](issues/019-lobby-edits-stale-gameserver.md) | Lobby edits persist to DB but a running SceneServer holds a stale snapshot |
+| [#24](issues/024-grid-data-jsonb.md) | `grid_tiles` uses one row per cell; planned migration to JSONB on `campaigns` |
+| [#35](issues/035-entity-schema-level-temp-hp.md) | `entities` table missing `level`, `temp_hp`, `challenge_rating`, `xp_reward` columns |
+| [#36](issues/036-scene-phase-state-machine.md) | `GameServer` has no phase field; no scene state machine; rename to `SceneServer` |
+| [#37](issues/037-runtime-entity-map-extensions.md) | Runtime entity map missing `action_economy`, `resources`, `conditions` extensions |
+| [#38](issues/038-dnd5e-stats-module.md) | No derived stat computation (`ability_modifier`, `proficiency_bonus`, `armor_class`) |
+| [#39](issues/039-ruleset-behaviour.md) | No `Gibbering.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
+| [#40](issues/040-rule-modifier-predicate-evaluator.md) | No `RuleModifier` struct or predicate evaluator — rules hardcoded in `Rules` module |
+| [#41](issues/041-spell-struct.md) | `Data.Spells` is a flat map; no `%Spell{}` struct with structured fields |
+| [#42](issues/042-condition-struct.md) | No `%Condition{}` struct; conditions not applied to entities at runtime |
+| [#43](issues/043-action-economy-tracking.md) | No action economy tracking; no `advance_turn` reset |
+| [#44](issues/044-spell-slots-resource-pools.md) | No spell slot or class resource tracking |
+| [#45](issues/045-attack-roll-vs-ac.md) | `Rules.attack/3` rolls 1d6 with no attack roll, no AC check, no modifiers |
+| [#46](issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
+| [#47](issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
+| [#48](issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |

@@ -50,7 +50,7 @@ Fonts: check [Google Fonts](https://fonts.google.com) (OFL — permissive) or [F
 
 | Source | License / Terms | Notes |
 |---|---|---|
-| Open5e API | CC-BY-4.0 (mirrors SRD data) | Verify their ToS; do not cache in a way that re-distributes their infrastructure |
+| Open5e API | CC-BY-4.0 (mirrors SRD data) — **Verified ✓** | `mix gibbering.ingest` fetches monsters from `https://api.open5e.com`. Data is SRD 5.1 content re-served under CC-BY-4.0. Open5e is an open-source project (https://github.com/open5e/open5e-api). Attribution: "Data sourced from Open5e (open5e.com), licensed CC-BY-4.0." |
 | 5e-database (GitHub) | CC-BY-4.0 | Safe for local ingestion |
 | D&D Beyond / Roll20 / Foundry data exports | Proprietary | **Never ingest** |
 | Homebrew wikis (Fandom, etc.) | Mixed — often All Rights Reserved | **Do not ingest without per-item verification** |
@@ -90,7 +90,24 @@ If players can upload homebrew content (maps, custom monsters, art):
 
 ---
 
-## 7. The `LegalGuard` Module — Scope
+## 7. Project License
+
+**Decision: AGPL-3.0** (pending confirmation — not yet applied to repo).
+
+AGPL-3.0 was chosen over MIT because the network-use clause matters for a hosted multiplayer game: anyone running a modified version as a service must publish their source. MIT would allow a competing hosted fork with no obligation to give back.
+
+**Can/should the license be changed later?**
+
+- **You can relicense** as long as you are the sole copyright holder. Once contributors submit code under AGPL-3.0, you need written consent from every contributor to move to a more permissive license (e.g. MIT). The earlier you decide, the easier relicensing becomes.
+- **Tightening** (e.g. moving from MIT → AGPL) is fine for new code but cannot retroactively cover prior contributions under the old license.
+- **Practical advice:** If there is any chance you want to commercialise with a dual-license model (open-source AGPL + paid commercial), decide that *before* accepting external contributions. A Contributor License Agreement (CLA) at that point lets you relicense later without chasing consent.
+- **Dependencies:** Confirm no dependency is GPL-2.0-only (without "or later") before publishing under AGPL-3.0 — that combination is incompatible. Apache 2.0, MIT, LGPL, MPL 2.0, and AGPL-3.0 itself are all fine.
+
+**Action required before publishing the repo:** Add a `LICENSE` file (AGPL-3.0 full text) and a SPDX header to key source files.
+
+---
+
+## 8. The `LegalGuard` Module — Scope
 
 `Gibbering.Pipeline.LegalGuard` is currently scoped to WotC Product Identity. Its scope should expand to:
 

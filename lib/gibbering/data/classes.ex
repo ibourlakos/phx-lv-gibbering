@@ -1,5 +1,7 @@
 defmodule Gibbering.Data.Classes do
-  @classes %{
+  @moduledoc "Seed source for the classes catalogue table. Runtime reads go through Gibbering.Catalogue.Cache."
+
+  @seed_data %{
     "fighter" => %{
       name: "Fighter",
       description: "Masters of martial combat, skilled with weapons and armor.",
@@ -101,28 +103,5 @@ defmodule Gibbering.Data.Classes do
     }
   }
 
-  def all, do: @classes
-  def get(class_key), do: Map.get(@classes, class_key)
-  def keys, do: Map.keys(@classes)
-
-  def base_stats(class_key) do
-    case get(class_key) do
-      nil -> %{}
-      cls -> cls.stats
-    end
-  end
-
-  def base_hp(class_key) do
-    case get(class_key) do
-      nil -> 8
-      cls -> cls.base_hp
-    end
-  end
-
-  def spells_for(class_key) do
-    case get(class_key) do
-      nil -> []
-      cls -> cls.spells
-    end
-  end
+  def seed_data, do: @seed_data
 end

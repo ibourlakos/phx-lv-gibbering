@@ -22,7 +22,7 @@ That's it. Elixir, Erlang, and Node run inside containers.
 
 ```bash
 # 1. Clone and enter the repo
-git clone <repo-url>
+git clone git@github.com:ibourlakos/phx-lv-gibbering.git
 cd phx-lv-gibbering
 
 # 2. Activate Git LFS (once per machine)
@@ -99,13 +99,38 @@ Databases:
 
 ---
 
+## Playwright Smoke Tests
+
+Playwright runs as a separate Docker service under the `smoke` profile, targeting the running dev app. No extra Mix environment or database needed — the dev DB and dev app are used.
+
+**Prerequisite:** the dev app must be running and seeded (`mix ecto.setup`).
+
+```bash
+# Run the full smoke suite (headless Chromium, inside Docker)
+docker compose --profile smoke run --rm playwright
+
+# Re-run without re-fetching npm deps (faster if node_modules is cached)
+docker compose --profile smoke run --rm playwright npx playwright test
+
+# Screenshots on failure land in test/smoke/screenshots/
+```
+
+Tests live in `test/smoke/tests/`. They cover auth flows, the characters roster, character creation modal, lobby navigation, and the game SVG board.
+
+---
+
 ## SRD Data Pipeline
 
 ```bash
-docker compose exec app mix gibbering.seed_srd
+docker compose exec app mix gibbering.ingest
 ```
 
-Fetches D&D 5e SRD data, filters WotC Product Identity, and inserts into `monsters` + `spells`.
+Fetches D&D 5e SRD monsters from the Open5e API (CC-BY-4.0), filters WotC Product Identity via `LegalGuard`, and upserts into the `monsters` table. The task is idempotent — re-running skips already-present entries.
+
+```bash
+# Dry run — fetch and parse without writing to DB
+docker compose exec app mix gibbering.ingest --dry-run
+```
 
 ---
 
@@ -150,8 +175,8 @@ docker compose up -d
 
 ## Other Environments
 
-- [docs/qa-setup.md](qa-setup.md) — QA environment (placeholder; see issue [#62](../.issues/062-multi-environment-infra.md))
-- [docs/prod-setup.md](prod-setup.md) — Production environment (placeholder; see issue [#62](../.issues/062-multi-environment-infra.md))
+- [docs/qa-setup.md](qa-setup.md) — QA environment (placeholder; see issue [#62](issues/062-multi-environment-infra.md))
+- [docs/prod-setup.md](prod-setup.md) — Production environment (placeholder; see issue [#62](issues/062-multi-environment-infra.md))
 
 > **Security note for non-dev environments:** the `/admin` route scope must be restricted to an internal network or VPN at the reverse proxy level. See the Security section in each environment doc.
 

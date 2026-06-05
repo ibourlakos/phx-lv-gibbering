@@ -16,8 +16,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4000/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
     stdin_open: true
     tty: true
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.52.0-jammy
+    profiles:
+      - smoke
+    working_dir: /smoke
+    volumes:
+      - ./test/smoke:/smoke
+    environment:
+      BASE_URL: http://app:4000
+    command: >
+      bash -c "npm ci --prefer-offline && npx playwright test"
+    depends_on:
+      app:
+        condition: service_healthy
 
   db:
     image: postgres:17-alpine

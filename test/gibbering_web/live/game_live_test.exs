@@ -1,6 +1,6 @@
 defmodule GibberingWeb.GameLiveTest do
   # Full-stack: mounts a real LiveView, drives events, asserts rendered output.
-  # Requires the DB (loads Campaign). async: false because GameServer is shared state.
+  # Requires the DB (loads Campaign). async: false because SceneServer is shared state.
   use GibberingWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
@@ -8,7 +8,7 @@ defmodule GibberingWeb.GameLiveTest do
   import Gibbering.AccountsFixtures
 
   alias Gibbering.{Campaigns}
-  alias Gibbering.Engine.{GameServer, State}
+  alias Gibbering.Engine.{SceneServer, State}
 
   defp mount_game(conn) do
     user = register_user()
@@ -16,7 +16,7 @@ defmodule GibberingWeb.GameLiveTest do
     game_id = insert_campaign()
     Campaigns.join_campaign(game_id, user.id)
     # Pre-start the server so the LiveView mounts against an already-running game.
-    start_supervised!({GameServer, game_id})
+    start_supervised!({SceneServer, game_id})
     {:ok, view, _html} = live(conn, "/game/#{game_id}")
     {view, game_id}
   end
@@ -40,7 +40,7 @@ defmodule GibberingWeb.GameLiveTest do
   describe "select_entity event" do
     test "clicking the active hero highlights valid move tiles", %{conn: conn} do
       {view, game_id} = mount_game(conn)
-      state = GameServer.get_state(game_id)
+      state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
       view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
@@ -54,7 +54,7 @@ defmodule GibberingWeb.GameLiveTest do
   describe "end_turn event" do
     test "end_turn button clears move overlays", %{conn: conn} do
       {view, game_id} = mount_game(conn)
-      state = GameServer.get_state(game_id)
+      state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
       # Select hero to show moves, then end turn.

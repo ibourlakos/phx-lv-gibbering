@@ -48,6 +48,12 @@ defmodule Gibbering.Engine.RulesTest do
       refute {2, 1} in moves
     end
 
+    test "treats a tile absent from grid_tiles as unwalkable" do
+      state = %{build_state() | grid_tiles: Map.delete(build_state().grid_tiles, {2, 1})}
+      moves = Rules.valid_moves(state, hero_id())
+      refute {2, 1} in moves
+    end
+
     test "excludes tiles occupied by another hero" do
       # Add a second hero at (2, 1).
       second_hero = %{

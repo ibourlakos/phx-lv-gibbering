@@ -1,6 +1,6 @@
 # Production Setup
 
-> This document is a placeholder. Full production environment setup is tracked in issue [#62](.issues/062-multi-environment-infra.md).
+> This document is a placeholder. Full production environment setup is tracked in issue [#62](issues/062-multi-environment-infra.md).
 
 ---
 
@@ -50,7 +50,7 @@ All HTTP access to `/admin` should also be logged at the load-balancer level, in
 
 ## To Be Defined
 
-See issue [#62](.issues/062-multi-environment-infra.md) for:
+See issue [#62](issues/062-multi-environment-infra.md) for:
 
 - Release build and Docker image for production (`MIX_ENV=prod`)
 - Orchestration / hosting choice (fly.io, Render, VPS, k8s, etc.)

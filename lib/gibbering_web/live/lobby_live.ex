@@ -2,7 +2,7 @@ defmodule GibberingWeb.LobbyLive do
   use GibberingWeb, :live_view
 
   alias Gibbering.{Repo, Campaign, Entity, Campaigns}
-  alias Gibbering.Data.{Races, Classes}
+  alias Gibbering.Catalogue.Cache, as: Catalogue
 
   @impl true
   def mount(%{"id" => campaign_id}, _session, socket) do
@@ -29,8 +29,8 @@ defmodule GibberingWeb.LobbyLive do
        |> assign(:campaign, campaign)
        |> assign(:editing_id, nil)
        |> assign(:edit_form, %{})
-       |> assign(:races, Races.all())
-       |> assign(:classes, Classes.all())}
+       |> assign(:races, Catalogue.races_map())
+       |> assign(:classes, Catalogue.classes_map())}
     end
   end
 
@@ -103,13 +103,14 @@ defmodule GibberingWeb.LobbyLive do
     new_name = String.trim(params["name"] || entity.name)
     name = if new_name == "", do: entity.name, else: new_name
 
-    class_data = Classes.get(new_class) || Classes.get(entity.class)
+    class_data = Catalogue.get_class(new_class) || Catalogue.get_class(entity.class)
 
     base_hp = class_data.base_hp
     base_stats = class_data.stats
 
-    race_bonuses = Races.stat_bonuses(new_race)
-    speed = Races.base_speed(new_race)
+    race = Catalogue.get_race(new_race)
+    race_bonuses = if race, do: race.stat_bonuses, else: %{}
+    speed = if race, do: race.speed, else: 30
 
     merged_stats =
       base_stats
@@ -148,7 +149,7 @@ defmodule GibberingWeb.LobbyLive do
 
   @impl true
   def handle_event("add_slot", _, socket) do
-    if socket.assigns.current_user.role not in ["dm", "support"] do
+    if socket.assigns.current_user.id != socket.assigns.campaign.dm_id do
       {:noreply, put_flash(socket, :error, "Only the DM can add character slots.")}
     else
       heroes = Enum.filter(socket.assigns.campaign.entities, &(&1.type == "hero"))
@@ -176,7 +177,7 @@ defmodule GibberingWeb.LobbyLive do
 
   @impl true
   def handle_event("remove_slot", %{"id" => entity_id}, socket) do
-    if socket.assigns.current_user.role not in ["dm", "support"] do
+    if socket.assigns.current_user.id != socket.assigns.campaign.dm_id do
       {:noreply, put_flash(socket, :error, "Only the DM can remove character slots.")}
     else
       entity_id = String.to_integer(entity_id)

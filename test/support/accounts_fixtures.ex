@@ -7,7 +7,7 @@ defmodule Gibbering.AccountsFixtures do
 
   def valid_user_attrs(attrs \\ %{}) do
     Map.merge(
-      %{"username" => unique_username(), "password" => "valid_password", "role" => "player"},
+      %{"username" => unique_username(), "password" => "valid_password"},
       attrs
     )
   end

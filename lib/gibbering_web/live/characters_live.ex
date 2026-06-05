@@ -2,6 +2,7 @@ defmodule GibberingWeb.CharactersLive do
   use GibberingWeb, :live_view
 
   alias Gibbering.{Characters, Data}
+  alias Gibbering.Catalogue.Cache, as: Catalogue
   import GibberingWeb.Components.CharacterSprite
 
   @standard_array [15, 14, 13, 12, 10, 8]
@@ -82,7 +83,7 @@ defmodule GibberingWeb.CharactersLive do
           do: Data.Backgrounds.get(background_key),
           else: nil
 
-      cls = Data.Classes.get(class)
+      cls = Catalogue.get_class(class)
 
       # Pre-compute proficiencies from class + background for next steps
       saving_throws = if cls, do: cls.saving_throws, else: []
@@ -949,7 +950,7 @@ defmodule GibberingWeb.CharactersLive do
   defp format_changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
+        opts |> Keyword.get(String.to_atom(key), key) |> to_string()
       end)
     end)
     |> Enum.flat_map(fn {field, msgs} ->

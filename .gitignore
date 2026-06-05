@@ -33,6 +33,12 @@ erl_crash.dump
 # === Test artifacts ===
 /cover/
 
+# === Playwright smoke tests ===
+/test/smoke/node_modules/
+/test/smoke/playwright-report/
+/test/smoke/screenshots/*.png
+/test/smoke/screenshots/*.jpg
+
 # === OS ===
 .DS_Store
 Thumbs.db

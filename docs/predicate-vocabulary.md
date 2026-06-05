@@ -4,8 +4,8 @@ The `RuleModifier` struct's `:predicate` field is a closed-vocabulary expression
 evaluated by a single recursive pattern-match function. This document is the
 canonical reference for that vocabulary.
 
-Related issues: [#31](../.issues/031-rule-modifier-predicate-decomposition.md)
-(implementation), [#32](../.issues/032-dm-override-event-schema.md) (DM overrides
+Related issues: [#31](issues/031-rule-modifier-predicate-decomposition.md)
+(implementation), [#32](issues/032-dm-override-event-schema.md) (DM overrides
 must compose with this pipeline, not bypass it).
 
 ---

@@ -5,88 +5,38 @@ defmodule GibberingWeb.Components.CharacterSpriteTest do
 
   alias GibberingWeb.Components.CharacterSprite
 
-  describe "character_sprite/1" do
-    test "renders an SVG element" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1,
-          race: "human",
-          class_name: "fighter"
-        )
+  @known_sprites [
+    {"human", "fighter"},
+    {"human", "wizard"},
+    {"human", "rogue"},
+    {"elf", "fighter"},
+    {"elf", "wizard"},
+    {"elf", "rogue"},
+    {"gnome", "fighter"},
+    {"gnome", "wizard"},
+    {"gnome", "rogue"}
+  ]
 
-      assert html =~ "<svg"
-      assert html =~ "viewBox=\"0 0 64 64\""
+  describe "character_sprite/1 — known race/class combinations" do
+    for {race, class_name} <- @known_sprites do
+      @race race
+      @class_name class_name
+
+      test "renders #{@race} #{@class_name} with correct data-sprite" do
+        html =
+          render_component(&CharacterSprite.character_sprite/1,
+            race: @race,
+            class_name: @class_name
+          )
+
+        assert html =~ ~s(data-sprite="#{@race}_#{@class_name}")
+        refute html =~ ~s(>?<)
+      end
     end
+  end
 
-    test "renders human fighter" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1,
-          race: "human",
-          class_name: "fighter"
-        )
-
-      assert html =~ "<svg"
-    end
-
-    test "renders human wizard" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "human", class_name: "wizard")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders human rogue" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "human", class_name: "rogue")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders elf fighter" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "elf", class_name: "fighter")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders elf wizard" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "elf", class_name: "wizard")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders elf rogue" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "elf", class_name: "rogue")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders gnome fighter" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1,
-          race: "gnome",
-          class_name: "fighter"
-        )
-
-      assert html =~ "<svg"
-    end
-
-    test "renders gnome wizard" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "gnome", class_name: "wizard")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders gnome rogue" do
-      html =
-        render_component(&CharacterSprite.character_sprite/1, race: "gnome", class_name: "rogue")
-
-      assert html =~ "<svg"
-    end
-
-    test "renders a fallback for unknown race/class" do
+  describe "character_sprite/1 — fallback" do
+    test "renders the fallback sprite for unknown race/class" do
       html =
         render_component(&CharacterSprite.character_sprite/1,
           race: "orc",
@@ -96,8 +46,21 @@ defmodule GibberingWeb.Components.CharacterSpriteTest do
       assert html =~ "<svg"
       assert html =~ "?"
     end
+  end
 
-    test "respects the size attribute" do
+  describe "character_sprite/1 — size" do
+    test "defaults to 64×64" do
+      html =
+        render_component(&CharacterSprite.character_sprite/1,
+          race: "human",
+          class_name: "fighter"
+        )
+
+      assert html =~ ~s(width="64")
+      assert html =~ ~s(height="64")
+    end
+
+    test "respects explicit size attribute" do
       html =
         render_component(&CharacterSprite.character_sprite/1,
           race: "human",
@@ -105,8 +68,8 @@ defmodule GibberingWeb.Components.CharacterSpriteTest do
           size: 128
         )
 
-      assert html =~ "width=\"128\""
-      assert html =~ "height=\"128\""
+      assert html =~ ~s(width="128")
+      assert html =~ ~s(height="128")
     end
   end
 end

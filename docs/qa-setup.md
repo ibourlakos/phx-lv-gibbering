@@ -1,6 +1,6 @@
 # QA Setup
 
-> This document is a placeholder. Full QA environment setup is tracked in issue [#62](.issues/062-multi-environment-infra.md).
+> This document is a placeholder. Full QA environment setup is tracked in issue [#62](issues/062-multi-environment-infra.md).
 
 A QA environment mirrors production configuration but targets a separate, disposable dataset. It is used for integration testing, pre-release verification, and stakeholder review before promoting to production.
 
@@ -49,7 +49,7 @@ location /admin {
 
 ## To Be Defined
 
-See issue [#62](.issues/062-multi-environment-infra.md) for:
+See issue [#62](issues/062-multi-environment-infra.md) for:
 
 - Docker Compose / orchestration config for QA
 - CI/CD pipeline integration (deploy on merge to `main`)

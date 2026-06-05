@@ -1,5 +1,76 @@
 alias Gibbering.{Repo, Campaign, GridTile, Entity, CampaignMember}
 alias Gibbering.Accounts
+alias Gibbering.Catalogue.{Race, Class, Spell}
+alias Gibbering.Data.{Races, Classes, Spells}
+
+# ---------------------------------------------------------------------------
+# Catalogue tables (idempotent — skip if already present)
+# ---------------------------------------------------------------------------
+
+now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+Enum.each(Races.seed_data(), fn {key, attrs} ->
+  unless Repo.get(Race, key) do
+    Repo.insert!(%Race{
+      key: key,
+      name: attrs.name,
+      description: attrs.description,
+      speed: attrs.speed,
+      stat_bonuses: attrs.stat_bonuses,
+      traits: Enum.map(attrs.traits, &Map.new(&1, fn {k, v} -> {to_string(k), v} end)),
+      darkvision: attrs.darkvision,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+end)
+
+Enum.each(Classes.seed_data(), fn {key, attrs} ->
+  unless Repo.get(Class, key) do
+    Repo.insert!(%Class{
+      key: key,
+      name: attrs.name,
+      description: attrs.description,
+      hit_die: attrs.hit_die,
+      base_hp: attrs.base_hp,
+      primary_stats: attrs.primary_stats,
+      saving_throws: attrs.saving_throws,
+      armor_proficiencies: attrs.armor_proficiencies,
+      weapon_proficiencies: attrs.weapon_proficiencies,
+      spellcasting: attrs.spellcasting,
+      spells: attrs.spells,
+      features: Enum.map(attrs.features, &Map.new(&1, fn {k, v} -> {to_string(k), v} end)),
+      stats: attrs.stats,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+end)
+
+Enum.each(Spells.seed_data(), fn {key, attrs} ->
+  unless Repo.get(Spell, key) do
+    Repo.insert!(%Spell{
+      key: key,
+      name: attrs.name,
+      level: attrs.level,
+      school: attrs.school,
+      casting_time: attrs.casting_time,
+      range: attrs.range,
+      description: attrs.description,
+      damage_dice: attrs.damage_dice,
+      damage_type: attrs.damage_type,
+      attack_type: attrs.attack_type,
+      save: attrs.save,
+      tags: attrs.tags,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+end)
+
+IO.puts(
+  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells"
+)
 
 # Wipe existing seed data
 Repo.delete_all(CampaignMember)
@@ -11,7 +82,7 @@ Repo.delete_all(Campaign)
 {:ok, dm_user} =
   case Accounts.get_user_by_username("dungeon_master") do
     nil ->
-      Accounts.register_user(%{username: "dungeon_master", password: "gibbering", role: "dm"})
+      Accounts.register_user(%{username: "dungeon_master", password: "gibbering"})
 
     existing ->
       {:ok, existing}
@@ -20,7 +91,7 @@ Repo.delete_all(Campaign)
 {:ok, player1} =
   case Accounts.get_user_by_username("aldric_player") do
     nil ->
-      Accounts.register_user(%{username: "aldric_player", password: "gibbering", role: "player"})
+      Accounts.register_user(%{username: "aldric_player", password: "gibbering"})
 
     existing ->
       {:ok, existing}
@@ -29,7 +100,7 @@ Repo.delete_all(Campaign)
 {:ok, player2} =
   case Accounts.get_user_by_username("sylvara_player") do
     nil ->
-      Accounts.register_user(%{username: "sylvara_player", password: "gibbering", role: "player"})
+      Accounts.register_user(%{username: "sylvara_player", password: "gibbering"})
 
     existing ->
       {:ok, existing}
@@ -38,7 +109,7 @@ Repo.delete_all(Campaign)
 {:ok, player3} =
   case Accounts.get_user_by_username("zippik_player") do
     nil ->
-      Accounts.register_user(%{username: "zippik_player", password: "gibbering", role: "player"})
+      Accounts.register_user(%{username: "zippik_player", password: "gibbering"})
 
     existing ->
       {:ok, existing}

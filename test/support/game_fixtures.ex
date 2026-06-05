@@ -6,7 +6,7 @@ defmodule Gibbering.GameFixtures do
   - In-memory builders (`build_state/1`, `with_entity/3`, `with_tile/3`) — no DB, no process.
     Use these for testing pure functions in Rules and State.
   - DB factories (`insert_campaign/1`) — insert Ecto records into the sandbox DB.
-    Use these for GameServer integration tests.
+    Use these for SceneServer integration tests.
   """
 
   alias Gibbering.Engine.State
@@ -161,7 +161,7 @@ defmodule Gibbering.GameFixtures do
 
   @doc """
   Insert a Campaign (with a full 5x5 walkable grid, one hero, one monster)
-  into the sandbox DB. Returns the campaign id to pass to GameServer.start_link/1.
+  into the sandbox DB. Returns the campaign id to pass to SceneServer.start_link/1.
 
   Each call generates a unique campaign name so tests can run in any order.
   """

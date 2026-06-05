@@ -1,5 +1,7 @@
 defmodule Gibbering.Data.Races do
-  @races %{
+  @moduledoc "Seed source for the races catalogue table. Runtime reads go through Gibbering.Catalogue.Cache."
+
+  @seed_data %{
     "human" => %{
       name: "Human",
       description: "Versatile and ambitious, humans adapt quickly and excel in any calling.",
@@ -68,21 +70,5 @@ defmodule Gibbering.Data.Races do
     }
   }
 
-  def all, do: @races
-  def get(race_key), do: Map.get(@races, race_key)
-  def keys, do: Map.keys(@races)
-
-  def stat_bonuses(race_key) do
-    case get(race_key) do
-      nil -> %{}
-      race -> race.stat_bonuses
-    end
-  end
-
-  def base_speed(race_key) do
-    case get(race_key) do
-      nil -> 30
-      race -> race.speed
-    end
-  end
+  def seed_data, do: @seed_data
 end
