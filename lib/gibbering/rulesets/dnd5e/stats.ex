@@ -14,6 +14,8 @@ defmodule Gibbering.Rulesets.DnD5e.Stats do
 
   def ability_modifier(score), do: Integer.floor_div(score - 10, 2)
 
+  def speed(entity), do: Map.get(entity, :speed, entity[:speed] || 30)
+
   def proficiency_bonus(level), do: div(level - 1, 4) + 2
 
   def armor_class(entity) do

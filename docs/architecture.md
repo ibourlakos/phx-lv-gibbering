@@ -50,24 +50,22 @@ Gibbering.Pipeline.LegalGuard ← WotC Product Identity filter (see docs/legal.m
 
 ---
 
-## The Ruleset Behaviour (planned — see #14)
+## The Ruleset Behaviour
 
-The engine is intended to be ruleset-agnostic. The `Gibbering.Ruleset` behaviour and `Gibbering.Rulesets.DnD5e` module are **not yet implemented** — combat and movement logic currently lives directly in `Gibbering.Engine.Rules`. The planned interface:
+The engine is ruleset-agnostic. `Gibbering.Ruleset` is a **behaviour** (not a protocol — #14 resolved).
+`Engine.State.ruleset` holds the module reference; `SceneServer` delegates all rule decisions to it.
 
 ```elixir
 defmodule Gibbering.Ruleset do
-  @callback on_move_requested(state, entity_id, {x, y}) :: {:ok, state} | {:error, reason}
-  @callback on_entity_selected(state, entity_id) :: state
-  @callback on_combat_action(state, attacker_id, target_id, action) :: state
-  @callback valid_moves(state, entity_id) :: [{x, y}]
+  @callback collect_modifiers(entity, action, state) :: [RuleModifier.t()]
+  @callback initial_resources(entity) :: map()
+  @callback initial_action_economy(entity) :: map()
+  @callback advance_turn(entity) :: entity
 end
 ```
 
-`GameServer` would hold the ruleset module as plain data and dispatch to it:
-
-```elixir
-def start_link(game_id, ruleset \\ Gibbering.Rulesets.DnD5e)
-```
+`Engine.State` holds the ruleset module as a plain field (default `Gibbering.Rulesets.DnD5e`).
+All `DnD5e.*` subsystems live under `Gibbering.Rulesets.DnD5e.*` (Stats, Spell, RuleModifier, Condition).
 
 ### State must stay generic
 
@@ -181,7 +179,7 @@ Pipeline.Parser.parse_action_damage/1  ← regex: "Hit: 10 (2d6+3) piercing" →
 
 ## Open Questions
 
-- Should `Gibbering.Ruleset` be a `behaviour` or a `protocol`? (see #14)
+- ~~Should `Gibbering.Ruleset` be a `behaviour` or a `protocol`?~~ Decided: behaviour (#14 closed)
 - Does fog-of-war calculation belong to the engine or the ruleset?
 - How does a ruleset declare what UI action buttons to render?
 - How should lobby player identity work for same-browser multi-player? (see #18)
