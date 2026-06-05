@@ -284,4 +284,241 @@ defmodule Gibbering.Engine.RulesTest do
       refute tile.texture == "rubble"
     end
   end
+
+  # ---------------------------------------------------------------------------
+  # valid_spell_targets/3
+  # ---------------------------------------------------------------------------
+
+  describe "valid_spell_targets/3" do
+    test "returns empty list for unknown spell key" do
+      state = build_state()
+      assert Rules.valid_spell_targets(state, hero_id(), :nonexistent_spell) == []
+    end
+
+    test "monster within range of fire_bolt (120 ft) is a valid target" do
+      # Hero at (2,2), monster at (3,3) — Chebyshev 1, fire_bolt range 24 tiles
+      state = build_state()
+      targets = Rules.valid_spell_targets(state, hero_id(), :fire_bolt)
+      assert monster_id() in targets
+    end
+
+    test "monster outside fire_bolt range is excluded" do
+      state =
+        build_state(map_width: 30, map_height: 30)
+        |> with_entity(monster_id(), x: 29, y: 29)
+
+      # Hero at (2,2), monster at (29,29) — Chebyshev 27, fire_bolt range 24 tiles
+      targets = Rules.valid_spell_targets(state, hero_id(), :fire_bolt)
+      refute monster_id() in targets
+    end
+
+    test "caster is never a valid spell target" do
+      state = build_state()
+      targets = Rules.valid_spell_targets(state, hero_id(), :fire_bolt)
+      refute hero_id() in targets
+    end
+
+    test "touch-range spell (cure_wounds) reaches adjacent monster (Chebyshev 1)" do
+      # Monster at (3,3) is Chebyshev 1 from hero at (2,2) — within touch range
+      state = build_state()
+      targets = Rules.valid_spell_targets(state, hero_id(), :cure_wounds)
+      assert monster_id() in targets
+    end
+
+    test "touch-range spell does not reach monster 2 tiles away" do
+      state = build_state() |> with_entity(monster_id(), x: 4, y: 4)
+      # Chebyshev distance is 2 — beyond touch range (1 tile)
+      targets = Rules.valid_spell_targets(state, hero_id(), :cure_wounds)
+      refute monster_id() in targets
+    end
+
+    test "other heroes are not spell targets" do
+      ally = %{
+        name: "Cleric",
+        type: "hero",
+        sprite: "cleric.png",
+        x: 3,
+        y: 3,
+        hp: 8,
+        max_hp: 8,
+        tags: [],
+        stats: %{},
+        conditions: [],
+        armor_class: 12,
+        action_economy: %{
+          action: :available,
+          bonus_action: :available,
+          reaction: :available,
+          movement_remaining: 30
+        },
+        resources: %{}
+      }
+
+      state = %{build_state() | entities: Map.put(build_state().entities, 99, ally)}
+      targets = Rules.valid_spell_targets(state, hero_id(), :fire_bolt)
+      refute 99 in targets
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # cast_spell/5
+  # ---------------------------------------------------------------------------
+
+  # Helpers for spell tests — wizard hero has INT 16 (+3) and a level-1 spell slot.
+  defp wizard_state do
+    build_state()
+    |> with_entity(hero_id(),
+      class: "wizard",
+      stats:
+        Map.merge(build_state().entities[hero_id()].stats, %{
+          "intelligence" => 16
+        }),
+      ability_modifiers: %{"intelligence" => 3, "strength" => 3, "dexterity" => 1},
+      resources: %{spell_slots: %{1 => 2}}
+    )
+  end
+
+  describe "cast_spell/5 — resource checks" do
+    test "returns error for unknown spell key" do
+      state = build_state()
+
+      assert {:error, :unknown_spell} =
+               Rules.cast_spell(state, hero_id(), :not_a_spell, monster_id())
+    end
+
+    test "returns error when action slot is spent" do
+      state =
+        with_entity(build_state(), hero_id(),
+          action_economy: %{
+            action: :spent,
+            bonus_action: :available,
+            reaction: :available,
+            movement_remaining: 30
+          }
+        )
+
+      assert {:error, :already_spent} =
+               Rules.cast_spell(state, hero_id(), :fire_bolt, monster_id())
+    end
+
+    test "returns error when no level-1 spell slot available" do
+      state = with_entity(build_state(), hero_id(), resources: %{spell_slots: %{1 => 0}})
+
+      assert {:error, :no_slots} =
+               Rules.cast_spell(state, hero_id(), :magic_missile, monster_id())
+    end
+
+    test "casting a cantrip does not require or consume spell slots" do
+      state = with_entity(build_state(), hero_id(), resources: %{})
+      # fire_bolt is a cantrip (level 0) — no slot required
+      result = Rules.cast_spell(state, hero_id(), :fire_bolt, monster_id(), roll: 20)
+      assert elem(result, 0) in [:hit, :miss, :critical]
+    end
+  end
+
+  describe "cast_spell/5 — ranged_attack (fire_bolt)" do
+    test "natural 20 is a critical hit" do
+      {result, _state, details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: 20)
+
+      assert result == :critical
+      assert details.hit == true
+      assert details.critical == true
+    end
+
+    test "natural 1 is always a miss" do
+      {result, _state, details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: 1)
+
+      assert result == :miss
+      assert details.hit == false
+    end
+
+    test "hit when d20 + spell_attack_bonus >= target AC" do
+      # wizard INT 16 (+3) + prof +2 = spell bonus 5, monster AC 13
+      # roll 8 → 8 + 5 = 13 >= 13 → hit
+      {result, _state, details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: 8)
+
+      assert result == :hit
+      assert details.hit == true
+    end
+
+    test "miss when d20 + spell_attack_bonus < target AC" do
+      # roll 7 → 7 + 5 = 12 < 13 → miss
+      {result, _state, details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: 7)
+
+      assert result == :miss
+      assert details.hit == false
+      assert details.damage == nil
+    end
+
+    test "hit reduces target hp" do
+      original_hp = wizard_state().entities[monster_id()].hp
+
+      {_result, new_state, _details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: 20)
+
+      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
+      assert new_hp < original_hp
+    end
+
+    test "consumes action slot on any roll" do
+      for roll <- [1, 10, 20] do
+        {_result, new_state, _details} =
+          Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: roll)
+
+        assert new_state.entities[hero_id()].action_economy.action == :spent
+      end
+    end
+  end
+
+  describe "cast_spell/5 — auto-hit (magic_missile)" do
+    test "always returns :hit" do
+      state = wizard_state()
+
+      {result, _new_state, details} =
+        Rules.cast_spell(state, hero_id(), :magic_missile, monster_id())
+
+      assert result == :hit
+      assert details.hit == true
+    end
+
+    test "deals damage regardless of target AC" do
+      state = wizard_state() |> with_entity(monster_id(), armor_class: 30)
+
+      {_result, new_state, details} =
+        Rules.cast_spell(state, hero_id(), :magic_missile, monster_id())
+
+      assert is_integer(details.damage) and details.damage >= 1
+      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
+      assert new_hp < state.entities[monster_id()].hp
+    end
+
+    test "consumes a level-1 spell slot" do
+      state = wizard_state()
+      slots_before = get_in(state.entities, [hero_id(), :resources, :spell_slots, 1])
+
+      {_result, new_state, _details} =
+        Rules.cast_spell(state, hero_id(), :magic_missile, monster_id())
+
+      slots_after = get_in(new_state.entities, [hero_id(), :resources, :spell_slots, 1])
+      assert slots_after == slots_before - 1
+    end
+  end
+
+  describe "cast_spell/5 — non-damaging types (save/aoe/utility)" do
+    test "returns :hit without applying damage for :save spells" do
+      state = wizard_state()
+
+      {result, new_state, details} =
+        Rules.cast_spell(state, hero_id(), :sacred_flame, monster_id())
+
+      assert result == :hit
+      assert details.damage == nil
+      # Target hp unchanged
+      assert new_state.entities[monster_id()].hp == state.entities[monster_id()].hp
+    end
+  end
 end

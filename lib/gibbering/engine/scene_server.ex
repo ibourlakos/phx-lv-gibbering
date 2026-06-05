@@ -24,6 +24,9 @@ defmodule Gibbering.Engine.SceneServer do
   def attack_entity(game_id, target_id),
     do: GenServer.call(via(game_id), {:attack, target_id})
 
+  def cast_spell(game_id, spell_key, target_id),
+    do: GenServer.call(via(game_id), {:cast_spell, spell_key, target_id})
+
   def end_turn(game_id), do: GenServer.call(via(game_id), :end_turn)
 
   def transition_phase(game_id, new_phase),
@@ -134,6 +137,23 @@ defmodule Gibbering.Engine.SceneServer do
         case Rules.attack(state, state.selected_id, target_id) do
           {:error, _reason} -> state
           {_result, after_attack, _details} -> State.advance_turn(after_attack)
+        end
+      else
+        state
+      end
+
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, new_state, new_state}
+  end
+
+  @impl true
+  def handle_call({:cast_spell, spell_key, target_id}, _from, state) do
+    new_state =
+      if state.selected_id do
+        case Rules.cast_spell(state, state.selected_id, spell_key, target_id) do
+          {:error, _reason} -> state
+          {_result, after_cast, _details} -> State.advance_turn(after_cast)
         end
       else
         state

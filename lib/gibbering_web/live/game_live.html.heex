@@ -65,6 +65,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         <% is_active = id == active_id %>
         <% is_selected = id == state.selected_id %>
         <% is_target = id in @valid_targets %>
+        <% is_spell_target = id in @spell_targets %>
         <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_h) %>
         <% {ix, iy} = iso.sprite_pos(sx, sy) %>
         <% hp_w = tw - 8 %>
@@ -72,9 +73,20 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 
         <g
           id={"entity-#{id}"}
-          phx-click={if is_target, do: "attack", else: "select_entity"}
+          phx-click={
+            cond do
+              is_spell_target -> "cast_spell"
+              is_target -> "attack"
+              true -> "select_entity"
+            end
+          }
           phx-value-id={id}
-          style={"cursor: #{if is_target, do: "crosshair", else: if(entity.type == "hero", do: "pointer", else: "default")};"}
+          style={"cursor: #{cond do
+            is_spell_target -> "crosshair"
+            is_target -> "crosshair"
+            entity.type == "hero" -> "pointer"
+            true -> "default"
+          end};"}
         >
           <%!-- Target highlight --%>
           <%= if is_target do %>
@@ -83,6 +95,17 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               fill="rgba(231,76,60,0.35)"
               stroke="#e74c3c"
               stroke-width="2"
+            />
+          <% end %>
+
+          <%!-- Spell target highlight --%>
+          <%= if is_spell_target do %>
+            <polygon
+              points={iso.diamond_points(sx, sy)}
+              fill="rgba(192,80,255,0.3)"
+              stroke="#c050ff"
+              stroke-width="2"
+              stroke-dasharray="4 3"
             />
           <% end %>
 
@@ -158,6 +181,27 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         End Turn
       </button>
     </div>
+
+    <%!-- Spell panel — only shown when active entity knows spells --%>
+    <%= if active_entity && get_in(active_entity, [:stats, "spells"]) do %>
+      <div class="bg-gray-800 rounded p-3 flex flex-col gap-2">
+        <div class="text-xs text-gray-400 mb-1">Spells</div>
+        <%= for spell_key <- active_entity.stats["spells"] do %>
+          <button
+            phx-click="select_spell"
+            phx-value-key={spell_key}
+            class={[
+              "text-left text-sm rounded px-3 py-1 flex justify-between items-center",
+              (@selected_spell == spell_key && "bg-purple-700 text-white ring-1 ring-purple-400") ||
+                "bg-gray-700 hover:bg-gray-600 text-gray-200"
+            ]}
+          >
+            <span>{spell_display_name(spell_key)}</span>
+            <span class="text-xs text-gray-400 ml-2">{spell_level_label(spell_key)}</span>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
 
     <div class="bg-gray-800 rounded p-3 flex-1">
       <div class="text-xs text-gray-400 mb-2">Log</div>
