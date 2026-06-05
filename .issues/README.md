@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 35 (see `counter`)
+**Next issue number:** 49 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -52,6 +52,20 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
+| [#35](035-entity-schema-level-temp-hp.md) | Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward` | `architecture` `rules` | high |
+| [#36](036-scene-phase-state-machine.md) | Scene phase state machine in `SceneServer` | `architecture` `rules` | high |
+| [#37](037-runtime-entity-map-extensions.md) | Runtime entity map: `action_economy`, `resources`, `conditions` fields | `architecture` `rules` | high |
+| [#38](038-dnd5e-stats-module.md) | `DnD5e.Stats`: derived stat computation module | `rules` `architecture` | high |
+| [#39](039-ruleset-behaviour.md) | `Gibbering.Ruleset` behaviour + `DnD5e` implementation shell | `architecture` | high |
+| [#40](040-rule-modifier-predicate-evaluator.md) | `RuleModifier` struct + predicate evaluator + modifier pipeline | `rules` `architecture` | medium |
+| [#41](041-spell-struct.md) | `Spell` struct completion + `Data.Spells` migration | `rules` `gameplay` | medium |
+| [#42](042-condition-struct.md) | `Condition` struct + runtime application via active effects registry | `rules` `gameplay` | medium |
+| [#43](043-action-economy-tracking.md) | Action economy tracking + `advance_turn` reset | `rules` `gameplay` | medium |
+| [#44](044-spell-slots-resource-pools.md) | Spell slots + class resource pools in `resources` map | `rules` `gameplay` | medium |
+| [#45](045-attack-roll-vs-ac.md) | Attack roll vs AC (replace bare 1d6 in `Rules.attack/3`) | `rules` `gameplay` | high |
+| [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` | low |
+| [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` | low |
+| [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` | low |
 
 ---
 
