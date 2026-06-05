@@ -35,4 +35,18 @@ defmodule Gibbering.Ruleset do
   Returns the updated entity map.
   """
   @callback advance_turn(entity :: map()) :: map()
+
+  @doc """
+  Applies short-rest recovery to a single entity.
+  Restores resources that recharge on a short rest (e.g. Fighter Second Wind, Warlock pact slots).
+  Returns the updated entity map.
+  """
+  @callback short_rest_entity(entity :: map()) :: map()
+
+  @doc """
+  Applies long-rest recovery to a single entity.
+  Restores all spell slots and class resources.
+  Returns the updated entity map.
+  """
+  @callback long_rest_entity(entity :: map()) :: map()
 end

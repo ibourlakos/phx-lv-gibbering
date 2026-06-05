@@ -100,20 +100,23 @@ defmodule Gibbering.Engine.SceneServer do
 
     new_state =
       if selected && {x, y} in state.valid_moves do
-        entity = state.entities[selected] |> Map.put(:x, x) |> Map.put(:y, y)
+        entity = state.entities[selected]
+        cost_ft = chebyshev(entity.x, entity.y, x, y) * 5
 
-        targets =
-          Rules.valid_targets(
-            %{state | entities: Map.put(state.entities, selected, entity)},
-            selected
-          )
-
-        %{
+        moved_state =
           state
-          | entities: Map.put(state.entities, selected, entity),
-            valid_moves: [],
-            selected_id: selected
-        }
+          |> put_in([Access.key(:entities), selected, :x], x)
+          |> put_in([Access.key(:entities), selected, :y], y)
+
+        after_move =
+          case State.consume_movement(moved_state, selected, cost_ft) do
+            {:ok, s} -> s
+            {:error, _} -> moved_state
+          end
+
+        targets = Rules.valid_targets(after_move, selected)
+
+        %{after_move | valid_moves: [], selected_id: selected}
         |> put_targets(targets)
       else
         state
@@ -128,8 +131,10 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:attack, target_id}, _from, state) do
     new_state =
       if state.selected_id do
-        {_result, after_attack, _details} = Rules.attack(state, state.selected_id, target_id)
-        State.advance_turn(after_attack)
+        case Rules.attack(state, state.selected_id, target_id) do
+          {:error, _reason} -> state
+          {_result, after_attack, _details} -> State.advance_turn(after_attack)
+        end
       else
         state
       end
@@ -170,6 +175,8 @@ defmodule Gibbering.Engine.SceneServer do
   # --- Helpers ---
 
   defp put_targets(state, targets), do: Map.put(state, :valid_targets, targets)
+
+  defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
 
   defp persist(state) do
     binary = :erlang.term_to_binary(state, [:compressed])

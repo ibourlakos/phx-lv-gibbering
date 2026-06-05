@@ -2,10 +2,12 @@ defmodule Gibbering.Engine.Rules do
   alias Gibbering.Engine.State
   alias Gibbering.Rulesets.DnD5e.Stats
 
-  @doc "Returns [{x,y}] the entity can move to this turn."
+  @doc "Returns [{x,y}] the entity can move to this turn based on remaining movement."
   def valid_moves(%State{} = state, entity_id) do
     entity = state.entities[entity_id]
-    max_tiles = div(Map.get(entity.stats, "speed", 30), 5)
+    movement_remaining = get_in(entity, [:action_economy, :movement_remaining])
+    speed_ft = movement_remaining || Map.get(entity.stats || %{}, "speed", 30)
+    max_tiles = div(speed_ft, 5)
 
     for x <- (entity.x - max_tiles)..(entity.x + max_tiles),
         y <- (entity.y - max_tiles)..(entity.y + max_tiles),
@@ -33,12 +35,19 @@ defmodule Gibbering.Engine.Rules do
   @doc """
   Resolve a melee attack from attacker against target.
 
-  Returns `{result, new_state, roll_details}` where result is
-  `:hit | :miss | :critical`.
+  Validates that the attacker has an `:action` available, then consumes it.
+  Returns `{result, new_state, roll_details}` where result is `:hit | :miss | :critical`,
+  or `{:error, reason}` when the action economy check fails.
 
   Pass `roll: n` in opts to fix the d20 value (for testing).
   """
   def attack(%State{} = state, attacker_id, target_id, opts \\ []) do
+    with {:ok, state} <- State.consume_action(state, attacker_id, :action) do
+      do_attack(state, attacker_id, target_id, opts)
+    end
+  end
+
+  defp do_attack(%State{} = state, attacker_id, target_id, opts) do
     attacker = state.entities[attacker_id]
     target = state.entities[target_id]
 

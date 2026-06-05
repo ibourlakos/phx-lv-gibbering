@@ -218,6 +218,34 @@ defmodule Gibbering.Engine.RulesTest do
     end
   end
 
+  describe "attack/4 — action economy" do
+    test "returns error when attacker action slot is spent" do
+      state =
+        with_entity(build_state(), hero_id(),
+          action_economy: %{
+            action: :spent,
+            bonus_action: :available,
+            reaction: :available,
+            movement_remaining: 30
+          }
+        )
+
+      assert {:error, :already_spent} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+    end
+
+    test "consumes the action slot on a hit" do
+      state = build_state()
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
+      assert new_state.entities[hero_id()].action_economy.action == :spent
+    end
+
+    test "consumes the action slot on a miss" do
+      state = build_state()
+      {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 1)
+      assert new_state.entities[hero_id()].action_economy.action == :spent
+    end
+  end
+
   describe "attack/4 — state effects" do
     test "reduces target hp on hit" do
       state = build_state()
