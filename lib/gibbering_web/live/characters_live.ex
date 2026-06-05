@@ -25,7 +25,9 @@ defmodule GibberingWeb.CharactersLive do
      |> assign(:characters, Characters.list_for_user(user.id))
      |> assign(:modal, :closed)
      |> assign(:char_draft, %{})
-     |> assign(:modal_errors, [])}
+     |> assign(:modal_errors, [])
+     |> assign(:preview_bg_key, "")
+     |> assign(:preview_appearance, %{})}
   end
 
   # ---------------------------------------------------------------------------
@@ -35,11 +37,32 @@ defmodule GibberingWeb.CharactersLive do
   @impl true
   def handle_event("new_character", _params, socket) do
     {:noreply,
-     socket |> assign(:modal, :identity) |> assign(:char_draft, %{}) |> assign(:modal_errors, [])}
+     socket
+     |> assign(:modal, :identity)
+     |> assign(:char_draft, %{})
+     |> assign(:modal_errors, [])
+     |> assign(:preview_bg_key, "")
+     |> assign(:preview_appearance, %{})}
   end
 
   def handle_event("close_modal", _params, socket) do
     {:noreply, socket |> assign(:modal, :closed) |> assign(:char_draft, %{})}
+  end
+
+  def handle_event("back_step", _params, socket) do
+    {:noreply, assign(socket, :modal, prev_step(socket.assigns.modal))}
+  end
+
+  # ---------------------------------------------------------------------------
+  # Live preview events
+  # ---------------------------------------------------------------------------
+
+  def handle_event("preview_identity", %{"identity" => params}, socket) do
+    {:noreply, assign(socket, :preview_bg_key, params["background"] || "")}
+  end
+
+  def handle_event("preview_appearance", %{"appearance" => params}, socket) do
+    {:noreply, assign(socket, :preview_appearance, params)}
   end
 
   # ---------------------------------------------------------------------------
@@ -322,7 +345,12 @@ defmodule GibberingWeb.CharactersLive do
             </p>
           </div>
 
-          <.render_step modal={@modal} draft={@char_draft} />
+          <.render_step
+            modal={@modal}
+            draft={@char_draft}
+            preview_bg_key={@preview_bg_key}
+            preview_appearance={@preview_appearance}
+          />
         </div>
       </div>
     </div>
@@ -376,15 +404,40 @@ defmodule GibberingWeb.CharactersLive do
          |> Enum.map(fn {k, bg} -> {bg.name, k} end)
          |> Enum.sort_by(&elem(&1, 0)))
 
+    raw_key = assigns[:preview_bg_key]
+
+    bg_key =
+      if raw_key && raw_key != "",
+        do: raw_key,
+        else: assigns.draft["background"] || ""
+
+    bg = if bg_key != "", do: Data.Backgrounds.get(bg_key), else: nil
+
+    bg_skills_str =
+      if bg, do: bg.skill_proficiencies |> Enum.map(&pretty_skill/1) |> Enum.join(", "), else: ""
+
+    bg_tools_str =
+      if bg, do: bg.tool_proficiencies |> Enum.map(&pretty_skill/1) |> Enum.join(", "), else: ""
+
+    bg_equipment_str =
+      if bg,
+        do: bg.starting_equipment |> Enum.map(&pretty_skill/1) |> Enum.join(", "),
+        else: ""
+
     assigns =
       assigns
       |> Map.put(:races, races)
       |> Map.put(:classes, classes)
       |> Map.put(:alignments, alignments)
       |> Map.put(:backgrounds, backgrounds)
+      |> Map.put(:bg, bg)
+      |> Map.put(:bg_skills_str, bg_skills_str)
+      |> Map.put(:bg_tools_str, bg_tools_str)
+      |> Map.put(:bg_equipment_str, bg_equipment_str)
+      |> Map.put(:bg_key, bg_key)
 
     ~H"""
-    <form phx-submit="step_identity">
+    <form phx-submit="step_identity" phx-change="preview_identity">
       <.field label="Character Name" name="identity[name]" type="text" value={@draft["name"] || ""} />
       <.select_field
         label="Race"
@@ -414,8 +467,37 @@ defmodule GibberingWeb.CharactersLive do
         label="Background"
         name="identity[background]"
         options={@backgrounds}
-        value={@draft["background"] || ""}
+        value={@bg_key}
       />
+
+      <div
+        :if={@bg}
+        style="background: #0d0d1e; border: 1px solid #2a3a4a; border-radius: 6px; padding: 0.9rem; margin-bottom: 1rem; font-size: 0.82rem;"
+      >
+        <div style="color: #e8d5a0; font-weight: bold; margin-bottom: 0.3rem;">
+          {@bg.feature.name}
+        </div>
+        <div style="color: #8090a8; line-height: 1.4; margin-bottom: 0.6rem;">
+          {@bg.feature.description}
+        </div>
+        <div :if={@bg_skills_str != ""} style="margin-bottom: 0.25rem;">
+          <span style="color: #5a6070;">Skills: </span>
+          <span style="color: #a0c0a0;">{@bg_skills_str}</span>
+        </div>
+        <div :if={@bg_tools_str != ""} style="margin-bottom: 0.25rem;">
+          <span style="color: #5a6070;">Tools: </span>
+          <span style="color: #a0c0a0;">{@bg_tools_str}</span>
+        </div>
+        <div :if={@bg.languages > 0} style="margin-bottom: 0.25rem;">
+          <span style="color: #5a6070;">Languages: </span>
+          <span style="color: #a0c0a0;">+{@bg.languages} of your choice</span>
+        </div>
+        <div :if={@bg_equipment_str != ""}>
+          <span style="color: #5a6070;">Equipment: </span>
+          <span style="color: #a0c0a0;">{@bg_equipment_str}</span>
+        </div>
+      </div>
+
       <.modal_buttons back={false} />
     </form>
     """
@@ -458,7 +540,10 @@ defmodule GibberingWeb.CharactersLive do
       {"Violet", "violet"}
     ]
 
-    app = assigns.draft["appearance"] || %{}
+    # Merge saved draft values with live preview (live overrides on change)
+    draft_app = assigns.draft["appearance"] || %{}
+    live_app = assigns[:preview_appearance] || %{}
+    app = Map.merge(draft_app, live_app)
 
     assigns =
       assigns
@@ -470,7 +555,7 @@ defmodule GibberingWeb.CharactersLive do
       |> Map.put(:app, app)
 
     ~H"""
-    <form phx-submit="step_appearance">
+    <form phx-submit="step_appearance" phx-change="preview_appearance">
       <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
         <div style="flex: 1;">
           <.select_field
@@ -504,12 +589,29 @@ defmodule GibberingWeb.CharactersLive do
             value={@app["eye_color"] || "brown"}
           />
         </div>
-        <div style="display: flex; align-items: center; justify-content: center; width: 100px;">
-          <.character_sprite
-            race={@draft["race"] || "human"}
-            class_name={@draft["class"] || "fighter"}
-            size={96}
-          />
+
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100px; gap: 0.75rem;">
+          <div style={"transform: scale(#{body_type_scale(@app["body_type"] || "medium")}); transition: transform 0.15s;"}>
+            <.character_sprite
+              race={@draft["race"] || "human"}
+              class_name={@draft["class"] || "fighter"}
+              size={96}
+            />
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <div
+              title={"Hair: #{@app["hair_color"] || "brown"}"}
+              style={"width: 14px; height: 14px; border-radius: 50%; background: #{hair_color_css(@app["hair_color"] || "brown")}; border: 1px solid #4a4a6a;"}
+            />
+            <div
+              title={"Skin: #{@app["skin_tone"] || "tan"}"}
+              style={"width: 14px; height: 14px; border-radius: 50%; background: #{skin_tone_css(@app["skin_tone"] || "tan")}; border: 1px solid #4a4a6a;"}
+            />
+            <div
+              title={"Eyes: #{@app["eye_color"] || "brown"}"}
+              style={"width: 14px; height: 14px; border-radius: 50%; background: #{eye_color_css(@app["eye_color"] || "brown")}; border: 1px solid #4a4a6a;"}
+            />
+          </div>
         </div>
       </div>
       <.modal_buttons back={true} />
@@ -674,6 +776,13 @@ defmodule GibberingWeb.CharactersLive do
           Cancel
         </button>
         <button
+          phx-click="back_step"
+          type="button"
+          style="background: #2a2a4a; color: #a0a8b8; border: 1px solid #4a4a6a; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer;"
+        >
+          ← Back
+        </button>
+        <button
           phx-click="create_character"
           type="button"
           style="background: #2a6a3a; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 4px; cursor: pointer; font-size: 1rem;"
@@ -759,7 +868,7 @@ defmodule GibberingWeb.CharactersLive do
     <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
       <button
         type="button"
-        phx-click="close_modal"
+        phx-click="back_step"
         style="background: #2a2a4a; color: #a0a8b8; border: 1px solid #4a4a6a; padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer;"
       >
         ← Back
@@ -890,4 +999,41 @@ defmodule GibberingWeb.CharactersLive do
       list -> hd(list)
     end
   end
+
+  defp prev_step(:appearance), do: :identity
+  defp prev_step(:scores), do: :appearance
+  defp prev_step(:proficiencies), do: :scores
+  defp prev_step(:personality), do: :proficiencies
+  defp prev_step(:review), do: :personality
+  defp prev_step(step), do: step
+
+  @hair_colors_css %{
+    "black" => "#222222",
+    "brown" => "#7b4a2d",
+    "blonde" => "#d4b483",
+    "red" => "#b24a2a",
+    "white" => "#e8e8e8",
+    "silver" => "#a0a8b8"
+  }
+  @skin_tones_css %{
+    "pale" => "#f0e0d0",
+    "fair" => "#ddb896",
+    "tan" => "#c8956c",
+    "brown" => "#8b5e3c",
+    "dark" => "#4a2e1a"
+  }
+  @eye_colors_css %{
+    "brown" => "#7b4a2d",
+    "blue" => "#3a6a9b",
+    "green" => "#3a7b4a",
+    "grey" => "#8090a0",
+    "amber" => "#c87a20",
+    "violet" => "#7b3a9b"
+  }
+  @body_type_scales %{"light" => "0.85", "medium" => "1.0", "heavy" => "1.15"}
+
+  defp hair_color_css(c), do: Map.get(@hair_colors_css, c, "#7b4a2d")
+  defp skin_tone_css(t), do: Map.get(@skin_tones_css, t, "#c8956c")
+  defp eye_color_css(c), do: Map.get(@eye_colors_css, c, "#7b4a2d")
+  defp body_type_scale(t), do: Map.get(@body_type_scales, t, "1.0")
 end
