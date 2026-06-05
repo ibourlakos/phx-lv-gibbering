@@ -1,6 +1,7 @@
 # #51 · Character collection LiveView
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** gameplay, rendering
 

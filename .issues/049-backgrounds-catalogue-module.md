@@ -1,6 +1,7 @@
 # #49 · Backgrounds catalogue module
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-05
 **Priority:** high
 **Tags:** rules, gameplay
 
