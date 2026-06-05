@@ -148,6 +148,15 @@ docker compose up -d
 
 ---
 
+## Other Environments
+
+- [docs/qa-setup.md](qa-setup.md) — QA environment (placeholder; see issue [#62](../.issues/062-multi-environment-infra.md))
+- [docs/prod-setup.md](prod-setup.md) — Production environment (placeholder; see issue [#62](../.issues/062-multi-environment-infra.md))
+
+> **Security note for non-dev environments:** the `/admin` route scope must be restricted to an internal network or VPN at the reverse proxy level. See the Security section in each environment doc.
+
+---
+
 ## Environment Variables
 
 | Variable | Default (dev) | Notes |
