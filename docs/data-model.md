@@ -115,13 +115,16 @@ The `stats` map is intentionally schemaless so any ruleset can store what it nee
 
 ---
 
-## Runtime Layer (GameServer in-memory)
+## Runtime Layer (SceneServer in-memory)
 
-`Gibbering.Engine.GameServer` holds one `%Gibbering.Engine.State{}` struct per running campaign, keyed by `campaign_id` in a `Registry`.
+`Gibbering.Engine.SceneServer` (planned rename of `GameServer` — see issue #36) holds one
+`%Gibbering.Engine.State{}` struct per running scene, keyed by `campaign_id` in a `Registry`.
 
 ### `%Gibbering.Engine.State{}`
 
-Hydrated from the DB on `GameServer.init/1` via `State.from_campaign/1`. **Not persisted back to DB between turns** (see open issue #12).
+Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not persisted back to DB between turns** (see open issue #12).
+
+#### Structural fields (current)
 
 | Field | Type | Notes |
 |---|---|---|
@@ -136,13 +139,22 @@ Hydrated from the DB on `GameServer.init/1` via `State.from_campaign/1`. **Not p
 | `turn_order` | `[integer]` | hero entity ids in sequence |
 | `active_index` | integer | index into `turn_order` |
 
+#### Planned additions (issues #36, #37)
+
+| Field | Type | Notes |
+|---|---|---|
+| `phase` | `scene_phase()` | `:lobby \| :exploration \| :initiative_rolling \| :in_combat \| :paused` |
+| `previous_phase` | `scene_phase() \| nil` | restored on `:paused → <previous>` transition |
+| `active_effects` | `[active_effect()]` | scene-level effects registry — all conditions, buffs, ability states |
+| `event_log` | `[event()]` | append-only; structural dependency for predicate evaluation |
+
 #### Runtime tile map shape
 
 ```elixir
 %{texture: "grass", walkable: true, decoration: "dead_tree" | nil}
 ```
 
-#### Runtime entity map shape
+#### Runtime entity map shape (current)
 
 ```elixir
 %{
@@ -160,13 +172,41 @@ Hydrated from the DB on `GameServer.init/1` via `State.from_campaign/1`. **Not p
 }
 ```
 
-Note: the runtime entity map uses **atom keys** for structural fields (`name`, `x`, `hp`, …) but **string keys** inside `stats` (inherited from the DB JSONB decode). This asymmetry is intentional — structural fields are accessed hot by the engine with atom key pattern matching; stats are accessed by string key as arbitrary ruleset data.
+#### Runtime entity map — planned extensions (issue #37)
+
+```elixir
+%{
+  # ... existing fields above ...
+  level: integer,
+  temp_hp: integer,
+  ability_modifiers: %{string() => integer()},   # pre-computed at hydration
+  proficiency_bonus: integer,
+  armor_class: integer,
+  resources: %{
+    spell_slots: %{integer() => integer()},   # level => remaining
+    # class-specific: second_wind, action_surge, ki_points, rage_charges, …
+  },
+  conditions: [condition_ref()],             # projected from scene active_effects registry
+  action_economy: %{
+    action:            :available | :spent,
+    bonus_action:      :available | :spent,
+    reaction:          :available | :spent,
+    movement_remaining: integer()
+  }
+}
+```
+
+Atom keys for structural fields, string keys inside `stats` (inherited from DB JSONB decode).
+This asymmetry is intentional — structural fields are accessed hot by the engine via atom-key
+pattern matching; stats are arbitrary ruleset data accessed by string key.
 
 ---
 
 ## Static Reference Data (in-memory, no DB)
 
-These modules define constant D&D 5e data. They are consulted only during lobby character setup — the engine never calls them at game time.
+These modules define constant D&D 5e data. Current modules are consulted only during lobby
+character setup. Planned modules (`RuleModifier`, `Condition`, `Spell`) will be queried by the
+rules engine at resolution time.
 
 ### `Gibbering.Data.Races`
 
@@ -219,6 +259,125 @@ Key: atom (e.g. `:fire_bolt`, `:magic_missile`). Value shape:
 }
 ```
 
+See issue #41 for the planned migration to `%Gibbering.Rulesets.DnD5e.Spell{}` struct below.
+
+---
+
+### Planned: `Gibbering.Rulesets.DnD5e.Spell` (issue #41)
+
+Replaces the flat map in `Data.Spells`:
+
+```elixir
+defstruct [:key, :name, :level, :school, :casting_time, :range, :components,
+           :duration, :target_area, :effect, :tags]
+# casting_time: {:action} | {:bonus_action} | {:reaction, trigger_pred} | {:minutes, n}
+# components:   %{verbal: bool, somatic: bool, material: bool, material_desc: string | nil}
+# duration:     %{type: :instantaneous | {:rounds, n} | {:minutes, n}, is_concentration: bool}
+# target_area:  %{shape: :single | :cone | :cube | :sphere | :line, size_feet: integer | nil}
+# effect:       %{type: :damage | :healing | :condition | :utility, ...}
+```
+
+---
+
+### Planned: `Gibbering.Rulesets.DnD5e.RuleModifier` (issue #40)
+
+The engine's rule representation — no DB, pure Elixir data:
+
+```elixir
+defstruct [:id, :name, :description, :source, :trigger, :predicate, :effect,
+           stacking: :additive, min_level: 1]
+# trigger:    {:on_attack, :melee | :ranged | :any} | {:passive} | {:on_damage_received, type}
+#             | {:on_saving_throw, ability} | {:on_condition_applied, cond} | {:on_being_attacked}
+# predicate:  closed-vocabulary expression — see docs/predicate-vocabulary.md
+# effect:     {:add_damage_dice, "1d6", :any} | {:grant_advantage, :attack_rolls}
+#             | {:set_speed, 0} | {:grant_resistance} | {:add_bonus, :ac, n}
+#             | {:override_ac_formula, formula} | {:force_critical_hit}
+# stacking:   :additive | :named_bonus | :binary_flag
+```
+
+Pipeline: `collect_modifiers(entity, trigger, context)` → `[%RuleModifier{}]` from race traits +
+class features + active conditions. `apply_modifiers(roll_context, modifiers)` folds each
+effect in layering order. No `if entity.class == "rogue"` branches in the rules engine.
+
+---
+
+### Planned: `Gibbering.Rulesets.DnD5e.Condition` (issue #42)
+
+Static definition of every SRD condition — no DB:
+
+```elixir
+defstruct [:id, :name, :description, :modifiers]
+# modifiers: [%RuleModifier{}]
+# Example — Paralyzed:
+#   modifiers: [
+#     %RuleModifier{trigger: :passive,           effect: {:set_speed, 0}},
+#     %RuleModifier{trigger: :on_being_attacked, predicate: {:entity_adjacent_to_target},
+#                   effect: {:force_critical_hit}},
+#     %RuleModifier{trigger: :passive,           effect: {:grant_disadvantage, :attack_rolls}},
+#     %RuleModifier{trigger: :passive,           effect: {:grant_disadvantage, :ability_checks}}
+#   ]
+```
+
+Conditions are applied as `ActiveEffect` entries in the scene registry; the `Condition` module
+is the static definition consulted when building those entries.
+
+---
+
+### Planned: `Gibbering.Rulesets.DnD5e.Stats` (issue #38)
+
+Pure stat computation — no DB, no process:
+
+```elixir
+def ability_modifier(score),      do: Integer.floor_div(score - 10, 2)
+def proficiency_bonus(level),     do: div(level - 1, 4) + 2
+def spell_dc(entity),             do: 8 + proficiency_bonus(entity.level) + spellcasting_modifier(entity)
+def armor_class(entity),          do: # reads stats["equipped_armor"] or defaults 10 + dex_mod
+def attack_bonus(entity, type),   do: # proficiency_bonus + relevant ability modifier
+def initial_resources(entity),    do: # builds resources map from class + level
+```
+
+Called by `State.from_campaign/1` to hydrate `ability_modifiers`, `proficiency_bonus`,
+`armor_class` onto each entity map at session start.
+
+---
+
+### Tactical item model in `stats` JSONB (issue #46)
+
+Full inventory is deferred. Equipped weapon and armor live in the `stats` JSONB map:
+
+```elixir
+"equipped_weapon" => %{
+  "key"           => "longsword",
+  "damage_dice"   => "1d8",
+  "damage_type"   => "slashing",
+  "attack_ability"=> "strength",
+  "properties"    => ["versatile"]
+},
+"equipped_armor" => %{
+  "key"           => "chain_mail",
+  "base_ac"       => 16,
+  "armor_category"=> "heavy",
+  "stealth_disadv"=> true
+}
+```
+
+`DnD5e.Stats.armor_class/1` reads these keys. Forward-compatible: replace with a proper
+Ecto schema when full inventory is needed.
+
+---
+
+### `Gibbering.Ruleset` behaviour (issue #39, closes #14)
+
+All `DnD5e.*` modules live under `Gibbering.Rulesets.DnD5e.*` and the top-level module
+implements the `Gibbering.Ruleset` behaviour, providing a single entry point for the engine:
+
+```elixir
+@callback collect_modifiers(entity_map(), trigger(), eval_context()) :: [RuleModifier.t()]
+@callback initial_resources(entity_map()) :: resources_map()
+@callback initial_action_economy(entity_map()) :: action_economy_map()
+@callback advance_turn(State.t()) :: State.t()
+```
+
 ---
 
 ## Layer Relationships
@@ -235,9 +394,17 @@ users
               State.from_campaign/1
                     │
                     ▼
-          %Engine.State{}          ← held by GameServer (one per campaign)
-          ├── grid_tiles map       (atom-keyed, {x,y} tuple keys)
-          └── entities map         (atom-keyed structural fields + string stats)
+          %Engine.State{}            ← held by SceneServer (one per campaign)
+          ├── phase                  (scene phase state machine)
+          ├── grid_tiles map         (atom-keyed, {x,y} tuple keys)
+          ├── entities map           (atom-keyed structural + string stats + planned extensions)
+          ├── active_effects         (scene-level registry — conditions, buffs, ability states)
+          └── event_log              (append-only; predicate evaluator structural dep)
+
+Static reference data (pure Elixir modules, no DB, no process):
+  Gibbering.Data.{Races, Classes, Spells}           ← lobby use only (current)
+  Gibbering.Rulesets.DnD5e.{Stats, Spell,
+    RuleModifier, Condition}                         ← planned; engine queries at resolution time
 ```
 
 ---
@@ -246,6 +413,20 @@ users
 
 | Issue | Gap |
 |---|---|
-| [#12](../.issues/012-persistence-strategy.md) | Game state (`Engine.State`) is never written back to DB — a GameServer restart resets all positions and HP |
-| [#19](../.issues/019-lobby-edits-stale-gameserver.md) | Lobby edits persist to DB entities but a running GameServer holds a stale snapshot |
-| [#24](../.issues/024-grid-data-jsonb.md) | `grid_tiles` uses one row per cell; planned migration to a single JSONB column on `campaigns` |
+| [#12](../.issues/012-persistence-strategy.md) | `Engine.State` never written back to DB — SceneServer restart resets all positions and HP |
+| [#19](../.issues/019-lobby-edits-stale-gameserver.md) | Lobby edits persist to DB but a running SceneServer holds a stale snapshot |
+| [#24](../.issues/024-grid-data-jsonb.md) | `grid_tiles` uses one row per cell; planned migration to JSONB on `campaigns` |
+| [#35](../.issues/035-entity-schema-level-temp-hp.md) | `entities` table missing `level`, `temp_hp`, `challenge_rating`, `xp_reward` columns |
+| [#36](../.issues/036-scene-phase-state-machine.md) | `GameServer` has no phase field; no scene state machine; rename to `SceneServer` |
+| [#37](../.issues/037-runtime-entity-map-extensions.md) | Runtime entity map missing `action_economy`, `resources`, `conditions` extensions |
+| [#38](../.issues/038-dnd5e-stats-module.md) | No derived stat computation (`ability_modifier`, `proficiency_bonus`, `armor_class`) |
+| [#39](../.issues/039-ruleset-behaviour.md) | No `Gibbering.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
+| [#40](../.issues/040-rule-modifier-predicate-evaluator.md) | No `RuleModifier` struct or predicate evaluator — rules hardcoded in `Rules` module |
+| [#41](../.issues/041-spell-struct.md) | `Data.Spells` is a flat map; no `%Spell{}` struct with structured fields |
+| [#42](../.issues/042-condition-struct.md) | No `%Condition{}` struct; conditions not applied to entities at runtime |
+| [#43](../.issues/043-action-economy-tracking.md) | No action economy tracking; no `advance_turn` reset |
+| [#44](../.issues/044-spell-slots-resource-pools.md) | No spell slot or class resource tracking |
+| [#45](../.issues/045-attack-roll-vs-ac.md) | `Rules.attack/3` rolls 1d6 with no attack roll, no AC check, no modifiers |
+| [#46](../.issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
+| [#47](../.issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
+| [#48](../.issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |
