@@ -6,48 +6,48 @@ The sequence we follow for every change — from first idea to merged commit.
 
 ## Overview
 
+The full workflow is a composable chain. **Enter at the earliest stage where you can write a crisp next step.**
+
 ```
-Brainstorm → Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
+[A] Brainstorm → Settle → Triage ─┐
+[B]                      Issue ───┼──► Branch → Red → Green → Refactor → Verify → Commit
+[C]                     Branch ───┘
 ```
 
-Not every change needs every phase. A typo fix skips everything up to Branch. A new mechanic
-runs all nine. Use judgement; the gates are the non-negotiables.
+| Entry point | When to use |
+|---|---|
+| **[A] Brainstorm** | Design space is fuzzy — you cannot write acceptance criteria yet |
+| **[B] Issue** | Problem is understood — you can scope it and write acceptance criteria |
+| **[C] Branch** | Issue is already open and clearly scoped — just start coding |
+
+Every path converges at **Branch** and follows the same code phases from there. The gates (Legal, Architecture, Discovery) are non-negotiable at any entry point.
 
 ---
 
-## Phase 0 — Brainstorm
+## Brainstorm phase
 
-**What:** Free-form exploration of an idea before it's ready to become an issue. Use this when the problem space is fuzzy, the approach is unknown, or multiple systems are involved and you don't yet know what questions to ask.
+> Detail and counter rules: [docs/brainstorming/README.md](../docs/brainstorming/README.md)
 
-**When to open a brainstorm file:**
-- The idea spans more than one subsystem and you can't write acceptance criteria yet.
-- You need to map a domain (e.g. D&D 5e conditions) before designing a data model.
-- You're evaluating competing approaches and need to think out loud first.
+Use a brainstorm file when the problem is too wide or ambiguous to scope into an issue. Brainstorming maps trade-offs, domain knowledge, and design space before committing to a direction.
 
-**Rules:**
-- Create a file in `docs/brainstorming/` using the current counter value: `<NN>-<slug>.md` (zero-padded to two digits).
-- Increment `docs/brainstorming/counter` after creating the file. Never reuse a number.
-- Add a row to the brainstorming log table in [CLAUDE.md](../CLAUDE.md).
-- A brainstorm file lives until its questions are either answered (→ extracted as issues) or dead (→ deleted). It is not a permanent document.
+### Lifecycle
 
-**Output:** A `docs/brainstorming/<NN>-<slug>.md` file. When the file's open questions have been extracted as issues, delete the file.
+| Step | Action | Commit |
+|---|---|---|
+| **Open** | Create `docs/brainstorming/<NN>-<slug>.md`, increment counter, add row to CLAUDE.md | `chore: open brainstorm #N` |
+| **Explore** | Discussion sessions — populate the doc; accumulate open questions | *(no commit required per session)* |
+| **Settle** | Work through each open question; every question resolves to a **decision** (documented) or an **explicit deferral** (noted with reason) | *(no commit required)* |
+| **Triage** | Each settled decision becomes one or more issues in `.issues/`; update the doc to reference them | *(bundle with next step)* |
+| **Commit** | Brainstorm doc (updated) + all new issue files in one atomic commit | `chore: brainstorm #N → issues #X–Y` |
+| **Close** | Once the brainstorm's issues are all closed or deferred, delete the file, remove from CLAUDE.md | `chore: close brainstorm #N` |
 
----
+**Gate before Commit:** No open question may remain without either a decision or an explicit deferral with reason. A partially triage brainstorm is not committed.
 
-## Phase 1 — Explore
-
-**What:** Talk through the idea. Identify unknowns, risks, and legal exposure before writing a line.
-
-**Prompts:**
-- Does this touch any licensed asset, data source, or dependency? → Legal gate (see below).
-- Does this cross more than two modules or change a shared interface? → Architecture discussion first.
-- Is this well-understood enough to write acceptance criteria? → If not, open a discovery issue and stop.
-
-**Output:** Either "ready to implement" or a discovery issue in `.issues/`.
+**Gate before Close:** All issues extracted from this brainstorm are closed or deferred in `.issues/`.
 
 ---
 
-## Phase 2 — Issue
+## Issue phase
 
 **What:** Open or update a `.issues/` entry with acceptance criteria that can become test cases.
 
@@ -61,7 +61,7 @@ runs all nine. Use judgement; the gates are the non-negotiables.
 
 ---
 
-## Phase 3 — Branch
+## Branch phase
 
 **What:** Create a branch that matches the change type.
 
@@ -76,7 +76,7 @@ Branch naming is in [docs/git-policy.md](git-policy.md). Never commit directly t
 
 ---
 
-## Phase 4 — Red (Write tests first)
+## Red phase — write tests first
 
 **What:** Write failing tests *before* any production code. This phase ends when `mix test` shows red.
 
@@ -94,7 +94,7 @@ It's fine to add tests at multiple layers for the same change. Start low, add hi
 
 ### BDD framing
 
-Name tests in terms of behavior, not implementation:
+Name tests in terms of behaviour, not implementation:
 
 ```elixir
 # Good — describes what the game does
@@ -104,7 +104,7 @@ test "active hero cannot move to a tile occupied by another hero"
 test "occupied_by_hero? returns true for same coordinates"
 ```
 
-The acceptance criteria from Phase 1 should map 1-to-1 to test descriptions.
+The acceptance criteria from the Issue phase should map 1-to-1 to test descriptions.
 
 ### New integration test file?
 
@@ -119,13 +119,13 @@ Copy the `use` + `import` header from the nearest similar file.
 
 ---
 
-## Phase 5 — Green (Implement)
+## Green phase — implement
 
 **What:** Write the minimum production code to make the failing tests pass.
 
 **Rules:**
 - No gold-plating. If the tests don't require it, don't write it.
-- No cleanup of surrounding code. That's Phase 5.
+- No cleanup of surrounding code. That's the Refactor phase.
 - If you need a new DB migration, write it before the code it supports.
 - If you add a dependency, check the legal gate first.
 
@@ -133,9 +133,9 @@ Copy the `use` + `import` header from the nearest similar file.
 
 ---
 
-## Phase 6 — Refactor
+## Refactor phase
 
-**What:** Improve the code without changing behavior.
+**What:** Improve the code without changing behaviour.
 
 - Rename for clarity, extract a well-named helper, remove duplication.
 - Tests must stay green throughout. Run `mix test` after each change.
@@ -145,7 +145,7 @@ Copy the `use` + `import` header from the nearest similar file.
 
 ---
 
-## Phase 7 — Verify
+## Verify phase
 
 **What:** Run the pre-commit gate. This must pass before any commit.
 
@@ -165,7 +165,7 @@ Fix every failure before moving on. A red precommit is a hard stop.
 
 ---
 
-## Phase 8 — Commit & Close
+## Commit & Close phase
 
 **What:** Commit the work and close the issue.
 
@@ -183,14 +183,14 @@ Commit rules are in [docs/git-policy.md](git-policy.md).
 
 After the commit:
 1. Update the issue: change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`.
-2. Remove the row from the open issues table in `.issues/README.md`.
+2. Move the row from Open to Closed in `.issues/README.md`.
 3. Commit as `chore: close issue #N`.
 
 **Output:** Branch is ahead of `main` with clean commits. Issue is closed.
 
 ---
 
-## Decision Gates
+## Decision gates
 
 These are non-negotiable checkpoints that can pause any phase.
 
@@ -214,16 +214,16 @@ These are non-negotiable checkpoints that can pause any phase.
 
 ---
 
-## Quick Reference
+## Quick reference
 
-| Phase | Command / artifact | Done when |
+| Phase | Artifact / command | Done when |
 |---|---|---|
-| Brainstorm | `docs/brainstorming/<NN>-<slug>.md` | Open questions extracted as issues |
-| Explore | Conversation | Decision made |
+| Brainstorm → Settle | `docs/brainstorming/<NN>-<slug>.md` | All questions decided or explicitly deferred |
+| Triage → Commit | `.issues/<N>-<slug>.md` files + brainstorm doc | One atomic commit; no dangling open questions |
 | Issue | `.issues/<N>-<slug>.md` + `counter` | Acceptance criteria written |
 | Branch | `git checkout -b <type>/<name>` | Branch exists |
 | Red | `mix test` | Tests fail for the right reason |
 | Green | `mix test` | All tests pass |
 | Refactor | `mix test` | Still passing, code is clean |
 | Verify | `mix precommit` | Exits 0 |
-| Commit | `git commit` + close issue | Committed, issue closed |
+| Commit & Close | `git commit` + issue closed | Committed, issue status updated |
