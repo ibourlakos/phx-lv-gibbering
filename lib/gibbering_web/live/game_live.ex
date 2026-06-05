@@ -1,7 +1,7 @@
 defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.Engine.{GameServer, State}
+  alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Campaigns
 
   @impl true
@@ -18,10 +18,10 @@ defmodule GibberingWeb.GameLive do
       case ensure_game_server(game_id) do
         :ok ->
           if connected?(socket) do
-            Phoenix.PubSub.subscribe(Gibbering.PubSub, GameServer.topic(game_id))
+            Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
           end
 
-          state = GameServer.get_state(game_id)
+          state = SceneServer.get_state(game_id)
 
           {:ok,
            socket
@@ -42,7 +42,7 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("select_entity", %{"id" => id}, socket) do
     id = String.to_integer(id)
-    new_state = GameServer.select_entity(socket.assigns.game_id, id)
+    new_state = SceneServer.select_entity(socket.assigns.game_id, id)
     targets = Gibbering.Engine.Rules.valid_targets(new_state, id)
     {:noreply, assign(socket, game_state: new_state, valid_targets: targets)}
   end
@@ -50,7 +50,7 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("move", %{"x" => x, "y" => y}, socket) do
     new_state =
-      GameServer.move_entity(socket.assigns.game_id, String.to_integer(x), String.to_integer(y))
+      SceneServer.move_entity(socket.assigns.game_id, String.to_integer(x), String.to_integer(y))
 
     active = State.active_hero_id(new_state)
     targets = if active, do: Gibbering.Engine.Rules.valid_targets(new_state, active), else: []
@@ -66,7 +66,7 @@ defmodule GibberingWeb.GameLive do
     attacker_id = state.selected_id
     attacker_name = if attacker_id, do: state.entities[attacker_id].name, else: "?"
 
-    new_state = GameServer.attack_entity(socket.assigns.game_id, target_id)
+    new_state = SceneServer.attack_entity(socket.assigns.game_id, target_id)
 
     damage =
       if Map.has_key?(new_state.entities, target_id) do
@@ -94,7 +94,7 @@ defmodule GibberingWeb.GameLive do
 
   @impl true
   def handle_event("end_turn", _, socket) do
-    new_state = GameServer.end_turn(socket.assigns.game_id)
+    new_state = SceneServer.end_turn(socket.assigns.game_id)
     {:noreply, assign(socket, game_state: new_state, valid_targets: [])}
   end
 
@@ -104,10 +104,10 @@ defmodule GibberingWeb.GameLive do
   end
 
   # ---------------------------------------------------------------------------
-  # GameServer lifecycle
+  # SceneServer lifecycle
   # ---------------------------------------------------------------------------
 
-  # Uses GenServer.start/3 (not start_link) so a crash in GameServer.init does
+  # Uses GenServer.start/3 (not start_link) so a crash in SceneServer.init does
   # not propagate an exit signal to the LiveView process.
   defp ensure_game_server(game_id) do
     case Registry.lookup(Gibbering.GameRegistry, game_id) do
@@ -115,7 +115,7 @@ defmodule GibberingWeb.GameLive do
         :ok
 
       [] ->
-        case GenServer.start(Gibbering.Engine.GameServer, game_id,
+        case GenServer.start(Gibbering.Engine.SceneServer, game_id,
                name: {:via, Registry, {Gibbering.GameRegistry, game_id}}
              ) do
           {:ok, _pid} -> :ok

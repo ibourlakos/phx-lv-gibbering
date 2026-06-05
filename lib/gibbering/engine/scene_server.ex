@@ -1,4 +1,4 @@
-defmodule Gibbering.Engine.GameServer do
+defmodule Gibbering.Engine.SceneServer do
   use GenServer
 
   alias Gibbering.{Repo, Campaign}
@@ -24,6 +24,12 @@ defmodule Gibbering.Engine.GameServer do
     do: GenServer.call(via(game_id), {:attack, target_id})
 
   def end_turn(game_id), do: GenServer.call(via(game_id), :end_turn)
+
+  def transition_phase(game_id, new_phase),
+    do: GenServer.call(via(game_id), {:transition_phase, new_phase, false})
+
+  def force_transition_phase(game_id, new_phase),
+    do: GenServer.call(via(game_id), {:transition_phase, new_phase, true})
 
   def topic(game_id), do: @topic_prefix <> to_string(game_id)
 
@@ -64,7 +70,7 @@ defmodule Gibbering.Engine.GameServer do
 
     new_state =
       if selected && {x, y} in state.valid_moves do
-        entity = Map.put(state.entities[selected], :x, x) |> Map.put(:y, y)
+        entity = state.entities[selected] |> Map.put(:x, x) |> Map.put(:y, y)
 
         targets =
           Rules.valid_targets(
@@ -78,7 +84,6 @@ defmodule Gibbering.Engine.GameServer do
             valid_moves: [],
             selected_id: selected
         }
-        |> then(fn s -> %{s | valid_moves: [], selected_id: selected} end)
         |> put_targets(targets)
       else
         state
@@ -107,6 +112,25 @@ defmodule Gibbering.Engine.GameServer do
     new_state = State.advance_turn(state)
     broadcast(new_state)
     {:reply, new_state, new_state}
+  end
+
+  @impl true
+  def handle_call({:transition_phase, new_phase, force}, _from, state) do
+    result =
+      if force do
+        State.force_transition_phase(state, new_phase)
+      else
+        State.transition_phase(state, new_phase)
+      end
+
+    case result do
+      {:ok, new_state} ->
+        broadcast(new_state)
+        {:reply, :ok, new_state}
+
+      {:error, _reason} = err ->
+        {:reply, err, state}
+    end
   end
 
   # --- Helpers ---
