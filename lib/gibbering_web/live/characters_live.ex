@@ -425,16 +425,17 @@ defmodule GibberingWeb.CharactersLive do
         else: ""
 
     assigns =
-      assigns
-      |> Map.put(:races, races)
-      |> Map.put(:classes, classes)
-      |> Map.put(:alignments, alignments)
-      |> Map.put(:backgrounds, backgrounds)
-      |> Map.put(:bg, bg)
-      |> Map.put(:bg_skills_str, bg_skills_str)
-      |> Map.put(:bg_tools_str, bg_tools_str)
-      |> Map.put(:bg_equipment_str, bg_equipment_str)
-      |> Map.put(:bg_key, bg_key)
+      assign(assigns,
+        races: races,
+        classes: classes,
+        alignments: alignments,
+        backgrounds: backgrounds,
+        bg: bg,
+        bg_skills_str: bg_skills_str,
+        bg_tools_str: bg_tools_str,
+        bg_equipment_str: bg_equipment_str,
+        bg_key: bg_key
+      )
 
     ~H"""
     <form phx-submit="step_identity" phx-change="preview_identity">
@@ -546,13 +547,14 @@ defmodule GibberingWeb.CharactersLive do
     app = Map.merge(draft_app, live_app)
 
     assigns =
-      assigns
-      |> Map.put(:body_types, body_types)
-      |> Map.put(:hair_styles, hair_styles)
-      |> Map.put(:hair_colors, hair_colors)
-      |> Map.put(:skin_tones, skin_tones)
-      |> Map.put(:eye_colors, eye_colors)
-      |> Map.put(:app, app)
+      assign(assigns,
+        body_types: body_types,
+        hair_styles: hair_styles,
+        hair_colors: hair_colors,
+        skin_tones: skin_tones,
+        eye_colors: eye_colors,
+        app: app
+      )
 
     ~H"""
     <form phx-submit="step_appearance" phx-change="preview_appearance">
@@ -621,7 +623,7 @@ defmodule GibberingWeb.CharactersLive do
 
   def render_step(%{modal: :scores} = assigns) do
     stats = ~w(strength dexterity constitution intelligence wisdom charisma)
-    assigns = Map.put(assigns, :stats, stats)
+    assigns = assign(assigns, :stats, stats)
 
     ~H"""
     <form phx-submit="step_scores">
@@ -659,12 +661,13 @@ defmodule GibberingWeb.CharactersLive do
     saving_throws = assigns.draft["saving_throw_proficiencies"] || []
 
     assigns =
-      assigns
-      |> Map.put(:required, required)
-      |> Map.put(:choices, choices)
-      |> Map.put(:bg_skills, bg_skills)
-      |> Map.put(:bg_tools, bg_tools)
-      |> Map.put(:saving_throws, saving_throws)
+      assign(assigns,
+        required: required,
+        choices: choices,
+        bg_skills: bg_skills,
+        bg_tools: bg_tools,
+        saving_throws: saving_throws
+      )
 
     ~H"""
     <form phx-submit="step_proficiencies">
@@ -695,7 +698,7 @@ defmodule GibberingWeb.CharactersLive do
     bg_key = assigns.draft["background"]
     bg = if bg_key && bg_key != "", do: Data.Backgrounds.get(bg_key), else: nil
 
-    assigns = Map.put(assigns, :bg, bg)
+    assigns = assign(assigns, :bg, bg)
 
     ~H"""
     <form phx-submit="step_personality">
