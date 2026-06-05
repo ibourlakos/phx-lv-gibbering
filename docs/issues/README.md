@@ -54,12 +54,10 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#26](026-fog-of-war-ownership.md) | Fog-of-war ownership: ruleset or engine? | `discovery` `architecture` `rendering` | medium |
 | [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
-| [#30](030-conditions-status-effects-model.md) | Conditions and status effects engine model | `rules` `architecture` | medium |
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
 | [#41](041-spell-struct.md) | `Spell` struct completion + `Data.Spells` migration | `rules` `gameplay` | medium |
-| [#42](042-condition-struct.md) | `Condition` struct + runtime application via active effects registry | `rules` `gameplay` | medium |
 | [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` | low |
 | [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` | low |
 | [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` | low |
@@ -124,6 +122,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#31](031-rule-modifier-predicate-decomposition.md) | Trigger/predicate/effect decomposition for RuleModifier | `discovery` `rules` `architecture` |
 | [#37](037-runtime-entity-map-extensions.md) | Runtime entity map: `action_economy`, `resources`, `conditions` fields | `architecture` `rules` |
 | [#40](040-rule-modifier-predicate-evaluator.md) | `RuleModifier` struct + predicate evaluator + modifier pipeline | `rules` `architecture` |
+| [#30](030-conditions-status-effects-model.md) | Conditions and status effects engine model | `rules` `architecture` |
+| [#42](042-condition-struct.md) | `Condition` struct + runtime application via active effects registry | `rules` `gameplay` |
 | [#43](043-action-economy-tracking.md) | Action economy tracking + `advance_turn` reset | `rules` `gameplay` |
 | [#44](044-spell-slots-resource-pools.md) | Spell slots + class resource pools in `resources` map | `rules` `gameplay` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |

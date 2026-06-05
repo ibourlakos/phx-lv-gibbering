@@ -340,6 +340,72 @@ defmodule Gibbering.Engine.StateTest do
     end
   end
 
+  describe "apply_condition/4" do
+    test "adds an active_effect entry for the entity" do
+      state = build_state()
+      assert {:ok, new_state} = State.apply_condition(state, hero_id(), :poisoned)
+      assert [effect] = new_state.active_effects
+      assert effect.entity_id == hero_id()
+      assert effect.condition_id == :poisoned
+      assert :poisoned in effect.conditions
+    end
+
+    test "appends the condition key to entity.conditions" do
+      state = build_state()
+      {:ok, new_state} = State.apply_condition(state, hero_id(), :poisoned)
+      assert :poisoned in new_state.entities[hero_id()].conditions
+    end
+
+    test "applying the same condition twice does not duplicate entity.conditions" do
+      state = build_state()
+      {:ok, s1} = State.apply_condition(state, hero_id(), :poisoned)
+      {:ok, s2} = State.apply_condition(s1, hero_id(), :poisoned)
+      assert Enum.count(s2.entities[hero_id()].conditions, &(&1 == :poisoned)) == 1
+    end
+
+    test "accepts source and duration opts" do
+      state = build_state()
+
+      {:ok, new_state} =
+        State.apply_condition(state, hero_id(), :blinded, source: :spell, duration: 3)
+
+      [effect] = new_state.active_effects
+      assert effect.source == :spell
+      assert effect.duration == 3
+    end
+
+    test "does not affect other entities" do
+      state = build_state()
+      {:ok, new_state} = State.apply_condition(state, hero_id(), :poisoned)
+      assert new_state.entities[monster_id()].conditions == []
+    end
+  end
+
+  describe "remove_condition/3" do
+    test "removes the active_effect and clears entity.conditions" do
+      state = build_state()
+      {:ok, with_cond} = State.apply_condition(state, hero_id(), :poisoned)
+      assert {:ok, cleared} = State.remove_condition(with_cond, hero_id(), :poisoned)
+      assert cleared.active_effects == []
+      refute :poisoned in cleared.entities[hero_id()].conditions
+    end
+
+    test "removing a non-existent condition is a no-op" do
+      state = build_state()
+      assert {:ok, same} = State.remove_condition(state, hero_id(), :blinded)
+      assert same.active_effects == []
+    end
+
+    test "removing one condition does not affect other conditions on the same entity" do
+      state = build_state()
+      {:ok, s1} = State.apply_condition(state, hero_id(), :poisoned)
+      {:ok, s2} = State.apply_condition(s1, hero_id(), :blinded)
+      {:ok, s3} = State.remove_condition(s2, hero_id(), :poisoned)
+      refute :poisoned in s3.entities[hero_id()].conditions
+      assert :blinded in s3.entities[hero_id()].conditions
+    end
+  end
+
   describe "apply_long_rest/2" do
     test "restores spell slots to initial values" do
       state =

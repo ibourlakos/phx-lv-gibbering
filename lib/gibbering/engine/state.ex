@@ -33,7 +33,9 @@ defmodule Gibbering.Engine.State do
     # scene_phase() | nil — phase before entering :paused
     previous_phase: nil,
     # module implementing Gibbering.Ruleset behaviour
-    ruleset: Gibbering.Rulesets.DnD5e
+    ruleset: Gibbering.Rulesets.DnD5e,
+    # [%{id, entity_id, condition_id, conditions, source, duration}]
+    active_effects: []
   ]
 
   def from_campaign(%Campaign{} = campaign) do
@@ -93,7 +95,8 @@ defmodule Gibbering.Engine.State do
       active_index: 0,
       phase: :lobby,
       previous_phase: nil,
-      ruleset: Gibbering.Rulesets.DnD5e
+      ruleset: Gibbering.Rulesets.DnD5e,
+      active_effects: []
     }
   end
 
@@ -214,6 +217,57 @@ defmodule Gibbering.Engine.State do
        state
        | entities: Map.put(state.entities, entity_id, state.ruleset.long_rest_entity(entity))
      }}
+  end
+
+  @doc """
+  Applies `condition_id` to `entity_id`.
+  Adds an ActiveEffect entry to `state.active_effects` and appends the key to
+  `entity.conditions`. Opts: `source:` (default `:unknown`), `duration:` integer
+  turns or nil for permanent.
+  Returns `{:ok, new_state}`.
+  """
+  def apply_condition(%__MODULE__{} = state, entity_id, condition_id, opts \\ []) do
+    effect = %{
+      id: System.unique_integer([:positive]),
+      entity_id: entity_id,
+      condition_id: condition_id,
+      conditions: [condition_id],
+      source: Keyword.get(opts, :source, :unknown),
+      duration: Keyword.get(opts, :duration, nil)
+    }
+
+    new_entities =
+      Map.update!(state.entities, entity_id, fn entity ->
+        Map.update(entity, :conditions, [condition_id], &Enum.uniq([condition_id | &1]))
+      end)
+
+    {:ok, %{state | active_effects: [effect | state.active_effects], entities: new_entities}}
+  end
+
+  @doc """
+  Removes all active effects for `condition_id` from `entity_id`.
+  Removes the key from `entity.conditions` unless another active effect
+  still lists it. Returns `{:ok, new_state}`.
+  """
+  def remove_condition(%__MODULE__{} = state, entity_id, condition_id) do
+    new_effects =
+      Enum.reject(state.active_effects, fn ae ->
+        ae.entity_id == entity_id and ae.condition_id == condition_id
+      end)
+
+    still_active =
+      Enum.any?(new_effects, fn ae ->
+        ae.entity_id == entity_id and condition_id in (ae.conditions || [])
+      end)
+
+    new_entities =
+      Map.update!(state.entities, entity_id, fn entity ->
+        if still_active,
+          do: entity,
+          else: Map.update(entity, :conditions, [], &List.delete(&1, condition_id))
+      end)
+
+    {:ok, %{state | active_effects: new_effects, entities: new_entities}}
   end
 
   def advance_turn(%__MODULE__{} = state) do
