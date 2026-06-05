@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 49 (see `counter`)
+**Next issue number:** 60 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -63,6 +63,15 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` | low |
 | [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` | low |
 | [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` | low |
+| [#49](049-backgrounds-catalogue-module.md) | Backgrounds catalogue module (`Data.Backgrounds`) | `rules` `gameplay` | high |
+| [#50](050-character-schema-and-context.md) | Character schema and context (player-owned template) | `architecture` `gameplay` | high |
+| [#51](051-character-collection-liveview.md) | Character collection LiveView (`/characters` roster) | `gameplay` `rendering` | high |
+| [#52](052-character-creation-modal.md) | Character creation multi-step modal | `gameplay` `rendering` | high |
+| [#53](053-composable-svg-appearance-system.md) | Composable SVG appearance system | `rendering` `architecture` | high |
+| [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` | medium |
+| [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` | medium |
+| [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | `architecture` `rules` | medium |
+| [#57](057-dm-character-adjustment-ui.md) | DM character adjustment UI (campaign prep) | `gameplay` `rendering` | medium |
 
 ---
 
@@ -70,6 +79,8 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#58](058-point-buy-ability-scores.md) | Point buy ability score method | `gameplay` `rules` | low |
+| [#59](059-character-export-import.md) | Character export/import with versioned serialization | `architecture` `gameplay` | low |
 
 ---
 

@@ -34,6 +34,7 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 |---|---|---|
 | [`docs/brainstorming/06-investigate-initial-high-level-dnd-semantics.md`](docs/brainstorming/06-investigate-initial-high-level-dnd-semantics.md) | D&D 5e semantic graph: actors, spells, items, conditions, action resolution | exploration |
 | [`docs/brainstorming/07-player-character-creation.md`](docs/brainstorming/07-player-character-creation.md) | Player character creation flow and personal character collection | exploration |
+| [`docs/brainstorming/08-isometric-rendering-depth-viewport.md`](docs/brainstorming/08-isometric-rendering-depth-viewport.md) | Viewport zoom/pan, elevation (Z axis), volumetric spell effects | exploration |
 
 ## Dev Setup (short form)
 
