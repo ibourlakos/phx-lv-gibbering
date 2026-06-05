@@ -28,12 +28,11 @@ Any unresolved legal issue is a blocker. See [docs/legal.md](docs/legal.md) for 
 
 ## Brainstorming Log
 
-| File | Topic |
-|---|---|
-| `.claude/brainstorming/01-initial-gemini.md` | Stack selection, engine naming, SVG approach, SRD pipeline |
-| `.claude/brainstorming/02-splitting-the-grimoire.md` | Engine vs. ruleset separation; Ruleset behaviour pattern |
-| `.claude/brainstorming/03-the-proving-grounds.md` | Prototype v0 — what's built, what was validated, what's missing |
-| `.claude/brainstorming/04-dst-aesthetic-sprites.md` | Visual overhaul: DST aesthetic, 2:1 dimetric isometric, SVG sprite pipeline |
+Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See the [README](docs/brainstorming/README.md) for counter rules and workflow.
+
+| File | Topic | Status |
+|---|---|---|
+| [`docs/brainstorming/06-investigate-initial-high-level-dnd-semantics.md`](docs/brainstorming/06-investigate-initial-high-level-dnd-semantics.md) | D&D 5e semantic graph: actors, spells, items, conditions, action resolution | exploration |
 
 ## Dev Setup (short form)
 

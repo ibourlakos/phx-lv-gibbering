@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 25 (see `counter`)
+**Next issue number:** 31 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -42,6 +42,12 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#20](020-spells-defined-not-castable.md) | Spells are defined but not castable | `gameplay` `rules` | medium |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
+| [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons and stat panels | `discovery` `architecture` | medium |
+| [#26](026-fog-of-war-ownership.md) | Fog-of-war ownership: ruleset or engine? | `discovery` `architecture` `rendering` | medium |
+| [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` | low |
+| [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
+| [#29](029-srd-data-ingestion-pipeline.md) | SRD data ingestion pipeline | `architecture` `ops` | medium |
+| [#30](030-conditions-status-effects-model.md) | Conditions and status effects engine model | `rules` `architecture` | medium |
 
 ---
 
