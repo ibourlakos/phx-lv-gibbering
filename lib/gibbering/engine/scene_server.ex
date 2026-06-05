@@ -1,8 +1,9 @@
 defmodule Gibbering.Engine.SceneServer do
   use GenServer
 
+  import Ecto.Query
   alias Gibbering.{Repo, Campaign}
-  alias Gibbering.Engine.{State, Rules}
+  alias Gibbering.Engine.{State, Rules, GameSession}
 
   @topic_prefix "game:"
 
@@ -56,12 +57,21 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def init(game_id) do
-    campaign =
-      Campaign
-      |> Repo.get!(game_id)
-      |> Repo.preload([:tiles, :entities])
+    state =
+      case Repo.one(from s in GameSession, where: s.game_id == ^game_id) do
+        %GameSession{state: binary} ->
+          :erlang.binary_to_term(binary, [:safe])
 
-    {:ok, State.from_campaign(campaign)}
+        nil ->
+          campaign =
+            Campaign
+            |> Repo.get!(game_id)
+            |> Repo.preload([:tiles, :entities])
+
+          State.from_campaign(campaign)
+      end
+
+    {:ok, state}
   end
 
   @impl true
@@ -79,6 +89,7 @@ defmodule Gibbering.Engine.SceneServer do
         state
       end
 
+    persist(new_state)
     broadcast(new_state)
     {:reply, new_state, new_state}
   end
@@ -108,6 +119,7 @@ defmodule Gibbering.Engine.SceneServer do
         state
       end
 
+    persist(new_state)
     broadcast(new_state)
     {:reply, new_state, new_state}
   end
@@ -122,6 +134,7 @@ defmodule Gibbering.Engine.SceneServer do
         state
       end
 
+    persist(new_state)
     broadcast(new_state)
     {:reply, new_state, new_state}
   end
@@ -129,6 +142,7 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call(:end_turn, _from, state) do
     new_state = State.advance_turn(state)
+    persist(new_state)
     broadcast(new_state)
     {:reply, new_state, new_state}
   end
@@ -144,6 +158,7 @@ defmodule Gibbering.Engine.SceneServer do
 
     case result do
       {:ok, new_state} ->
+        persist(new_state)
         broadcast(new_state)
         {:reply, :ok, new_state}
 
@@ -155,6 +170,25 @@ defmodule Gibbering.Engine.SceneServer do
   # --- Helpers ---
 
   defp put_targets(state, targets), do: Map.put(state, :valid_targets, targets)
+
+  defp persist(state) do
+    binary = :erlang.term_to_binary(state, [:compressed])
+    game_id = state.campaign_id
+
+    case Repo.one(from s in GameSession, where: s.game_id == ^game_id) do
+      nil ->
+        %GameSession{}
+        |> GameSession.changeset(%{game_id: game_id, state: binary})
+        |> Repo.insert!(on_conflict: :nothing)
+
+      existing ->
+        existing
+        |> GameSession.changeset(%{state: binary})
+        |> Repo.update!()
+    end
+
+    state
+  end
 
   defp broadcast(state) do
     Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), {:state_updated, state})
