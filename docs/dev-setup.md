@@ -22,7 +22,7 @@ That's it. Elixir, Erlang, and Node run inside containers.
 
 ```bash
 # 1. Clone and enter the repo
-git clone <repo-url>
+git clone git@github.com:ibourlakos/phx-lv-gibbering.git
 cd phx-lv-gibbering
 
 # 2. Activate Git LFS (once per machine)

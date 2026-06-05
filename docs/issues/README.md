@@ -39,7 +39,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#73](073-static-reference-data-to-db.md) | Migrate static reference data to DB tables | `architecture` `ops` | medium |
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
 | [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` | medium |
-| [#1](001-establish-git-remote.md) | Establish git remote | `ops` | high |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` | medium |
 | [#3](003-saveload-order.md) | Save/load: before or after Ruleset behaviour split | `discovery` `architecture` | medium |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
@@ -116,6 +115,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#1](001-establish-git-remote.md) | Establish git remote | `ops` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
