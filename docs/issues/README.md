@@ -55,7 +55,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#30](030-conditions-status-effects-model.md) | Conditions and status effects engine model | `rules` `architecture` | medium |
-| [#31](031-rule-modifier-predicate-decomposition.md) | Trigger/predicate/effect decomposition for RuleModifier | `discovery` `rules` `architecture` | high |
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
@@ -126,6 +125,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#14](014-ruleset-behaviour-vs-protocol.md) | `Gibbering.Ruleset`: behaviour vs protocol | `discovery` `architecture` |
 | [#36](036-scene-phase-state-machine.md) | Scene phase state machine in `SceneServer` | `architecture` `rules` |
 | [#39](039-ruleset-behaviour.md) | `Gibbering.Ruleset` behaviour + `DnD5e` implementation shell | `architecture` |
+| [#31](031-rule-modifier-predicate-decomposition.md) | Trigger/predicate/effect decomposition for RuleModifier | `discovery` `rules` `architecture` |
 | [#4](004-fog-vs-sprites.md) | Fog of war vs sprites: which comes first | `discovery` |
 | [#5](005-isometric-rendering.md) | Isometric rendering overhaul (2:1 dimetric) | `rendering` |
 | [#17](017-wizard-speed-nonstandard.md) | Wizard speed is non-standard (25 ft instead of 30 ft) | `bug` `rules` |
