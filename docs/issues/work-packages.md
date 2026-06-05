@@ -75,6 +75,19 @@ _Bridges character-creation work (closed) to active play. Depends on WP-A schema
 
 ---
 
+## WP-G — Integration Test Coverage
+_Fills the remaining coverage gaps left after the pure-unit pass. #76 and #77 are independent; #78 depends on WP-D._
+
+| # | Title | Priority |
+|---|---|---|
+| #76 | `Accounts` context integration tests | medium |
+| #77 | `Catalogue.Cache` GenServer tests | medium |
+| #78 | `GameLive` event handler integration tests | medium |
+
+#76 and #77 can be done any time (no phase dependency). #78 requires WP-D (#54–#56) because event handlers need a live `CampaignCharacter` and a running `GameServer` backed by DB entities.
+
+---
+
 ## WP-E — Admin App
 _Mostly independent of the rules engine. Can be done in parallel with WP-C._
 
@@ -128,8 +141,8 @@ _No strict phase placement. Resolve in parallel or as needed._
 ## Suggested sequencing
 
 ```
-WP-A  →  WP-B  →  WP-C  →  WP-D (frontend finish)
-              ↘  WP-E  (parallel with WP-C)
+WP-A  →  WP-B  →  WP-C  →  WP-D  →  WP-G (#78)
+              ↘  WP-E  (parallel with WP-C)        ↗ WP-G (#76, #77 can start earlier)
               ↘  WP-F discoveries (parallel; rendering code gates on WP-C shape)
 ```
 
