@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 60 (see `counter`)
+**Next issue number:** 63 (see `counter`)
 
 One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -63,11 +63,6 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` | low |
 | [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` | low |
 | [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` | low |
-| [#49](049-backgrounds-catalogue-module.md) | Backgrounds catalogue module (`Data.Backgrounds`) | `rules` `gameplay` | high |
-| [#50](050-character-schema-and-context.md) | Character schema and context (player-owned template) | `architecture` `gameplay` | high |
-| [#51](051-character-collection-liveview.md) | Character collection LiveView (`/characters` roster) | `gameplay` `rendering` | high |
-| [#52](052-character-creation-modal.md) | Character creation multi-step modal | `gameplay` `rendering` | high |
-| [#53](053-composable-svg-appearance-system.md) | Composable SVG appearance system | `rendering` `architecture` | high |
 | [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` | medium |
 | [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` | medium |
 | [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | `architecture` `rules` | medium |
@@ -81,6 +76,9 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 |---|---|---|---|
 | [#58](058-point-buy-ability-scores.md) | Point buy ability score method | `gameplay` `rules` | low |
 | [#59](059-character-export-import.md) | Character export/import with versioned serialization | `architecture` `gameplay` | low |
+| [#60](060-umbrella-restructure-for-admin-app.md) | Umbrella restructure for independent admin app deployment | `discovery` `architecture` `ops` | low |
+| [#61](061-catalogue-entry-versioning.md) | Catalogue entry versioning | `discovery` `architecture` | low |
+| [#62](062-multi-environment-infra.md) | Multi-environment infrastructure (QA + production) | `ops` `architecture` | low |
 
 ---
 
@@ -98,3 +96,8 @@ One file per issue: `.issues/<N>-<slug>.md`. This file is the index only — no 
 | [#35](035-entity-schema-level-temp-hp.md) | Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward` | `architecture` `rules` |
 | [#38](038-dnd5e-stats-module.md) | `DnD5e.Stats`: derived stat computation module | `rules` `architecture` |
 | [#45](045-attack-roll-vs-ac.md) | Attack roll vs AC (replace bare 1d6 in `Rules.attack/3`) | `rules` `gameplay` |
+| [#49](049-backgrounds-catalogue-module.md) | Backgrounds catalogue module (`Data.Backgrounds`) | `rules` `gameplay` |
+| [#50](050-character-schema-and-context.md) | Character schema and context (player-owned template) | `architecture` `gameplay` |
+| [#51](051-character-collection-liveview.md) | Character collection LiveView (`/characters` roster) | `gameplay` `rendering` |
+| [#52](052-character-creation-modal.md) | Character creation multi-step modal | `gameplay` `rendering` |
+| [#53](053-composable-svg-appearance-system.md) | Composable SVG appearance system | `rendering` `architecture` |

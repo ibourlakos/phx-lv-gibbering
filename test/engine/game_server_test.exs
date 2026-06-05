@@ -99,7 +99,8 @@ defmodule Gibbering.Engine.GameServerTest do
       new_state = GameServer.attack_entity(game_id, monster_id)
 
       surviving_hp = get_in(new_state.entities, [monster_id, :hp])
-      assert surviving_hp == nil or surviving_hp < original_hp
+      # A miss is valid; HP can only decrease or stay the same — never increase from an attack.
+      assert surviving_hp == nil or surviving_hp <= original_hp
     end
 
     test "advances turn after attack" do
