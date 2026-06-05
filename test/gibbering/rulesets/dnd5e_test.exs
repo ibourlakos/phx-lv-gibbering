@@ -15,8 +15,12 @@ defmodule Gibbering.Rulesets.DnD5eTest do
   end
 
   describe "initial_resources/1" do
-    test "non-spellcasting classes return empty map" do
-      assert DnD5e.initial_resources(entity(class: "fighter")) == %{}
+    test "fighter gets second_wind at level 1" do
+      assert DnD5e.initial_resources(entity(class: "fighter")) == %{second_wind: 1}
+    end
+
+    test "unknown class returns empty map" do
+      assert DnD5e.initial_resources(entity(class: "artificer")) == %{}
     end
 
     test "wizard gets spell slots" do
@@ -44,6 +48,38 @@ defmodule Gibbering.Rulesets.DnD5eTest do
                "#{class} should have spell_slots"
       end
     end
+
+    test "wizard level 5 gets 4/3/2 spell slots" do
+      resources = DnD5e.initial_resources(entity(class: "wizard", level: 5))
+      assert resources.spell_slots == %{1 => 4, 2 => 3, 3 => 2}
+    end
+
+    test "paladin level 1 gets no spell slots" do
+      resources = DnD5e.initial_resources(entity(class: "paladin", level: 1))
+      assert resources.spell_slots == %{}
+    end
+
+    test "paladin level 5 gets 4/2 spell slots" do
+      resources = DnD5e.initial_resources(entity(class: "paladin", level: 5))
+      assert resources.spell_slots == %{1 => 4, 2 => 2}
+    end
+
+    test "barbarian gets rage_charges" do
+      resources = DnD5e.initial_resources(entity(class: "barbarian", level: 1))
+      assert resources.rage_charges == 2
+    end
+
+    test "fighter level 2 gets second_wind and action_surge" do
+      resources = DnD5e.initial_resources(entity(class: "fighter", level: 2))
+      assert resources.second_wind == 1
+      assert resources.action_surge == 1
+    end
+
+    test "warlock gets pact_slot_level alongside pact_slots" do
+      resources = DnD5e.initial_resources(entity(class: "warlock", level: 5))
+      assert resources.pact_slots == 2
+      assert resources.pact_slot_level == 3
+    end
   end
 
   describe "initial_action_economy/1" do
@@ -66,6 +102,44 @@ defmodule Gibbering.Rulesets.DnD5eTest do
     test "falls back to 30 when speed is absent" do
       ae = DnD5e.initial_action_economy(%{class: "fighter"})
       assert ae.movement_remaining == 30
+    end
+  end
+
+  describe "short_rest_entity/1" do
+    test "restores Fighter second_wind and action_surge" do
+      e =
+        entity(class: "fighter", level: 2)
+        |> Map.put(:resources, %{second_wind: 0, action_surge: 0})
+
+      refreshed = DnD5e.short_rest_entity(e)
+      assert refreshed.resources.second_wind == 1
+      assert refreshed.resources.action_surge == 1
+    end
+
+    test "restores Warlock pact slots" do
+      e =
+        entity(class: "warlock", level: 3)
+        |> Map.put(:resources, %{pact_slots: 0, pact_slot_level: 2})
+
+      refreshed = DnD5e.short_rest_entity(e)
+      assert refreshed.resources.pact_slots == 2
+    end
+
+    test "is a no-op for non-short-rest classes" do
+      e = entity(class: "wizard", level: 3) |> Map.put(:resources, %{spell_slots: %{1 => 0}})
+      assert DnD5e.short_rest_entity(e) == e
+    end
+  end
+
+  describe "long_rest_entity/1" do
+    test "restores all resources to initial values" do
+      e =
+        entity(class: "wizard", level: 3)
+        |> Map.put(:resources, %{spell_slots: %{1 => 0, 2 => 0}})
+
+      refreshed = DnD5e.long_rest_entity(e)
+      assert refreshed.resources.spell_slots[1] == 4
+      assert refreshed.resources.spell_slots[2] == 2
     end
   end
 

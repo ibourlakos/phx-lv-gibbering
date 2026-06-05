@@ -210,7 +210,7 @@ defmodule Gibbering.Engine.StateTest do
       assert entity.conditions == []
     end
 
-    test "non-spellcasting entities get empty resources map" do
+    test "fighter entities get second_wind resource" do
       entities = [
         %Gibbering.Entity{
           id: 5,
@@ -242,8 +242,130 @@ defmodule Gibbering.Engine.StateTest do
       }
 
       entity = State.from_campaign(campaign).entities[5]
-      assert entity.resources == %{}
+      assert entity.resources == %{second_wind: 1}
       assert entity.conditions == []
+    end
+  end
+
+  describe "consume_action/3" do
+    test "marks an available slot as spent" do
+      state = build_state()
+      assert {:ok, new_state} = State.consume_action(state, hero_id(), :action)
+      assert new_state.entities[hero_id()].action_economy.action == :spent
+    end
+
+    test "returns error when slot is already spent" do
+      state =
+        with_entity(build_state(), hero_id(),
+          action_economy: %{
+            action: :spent,
+            bonus_action: :available,
+            reaction: :available,
+            movement_remaining: 30
+          }
+        )
+
+      assert {:error, :already_spent} = State.consume_action(state, hero_id(), :action)
+    end
+
+    test "consuming bonus_action does not affect action slot" do
+      state = build_state()
+      {:ok, new_state} = State.consume_action(state, hero_id(), :bonus_action)
+      assert new_state.entities[hero_id()].action_economy.action == :available
+      assert new_state.entities[hero_id()].action_economy.bonus_action == :spent
+    end
+  end
+
+  describe "consume_movement/3" do
+    test "deducts feet from movement_remaining" do
+      state = build_state()
+      assert {:ok, new_state} = State.consume_movement(state, hero_id(), 15)
+      assert new_state.entities[hero_id()].action_economy.movement_remaining == 15
+    end
+
+    test "returns error when insufficient movement" do
+      state =
+        with_entity(build_state(), hero_id(),
+          action_economy: %{
+            action: :available,
+            bonus_action: :available,
+            reaction: :available,
+            movement_remaining: 5
+          }
+        )
+
+      assert {:error, :insufficient_movement} = State.consume_movement(state, hero_id(), 10)
+    end
+
+    test "allows exact spend to zero" do
+      state =
+        with_entity(build_state(), hero_id(),
+          action_economy: %{
+            action: :available,
+            bonus_action: :available,
+            reaction: :available,
+            movement_remaining: 10
+          }
+        )
+
+      assert {:ok, new_state} = State.consume_movement(state, hero_id(), 10)
+      assert new_state.entities[hero_id()].action_economy.movement_remaining == 0
+    end
+  end
+
+  describe "consume_resource/3" do
+    test "decrements a class resource charge" do
+      state = with_entity(build_state(), hero_id(), resources: %{second_wind: 1})
+      assert {:ok, new_state} = State.consume_resource(state, hero_id(), :second_wind)
+      assert new_state.entities[hero_id()].resources.second_wind == 0
+    end
+
+    test "returns error when no charges remain" do
+      state = with_entity(build_state(), hero_id(), resources: %{second_wind: 0})
+      assert {:error, :no_charges} = State.consume_resource(state, hero_id(), :second_wind)
+    end
+  end
+
+  describe "consume_spell_slot/3" do
+    test "decrements a spell slot at the given level" do
+      state = with_entity(build_state(), hero_id(), resources: %{spell_slots: %{1 => 3, 2 => 2}})
+      assert {:ok, new_state} = State.consume_spell_slot(state, hero_id(), 1)
+      assert new_state.entities[hero_id()].resources.spell_slots[1] == 2
+      assert new_state.entities[hero_id()].resources.spell_slots[2] == 2
+    end
+
+    test "returns error when no slots at the requested level" do
+      state = with_entity(build_state(), hero_id(), resources: %{spell_slots: %{1 => 0}})
+      assert {:error, :no_slots} = State.consume_spell_slot(state, hero_id(), 1)
+    end
+  end
+
+  describe "apply_long_rest/2" do
+    test "restores spell slots to initial values" do
+      state =
+        with_entity(build_state(), hero_id(),
+          resources: %{spell_slots: %{1 => 0}},
+          class: "wizard",
+          level: 1
+        )
+
+      assert {:ok, new_state} = State.apply_long_rest(state, hero_id())
+      assert new_state.entities[hero_id()].resources.spell_slots[1] == 2
+    end
+  end
+
+  describe "apply_short_rest/2" do
+    test "restores Fighter second_wind and action_surge" do
+      state =
+        with_entity(build_state(), hero_id(),
+          resources: %{second_wind: 0, action_surge: 0},
+          class: "fighter",
+          level: 2
+        )
+
+      assert {:ok, new_state} = State.apply_short_rest(state, hero_id())
+      assert new_state.entities[hero_id()].resources.second_wind == 1
+      assert new_state.entities[hero_id()].resources.action_surge == 1
     end
   end
 end

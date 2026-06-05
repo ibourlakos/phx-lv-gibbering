@@ -10,7 +10,7 @@ defmodule Gibbering.GameFixtures do
   """
 
   alias Gibbering.Engine.State
-  alias Gibbering.Rulesets.DnD5e.Stats
+  alias Gibbering.Rulesets.{DnD5e, DnD5e.Stats}
   alias Gibbering.{Repo, Campaign, GridTile, Entity}
 
   # ---------------------------------------------------------------------------
@@ -98,9 +98,17 @@ defmodule Gibbering.GameFixtures do
       }
     }
 
+    hydrate = fn base ->
+      base
+      |> Map.put(:action_economy, DnD5e.initial_action_economy(base))
+      |> Map.put(:resources, DnD5e.initial_resources(base))
+      |> Map.put(:conditions, [])
+      |> Stats.hydrate_entity()
+    end
+
     entities = %{
-      @hero_id => Stats.hydrate_entity(hero_base),
-      @monster_id => Stats.hydrate_entity(monster_base)
+      @hero_id => hydrate.(hero_base),
+      @monster_id => hydrate.(monster_base)
     }
 
     base = %State{
