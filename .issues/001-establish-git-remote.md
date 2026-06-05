@@ -1,12 +1,9 @@
-# Ops Issues
+# #1 · Establish git remote
 
----
-
-## #1 · Establish git remote
-
-**Status:** open  
-**Opened:** 2026-06-03  
-**Priority:** high  
+**Status:** open
+**Opened:** 2026-06-03
+**Priority:** high
+**Tags:** ops
 
 Connect the local repository to a remote so the team can push and collaborate.
 

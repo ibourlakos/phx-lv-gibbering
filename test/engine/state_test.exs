@@ -30,8 +30,10 @@ defmodule Gibbering.Engine.StateTest do
         name: "Ranger",
         type: "hero",
         sprite: "ranger.png",
-        x: 1, y: 1,
-        hp: 8, max_hp: 8,
+        x: 1,
+        y: 1,
+        hp: 8,
+        max_hp: 8,
         tags: [],
         stats: %{"speed" => 30}
       }
@@ -68,8 +70,10 @@ defmodule Gibbering.Engine.StateTest do
           name: "Warrior",
           type: "hero",
           sprite: "warrior.png",
-          x: 0, y: 0,
-          hp: 20, max_hp: 20,
+          x: 0,
+          y: 0,
+          hp: 20,
+          max_hp: 20,
           tags: [],
           stats: %{"speed" => 25},
           campaign_id: 1
@@ -90,8 +94,8 @@ defmodule Gibbering.Engine.StateTest do
 
       assert state.map_width == 2
       assert state.map_height == 1
-      assert state.grid_tiles[{0, 0}] == %{texture: "grass", walkable: true}
-      assert state.grid_tiles[{1, 0}] == %{texture: "stone", walkable: false}
+      assert state.grid_tiles[{0, 0}] == %{texture: "grass", walkable: true, decoration: nil}
+      assert state.grid_tiles[{1, 0}] == %{texture: "stone", walkable: false, decoration: nil}
       assert state.entities[10].name == "Warrior"
       assert state.turn_order == [10]
       assert state.active_index == 0
@@ -100,18 +104,41 @@ defmodule Gibbering.Engine.StateTest do
     test "only heroes are included in turn_order" do
       entities = [
         %Gibbering.Entity{
-          id: 1, name: "Hero", type: "hero", sprite: "h.png",
-          x: 0, y: 0, hp: 10, max_hp: 10, tags: [], stats: %{}, campaign_id: 1
+          id: 1,
+          name: "Hero",
+          type: "hero",
+          sprite: "h.png",
+          x: 0,
+          y: 0,
+          hp: 10,
+          max_hp: 10,
+          tags: [],
+          stats: %{},
+          campaign_id: 1
         },
         %Gibbering.Entity{
-          id: 2, name: "Orc", type: "monster", sprite: "o.png",
-          x: 1, y: 0, hp: 5, max_hp: 5, tags: [], stats: %{}, campaign_id: 1
+          id: 2,
+          name: "Orc",
+          type: "monster",
+          sprite: "o.png",
+          x: 1,
+          y: 0,
+          hp: 5,
+          max_hp: 5,
+          tags: [],
+          stats: %{},
+          campaign_id: 1
         }
       ]
 
       campaign = %Gibbering.Campaign{
-        id: 1, name: "T", map_width: 2, map_height: 1, tile_size: 32,
-        tiles: [], entities: entities
+        id: 1,
+        name: "T",
+        map_width: 2,
+        map_height: 1,
+        tile_size: 32,
+        tiles: [],
+        entities: entities
       }
 
       state = State.from_campaign(campaign)

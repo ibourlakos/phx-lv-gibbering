@@ -65,12 +65,18 @@ defmodule Gibbering.Engine.GameServer do
     new_state =
       if selected && {x, y} in state.valid_moves do
         entity = Map.put(state.entities[selected], :x, x) |> Map.put(:y, y)
-        targets = Rules.valid_targets(%{state | entities: Map.put(state.entities, selected, entity)}, selected)
 
-        %{state |
-          entities: Map.put(state.entities, selected, entity),
-          valid_moves: [],
-          selected_id: selected
+        targets =
+          Rules.valid_targets(
+            %{state | entities: Map.put(state.entities, selected, entity)},
+            selected
+          )
+
+        %{
+          state
+          | entities: Map.put(state.entities, selected, entity),
+            valid_moves: [],
+            selected_id: selected
         }
         |> then(fn s -> %{s | valid_moves: [], selected_id: selected} end)
         |> put_targets(targets)
@@ -86,9 +92,8 @@ defmodule Gibbering.Engine.GameServer do
   def handle_call({:attack, target_id}, _from, state) do
     new_state =
       if state.selected_id do
-        state
-        |> Rules.attack(state.selected_id, target_id)
-        |> State.advance_turn()
+        {_result, after_attack, _details} = Rules.attack(state, state.selected_id, target_id)
+        State.advance_turn(after_attack)
       else
         state
       end

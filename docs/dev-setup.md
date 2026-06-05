@@ -131,13 +131,20 @@ docker system prune -f
 docker system prune -f --volumes
 ```
 
-When rebuilding after dependency changes:
+When rebuilding after dependency changes (`mix.lock` updated):
 
 ```bash
-# Rebuild the app image without cache
-docker compose build --no-cache app
+# Rebuild the app image (recompiles deps for dev + test inside the image layer)
+docker compose build app
+docker compose up -d
+
+# If you get permission errors from stale volumes after a UID-changing rebuild:
+docker compose down
+docker volume rm phx-lv-gibbering_deps_cache phx-lv-gibbering_build_cache
 docker compose up -d
 ```
+
+> **Why deps are compiled into the image**: `Dockerfile.dev` runs `MIX_ENV=dev mix deps.compile` and `MIX_ENV=test mix deps.compile` so that named volumes (`build_cache`) are seeded with pre-compiled deps on first creation. This avoids a long recompilation step inside the container. The tradeoff is a slower `docker compose build` after `mix.lock` changes.
 
 ---
 
@@ -148,4 +155,4 @@ docker compose up -d
 | `DATABASE_URL` | `ecto://gibbering:gibbering@db/gibbering_dev` | `db` = Docker service name |
 | `SECRET_KEY_BASE` | see `.env.example` | Generate a real one with `mix phx.gen.secret` |
 | `PHX_HOST` | `localhost` | Change for production |
-| `MIX_ENV` | `dev` | Set to `test` for test runs |
+| `MIX_ENV` | (not set — Mix defaults to `dev` for server, `test` for `mix test`) | Do not set this globally; let Mix choose per task |

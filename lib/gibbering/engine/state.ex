@@ -1,38 +1,53 @@
 defmodule Gibbering.Engine.State do
   alias Gibbering.Campaign
+  alias Gibbering.Rulesets.DnD5e.Stats
 
   defstruct [
     :campaign_id,
     :map_width,
     :map_height,
     :tile_size,
-    :grid_tiles,   # %{{x, y} => %{texture: string, walkable: bool}}
-    :entities,     # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
-    :selected_id,  # integer | nil
-    :valid_moves,  # [{x, y}]
-    :turn_order,   # [entity_id] — hero ids in sequence
-    :active_index  # index into turn_order
+    # %{{x, y} => %{texture: string, walkable: bool}}
+    :grid_tiles,
+    # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
+    :entities,
+    # integer | nil
+    :selected_id,
+    # [{x, y}]
+    :valid_moves,
+    # [entity_id] — hero ids in sequence
+    :turn_order,
+    # index into turn_order
+    :active_index
   ]
 
   def from_campaign(%Campaign{} = campaign) do
     tiles =
       campaign.tiles
-      |> Map.new(fn t -> {{t.x, t.y}, %{texture: t.texture, walkable: t.walkable}} end)
+      |> Map.new(fn t ->
+        {{t.x, t.y}, %{texture: t.texture, walkable: t.walkable, decoration: t.decoration}}
+      end)
 
     entities =
       campaign.entities
       |> Map.new(fn e ->
-        {e.id, %{
+        base = %{
           name: e.name,
           type: e.type,
           sprite: e.sprite,
+          race: e.race || "human",
+          class: e.class || "fighter",
           x: e.x,
           y: e.y,
           hp: e.hp,
           max_hp: e.max_hp,
+          level: e.level,
+          temp_hp: e.temp_hp,
           tags: e.tags,
           stats: e.stats
-        }}
+        }
+
+        {e.id, Stats.hydrate_entity(base)}
       end)
 
     hero_ids =
@@ -54,7 +69,7 @@ defmodule Gibbering.Engine.State do
     }
   end
 
-  def active_hero_id(%__MODULE__{turn_order: [], }), do: nil
+  def active_hero_id(%__MODULE__{turn_order: []}), do: nil
   def active_hero_id(%__MODULE__{turn_order: order, active_index: idx}), do: Enum.at(order, idx)
 
   def advance_turn(%__MODULE__{} = state) do

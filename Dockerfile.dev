@@ -16,9 +16,13 @@ RUN chown app:app /app
 
 USER app
 
-# Deps cached separately from source so rebuilds are fast
+# Deps cached separately from source so rebuilds are fast.
+# Pre-compile for both dev and test so the build_cache volume is seeded
+# with compiled deps on first mount — avoids long recompilation on fresh volumes.
 COPY --chown=app:app mix.exs mix.lock ./
 RUN mix deps.get
+RUN MIX_ENV=dev mix deps.compile
+RUN MIX_ENV=test mix deps.compile
 
 COPY --chown=app:app . .
 
