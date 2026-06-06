@@ -56,8 +56,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` | low |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
-| [#97](097-full-viewport-scene-layout.md) | Full-viewport scene layout model and overlay z-layer system | `discovery` `rendering` `architecture` `ui` | medium |
-| [#98](098-dst-art-direction-spec.md) | DST-inspired art direction — reference tile and entity spec | `rendering` | medium |
+| [#102](102-gamelive-full-viewport-layout-refactor.md) | GameLive full-viewport layout refactor | `rendering` `ui` `architecture` | medium |
 | [#99](099-multi-style-appearance-system.md) | Multi-style appearance system — style_id keying, per-style records, fallback | `architecture` `rendering` | medium |
 | [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline | `discovery` `rendering` `architecture` | medium |
 | [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` | low |
@@ -157,3 +156,5 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#66](066-support-audit-log.md) | Support audit log | `architecture` `ops` |
 | [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | `architecture` `gameplay` |
 | [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` |
+| [#97](097-full-viewport-scene-layout.md) | Full-viewport scene layout model (discovery) | `discovery` `rendering` `architecture` `ui` |
+| [#98](098-dst-art-direction-spec.md) | DST-inspired art direction spec (discovery) | `rendering` |
