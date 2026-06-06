@@ -29,7 +29,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | # | Title | Tags | Priority |
 |---|---|---|---|
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
-| [#66](066-support-audit-log.md) | Support audit log | `architecture` `ops` | medium |
 | [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | `architecture` `gameplay` | medium |
 | [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring page | `ops` `architecture` | low |
 | [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` | low |
@@ -157,3 +156,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#95](095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | `ui` `gameplay` `architecture` |
 | [#64](064-admin-router-scope-and-pipeline.md) | Admin router scope and pipeline | `architecture` `ops` |
 | [#65](065-support-users-schema-and-auth.md) | `support_users` schema, migration, context, and auth | `architecture` `ops` |
+| [#66](066-support-audit-log.md) | Support audit log | `architecture` `ops` |
