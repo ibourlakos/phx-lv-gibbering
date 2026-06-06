@@ -11,6 +11,8 @@ defmodule Gibbering.Rulesets.DnD5e.Predicate do
       scene: scene_context, resolution: resolution_context | nil}
   """
 
+  @doc "Evaluates predicate `pred` against `ctx` and returns a boolean."
+
   # ---------------------------------------------------------------------------
   # Group 1 — Structural Combinators
   # ---------------------------------------------------------------------------

@@ -1,4 +1,6 @@
 defmodule Gibbering.Engine.State do
+  @moduledoc "Runtime scene state: entity map, grid, turn order, phase machine, and action economy helpers."
+
   alias Gibbering.Campaign
   alias Gibbering.Rulesets.DnD5e.Stats
 
@@ -38,6 +40,7 @@ defmodule Gibbering.Engine.State do
     active_effects: []
   ]
 
+  @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."
   def from_campaign(%Campaign{} = campaign) do
     tiles =
       campaign.tiles
@@ -128,6 +131,7 @@ defmodule Gibbering.Engine.State do
     {:ok, %{state | previous_phase: current, phase: new_phase}}
   end
 
+  @doc "Returns the entity id of the hero whose turn it currently is, or `nil` when there is no turn order."
   def active_hero_id(%__MODULE__{turn_order: []}), do: nil
   def active_hero_id(%__MODULE__{turn_order: order, active_index: idx}), do: Enum.at(order, idx)
 
@@ -270,6 +274,7 @@ defmodule Gibbering.Engine.State do
     {:ok, %{state | active_effects: new_effects, entities: new_entities}}
   end
 
+  @doc "Advances to the next hero in the turn order and resets that hero's action economy for the new turn."
   def advance_turn(%__MODULE__{} = state) do
     next = rem(state.active_index + 1, max(length(state.turn_order), 1))
     next_id = Enum.at(state.turn_order, next)

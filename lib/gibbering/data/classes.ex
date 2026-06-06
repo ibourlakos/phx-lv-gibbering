@@ -103,6 +103,7 @@ defmodule Gibbering.Data.Classes do
     }
   }
 
+  @doc false
   def seed_data, do: @seed_data
 
   @doc "Returns combat-relevant `%RuleModifier{}` structs for the given class."

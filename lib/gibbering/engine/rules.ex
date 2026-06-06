@@ -1,4 +1,6 @@
 defmodule Gibbering.Engine.Rules do
+  @moduledoc "Core combat rule resolution: movement, attacks, spell casting, and saving throws."
+
   alias Gibbering.Engine.State
   alias Gibbering.Rulesets.DnD5e.Stats
   alias Gibbering.Data.{Classes, Spells}

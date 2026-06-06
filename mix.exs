@@ -88,7 +88,13 @@ defmodule Gibbering.MixProject do
         "esbuild gibbering --minify",
         "phx.digest"
       ],
-      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
+      precommit: [
+        "compile --warnings-as-errors",
+        "deps.unlock --unused",
+        "format",
+        "check.docs",
+        "test"
+      ]
     ]
   end
 end

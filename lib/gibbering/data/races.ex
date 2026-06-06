@@ -70,6 +70,7 @@ defmodule Gibbering.Data.Races do
     }
   }
 
+  @doc false
   def seed_data, do: @seed_data
 
   @doc "Returns combat-relevant `%RuleModifier{}` structs for the given race."

@@ -1,4 +1,6 @@
 defmodule Gibbering.Engine.SceneServer do
+  @moduledoc "GenServer process that owns a running scene's `State`, dispatches player actions, and broadcasts state updates via PubSub."
+
   use GenServer
 
   import Ecto.Query
@@ -9,32 +11,42 @@ defmodule Gibbering.Engine.SceneServer do
 
   # --- Public API ---
 
+  @doc false
   def start_link(game_id) do
     GenServer.start_link(__MODULE__, game_id, name: via(game_id))
   end
 
+  @doc "Returns the current `%State{}` for the given game."
   def get_state(game_id), do: GenServer.call(via(game_id), :get_state)
 
+  @doc "Selects `entity_id` as the active entity, computing valid moves."
   def select_entity(game_id, entity_id),
     do: GenServer.call(via(game_id), {:select_entity, entity_id})
 
+  @doc "Moves the selected entity to `{x, y}` if the tile is reachable this turn."
   def move_entity(game_id, x, y),
     do: GenServer.call(via(game_id), {:move_entity, x, y})
 
+  @doc "Resolves a melee attack from the selected entity against `target_id`."
   def attack_entity(game_id, target_id),
     do: GenServer.call(via(game_id), {:attack, target_id})
 
+  @doc "Resolves a spell cast from the selected entity using `spell_key` against `target_id`."
   def cast_spell(game_id, spell_key, target_id),
     do: GenServer.call(via(game_id), {:cast_spell, spell_key, target_id})
 
+  @doc "Ends the current hero's turn and advances to the next in the turn order."
   def end_turn(game_id), do: GenServer.call(via(game_id), :end_turn)
 
+  @doc "Requests a validated scene phase transition."
   def transition_phase(game_id, new_phase),
     do: GenServer.call(via(game_id), {:transition_phase, new_phase, false})
 
+  @doc "Forces a scene phase transition without validation — DM override only."
   def force_transition_phase(game_id, new_phase),
     do: GenServer.call(via(game_id), {:transition_phase, new_phase, true})
 
+  @doc "Returns the PubSub topic string for broadcasting scene updates to subscribers."
   def topic(game_id), do: @topic_prefix <> to_string(game_id)
 
   @doc """
