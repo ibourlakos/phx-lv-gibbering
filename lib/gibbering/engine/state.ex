@@ -37,7 +37,9 @@ defmodule Gibbering.Engine.State do
     # module implementing Gibbering.Ruleset behaviour
     ruleset: Gibbering.Rulesets.DnD5e,
     # [%{id, entity_id, condition_id, conditions, source, duration}]
-    active_effects: []
+    active_effects: [],
+    # %{entity_id => integer} — DM-rolled initiative values per entity
+    initiative_values: %{}
   ]
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."
@@ -129,6 +131,45 @@ defmodule Gibbering.Engine.State do
   @doc "Forces a phase transition without validation — for DM override calls."
   def force_transition_phase(%__MODULE__{phase: current} = state, new_phase) do
     {:ok, %{state | previous_phase: current, phase: new_phase}}
+  end
+
+  @doc """
+  Stores `value` as the initiative for `entity_id` and re-sorts `turn_order` by
+  initiative descending. The currently active entity remains active after the sort.
+  """
+  def set_initiative(%__MODULE__{} = state, entity_id, value) do
+    current = Enum.at(state.turn_order, state.active_index)
+    new_initiative = Map.put(state.initiative_values || %{}, entity_id, value)
+    sorted = Enum.sort_by(state.turn_order, fn id -> -Map.get(new_initiative, id, 0) end)
+    new_index = (current && Enum.find_index(sorted, &(&1 == current))) || 0
+    %{state | initiative_values: new_initiative, turn_order: sorted, active_index: new_index}
+  end
+
+  @doc "Appends `entity_id` to `turn_order`. No-op if already present or not in entities."
+  def add_to_turn_order(%__MODULE__{} = state, entity_id) do
+    if entity_id in state.turn_order or not Map.has_key?(state.entities, entity_id) do
+      state
+    else
+      %{state | turn_order: state.turn_order ++ [entity_id]}
+    end
+  end
+
+  @doc "Removes `entity_id` from `turn_order`, keeping `active_index` in bounds."
+  def remove_from_turn_order(%__MODULE__{} = state, entity_id) do
+    new_order = List.delete(state.turn_order, entity_id)
+    new_index = min(state.active_index, max(length(new_order) - 1, 0))
+    %{state | turn_order: new_order, active_index: new_index}
+  end
+
+  @doc """
+  Replaces `turn_order` with `ordered_ids`, filtering out any ids not currently in the
+  order. The currently active entity's position is preserved.
+  """
+  def reorder_turn_order(%__MODULE__{} = state, ordered_ids) do
+    current = Enum.at(state.turn_order, state.active_index)
+    valid = Enum.filter(ordered_ids, &(&1 in state.turn_order))
+    new_index = (current && Enum.find_index(valid, &(&1 == current))) || 0
+    %{state | turn_order: valid, active_index: new_index}
   end
 
   @doc "Returns the entity id of the hero whose turn it currently is, or `nil` when there is no turn order."

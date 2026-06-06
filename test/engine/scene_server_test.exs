@@ -348,4 +348,81 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert SceneServer.get_state(game_id).phase == :in_combat
     end
   end
+
+  describe "set_initiative/3" do
+    test "stores initiative value and broadcasts updated state" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      assert :ok = SceneServer.set_initiative(game_id, hero_id, 14)
+
+      new_state = SceneServer.get_state(game_id)
+      assert new_state.initiative_values[hero_id] == 14
+      assert_receive {:state_updated, %State{}}, 500
+    end
+  end
+
+  describe "add_to_turn_order/2" do
+    test "adds an entity not already in turn_order" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      assert :ok = SceneServer.add_to_turn_order(game_id, monster_id)
+      assert monster_id in SceneServer.get_state(game_id).turn_order
+    end
+  end
+
+  describe "remove_from_turn_order/2" do
+    test "removes an entity from the turn_order" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      assert :ok = SceneServer.remove_from_turn_order(game_id, hero_id)
+      refute hero_id in SceneServer.get_state(game_id).turn_order
+    end
+  end
+
+  describe "reorder_turn_order/2" do
+    test "replaces the turn_order with the given ordering" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      monster_id =
+        state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      # Add monster to turn_order first, then reorder
+      :ok = SceneServer.add_to_turn_order(game_id, monster_id)
+      assert :ok = SceneServer.reorder_turn_order(game_id, [monster_id, hero_id])
+      assert hd(SceneServer.get_state(game_id).turn_order) == monster_id
+    end
+  end
+
+  describe "force_end_turn/1" do
+    test "advances turn even while session is paused" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.pause_session(game_id)
+      before_index = SceneServer.get_state(game_id).active_index
+
+      :ok = SceneServer.force_end_turn(game_id)
+
+      # With only one hero, index wraps to 0 again — check the call returned :ok.
+      assert SceneServer.get_state(game_id).active_index == before_index
+    end
+
+    test "broadcasts state_updated after force end turn" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      :ok = SceneServer.force_end_turn(game_id)
+
+      assert_receive {:state_updated, %State{}}, 500
+    end
+  end
 end

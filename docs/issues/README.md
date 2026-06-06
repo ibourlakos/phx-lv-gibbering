@@ -60,7 +60,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#88](088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | `discovery` `architecture` `gameplay` | medium |
 | [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` | low |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
-| [#94](094-dm-initiative-panel.md) | DM turn and initiative management panel | `ui` `gameplay` | medium |
 | [#95](095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | `ui` `gameplay` `architecture` | medium |
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
 | [#97](097-full-viewport-scene-layout.md) | Full-viewport scene layout model and overlay z-layer system | `discovery` `rendering` `architecture` `ui` | medium |
@@ -157,3 +156,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#77](077-catalogue-cache-genserver-tests.md) | `Catalogue.Cache` GenServer tests | `architecture` `ops` |
 | [#78](078-game-live-event-handler-tests.md) | `GameLive` event handler integration tests | `gameplay` `architecture` |
 | [#93](093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | `ui` `gameplay` `architecture` |
+| [#94](094-dm-initiative-panel.md) | DM turn and initiative management panel | `ui` `gameplay` |

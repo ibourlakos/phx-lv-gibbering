@@ -204,8 +204,77 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("dm_roll_initiative", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    id = String.to_integer(id)
+    entity = socket.assigns.game_state.entities[id]
+    dex = get_in(entity, [:stats, "dexterity"]) || 10
+    dex_mod = div(dex - 10, 2)
+    value = :rand.uniform(20) + dex_mod
+    SceneServer.set_initiative(socket.assigns.game_id, id, value)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_add_to_order", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.add_to_turn_order(socket.assigns.game_id, String.to_integer(id))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_remove_from_order", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.remove_from_turn_order(socket.assigns.game_id, String.to_integer(id))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_move_up", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    id = String.to_integer(id)
+    order = socket.assigns.game_state.turn_order
+    idx = Enum.find_index(order, &(&1 == id))
+
+    if idx && idx > 0 do
+      new_order = order |> List.delete_at(idx) |> List.insert_at(idx - 1, id)
+      SceneServer.reorder_turn_order(socket.assigns.game_id, new_order)
+    end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_move_down", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    id = String.to_integer(id)
+    order = socket.assigns.game_state.turn_order
+    idx = Enum.find_index(order, &(&1 == id))
+
+    if idx && idx < length(order) - 1 do
+      new_order = order |> List.delete_at(idx) |> List.insert_at(idx + 1, id)
+      SceneServer.reorder_turn_order(socket.assigns.game_id, new_order)
+    end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_force_end_turn", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.force_end_turn(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event(event, _, socket)
-      when event in ["dm_start", "dm_pause", "dm_resume", "dm_end_confirm", "dm_end"] do
+      when event in [
+             "dm_start",
+             "dm_pause",
+             "dm_resume",
+             "dm_end_confirm",
+             "dm_end",
+             "dm_roll_initiative",
+             "dm_add_to_order",
+             "dm_remove_from_order",
+             "dm_move_up",
+             "dm_move_down",
+             "dm_force_end_turn"
+           ] do
     {:noreply, socket}
   end
 

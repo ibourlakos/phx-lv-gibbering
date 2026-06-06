@@ -59,6 +59,25 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "Ends the session: broadcasts :session_ended to all connected LiveViews."
   def end_session(game_id), do: GenServer.call(via(game_id), :end_session)
 
+  @doc "Sets the initiative value for `entity_id` and re-sorts the turn order."
+  def set_initiative(game_id, entity_id, value),
+    do: GenServer.call(via(game_id), {:set_initiative, entity_id, value})
+
+  @doc "Adds `entity_id` to the turn order. No-op if already present."
+  def add_to_turn_order(game_id, entity_id),
+    do: GenServer.call(via(game_id), {:add_to_turn_order, entity_id})
+
+  @doc "Removes `entity_id` from the turn order."
+  def remove_from_turn_order(game_id, entity_id),
+    do: GenServer.call(via(game_id), {:remove_from_turn_order, entity_id})
+
+  @doc "Replaces the turn order with `ordered_ids` (DM reorder)."
+  def reorder_turn_order(game_id, ordered_ids),
+    do: GenServer.call(via(game_id), {:reorder_turn_order, ordered_ids})
+
+  @doc "DM-driven turn advance — bypasses the paused guard."
+  def force_end_turn(game_id), do: GenServer.call(via(game_id), :force_end_turn)
+
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
     Registry.lookup(Gibbering.GameRegistry, game_id) != []
@@ -100,7 +119,8 @@ defmodule Gibbering.Engine.SceneServer do
     state =
       case Repo.one(from s in GameSession, where: s.game_id == ^game_id) do
         %GameSession{state: binary} ->
-          :erlang.binary_to_term(binary, [:safe])
+          loaded = :erlang.binary_to_term(binary, [:safe])
+          struct(State, Map.from_struct(loaded))
 
         nil ->
           campaign =
@@ -323,6 +343,46 @@ defmodule Gibbering.Engine.SceneServer do
     persist(state)
     Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), :session_ended)
     {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:set_initiative, entity_id, value}, _from, state) do
+    new_state = State.set_initiative(state, entity_id, value)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:add_to_turn_order, entity_id}, _from, state) do
+    new_state = State.add_to_turn_order(state, entity_id)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:remove_from_turn_order, entity_id}, _from, state) do
+    new_state = State.remove_from_turn_order(state, entity_id)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:reorder_turn_order, ordered_ids}, _from, state) do
+    new_state = State.reorder_turn_order(state, ordered_ids)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call(:force_end_turn, _from, state) do
+    new_state = State.advance_turn(state)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
   end
 
   @impl true
