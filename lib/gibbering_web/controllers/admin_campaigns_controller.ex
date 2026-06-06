@@ -10,7 +10,11 @@ defmodule GibberingWeb.AdminCampaignsController do
 
   def show(conn, %{"id" => id}) do
     campaign = Admin.get_campaign_with_members(String.to_integer(id))
-    render(conn, :show, campaign: campaign)
+
+    render(conn, :show,
+      campaign: campaign,
+      current_support_user: conn.assigns.current_support_user
+    )
   end
 
   def force_close(conn, %{"id" => id, "reason" => reason}) do
@@ -21,5 +25,25 @@ defmodule GibberingWeb.AdminCampaignsController do
 
   def force_close(conn, %{"id" => id}) do
     force_close(conn, %{"id" => id, "reason" => ""})
+  end
+
+  def remove_member(conn, %{"id" => id, "user_id" => user_id, "reason" => reason}) do
+    actor = conn.assigns.current_support_user
+
+    case Admin.remove_campaign_member(
+           actor.id,
+           String.to_integer(id),
+           String.to_integer(user_id),
+           reason
+         ) do
+      {:ok, _} ->
+        redirect(conn, to: "/admin/campaigns/#{id}")
+
+      {:error, :forbidden} ->
+        send_resp(conn, 403, "Forbidden")
+
+      {:error, _reason} ->
+        redirect(conn, to: "/admin/campaigns/#{id}")
+    end
   end
 end

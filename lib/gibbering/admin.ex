@@ -6,7 +6,7 @@ defmodule Gibbering.Admin do
   alias Gibbering.Repo
   alias Gibbering.Admin.{SupportUser, AuditLog}
   alias Gibbering.Accounts.User
-  alias Gibbering.Campaign
+  alias Gibbering.{Campaign, CampaignMember}
 
   @doc "Creates a support user. Returns `{:ok, user}` or `{:error, changeset}`."
   def create_support_user(attrs) do
@@ -170,6 +170,65 @@ defmodule Gibbering.Admin do
 
         {:ok, updated}
     end
+  end
+
+  @moderator_roles ~w(moderator admin)
+
+  @doc """
+  Removes a user from a campaign. Requires actor to have moderator or admin role.
+  DM cannot be removed. Broadcasts ejection to a live session if present.
+  """
+  def remove_campaign_member(actor_id, campaign_id, user_id, reason) do
+    actor = Repo.get!(SupportUser, actor_id)
+
+    with :ok <- check_role(actor, @moderator_roles),
+         {:ok, campaign} <- fetch_campaign(campaign_id),
+         :ok <- check_not_dm(campaign, user_id),
+         {:ok, member} <- fetch_member(campaign_id, user_id) do
+      Repo.delete!(member)
+      broadcast_ejection(campaign_id, user_id)
+
+      log_action(
+        actor_id,
+        "campaign.remove_member",
+        "campaign_member",
+        "#{campaign_id}:#{user_id}",
+        metadata: %{"reason" => reason}
+      )
+
+      {:ok, :removed}
+    end
+  end
+
+  defp check_role(%SupportUser{role: role}, allowed) do
+    if role in allowed, do: :ok, else: {:error, :forbidden}
+  end
+
+  defp fetch_campaign(id) do
+    case Repo.get(Campaign, id) do
+      nil -> {:error, :not_found}
+      campaign -> {:ok, campaign}
+    end
+  end
+
+  defp check_not_dm(%Campaign{dm_id: dm_id}, user_id) when dm_id == user_id,
+    do: {:error, :cannot_remove_dm}
+
+  defp check_not_dm(_, _), do: :ok
+
+  defp fetch_member(campaign_id, user_id) do
+    case Repo.get_by(CampaignMember, campaign_id: campaign_id, user_id: user_id) do
+      nil -> {:error, :not_a_member}
+      member -> {:ok, member}
+    end
+  end
+
+  defp broadcast_ejection(campaign_id, user_id) do
+    Phoenix.PubSub.broadcast(
+      Gibbering.PubSub,
+      "game:#{campaign_id}:user:#{user_id}",
+      {:ejected, "Removed from campaign by admin"}
+    )
   end
 
   defp maybe_terminate_scene_server(campaign_id) do
