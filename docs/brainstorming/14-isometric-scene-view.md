@@ -124,6 +124,58 @@ All panels should be collapsible, minimal, and positioned at the screen peripher
 
 ---
 
+## SVG Store, Caching & Compositing
+
+The multi-style appearance system (see above) means the renderer can no longer treat each entity as
+a self-contained SVG blob. It must assemble final visuals by compositing appearance layers resolved
+from a style-aware store. This is a non-trivial pipeline.
+
+### The Problem
+- A single visible entity is the product of several independent appearance components: base body, equipment overlays, status effect tints, selection ring, HP bar, animation state
+- Each component may be style-specific (different geometry, filters, palette per style)
+- Recomputing and re-emitting all of this on every LiveView patch is wasteful and will hurt performance at scale
+
+### SVG Fragment Store
+- A server-side (or client-side) store that caches pre-resolved SVG fragments keyed by `(content_id, style_id, variant)` where variant captures animation frame, equipment loadout hash, condition set, etc.
+- On a state change, only the fragments that actually changed are re-resolved; unchanged fragments are referenced by ID (`<use href="#fragment-id">`) rather than re-emitted
+- SVG `<defs>` / `<symbol>` elements serve as the fragment registry; compositing is done by layering `<use>` references with transforms
+- Cache invalidation: a style switch invalidates the full store for that style; an entity state change invalidates only that entity's variant key
+
+### Compositing Pipeline
+- Rendering an entity = resolving an ordered list of layers → each layer is a cached fragment + a transform + optional filter/tint override
+- Layer order matters for depth and visual correctness (body behind equipment behind status effects behind selection ring)
+- The pipeline should be declarative: a data structure describes what to composite, a pure function produces the SVG output — this makes it testable without a browser
+
+### Geometry Challenges
+- Isometric projection requires non-trivial coordinate mapping: world grid (row, col) → screen (x, y) in a diamond layout, accounting for tile squash ratio and entity anchor points
+- Entity anchor points differ by content type (a tall creature anchors at the bottom-center of its tile; a flat item anchors at the tile center)
+- Appearance geometry is style-dependent — a DST-style entity may be taller and more stylised than the same entity in a flatter top-down style; the bounding box and anchor must be declared per appearance, not assumed from tile size
+- Z-ordering (painter's algorithm) must be re-evaluated whenever entities move; a naive full-sort on every frame is wasteful — consider incremental sort or spatial bucketing
+- Overlapping entities on the same tile need a deterministic stacking order (e.g., PCs above monsters above items) that is style-agnostic
+
+### Open Questions (Store & Compositing)
+- Server-side fragment generation (Elixir produces SVG strings) vs. client-side compositing (JS hook assembles fragments from a data payload) — which layer owns the heavy lifting?
+- How granular should the variant key be? Too coarse means stale renders; too fine means cache misses on every tick.
+- Should appearance geometry (anchor, bounding box, layer list) be stored in the DB alongside the visual asset, or inferred from conventions?
+- At what entity count does `<use>`-based compositing outperform direct SVG emission? Worth benchmarking early.
+
+---
+
+## DM Top-Down View (Tangent)
+
+The isometric view is the player-facing experience, but the DM placing units on a complex map
+may find the perspective awkward — foreshortening makes it hard to judge exact tile positions,
+especially for crowded scenes or large maps.
+
+- The DM should be able to toggle a **top-down orthographic view** of the map on demand, without affecting what players see
+- Top-down view is a placement tool, not a permanent mode: enter it to arrange units, exit to return to the isometric session view
+- In top-down mode: tiles are squares (or near-squares), entities are simple tokens (no perspective distortion), grid is more prominent
+- This is a second projection mode, not a separate page — the same world state, rendered differently
+- The SVG coordinate system and tile store must be designed to support multiple projection modes from the start; retrofitting it later will be painful
+- Open question: does the top-down view live in the DM panel as a minimap-style inset, or does it take over the full viewport temporarily?
+
+---
+
 ## Technical Considerations
 
 ### SVG vs. HTML Overlay Split
