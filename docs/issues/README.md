@@ -29,8 +29,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | # | Title | Tags | Priority |
 |---|---|---|---|
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
-| [#64](064-admin-router-scope-and-pipeline.md) | Admin router scope and pipeline | `architecture` `ops` | medium |
-| [#65](065-support-users-schema-and-auth.md) | `support_users` schema, migration, context, and auth | `architecture` `ops` | medium |
 | [#66](066-support-audit-log.md) | Support audit log | `architecture` `ops` | medium |
 | [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | `architecture` `gameplay` | medium |
 | [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring page | `ops` `architecture` | low |
@@ -157,3 +155,5 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#93](093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | `ui` `gameplay` `architecture` |
 | [#94](094-dm-initiative-panel.md) | DM turn and initiative management panel | `ui` `gameplay` |
 | [#95](095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | `ui` `gameplay` `architecture` |
+| [#64](064-admin-router-scope-and-pipeline.md) | Admin router scope and pipeline | `architecture` `ops` |
+| [#65](065-support-users-schema-and-auth.md) | `support_users` schema, migration, context, and auth | `architecture` `ops` |
