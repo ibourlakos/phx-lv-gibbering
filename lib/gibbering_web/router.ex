@@ -70,9 +70,14 @@ defmodule GibberingWeb.Router do
       on_mount: [{GibberingWeb.UserAuth, :ensure_authenticated}] do
       live "/dashboard", DashboardLive
       live "/characters", CharactersLive
-      live "/game/:id", GameLive
       live "/lobby/:id", LobbyLive
       live "/campaigns/:id/prep", CampaignPrepLive
+    end
+
+    live_session :game,
+      root_layout: {GibberingWeb.Layouts, :game_root},
+      on_mount: [{GibberingWeb.UserAuth, :ensure_authenticated}] do
+      live "/game/:id", GameLive
     end
 
     live_session :invite,

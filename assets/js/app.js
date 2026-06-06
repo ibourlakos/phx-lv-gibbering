@@ -162,6 +162,18 @@ const Hooks = {
         rollDiceAnimation(result, label || "Rolled")
       })
     }
+  },
+
+  // Skeleton: preserves client-side viewBox across LiveView patches.
+  // The server sets the initial viewBox; this hook prevents LV from clobbering it
+  // on subsequent state updates. Future gestures (pan/zoom) will update this.viewBox.
+  PanZoom: {
+    mounted() {
+      this.viewBox = this.el.getAttribute("viewBox")
+    },
+    updated() {
+      this.el.setAttribute("viewBox", this.viewBox)
+    }
   }
 }
 
