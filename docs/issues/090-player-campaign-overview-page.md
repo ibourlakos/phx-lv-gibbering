@@ -1,6 +1,7 @@
 # #90 · Player campaign overview page
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-06
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** ui, gameplay
 
@@ -12,8 +13,8 @@ Minimum scope:
 - Entry points: join a new campaign (redirects to invite flow), enter lobby for an active campaign, view/edit character sheet
 
 **Acceptance criteria**
-- [ ] `/campaigns` or `/dashboard` route renders the player's campaign list
-- [ ] Each campaign card shows: name, DM, status, character(s) belonging to this player
-- [ ] Empty state handled: prompt to join or wait for an invite
-- [ ] Links to lobby, character sheet, and join flow are correct and guarded by auth
-- [ ] DM users see their owned campaigns with a "manage" link instead of a character card
+- [x] `/campaigns` or `/dashboard` route renders the player's campaign list
+- [x] Each campaign card shows: name, DM, status, character(s) belonging to this player
+- [x] Empty state handled: prompt to join or wait for an invite
+- [x] Links to lobby, character sheet, and join flow are correct and guarded by auth
+- [x] DM users see their owned campaigns with a "manage" link instead of a character card
