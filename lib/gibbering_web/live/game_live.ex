@@ -22,12 +22,16 @@ defmodule GibberingWeb.GameLive do
             Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
           end
 
+          campaign = Campaigns.get!(game_id)
           state = SceneServer.get_state(game_id)
+          is_dm = campaign.dm_id == user.id
 
           {:ok,
            socket
            |> assign(:game_id, game_id)
            |> assign(:game_state, state)
+           |> assign(:is_dm, is_dm)
+           |> assign(:show_end_confirm, false)
            |> assign(:valid_targets, [])
            |> assign(:selected_spell, nil)
            |> assign(:spell_targets, [])
@@ -166,8 +170,53 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("dm_start", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.start_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_pause", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.pause_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_resume", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.resume_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_end_confirm", _, %{assigns: %{is_dm: true}} = socket) do
+    {:noreply, assign(socket, show_end_confirm: true)}
+  end
+
+  @impl true
+  def handle_event("dm_end_cancel", _, socket) do
+    {:noreply, assign(socket, show_end_confirm: false)}
+  end
+
+  @impl true
+  def handle_event("dm_end", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.end_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event(event, _, socket)
+      when event in ["dm_start", "dm_pause", "dm_resume", "dm_end_confirm", "dm_end"] do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:state_updated, new_state}, socket) do
     {:noreply, assign(socket, game_state: new_state)}
+  end
+
+  @impl true
+  def handle_info(:session_ended, socket) do
+    {:noreply, redirect(socket, to: "/dashboard")}
   end
 
   # ---------------------------------------------------------------------------

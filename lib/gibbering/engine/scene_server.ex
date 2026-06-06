@@ -47,6 +47,18 @@ defmodule Gibbering.Engine.SceneServer do
   def force_transition_phase(game_id, new_phase),
     do: GenServer.call(via(game_id), {:transition_phase, new_phase, true})
 
+  @doc "Transitions the session from lobby to active exploration state."
+  def start_session(game_id), do: transition_phase(game_id, :exploration)
+
+  @doc "Pauses the session, blocking player actions until resumed."
+  def pause_session(game_id), do: transition_phase(game_id, :paused)
+
+  @doc "Resumes a paused session, restoring the phase that was active before pausing."
+  def resume_session(game_id), do: GenServer.call(via(game_id), :resume_session)
+
+  @doc "Ends the session: broadcasts :session_ended to all connected LiveViews."
+  def end_session(game_id), do: GenServer.call(via(game_id), :end_session)
+
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
     Registry.lookup(Gibbering.GameRegistry, game_id) != []
@@ -101,6 +113,27 @@ defmodule Gibbering.Engine.SceneServer do
 
     {:ok, state}
   end
+
+  # Player actions are blocked while the session is paused.
+  @impl true
+  def handle_call({:select_entity, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:move_entity, _, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:attack, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:cast_spell, _, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call(:end_turn, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
 
   @impl true
   def handle_call(:get_state, _from, state), do: {:reply, state, state}
@@ -265,6 +298,31 @@ defmodule Gibbering.Engine.SceneServer do
     persist(new_state)
     broadcast(new_state)
     {:reply, new_state, new_state}
+  end
+
+  @impl true
+  def handle_call(:resume_session, _from, %{phase: :paused, previous_phase: prev} = state)
+      when not is_nil(prev) do
+    case State.transition_phase(state, prev) do
+      {:ok, new_state} ->
+        persist(new_state)
+        broadcast(new_state)
+        {:reply, :ok, new_state}
+
+      {:error, _} = err ->
+        {:reply, err, state}
+    end
+  end
+
+  @impl true
+  def handle_call(:resume_session, _from, state),
+    do: {:reply, {:error, "session is not paused"}, state}
+
+  @impl true
+  def handle_call(:end_session, _from, state) do
+    persist(state)
+    Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), :session_ended)
+    {:reply, :ok, state}
   end
 
   @impl true

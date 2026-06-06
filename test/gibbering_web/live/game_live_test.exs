@@ -82,6 +82,16 @@ defmodule GibberingWeb.GameLiveTest do
     game_id
   end
 
+  defp mount_dm_game(conn) do
+    user = register_user()
+    conn = log_in_user(conn, user)
+    game_id = insert_campaign(%{dm_id: user.id})
+    Campaigns.join_campaign(game_id, user.id)
+    start_supervised!({SceneServer, game_id})
+    {:ok, view, _html} = live(conn, "/game/#{game_id}")
+    {view, game_id}
+  end
+
   defp mount_combat_game(conn) do
     user = register_user()
     conn = log_in_user(conn, user)
@@ -196,6 +206,90 @@ defmodule GibberingWeb.GameLiveTest do
 
       html = render(view)
       refute html =~ "phx-click=\"move\""
+    end
+  end
+
+  describe "DM session lifecycle controls" do
+    test "DM sees Start button in lobby phase", %{conn: conn} do
+      {view, _game_id} = mount_dm_game(conn)
+      html = render(view)
+      assert html =~ "dm_start"
+    end
+
+    test "non-DM does not see DM controls", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      html = render(view)
+      refute html =~ "dm_start"
+      refute html =~ "dm_pause"
+      refute html =~ "dm_resume"
+    end
+
+    test "DM can start the session", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      view |> element("[phx-click='dm_start']") |> render_click()
+      assert SceneServer.get_state(game_id).phase == :exploration
+    end
+
+    test "DM sees Pause and End buttons when session is active", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      html = render(view)
+      assert html =~ "dm_pause"
+      assert html =~ "dm_end_confirm"
+    end
+
+    test "DM sees Resume button when paused", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      SceneServer.pause_session(game_id)
+      html = render(view)
+      assert html =~ "dm_resume"
+    end
+
+    test "pause overlay shown to all when session is paused", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      SceneServer.ensure_started(game_id)
+      SceneServer.start_session(game_id)
+      SceneServer.pause_session(game_id)
+      html = render(view)
+      assert html =~ "SESSION PAUSED"
+    end
+
+    test "DM can pause and resume the session", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      view |> element("[phx-click='dm_start']") |> render_click()
+      view |> element("[phx-click='dm_pause']") |> render_click()
+      assert SceneServer.get_state(game_id).phase == :paused
+      html = render(view)
+      view |> element("[phx-click='dm_resume']") |> render_click()
+      assert SceneServer.get_state(game_id).phase == :exploration
+      _ = html
+    end
+
+    test "end session confirm button shows confirmation dialog", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      html = render(view)
+      assert html =~ "dm_end_confirm"
+      view |> element("[phx-click='dm_end_confirm']") |> render_click()
+      html = render(view)
+      assert html =~ "dm_end"
+    end
+
+    test "confirming end session sends session_ended PubSub event", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      view |> element("[phx-click='dm_end_confirm']") |> render_click()
+      view |> element("[phx-click='dm_end']") |> render_click()
+      assert_receive :session_ended, 500
+    end
+
+    test "session_ended broadcast redirects all connected clients to dashboard", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      SceneServer.ensure_started(game_id)
+      Phoenix.PubSub.broadcast(Gibbering.PubSub, SceneServer.topic(game_id), :session_ended)
+      assert_redirect(view, "/dashboard")
     end
   end
 

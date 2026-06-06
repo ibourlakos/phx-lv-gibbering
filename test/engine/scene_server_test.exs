@@ -212,6 +212,106 @@ defmodule Gibbering.Engine.SceneServerTest do
     end
   end
 
+  describe "start_session/1" do
+    test "transitions phase from lobby to exploration" do
+      game_id = start_server()
+      assert :ok = SceneServer.start_session(game_id)
+      assert SceneServer.get_state(game_id).phase == :exploration
+    end
+
+    test "broadcasts state_updated after start" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      :ok = SceneServer.start_session(game_id)
+      assert_receive {:state_updated, %State{phase: :exploration}}, 500
+    end
+  end
+
+  describe "pause_session/1" do
+    test "transitions active phase to paused and saves previous_phase" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      assert :ok = SceneServer.pause_session(game_id)
+      state = SceneServer.get_state(game_id)
+      assert state.phase == :paused
+      assert state.previous_phase == :exploration
+    end
+
+    test "is idempotent when already paused" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.pause_session(game_id)
+      assert :ok = SceneServer.pause_session(game_id)
+      assert SceneServer.get_state(game_id).phase == :paused
+    end
+  end
+
+  describe "resume_session/1" do
+    test "transitions from paused back to previous phase" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.pause_session(game_id)
+      assert :ok = SceneServer.resume_session(game_id)
+      assert SceneServer.get_state(game_id).phase == :exploration
+    end
+
+    test "returns error when not paused" do
+      game_id = start_server()
+      assert {:error, _} = SceneServer.resume_session(game_id)
+    end
+  end
+
+  describe "end_session/1" do
+    test "broadcasts :session_ended PubSub event" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      assert :ok = SceneServer.end_session(game_id)
+      assert_receive :session_ended, 500
+    end
+  end
+
+  describe "player action blocking while paused" do
+    test "select_entity returns unchanged state when paused" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.pause_session(game_id)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      returned = SceneServer.select_entity(game_id, hero_id)
+
+      assert returned.selected_id == nil
+      assert returned.valid_moves == []
+    end
+
+    test "end_turn does not advance turn when paused" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.pause_session(game_id)
+      before_index = SceneServer.get_state(game_id).active_index
+
+      SceneServer.end_turn(game_id)
+
+      assert SceneServer.get_state(game_id).active_index == before_index
+    end
+
+    test "move_entity does not move hero when paused" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      original_x = state.entities[hero_id].x
+
+      :ok = SceneServer.start_session(game_id)
+      SceneServer.select_entity(game_id, hero_id)
+      :ok = SceneServer.pause_session(game_id)
+
+      SceneServer.move_entity(game_id, 0, 0)
+
+      new_state = SceneServer.get_state(game_id)
+      assert new_state.entities[hero_id].x == original_x
+    end
+  end
+
   describe "transition_phase/2" do
     test "valid transition succeeds and updates phase" do
       game_id = start_server()

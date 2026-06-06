@@ -177,13 +177,15 @@ defmodule Gibbering.GameFixtures do
     name = Map.get(attrs, :name, "Test Campaign #{System.unique_integer([:positive])}")
     width = Map.get(attrs, :map_width, 5)
     height = Map.get(attrs, :map_height, 5)
+    dm_id = Map.get(attrs, :dm_id, nil)
 
     {:ok, campaign} =
       Repo.insert(%Campaign{
         name: name,
         map_width: width,
         map_height: height,
-        tile_size: 32
+        tile_size: 32,
+        dm_id: dm_id
       })
 
     tile_rows =
