@@ -34,7 +34,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` | low |
-| [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | `bug` `rendering` | medium |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk understated in brainstorm | `legal` | medium |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
@@ -158,3 +157,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#97](097-full-viewport-scene-layout.md) | Full-viewport scene layout model (discovery) | `discovery` `rendering` `architecture` `ui` |
 | [#98](098-dst-art-direction-spec.md) | DST-inspired art direction spec (discovery) | `rendering` |
 | [#102](102-gamelive-full-viewport-layout-refactor.md) | GameLive full-viewport layout refactor | `rendering` `ui` `architecture` |
+| [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | `bug` `rendering` |

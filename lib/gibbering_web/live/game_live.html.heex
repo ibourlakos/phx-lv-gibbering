@@ -53,22 +53,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <% end %>
     <% end %>
 
-    <%!-- Layer 3: Move overlay --%>
-    <%= for {x, y} <- state.valid_moves do %>
-      <% {sx, sy} = iso.to_screen(x, y, map_h) %>
-      <polygon
-        points={iso.diamond_points(sx, sy)}
-        fill="rgba(100,180,255,0.25)"
-        stroke="#64b4ff"
-        stroke-width="1.5"
-        phx-click="move"
-        phx-value-x={x}
-        phx-value-y={y}
-        style="cursor: pointer;"
-      />
-    <% end %>
-
-    <%!-- Layer 4: Entities (depth-sorted, hidden entities filtered for players) --%>
+    <%!-- Layer 3: Entities (depth-sorted, hidden entities filtered for players) --%>
     <% visible_entities =
       if @is_dm,
         do: sorted_entities,
@@ -159,6 +144,26 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           fill={hp_bar_color(entity.hp, entity.max_hp)}
         />
       </g>
+    <% end %>
+
+    <%!--
+      Layer 4: Move overlay — rendered AFTER entities so diamonds are always visible.
+      Painter's algorithm: overlays on top means tall entity sprites cannot occlude them.
+      Valid-move tiles are never occupied, so pointer-events on these polygons don't
+      conflict with entity click targets.
+    --%>
+    <%= for {x, y} <- state.valid_moves do %>
+      <% {sx, sy} = iso.to_screen(x, y, map_h) %>
+      <polygon
+        points={iso.diamond_points(sx, sy)}
+        fill="rgba(100,180,255,0.30)"
+        stroke="#64b4ff"
+        stroke-width="1.5"
+        phx-click="move"
+        phx-value-x={x}
+        phx-value-y={y}
+        style="cursor: pointer;"
+      />
     <% end %>
   </svg>
 
