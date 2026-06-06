@@ -1,5 +1,6 @@
 # #56 · Character template → live entity merge logic
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-06
 **Opened:** 2026-06-05
 **Priority:** medium
 **Tags:** architecture, rules
