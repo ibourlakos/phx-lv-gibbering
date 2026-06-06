@@ -59,6 +59,48 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipelineTest do
       result = ModifierPipeline.collect_modifiers(e, {:on_attack, :any}, eval_ctx(e))
       assert is_list(result)
     end
+
+    test "poisoned entity gets attack disadvantage modifier" do
+      e = entity(conditions: [:poisoned])
+      ctx = eval_ctx(e)
+      result = ModifierPipeline.collect_modifiers(e, {:on_attack, :any}, ctx)
+      assert Enum.any?(result, &(&1.id == :poisoned_dis_attacks))
+    end
+
+    test "attacking a blinded target yields advantage modifier" do
+      attacker = entity(conditions: [])
+      target = entity(id: 2, conditions: [:blinded])
+      ctx = %{eval_ctx(attacker) | target: target}
+      result = ModifierPipeline.collect_modifiers(attacker, {:on_attack, :any}, ctx)
+      assert Enum.any?(result, &(&1.id == :blinded_adv_against))
+      refute Enum.any?(result, &(&1.id == :blinded_dis_attacks))
+    end
+
+    test "uniq_by id prevents double modifiers when both combatants share a condition" do
+      # Both entity and target are blinded: each has one blinded condition.
+      # After uniq_by, :blinded_dis_attacks and :blinded_adv_against appear
+      # exactly once each in the collected list.
+      attacker = entity(conditions: [:blinded])
+      target = entity(id: 2, conditions: [:blinded])
+
+      scene = %{
+        entities: %{1 => attacker, 2 => target},
+        grid: %{},
+        active_effects: [],
+        event_log: [],
+        phase: :in_combat,
+        current_turn: 1,
+        current_round: 1
+      }
+
+      ctx = %{entity: attacker, target: target, scene: scene, resolution: nil}
+      result = ModifierPipeline.collect_modifiers(attacker, {:on_attack, :any}, ctx)
+
+      dis_count = Enum.count(result, &(&1.id == :blinded_dis_attacks))
+      adv_count = Enum.count(result, &(&1.id == :blinded_adv_against))
+      assert dis_count == 1
+      assert adv_count == 1
+    end
   end
 
   # ---------------------------------------------------------------------------

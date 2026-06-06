@@ -1,8 +1,9 @@
 defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.Engine.{SceneServer, State}
+  alias Gibbering.Engine.{SceneServer, State, Rules}
   alias Gibbering.Campaigns
+  alias Gibbering.Data.Spells
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
@@ -28,6 +29,8 @@ defmodule GibberingWeb.GameLive do
            |> assign(:game_id, game_id)
            |> assign(:game_state, state)
            |> assign(:valid_targets, [])
+           |> assign(:selected_spell, nil)
+           |> assign(:spell_targets, [])
            |> assign(:log, [])}
 
         {:error, reason} ->
@@ -93,9 +96,73 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("select_spell", %{"key" => spell_key}, socket) do
+    state = socket.assigns.game_state
+    caster_id = state.selected_id || State.active_hero_id(state)
+
+    spell_targets =
+      if caster_id,
+        do: Rules.valid_spell_targets(state, caster_id, spell_key),
+        else: []
+
+    {:noreply,
+     assign(socket, selected_spell: spell_key, spell_targets: spell_targets, valid_targets: [])}
+  end
+
+  @impl true
+  def handle_event("cast_spell", %{"id" => target_id}, socket) do
+    target_id = String.to_integer(target_id)
+    state = socket.assigns.game_state
+    spell_key = socket.assigns.selected_spell
+
+    caster_id = state.selected_id
+    caster_name = if caster_id, do: state.entities[caster_id].name, else: "?"
+    target_name = state.entities[target_id].name
+    spell = Spells.get(spell_key)
+    spell_name = if spell, do: spell.name, else: spell_key
+
+    new_state = SceneServer.cast_spell(socket.assigns.game_id, spell_key, target_id)
+
+    {damage, log_entry} =
+      if Map.has_key?(new_state.entities, target_id) do
+        dmg = state.entities[target_id].hp - new_state.entities[target_id].hp
+        hp = new_state.entities[target_id].hp
+
+        {max(dmg, 0),
+         "#{caster_name} casts #{spell_name} → #{target_name} for #{dmg}! (#{hp} HP left)"}
+      else
+        {state.entities[target_id].hp,
+         "#{caster_name} casts #{spell_name} → #{target_name} destroyed!"}
+      end
+
+    dice_result = max(min(damage, 6), 1)
+
+    {:noreply,
+     socket
+     |> assign(
+       game_state: new_state,
+       valid_targets: [],
+       selected_spell: nil,
+       spell_targets: []
+     )
+     |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
+     |> push_event("roll_dice", %{
+       result: dice_result,
+       label: "#{caster_name} casts #{spell_name}!"
+     })}
+  end
+
+  @impl true
   def handle_event("end_turn", _, socket) do
     new_state = SceneServer.end_turn(socket.assigns.game_id)
-    {:noreply, assign(socket, game_state: new_state, valid_targets: [])}
+
+    {:noreply,
+     assign(socket,
+       game_state: new_state,
+       valid_targets: [],
+       selected_spell: nil,
+       spell_targets: []
+     )}
   end
 
   @impl true
@@ -108,6 +175,28 @@ defmodule GibberingWeb.GameLive do
   # ---------------------------------------------------------------------------
 
   defp ensure_game_server(game_id), do: SceneServer.ensure_started(game_id)
+
+  defp spell_display_name(key) do
+    case Spells.get(key) do
+      %{name: name} ->
+        name
+
+      nil ->
+        key
+        |> String.replace("_", " ")
+        |> String.split()
+        |> Enum.map(&String.capitalize/1)
+        |> Enum.join(" ")
+    end
+  end
+
+  defp spell_level_label(key) do
+    case Spells.get(key) do
+      %{level: 0} -> "cantrip"
+      %{level: n} -> "L#{n}"
+      nil -> ""
+    end
+  end
 
   # ---------------------------------------------------------------------------
   # Tile helpers (DST palette)

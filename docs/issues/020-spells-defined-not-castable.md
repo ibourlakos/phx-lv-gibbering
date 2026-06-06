@@ -1,7 +1,8 @@
 # #20 · Spells are defined but not castable
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** gameplay, rules
 
@@ -25,7 +26,7 @@ However there is no mechanic to actually cast a spell. The game board shows only
 - Requires or motivates the Ruleset behaviour split (#14).
 
 **Acceptance criteria**
-- [ ] Wizard can cast at least one cantrip (fire_bolt) from the game board
-- [ ] Ranged targeting overlay shown for spell range
-- [ ] Damage applied and dice animation plays on cast
-- [ ] Issue #2 closed
+- [x] Wizard can cast at least one cantrip (fire_bolt) from the game board
+- [x] Ranged targeting overlay shown for spell range
+- [x] Damage applied and dice animation plays on cast
+- [x] Issue #2 closed

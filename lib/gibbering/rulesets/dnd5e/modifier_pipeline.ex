@@ -10,7 +10,7 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   wins) → additive flat bonuses → dice modifiers → advantage/disadvantage.
   """
 
-  alias Gibbering.Rulesets.DnD5e.{Predicate, RuleModifier}
+  alias Gibbering.Rulesets.DnD5e.{Condition, Predicate, RuleModifier}
 
   # ---------------------------------------------------------------------------
   # collect_modifiers/3
@@ -25,7 +25,8 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
       scene: scene_context, resolution: resolution_context | nil}
   """
   def collect_modifiers(entity, trigger, eval_context) do
-    modifiers_for_entity(entity)
+    modifiers_for_context(entity, eval_context)
+    |> Enum.uniq_by(& &1.id)
     |> Enum.filter(fn %RuleModifier{trigger: t, predicate: pred, min_level: min_lvl} ->
       trigger_matches?(t, trigger) and
         Map.get(entity, :level, 1) >= min_lvl and
@@ -62,10 +63,14 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   # Private — modifier source registry
   # ---------------------------------------------------------------------------
 
-  defp modifiers_for_entity(entity) do
+  defp modifiers_for_context(entity, eval_context) do
+    target = Map.get(eval_context, :target)
+    target_conds = if target, do: Map.get(target, :conditions, []), else: []
+
     class_modifiers(Map.get(entity, :class, ""))
     |> Enum.concat(race_modifiers(Map.get(entity, :race, "")))
     |> Enum.concat(condition_modifiers(Map.get(entity, :conditions, [])))
+    |> Enum.concat(condition_modifiers(target_conds))
   end
 
   # Class feature modifiers — stubs; real modifiers wired in #47
@@ -74,8 +79,14 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   # Race trait modifiers — stubs; real modifiers wired in #47
   defp race_modifiers(_race), do: []
 
-  # Active condition modifiers — stubs; wired when #42 (Condition struct) lands
-  defp condition_modifiers(_conditions), do: []
+  defp condition_modifiers(conditions) do
+    Enum.flat_map(conditions, fn key ->
+      case Condition.get(key) do
+        %Condition{modifiers: mods} -> mods
+        nil -> []
+      end
+    end)
+  end
 
   # ---------------------------------------------------------------------------
   # Private — effect application layers
@@ -150,6 +161,7 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
       %RuleModifier{effect: {:add_damage_dice, _, _}} -> true
       %RuleModifier{effect: {:add_to_roll, _}} -> true
       %RuleModifier{effect: {:force_critical_hit}} -> true
+      %RuleModifier{effect: {:set_speed, _}} -> true
       _ -> false
     end)
     |> Enum.reduce(ctx, fn %RuleModifier{effect: effect}, acc ->
@@ -162,6 +174,10 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
 
         {:force_critical_hit} ->
           Map.put(acc, :is_critical, true)
+
+        {:set_speed, n} ->
+          # Multiple set_speed effects take the lowest (most restrictive).
+          Map.update(acc, :speed_override, n, &min(&1, n))
       end
     end)
   end
