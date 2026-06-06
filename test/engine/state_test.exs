@@ -406,6 +406,100 @@ defmodule Gibbering.Engine.StateTest do
     end
   end
 
+  describe "set_initiative/3" do
+    test "stores the initiative value for the entity" do
+      state = build_state()
+      new_state = State.set_initiative(state, hero_id(), 15)
+      assert new_state.initiative_values[hero_id()] == 15
+    end
+
+    test "sorts turn_order by initiative descending after roll" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()]}
+
+      # hero gets lower initiative; monster gets higher → monster should go first
+      s1 = State.set_initiative(state, hero_id(), 8)
+      s2 = State.set_initiative(s1, monster_id(), 18)
+
+      assert hd(s2.turn_order) == monster_id()
+    end
+
+    test "preserves the currently active entity across re-sort" do
+      # Start with hero active at index 0, set monster's initiative higher
+      state = %{build_state() | turn_order: [hero_id(), monster_id()], active_index: 0}
+      s1 = State.set_initiative(state, hero_id(), 20)
+      s2 = State.set_initiative(s1, monster_id(), 5)
+
+      # Hero still has highest initiative and is still at front
+      assert State.active_hero_id(s2) == hero_id()
+    end
+
+    test "stores initiative_values as an empty map by default" do
+      state = build_state()
+      assert state.initiative_values == %{}
+    end
+  end
+
+  describe "add_to_turn_order/2" do
+    test "appends entity to the end of turn_order" do
+      state = build_state()
+      new_state = State.add_to_turn_order(state, monster_id())
+      assert List.last(new_state.turn_order) == monster_id()
+    end
+
+    test "is a no-op if entity is already in turn_order" do
+      state = build_state()
+      new_state = State.add_to_turn_order(state, hero_id())
+      assert new_state.turn_order == state.turn_order
+    end
+
+    test "is a no-op if entity_id does not exist in entities" do
+      state = build_state()
+      new_state = State.add_to_turn_order(state, 9999)
+      assert new_state.turn_order == state.turn_order
+    end
+  end
+
+  describe "remove_from_turn_order/2" do
+    test "removes the entity from turn_order" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()]}
+      new_state = State.remove_from_turn_order(state, monster_id())
+      refute monster_id() in new_state.turn_order
+    end
+
+    test "adjusts active_index to stay in bounds when removing" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()], active_index: 1}
+      new_state = State.remove_from_turn_order(state, monster_id())
+      assert new_state.active_index == 0
+    end
+
+    test "is a no-op if entity is not in turn_order" do
+      state = build_state()
+      new_state = State.remove_from_turn_order(state, 9999)
+      assert new_state.turn_order == state.turn_order
+    end
+  end
+
+  describe "reorder_turn_order/2" do
+    test "replaces turn_order with the new order" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()]}
+      new_state = State.reorder_turn_order(state, [monster_id(), hero_id()])
+      assert new_state.turn_order == [monster_id(), hero_id()]
+    end
+
+    test "preserves the currently active entity position after reorder" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()], active_index: 0}
+      # Move hero to second position; active entity (hero) should remain active
+      new_state = State.reorder_turn_order(state, [monster_id(), hero_id()])
+      assert State.active_hero_id(new_state) == hero_id()
+    end
+
+    test "ignores ids not currently in turn_order" do
+      state = %{build_state() | turn_order: [hero_id()]}
+      new_state = State.reorder_turn_order(state, [hero_id(), 9999])
+      assert new_state.turn_order == [hero_id()]
+    end
+  end
+
   describe "apply_long_rest/2" do
     test "restores spell slots to initial values" do
       state =

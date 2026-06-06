@@ -293,6 +293,80 @@ defmodule GibberingWeb.GameLiveTest do
     end
   end
 
+  describe "DM initiative panel" do
+    test "DM sees initiative list when session is active", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      html = render(view)
+      assert html =~ "Initiative"
+    end
+
+    test "DM can roll initiative for an entity", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view
+      |> element("[phx-click='dm_roll_initiative'][phx-value-id='#{hero_id}']")
+      |> render_click()
+
+      assert SceneServer.get_state(game_id).initiative_values[hero_id] != nil
+    end
+
+    test "DM can add an entity to the turn order", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      view
+      |> element("[phx-click='dm_add_to_order'][phx-value-id='#{monster_id}']")
+      |> render_click()
+
+      assert monster_id in SceneServer.get_state(game_id).turn_order
+    end
+
+    test "DM can remove an entity from the turn order", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view
+      |> element("[phx-click='dm_remove_from_order'][phx-value-id='#{hero_id}']")
+      |> render_click()
+
+      refute hero_id in SceneServer.get_state(game_id).turn_order
+    end
+
+    test "DM can move an entry up in the turn order", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      # Add monster so there are 2 entries, then move it up
+      SceneServer.add_to_turn_order(game_id, monster_id)
+
+      view
+      |> element("[phx-click='dm_move_up'][phx-value-id='#{monster_id}']")
+      |> render_click()
+
+      assert hd(SceneServer.get_state(game_id).turn_order) == monster_id
+    end
+
+    test "DM can force-end the current turn", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.start_session(game_id)
+
+      view |> element("[phx-click='dm_force_end_turn']") |> render_click()
+
+      # Turn was advanced (and wrapped with 1 hero); server still running
+      assert %State{} = SceneServer.get_state(game_id)
+    end
+  end
+
   describe "handle_info PubSub broadcast" do
     test "state_updated broadcast updates the game board", %{conn: conn} do
       {view, game_id} = mount_combat_game(conn)
