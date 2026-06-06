@@ -59,7 +59,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#88](088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | `discovery` `architecture` `gameplay` | medium |
 | [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` | low |
-| [#91](091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | `architecture` `ui` `gameplay` | medium |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
 | [#93](093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | `ui` `gameplay` `architecture` | medium |
 | [#94](094-dm-initiative-panel.md) | DM turn and initiative management panel | `ui` `gameplay` | medium |
@@ -149,6 +148,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#19](019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | `bug` `architecture` |
 | [#20](020-spells-defined-not-castable.md) | Spells are defined but not castable | `gameplay` `rules` |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` |
+| [#91](091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | `architecture` `ui` `gameplay` |
 | [#90](090-player-campaign-overview-page.md) | Player campaign overview page | `ui` `gameplay` |
 | [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` |
 | [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` |
