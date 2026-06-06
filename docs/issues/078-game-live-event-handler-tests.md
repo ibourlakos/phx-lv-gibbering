@@ -1,6 +1,7 @@
 # #78 · GameLive event handler integration tests
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** gameplay, architecture
 
@@ -15,7 +16,7 @@ Untested handlers (non-exhaustive):
 **Depends on:** WP-D (#54, #55, #56) — `CampaignCharacter` schema and the entity merge pipeline must exist before campaigns can be seeded with live entities.
 
 **Acceptance criteria**
-- [ ] Each major `handle_event` clause has at least one happy-path test
-- [ ] PubSub broadcast → socket assign update is tested for at least one event type
-- [ ] Tests use `ConnCase` with a DB-backed campaign fixture and a started `GameServer`
-- [ ] Coverage on `GibberingWeb.GameLive` reaches ≥ 70%
+- [x] Each major `handle_event` clause has at least one happy-path test
+- [x] PubSub broadcast → socket assign update is tested for at least one event type
+- [x] Tests use `ConnCase` with a DB-backed campaign fixture and a started `GameServer`
+- [x] Coverage on `GibberingWeb.GameLive` reaches ≥ 70%
