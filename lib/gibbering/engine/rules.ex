@@ -1,7 +1,9 @@
 defmodule Gibbering.Engine.Rules do
+  @moduledoc "Core combat rule resolution: movement, attacks, spell casting, and saving throws."
+
   alias Gibbering.Engine.State
   alias Gibbering.Rulesets.DnD5e.Stats
-  alias Gibbering.Data.Spells
+  alias Gibbering.Data.{Classes, Spells}
 
   @doc "Returns [{x,y}] the entity can move to this turn based on remaining movement."
   def valid_moves(%State{} = state, entity_id) do
@@ -115,6 +117,43 @@ defmodule Gibbering.Engine.Rules do
   end
 
   @doc """
+  Roll a saving throw for `target_id` against `dc` using `ability`.
+
+  Returns `{:save, details}` when total >= dc, else `{:fail, details}`.
+  Pass `roll: n` in opts to fix the d20 value (for testing).
+  """
+  def saving_throw(%State{} = state, target_id, ability, dc, opts \\ []) do
+    entity = state.entities[target_id]
+    roll = Keyword.get(opts, :roll, Enum.random(1..20))
+    ability_str = to_string(ability)
+
+    ability_mod =
+      Map.get(
+        Map.get(entity, :ability_modifiers, %{}),
+        ability_str,
+        Stats.ability_modifier(get_in(entity, [:stats, ability_str]) || 10)
+      )
+
+    prof =
+      if proficient_in_save?(entity, ability_str),
+        do: Stats.proficiency_bonus(Map.get(entity, :level, 1)),
+        else: 0
+
+    total = roll + ability_mod + prof
+
+    details = %{
+      roll: roll,
+      modifier: ability_mod + prof,
+      total: total,
+      dc: dc,
+      ability: ability,
+      proficient: prof > 0
+    }
+
+    if total >= dc, do: {:save, details}, else: {:fail, details}
+  end
+
+  @doc """
   Resolve a spell cast from `caster_id` targeting `target_id`.
 
   Validates and consumes the `:action` slot (and a spell slot for level 1+).
@@ -202,10 +241,38 @@ defmodule Gibbering.Engine.Rules do
         new_state = state |> put_entity_hp(target_id, new_hp) |> maybe_destroy(target_id, new_hp)
         {:hit, new_state, %{hit: true, damage: damage}}
 
+      :save ->
+        dc = Stats.spell_dc(caster)
+        {save_result, save_details} = saving_throw(state, target_id, spell.effect.save, dc, opts)
+
+        {damage, new_state} =
+          case save_result do
+            :fail ->
+              dmg = roll_spell_damage(spell, false)
+              new_hp = max(target.hp - dmg, 0)
+              s = state |> put_entity_hp(target_id, new_hp) |> maybe_destroy(target_id, new_hp)
+              {dmg, s}
+
+            :save ->
+              dmg = div(roll_spell_damage(spell, false), 2)
+              new_hp = max(target.hp - dmg, 0)
+              s = state |> put_entity_hp(target_id, new_hp) |> maybe_destroy(target_id, new_hp)
+              {dmg, s}
+          end
+
+        {:hit, new_state,
+         %{hit: true, save_result: save_result, damage: damage, save: save_details}}
+
       _other ->
-        # save / aoe / utility / touch — no damage applied yet
+        # aoe / utility / touch — no damage applied yet
         {:hit, state, %{hit: true, damage: nil}}
     end
+  end
+
+  defp proficient_in_save?(entity, ability_str) do
+    class = Map.get(entity, :class, "")
+    class_data = Classes.seed_data()[class] || %{}
+    ability_str in Map.get(class_data, :saving_throws, [])
   end
 
   defp spell_attack_bonus(caster) do

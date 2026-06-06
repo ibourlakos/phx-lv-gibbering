@@ -103,5 +103,69 @@ defmodule Gibbering.Data.Classes do
     }
   }
 
+  @doc false
   def seed_data, do: @seed_data
+
+  @doc "Returns combat-relevant `%RuleModifier{}` structs for the given class."
+  def modifiers(class)
+
+  def modifiers("fighter") do
+    alias Gibbering.Rulesets.DnD5e.RuleModifier
+
+    [
+      %RuleModifier{
+        id: :fighter_second_wind,
+        name: "Second Wind",
+        source: :fighter,
+        trigger: :on_second_wind,
+        predicate: {:entity_has_resource, :second_wind},
+        effect: {:restore_hp, "1d10"},
+        stacking: :named_bonus
+      },
+      %RuleModifier{
+        id: :fighter_action_surge,
+        name: "Action Surge",
+        source: :fighter,
+        trigger: :on_action_surge,
+        predicate: {:entity_has_resource, :action_surge},
+        effect: {:grant_extra_action},
+        stacking: :named_bonus,
+        min_level: 2
+      }
+    ]
+  end
+
+  def modifiers("rogue") do
+    alias Gibbering.Rulesets.DnD5e.RuleModifier
+
+    [
+      %RuleModifier{
+        id: :rogue_sneak_attack,
+        name: "Sneak Attack",
+        source: :rogue,
+        trigger: {:on_attack, :any},
+        predicate: {:any_of, [{:ally_adjacent_to_target}, {:entity_and_ally_flank_target}]},
+        effect: {:add_damage_dice, "1d6", :sneak_attack},
+        stacking: :named_bonus
+      }
+    ]
+  end
+
+  def modifiers("barbarian") do
+    alias Gibbering.Rulesets.DnD5e.RuleModifier
+
+    [
+      %RuleModifier{
+        id: :barbarian_rage_damage,
+        name: "Rage",
+        source: :barbarian,
+        trigger: {:on_attack, :melee},
+        predicate: {:entity_has_condition, :raging},
+        effect: {:add_bonus, :damage, 2},
+        stacking: :additive
+      }
+    ]
+  end
+
+  def modifiers(_class), do: []
 end

@@ -10,6 +10,7 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   wins) → additive flat bonuses → dice modifiers → advantage/disadvantage.
   """
 
+  alias Gibbering.Data.{Classes, Races}
   alias Gibbering.Rulesets.DnD5e.{Condition, Predicate, RuleModifier}
 
   # ---------------------------------------------------------------------------
@@ -73,11 +74,9 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
     |> Enum.concat(condition_modifiers(target_conds))
   end
 
-  # Class feature modifiers — stubs; real modifiers wired in #47
-  defp class_modifiers(_class), do: []
+  defp class_modifiers(class), do: Classes.modifiers(class)
 
-  # Race trait modifiers — stubs; real modifiers wired in #47
-  defp race_modifiers(_race), do: []
+  defp race_modifiers(race), do: Races.modifiers(race)
 
   defp condition_modifiers(conditions) do
     Enum.flat_map(conditions, fn key ->
@@ -219,6 +218,8 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
       {{:on_attack, type}, {:on_attack, type}} -> true
       {{:on_damage_received, :any}, {:on_damage_received, _}} -> true
       {{:on_damage_received, type}, {:on_damage_received, type}} -> true
+      {{:on_saving_throw, :any}, {:on_saving_throw, _}} -> true
+      {{:on_saving_throw, ability}, {:on_saving_throw, ability}} -> true
       _ -> false
     end
   end

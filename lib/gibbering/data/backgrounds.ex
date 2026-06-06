@@ -1,4 +1,6 @@
 defmodule Gibbering.Data.Backgrounds do
+  @moduledoc "Seed source and runtime lookup for the backgrounds catalogue table."
+
   @backgrounds %{
     "acolyte" => %{
       name: "Acolyte",
@@ -519,7 +521,12 @@ defmodule Gibbering.Data.Backgrounds do
     }
   }
 
+  @doc "Returns all background definitions as a map keyed by string key."
   def all, do: @backgrounds
+
+  @doc "Returns the background definition for the given key, or nil."
   def get(key), do: Map.get(@backgrounds, key)
+
+  @doc "Returns all background string keys."
   def keys, do: Map.keys(@backgrounds)
 end

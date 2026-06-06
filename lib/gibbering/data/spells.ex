@@ -129,6 +129,7 @@ defmodule Gibbering.Data.Spells do
     }
   }
 
+  @doc false
   def seed_data, do: @seed_data
 
   @doc "Returns all spells as typed `%Spell{}` structs keyed by atom."

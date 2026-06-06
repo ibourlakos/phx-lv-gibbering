@@ -1,64 +1,30 @@
 # Work Packages
 _Temporary planning doc — not an issue file. Delete when packages are actioned._
 
-Generated: 2026-06-05
+Generated: 2026-06-05 · Last updated: 2026-06-06
 
 ---
 
-## WP-A — Infrastructure & Data Plumbing
-_Unblocks everything else. Do these early._
+## WP-A — Infrastructure & Data Plumbing ✓ (1 straggler)
+_All high/medium issues closed. One low-priority item remains._
 
 | # | Title | Priority |
 |---|---|---|
-| #1 | Establish git remote | high |
-| #72 | Drop `users.role` column | high |
-| #8 | `String.to_existing_atom` crash in data pipeline | medium |
-| #9 | `tile_walkable?` crash on missing coords | medium |
-| #73 | Migrate static reference data to DB tables | medium |
-| #29 | SRD data ingestion pipeline | medium |
-| #24 | Consolidate `grid_tiles` rows into JSONB column | low |
-
-#73 and #29 are sequenced — ingest pipeline (#29) feeds the reference tables (#73). #72 is an independent cleanup but should land before admin work starts since it touches the auth model.
+| [#24](024-grid-data-jsonb.md) | Consolidate `grid_tiles` rows into JSONB column | low |
 
 ---
 
-## WP-B — Core Engine Architecture
-_Process model, supervision, persistence. The skeleton the rules engine hangs on._
+## WP-B — Core Engine Architecture ✓ (1 straggler)
+_All high/medium issues closed. One low-priority item remains._
 
 | # | Title | Priority |
 |---|---|---|
-| #11 | Supervision tree design for `GameServer` | high |
-| #12 | Persistence strategy: game state → Postgres | high |
-| #36 | Scene phase state machine in `SceneServer` | high |
-| #39 | `Gibbering.Ruleset` behaviour + `DnD5e` shell | high |
-| #14 | `Ruleset`: behaviour vs protocol (discovery) | medium |
-| #3 | Save/load: before or after Ruleset split (discovery) | medium |
-| #15 | Document `stats: map()` tradeoffs | low |
-
-#39 closes #14. #3 is a prerequisite decision for #12. #36 depends on #11.
+| [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | low |
 
 ---
 
-## WP-C — Rules Engine
-_D&D 5e logic: modifiers, conditions, economy, spells. Depends on WP-B._
-
-| # | Title | Priority |
-|---|---|---|
-| #31 | Trigger/predicate/effect decomposition for `RuleModifier` (discovery) | high |
-| #37 | Runtime entity map: `action_economy`, `resources`, `conditions` | high |
-| #40 | `RuleModifier` struct + predicate evaluator + modifier pipeline | medium |
-| #30 | Conditions and status effects engine model | medium |
-| #41 | `Spell` struct completion + `Data.Spells` migration | medium |
-| #79 | `Data.Items` catalogue module (weapons, armour, consumables) | low |
-| #42 | `Condition` struct + runtime application via active effects | medium |
-| #43 | Action economy tracking + `advance_turn` reset | medium |
-| #44 | Spell slots + class resource pools in `resources` map | medium |
-| #20 | Spells are defined but not castable | medium |
-| #46 | Equipped weapon/armor in `stats` JSONB + seed data | low |
-| #47 | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | low |
-| #48 | Saving throw pipeline | low |
-
-#31 is a design gate — resolve before writing any `RuleModifier` code. Ordering: #37 → (#40, #43, #44) → (#30, #42) → (#41, #79, #20). #47 is a cleanup that can happen any time after #40. #79 can be done any time alongside #41 — both are pure catalogue data modules with no rule engine dependency.
+## WP-C — Rules Engine ✓ complete
+_All 13 issues closed as of 2026-06-06._
 
 ---
 
@@ -67,10 +33,10 @@ _Bridges character-creation work (closed) to active play. Depends on WP-A schema
 
 | # | Title | Priority |
 |---|---|---|
-| #54 | `CampaignCharacter` schema (template-to-instance bridge) | medium |
-| #55 | Bidirectional campaign joining (player request + DM invite) | medium |
-| #56 | Character template → live entity merge logic | medium |
-| #57 | DM character adjustment UI (campaign prep) | medium |
+| [#54](054-campaign-character-schema.md) | `CampaignCharacter` schema (template-to-instance bridge) | medium |
+| [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | medium |
+| [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | medium |
+| [#57](057-dm-character-adjustment-ui.md) | DM character adjustment UI (campaign prep) | medium |
 
 #54 → #55 → #56 are strictly sequential. #57 is the frontend face of this package.
 
@@ -81,27 +47,27 @@ _Fills the remaining coverage gaps left after the pure-unit pass. #76 and #77 ar
 
 | # | Title | Priority |
 |---|---|---|
-| #76 | `Accounts` context integration tests | medium |
-| #77 | `Catalogue.Cache` GenServer tests | medium |
-| #78 | `GameLive` event handler integration tests | medium |
+| [#76](076-accounts-context-integration-tests.md) | `Accounts` context integration tests | medium |
+| [#77](077-catalogue-cache-genserver-tests.md) | `Catalogue.Cache` GenServer tests | medium |
+| [#78](078-game-live-event-handler-tests.md) | `GameLive` event handler integration tests | medium |
 
 #76 and #77 can be done any time (no phase dependency). #78 requires WP-D (#54–#56) because event handlers need a live `CampaignCharacter` and a running `GameServer` backed by DB entities.
 
 ---
 
 ## WP-E — Admin App
-_Mostly independent of the rules engine. Can be done in parallel with WP-C._
+_Mostly independent of the rules engine. Can be done in parallel with WP-D._
 
 | # | Title | Priority |
 |---|---|---|
-| #65 | `support_users` schema, migration, context, and auth | medium |
-| #64 | Admin router scope and pipeline | medium |
-| #66 | Support audit log | medium |
-| #67 | Admin CRUD — Users and Campaigns | medium |
-| #75 | Admin campaign member management | medium |
-| #69 | `MetricsStore` behaviour + `Stores.Local` impl | low |
-| #68 | LiveDashboard mount + custom campaign monitoring | low |
-| #74 | Admin character moderation view | low |
+| [#65](065-support-users-schema-and-auth.md) | `support_users` schema, migration, context, and auth | medium |
+| [#64](064-admin-router-scope-and-pipeline.md) | Admin router scope and pipeline | medium |
+| [#66](066-support-audit-log.md) | Support audit log | medium |
+| [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | medium |
+| [#75](075-admin-campaign-member-management.md) | Admin campaign member management | medium |
+| [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` impl | low |
+| [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring | low |
+| [#74](074-admin-character-moderation-view.md) | Admin character moderation view | low |
 
 #65 is the foundation — everything else in this package gates on it. #64 → #67 → (#74, #75). #69 is a prerequisite for #68 but neither blocks other admin work.
 
@@ -112,20 +78,20 @@ _SVG pipeline bugs and discovery. Mostly depends on WP-B for data shape clarity.
 
 | # | Title | Priority |
 |---|---|---|
-| #13 | Move overlay occluded by entities in isometric depth order | medium |
-| #25 | Ruleset UI declaration: action buttons + stat panels (discovery) | medium |
-| #26 | Fog-of-war ownership: ruleset or engine? (discovery) | medium |
-| #34 | Active effect visual representation and animation (discovery) | medium |
-| #81 | Viewport zoom/pan architecture (discovery) | low |
-| #82 | Z-axis elevation — projection, depth sorting, and LOS (discovery) | low |
-| #83 | Volumetric spell effect rendering (discovery) | low |
-| #84 | LOD sprite detail levels for zoom (discovery) | low |
-| #10 | Isometric `origin_x` formula breaks on non-square maps | low |
-| #21 | Dice roll cycling faces | low |
-| #27 | Tile decoration storage (discovery) | low |
-| #28 | Multi-tile entity footprints (discovery) | low |
+| [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | medium |
+| [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons + stat panels (discovery) | medium |
+| [#26](026-fog-of-war-ownership.md) | Fog-of-war ownership: ruleset or engine? (discovery) | medium |
+| [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation (discovery) | medium |
+| [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture (discovery) | low |
+| [#82](082-z-axis-elevation-projection-and-los.md) | Z-axis elevation — projection, depth sorting, and LOS (discovery) | low |
+| [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering (discovery) | low |
+| [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom (discovery) | low |
+| [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | low |
+| [#21](021-dice-roll-cycling-faces.md) | Dice roll cycling faces | low |
+| [#27](027-tile-decoration-storage.md) | Tile decoration storage (discovery) | low |
+| [#28](028-multi-tile-entities.md) | Multi-tile entity footprints (discovery) | low |
 
-Discovery issues (#25, #26, #27, #28, #81, #82, #83, #84) must be answered before writing the corresponding rendering code. #13 and #10 are independent bug fixes. #84 (LOD) should be resolved after or alongside #81 (viewport zoom) since zoom thresholds are jointly determined. #83 (volumetric effects) is best after #82 (elevation) but can ship flat (z=0 only) first.
+Discovery issues (#25, #26, #27, #28, #81, #82, #83, #84) must be answered before writing the corresponding rendering code. #13 and #10 are independent bug fixes. #84 (LOD) should be resolved after or alongside #81 (viewport zoom). #83 (volumetric effects) is best after #82 (elevation) but can ship flat first.
 
 ---
 
@@ -134,23 +100,24 @@ _No strict phase placement. Resolve in parallel or as needed._
 
 | # | Title | Notes |
 |---|---|---|
-| #16 | LPC sprite copyleft risk | Legal — blocks #6 |
-| #6 | Raster sprite asset pipeline | Blocked on #16 |
-| #2 | Wizard first unique mechanic | Discovery/gameplay |
-| #32 | DM override event schema and god-mode mechanics | Discovery |
-| #33 | Templates governance model | Discovery |
-| #63 | Playwright smoke tests + smoke Docker env | Ops |
-| #80 | Inventory and loot container system | Discovery — depends on #79 + #40 (RuleModifier pipeline) |
-| #85 | Content creation tools — design and scope | Discovery — spans WP-E admin shell and future player UGC |
+| [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk | Legal — blocks #6 |
+| [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | Blocked on #16 |
+| [#19](019-lobby-edits-stale-gameserver.md) | Lobby edits don't propagate to running GameServer | Bug — no WP home yet |
+| [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | Discovery |
+| [#33](033-templates-governance-model.md) | Templates governance model | Discovery |
+| [#63](063-playwright-smoke-tests.md) | Playwright smoke tests + smoke Docker env | Ops |
+| [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | Discovery — depends on #79 + WP-C |
+| [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | Discovery — spans WP-E + future UGC |
 
 ---
 
 ## Suggested sequencing
 
 ```
-WP-A  →  WP-B  →  WP-C  →  WP-D  →  WP-G (#78)
-              ↘  WP-E  (parallel with WP-C)        ↗ WP-G (#76, #77 can start earlier)
-              ↘  WP-F discoveries (parallel; rendering code gates on WP-C shape)
+WP-A ✓  →  WP-B ✓  →  WP-C ✓  →  WP-D  →  WP-G (#78)
+                       ↘  WP-E  (parallel with WP-D)
+                       ↘  WP-F discoveries (parallel; rendering code gates on WP-D shape)
+                          WP-G (#76, #77 free-floating — can start now)
 ```
 
-WP-A and WP-B are closed. Next on the critical path: resolve #31 (RuleModifier design gate) to unblock WP-C. WP-E (Admin App) can start in parallel with WP-C — #65 is its foundation. WP-G issues #76 and #77 are free-floating and can be picked up any time.
+WP-A, WP-B, and WP-C are complete. Current critical path: WP-D (#54 → #55 → #56 → #57). WP-E (#65 is its foundation) and WP-F discoveries can run in parallel. WP-G issues #76 and #77 are free-floating and can be picked up any time.
