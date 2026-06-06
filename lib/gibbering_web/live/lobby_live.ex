@@ -3,6 +3,7 @@ defmodule GibberingWeb.LobbyLive do
 
   alias Gibbering.{Repo, Campaign, Entity, Campaigns}
   alias Gibbering.Catalogue.Cache, as: Catalogue
+  alias Gibbering.Engine.SceneServer
 
   @impl true
   def mount(%{"id" => campaign_id}, _session, socket) do
@@ -149,6 +150,7 @@ defmodule GibberingWeb.LobbyLive do
     |> Repo.update!()
 
     broadcast_refresh(socket.assigns.campaign.id)
+    maybe_reload_scene(socket.assigns.campaign.id)
     {:noreply, reload_campaign(socket) |> assign(editing_id: nil, edit_form: %{})}
   end
 
@@ -176,6 +178,7 @@ defmodule GibberingWeb.LobbyLive do
       })
 
       broadcast_refresh(socket.assigns.campaign.id)
+      maybe_reload_scene(socket.assigns.campaign.id)
       {:noreply, reload_campaign(socket)}
     end
   end
@@ -190,6 +193,7 @@ defmodule GibberingWeb.LobbyLive do
       Repo.delete!(entity)
 
       broadcast_refresh(socket.assigns.campaign.id)
+      maybe_reload_scene(socket.assigns.campaign.id)
       {:noreply, reload_campaign(socket) |> assign(editing_id: nil, edit_form: %{})}
     end
   end
@@ -207,6 +211,12 @@ defmodule GibberingWeb.LobbyLive do
 
   defp broadcast_refresh(campaign_id) do
     Phoenix.PubSub.broadcast(Gibbering.PubSub, lobby_topic(campaign_id), :refresh)
+  end
+
+  defp maybe_reload_scene(campaign_id) do
+    if SceneServer.running?(campaign_id) do
+      SceneServer.reload_entities(campaign_id)
+    end
   end
 
   defp reload_campaign(socket) do

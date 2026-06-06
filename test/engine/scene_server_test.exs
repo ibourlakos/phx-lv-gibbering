@@ -4,6 +4,7 @@ defmodule Gibbering.Engine.SceneServerTest do
   use Gibbering.DataCase, async: false
 
   import Gibbering.GameFixtures
+  alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.
@@ -138,6 +139,74 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       state = SceneServer.get_state(game_id)
       SceneServer.select_entity(game_id, State.active_hero_id(state))
+
+      assert_receive {:state_updated, %State{}}, 500
+    end
+  end
+
+  describe "running?/1" do
+    test "returns false when no server is registered for the game" do
+      refute SceneServer.running?(999_999_999)
+    end
+
+    test "returns true after a server is started" do
+      game_id = start_server()
+      assert SceneServer.running?(game_id)
+    end
+  end
+
+  describe "reload_entities/1" do
+    test "reflects a name change made to the DB entity" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      entity = Repo.get!(Entity, hero_id)
+      entity |> Entity.changeset(%{name: "Renamed Hero"}) |> Repo.update!()
+
+      :ok = SceneServer.reload_entities(game_id)
+      new_state = SceneServer.get_state(game_id)
+
+      assert new_state.entities[hero_id].name == "Renamed Hero"
+    end
+
+    test "preserves runtime position after reload" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      # Move the hero in-memory (SceneServer updates runtime state, not entity table x/y).
+      SceneServer.select_entity(game_id, hero_id)
+      moved_state = SceneServer.get_state(game_id)
+      {tx, ty} = hd(moved_state.valid_moves)
+      SceneServer.move_entity(game_id, tx, ty)
+
+      # Now trigger a reload and confirm position is preserved.
+      :ok = SceneServer.reload_entities(game_id)
+      new_state = SceneServer.get_state(game_id)
+
+      assert new_state.entities[hero_id].x == tx
+      assert new_state.entities[hero_id].y == ty
+    end
+
+    test "removes an entity that was deleted from DB" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      Repo.delete!(Repo.get!(Entity, hero_id))
+
+      :ok = SceneServer.reload_entities(game_id)
+      new_state = SceneServer.get_state(game_id)
+
+      refute Map.has_key?(new_state.entities, hero_id)
+    end
+
+    test "broadcasts :state_updated after reload" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      :ok = SceneServer.reload_entities(game_id)
 
       assert_receive {:state_updated, %State{}}, 500
     end

@@ -4,8 +4,9 @@ defmodule Gibbering.Engine.SceneServer do
   use GenServer
 
   import Ecto.Query
-  alias Gibbering.{Repo, Campaign}
+  alias Gibbering.{Repo, Campaign, Entity}
   alias Gibbering.Engine.{State, Rules, GameSession}
+  alias Gibbering.Rulesets.DnD5e.Stats
 
   @topic_prefix "game:"
 
@@ -45,6 +46,18 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "Forces a scene phase transition without validation — DM override only."
   def force_transition_phase(game_id, new_phase),
     do: GenServer.call(via(game_id), {:transition_phase, new_phase, true})
+
+  @doc "Returns true if a SceneServer for `game_id` is currently registered."
+  def running?(game_id) do
+    Registry.lookup(Gibbering.GameRegistry, game_id) != []
+  end
+
+  @doc """
+  Re-fetches all entities for the campaign from DB and merges them into the
+  running state, preserving runtime fields (position, action economy, resources,
+  conditions). Broadcasts the updated state. No-op if the server is not running.
+  """
+  def reload_entities(game_id), do: GenServer.call(via(game_id), :reload_entities)
 
   @doc "Returns the PubSub topic string for broadcasting scene updates to subscribers."
   def topic(game_id), do: @topic_prefix <> to_string(game_id)
@@ -91,6 +104,76 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call(:get_state, _from, state), do: {:reply, state, state}
+
+  @impl true
+  def handle_call(:reload_entities, _from, state) do
+    db_entities =
+      Entity
+      |> where(campaign_id: ^state.campaign_id)
+      |> Repo.all()
+
+    ruleset = state.ruleset
+
+    new_entities =
+      Map.new(db_entities, fn e ->
+        base = %{
+          name: e.name,
+          type: e.type,
+          sprite: e.sprite,
+          race: e.race || "human",
+          class: e.class || "fighter",
+          hp: e.hp,
+          max_hp: e.max_hp,
+          level: e.level,
+          temp_hp: e.temp_hp,
+          tags: e.tags,
+          stats: e.stats,
+          speed: (e.stats || %{})["speed"] || 30
+        }
+
+        merged =
+          case Map.get(state.entities, e.id) do
+            nil ->
+              base
+              |> Map.put(:x, e.x)
+              |> Map.put(:y, e.y)
+              |> Map.put(:action_economy, ruleset.initial_action_economy(base))
+              |> Map.put(:resources, ruleset.initial_resources(base))
+              |> Map.put(:conditions, [])
+              |> Stats.hydrate_entity()
+
+            existing ->
+              base
+              |> Map.put(:x, existing.x)
+              |> Map.put(:y, existing.y)
+              |> Map.put(:action_economy, existing.action_economy)
+              |> Map.put(:resources, existing.resources)
+              |> Map.put(:conditions, existing.conditions)
+              |> Stats.hydrate_entity()
+          end
+
+        {e.id, merged}
+      end)
+
+    hero_ids =
+      db_entities
+      |> Enum.filter(&(&1.type == "hero"))
+      |> Enum.map(& &1.id)
+
+    # Keep active_index in bounds after any hero list changes.
+    new_active_index = min(state.active_index, max(length(hero_ids) - 1, 0))
+
+    new_state = %{
+      state
+      | entities: new_entities,
+        turn_order: hero_ids,
+        active_index: new_active_index
+    }
+
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
 
   @impl true
   def handle_call({:select_entity, entity_id}, _from, state) do
