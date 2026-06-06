@@ -1,6 +1,7 @@
 # #57 · DM character adjustment UI
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** gameplay, rendering
 
