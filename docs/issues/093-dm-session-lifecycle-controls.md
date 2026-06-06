@@ -1,6 +1,7 @@
 # #93 · DM session lifecycle controls (start, pause, resume, end)
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-06
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** ui, gameplay, architecture
 
@@ -18,8 +19,8 @@ Design notes:
 - Session state transitions should be idempotent (double-clicking "pause" is harmless)
 
 **Acceptance criteria**
-- [ ] DM panel has Start / Pause / Resume / End buttons, shown conditionally based on current session state
-- [ ] Player inputs are rejected server-side while paused (not just hidden client-side)
-- [ ] Pause and resume broadcast a PubSub event that all connected LiveViews handle to show/hide the pause overlay
-- [ ] End session shows a confirmation dialog; on confirm, state is archived and all sockets receive a redirect
-- [ ] Session state persists across DM page reload (a refreshed DM can resume from correct state)
+- [x] DM panel has Start / Pause / Resume / End buttons, shown conditionally based on current session state
+- [x] Player inputs are rejected server-side while paused (not just hidden client-side)
+- [x] Pause and resume broadcast a PubSub event that all connected LiveViews handle to show/hide the pause overlay
+- [x] End session shows a confirmation dialog; on confirm, state is archived and all sockets receive a redirect
+- [x] Session state persists across DM page reload (a refreshed DM can resume from correct state)
