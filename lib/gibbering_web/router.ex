@@ -49,6 +49,7 @@ defmodule GibberingWeb.Router do
     pipe_through [:browser, :admin]
 
     get "/", AdminController, :index
+    get "/audit_log", AdminAuditLogController, :index
   end
 
   # Authenticated routes
