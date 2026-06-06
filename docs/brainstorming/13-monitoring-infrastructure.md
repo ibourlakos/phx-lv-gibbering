@@ -112,3 +112,19 @@ Likely winner: **Option A** to start, **Option B** as a later enhancement once m
 ## Cross-References
 
 - Brainstorm #12 — player/DM experience (game session metrics will tie to session lifecycle defined there)
+
+---
+
+## Issues Opened
+_Triaged 2026-06-06_
+
+| # | Title | Open questions handled |
+|---|---|---|
+| [#96](../issues/096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | Stack choice (PromEx), Docker compose strategy, security for `/metrics` endpoint |
+
+Deferred open questions (not yet resolved in #96):
+- Grafana self-hosted vs. Grafana Cloud — deferred; #96 defaults to self-hosted Docker
+- Alerting (PagerDuty/email/Slack) — deferred indefinitely; dashboards-first
+- Custom game-level metrics (active sessions, turn latency) — follow-up issue after #96 lands
+- Retention policy dev vs. prod — deferred to production infra phase ([#62](../issues/062-multi-environment-infra.md))
+- Admin app Grafana embed (Option B) — tracked in [#68](../issues/068-livedashboard-and-campaign-monitoring.md) as a later enhancement

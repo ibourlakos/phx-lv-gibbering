@@ -98,3 +98,24 @@ This is the minimum viable DM toolset needed to run a live session.
 ## Cross-References
 
 - Brainstorm #11 — game content workflow (race/class/background data needed for character creation)
+
+---
+
+## Issues Opened
+_Triaged 2026-06-06_
+
+| # | Title | Open questions handled |
+|---|---|---|
+| [#90](../issues/090-player-campaign-overview-page.md) | Player campaign overview page | Players need to see active campaigns and characters per campaign |
+| [#91](../issues/091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | Invite mechanism: link/token vs. username lookup |
+| [#92](../issues/092-spectator-role-discovery.md) | Spectator role — membership and session view (discovery) | Spectator role design, visibility scope, LiveView strategy |
+| [#93](../issues/093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | Session lifecycle; pause behavior (server-side vs. UI-only) |
+| [#94](../issues/094-dm-initiative-panel.md) | DM turn and initiative management panel | DM initiative override, skip/force-end, roll on behalf of player |
+| [#95](../issues/095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | DM broadcast/whisper UI placement; apply condition; adjust HP; entity visibility toggle |
+
+Deferred open questions (not yet resolved):
+- Characters campaign-scoped vs. account-global — deferred to [#54](../issues/054-campaign-character-schema.md) (`CampaignCharacter` schema)
+- Leveling up — explicitly out of scope for now
+- Session history / DM override logging — noted in #95 acceptance criteria but full history design is deferred
+- Scheduling — deferred indefinitely
+- Minimum character creation choices to unblock first playtest — tracked in [#89](../issues/089-initial-game-content-population.md)

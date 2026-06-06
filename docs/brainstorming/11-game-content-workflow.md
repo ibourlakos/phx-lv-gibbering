@@ -36,3 +36,15 @@ As a natural follow up I would like to
  - an initial assortment of monsters (care for legal)
  - an initial assortment of various items (care for legal issues)
  - enrich the choices at character creation/appearance
+
+---
+
+## Issues Opened
+_Triaged 2026-06-06_
+
+| # | Title | Open questions handled |
+|---|---|---|
+| [#88](../issues/088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | Definitive content type list; change surface per type; multi-style appearance slot definition |
+| [#89](../issues/089-initial-game-content-population.md) | Initial content population — races, classes, starter monsters/items | BG3 races, standard classes, starter monsters/items; character creation enrichment |
+
+Remaining open questions (e.g. whether characters are campaign-scoped or portable, exact appearance component schema) are tracked in #88 and #89, and depend on decisions in brainstorm #14 → issue [#98](../issues/098-dst-art-direction-spec.md) (art direction spec) and [#99](../issues/099-multi-style-appearance-system.md) (multi-style appearance system).

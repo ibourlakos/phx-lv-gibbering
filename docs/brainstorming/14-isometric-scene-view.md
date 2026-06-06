@@ -212,3 +212,26 @@ especially for crowded scenes or large maps.
 
 - Brainstorm #11 — game content workflow (entity appearance components feed into rendering)
 - Brainstorm #12 — player/DM experience (overlay panels for DM controls tie into this layout model)
+
+---
+
+## Issues Opened
+_Triaged 2026-06-06_
+
+| # | Title | Open questions handled |
+|---|---|---|
+| [#97](../issues/097-full-viewport-scene-layout.md) | Full-viewport scene layout model and overlay z-layer system (discovery) | Layout model; z-layer stack; HTML/SVG split; pointer-event scoping; pan/zoom hook boundary |
+| [#98](../issues/098-dst-art-direction-spec.md) | DST-inspired art direction — reference tile and entity spec | Art direction reference; tile size constant; palette variables; outline/texture technique |
+| [#99](../issues/099-multi-style-appearance-system.md) | Multi-style appearance system — `style_id` keying, per-style records, fallback | Multi-style support; `(content_id, style_id)` keying; fallback rendering; style-as-data |
+| [#100](../issues/100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline (discovery) | Fragment ownership (server vs. client); cache key granularity; `<use>`-based compositing; anchor point storage |
+| [#101](../issues/101-dm-top-down-projection-mode.md) | DM top-down projection mode (discovery) | DM top-down view design; projection-agnostic tile store; inset vs. full-viewport takeover |
+
+Deferred open questions (not yet resolved):
+- Current tile size constant and standard map dimensions — to be established in #98
+- Diamond iso vs. map-level projection config — deferred to #97 and #101
+- Pan/zoom state in URL vs. ephemeral — deferred to #97
+- Mobile/touch support — explicitly out of scope for now (desktop-only)
+- Action bar with real ability icons — depends on content pass ([#89](../issues/089-initial-game-content-population.md))
+- Turn order strip: portraits vs. colored tokens — deferred; colored tokens as default until art direction settles
+- Minimap — deferred; tracked as a note in #97
+- Accessibility (keyboard-only overlay navigation) — deferred; not a baseline requirement
