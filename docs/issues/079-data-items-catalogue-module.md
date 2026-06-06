@@ -1,7 +1,8 @@
 # #79 · `Data.Items` catalogue module
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** low
 **Tags:** rules, gameplay
 
@@ -18,7 +19,7 @@ All items share `name`, `weight_pounds`, `cost_gp`, `is_magical`, `requires_attu
 Seed data should cover the standard SRD weapon table, the standard armour table, and a handful of common consumables sufficient to equip a starter character of each class.
 
 **Acceptance criteria**
-- [ ] `Gibbering.Data.Items` module with a `list/0` or `get/1` interface matching the pattern of `Data.Spells`
-- [ ] Weapon, armor, and consumable entries covering SRD starter gear referenced by `Data.Classes` starting equipment
-- [ ] Unit tests confirming key lookups, type fields, and absence of data errors
-- [ ] `mix precommit` passes
+- [x] `Gibbering.Data.Items` module with a `list/0` or `get/1` interface matching the pattern of `Data.Spells`
+- [x] Weapon, armor, and consumable entries covering SRD starter gear referenced by `Data.Classes` starting equipment
+- [x] Unit tests confirming key lookups, type fields, and absence of data errors
+- [x] `mix precommit` passes
