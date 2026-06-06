@@ -50,6 +50,13 @@ defmodule GibberingWeb.Router do
 
     get "/", AdminController, :index
     get "/audit_log", AdminAuditLogController, :index
+    get "/users", AdminUsersController, :index
+    get "/users/:id", AdminUsersController, :show
+    post "/users/:id/suspend", AdminUsersController, :suspend
+    post "/users/:id/unsuspend", AdminUsersController, :unsuspend
+    get "/campaigns", AdminCampaignsController, :index
+    get "/campaigns/:id", AdminCampaignsController, :show
+    post "/campaigns/:id/force_close", AdminCampaignsController, :force_close
   end
 
   # Authenticated routes

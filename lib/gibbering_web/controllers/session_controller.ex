@@ -18,6 +18,9 @@ defmodule GibberingWeb.SessionController do
         |> put_flash(:info, "Welcome back, #{user.username}!")
         |> redirect(to: return_to)
 
+      {:error, :suspended} ->
+        render(conn, :new, error: "This account has been suspended.")
+
       {:error, :invalid_credentials} ->
         render(conn, :new, error: "Invalid username or password.")
     end

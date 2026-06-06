@@ -6,6 +6,9 @@ defmodule Gibbering.Accounts.User do
     field :username, :string
     field :password, :string, virtual: true
     field :password_hash, :string
+    field :suspended_at, :utc_datetime
+
+    has_many :campaign_members, Gibbering.CampaignMember
 
     timestamps()
   end
