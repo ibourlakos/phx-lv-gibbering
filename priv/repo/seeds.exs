@@ -1,5 +1,6 @@
 alias Gibbering.{Repo, Campaign, GridTile, Entity, CampaignMember}
 alias Gibbering.Accounts
+alias Gibbering.Admin
 alias Gibbering.Catalogue.{Race, Class, Spell}
 alias Gibbering.Data.{Races, Classes, Spells}
 
@@ -337,3 +338,15 @@ Repo.insert!(%Entity{
 
 IO.puts("Seeded campaign ##{campaign.id}: #{campaign.name}")
 IO.puts("Visit http://localhost:4000/game/#{campaign.id}")
+
+# Admin support user — dev credentials: admin@gibbering.local / gibbering_admin
+unless Repo.get_by(Gibbering.Admin.SupportUser, email: "admin@gibbering.local") do
+  {:ok, _} =
+    Admin.create_support_user(%{
+      email: "admin@gibbering.local",
+      password: "gibbering_admin",
+      role: "admin"
+    })
+
+  IO.puts("Seeded support user: admin@gibbering.local (admin) — password: gibbering_admin")
+end

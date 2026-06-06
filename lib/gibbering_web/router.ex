@@ -3,6 +3,8 @@ defmodule GibberingWeb.Router do
 
   import GibberingWeb.UserAuth, only: [fetch_current_user: 2]
 
+  alias GibberingWeb.Plugs.RequireSupportUser
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -17,6 +19,10 @@ defmodule GibberingWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :admin do
+    plug RequireSupportUser
+  end
+
   # Public routes (auth pages)
   scope "/", GibberingWeb do
     pipe_through :browser
@@ -27,6 +33,22 @@ defmodule GibberingWeb.Router do
     post "/login", SessionController, :create
     delete "/logout", SessionController, :delete
     post "/campaigns/:campaign_id/join", PageController, :join
+  end
+
+  # Admin routes — public (login/logout)
+  scope "/admin", GibberingWeb do
+    pipe_through :browser
+
+    get "/login", AdminSessionController, :new
+    post "/login", AdminSessionController, :create
+    delete "/logout", AdminSessionController, :delete
+  end
+
+  # Admin routes — require support user auth
+  scope "/admin", GibberingWeb do
+    pipe_through [:browser, :admin]
+
+    get "/", AdminController, :index
   end
 
   # Authenticated routes
