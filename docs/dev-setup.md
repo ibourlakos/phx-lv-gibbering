@@ -58,6 +58,9 @@ docker compose exec app iex -S mix
 docker compose exec app mix <command>
 
 # Run tests
+# Note: the test DB requires catalogue data for Cache tests. Seed it once after
+# first creating the test DB (or after mix ecto.reset with MIX_ENV=test):
+#   docker compose exec -e MIX_ENV=test app mix run priv/repo/seeds.exs
 docker compose exec app mix test
 
 # Format code

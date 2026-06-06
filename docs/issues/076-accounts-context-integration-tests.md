@@ -1,6 +1,7 @@
 # #76 · Accounts context integration tests
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** architecture, ops
 
@@ -13,8 +14,8 @@
 These are `DataCase` integration tests; they exercise the Ecto query layer and Bcrypt verification so mocking would defeat the purpose.
 
 **Acceptance criteria**
-- [ ] `authenticate_user/2` tested: correct credentials → `{:ok, user}`, wrong password → `{:error, :invalid_credentials}`, unknown username → `{:error, :invalid_credentials}`
-- [ ] `get_user_by_id/1` tested: existing id → user struct, unknown id → `nil`
-- [ ] `get_user_by_username/1` tested: existing username → user struct, unknown → `nil`
-- [ ] All tests use `DataCase, async: false` with DB-inserted fixtures
-- [ ] Coverage on `Gibbering.Accounts` reaches ≥ 90%
+- [x] `authenticate_user/2` tested: correct credentials → `{:ok, user}`, wrong password → `{:error, :invalid_credentials}`, unknown username → `{:error, :invalid_credentials}`
+- [x] `get_user_by_id/1` tested: existing id → user struct, unknown id → `nil`
+- [x] `get_user_by_username/1` tested: existing username → user struct, unknown → `nil`
+- [x] All tests use `DataCase, async: false` with DB-inserted fixtures
+- [x] Coverage on `Gibbering.Accounts` reaches ≥ 90%

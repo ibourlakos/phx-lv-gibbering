@@ -1,6 +1,7 @@
 # #77 · Catalogue.Cache GenServer tests
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** architecture, ops
 
@@ -12,7 +13,7 @@
 These require a running GenServer and seeded DB rows. They should use `DataCase` and start a named test instance of the Cache, or rely on the existing `test` start-up configuration.
 
 **Acceptance criteria**
-- [ ] Each `list_*` function is tested against seeded catalogue rows
-- [ ] `reload!/0` is tested: after a reload the `list_*` functions return fresh data
-- [ ] Tests start an isolated Cache process (not the app-level supervised one) or use the supervised one only if test isolation is maintained
-- [ ] Coverage on `Gibbering.Catalogue.Cache` reaches ≥ 90%
+- [x] Each `list_*` function is tested against seeded catalogue rows
+- [x] `reload!/0` is tested: after a reload the `list_*` functions return fresh data
+- [x] Tests use the app-supervised Cache with `DataCase, async: false` (shared sandbox allows Cache process DB access during reload)
+- [x] Coverage on `Gibbering.Catalogue.Cache` reaches ≥ 90%
