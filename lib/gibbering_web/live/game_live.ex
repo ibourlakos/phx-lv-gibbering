@@ -384,6 +384,13 @@ defmodule GibberingWeb.GameLive do
     {:noreply, update(socket, :dm_whispers, fn msgs -> [text | Enum.take(msgs, 4)] end)}
   end
 
+  def handle_info({:ejected, reason}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:error, "You have been removed from this campaign: #{reason}")
+     |> push_navigate(to: "/dashboard")}
+  end
+
   # ---------------------------------------------------------------------------
   # SceneServer lifecycle
   # ---------------------------------------------------------------------------

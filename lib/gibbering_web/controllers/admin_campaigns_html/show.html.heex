@@ -69,14 +69,47 @@
     <% else %>
       <ul class="space-y-2">
         <%= for m <- @campaign.campaign_members do %>
-          <li class="bg-gray-800 border border-gray-700 rounded px-4 py-2 text-sm flex justify-between">
-            <span>{if m.user, do: m.user.username, else: "User ##{m.user_id}"}</span>
-            <a
-              href={"/admin/users/#{m.user_id}"}
-              class="text-blue-400 hover:text-blue-300 text-xs"
-            >
-              View
-            </a>
+          <% is_dm = @campaign.dm_id == m.user_id %>
+          <li class="bg-gray-800 border border-gray-700 rounded px-4 py-3 text-sm">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <a href={"/admin/users/#{m.user_id}"} class="text-blue-400 hover:text-blue-300">
+                  {if m.user, do: m.user.username, else: "User ##{m.user_id}"}
+                </a>
+                <%= if is_dm do %>
+                  <span class="text-xs text-yellow-400 border border-yellow-700 rounded px-1">
+                    DM
+                  </span>
+                <% end %>
+              </div>
+            </div>
+            <%= if !is_dm && @current_support_user.role in ["moderator", "admin"] do %>
+              <form
+                method="post"
+                action={"/admin/campaigns/#{@campaign.id}/remove_member"}
+                class="flex gap-2 items-center"
+              >
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
+                <input type="hidden" name="user_id" value={m.user_id} />
+                <input
+                  name="reason"
+                  type="text"
+                  placeholder="Reason…"
+                  required
+                  class="bg-gray-700 text-white rounded px-2 py-1 text-xs border border-gray-500 focus:outline-none focus:border-red-500 flex-1"
+                />
+                <button
+                  type="submit"
+                  class="bg-red-800 hover:bg-red-700 text-white rounded px-3 py-1 text-xs"
+                >
+                  Remove
+                </button>
+              </form>
+            <% end %>
           </li>
         <% end %>
       </ul>
