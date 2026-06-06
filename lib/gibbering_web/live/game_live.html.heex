@@ -13,6 +13,101 @@ tw = iso.tile_w()
 sorted_tiles = Enum.sort_by(state.grid_tiles, fn {{gx, gy}, _} -> iso.depth_key(gx, gy) end)
 sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e.y) end) %>
 
+<%!-- DM broadcast banner — dismissable, visible to all --%>
+<%= for msg <- @dm_broadcasts do %>
+  <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-yellow-800 border border-yellow-500 rounded-lg px-6 py-3 flex items-center gap-4 shadow-xl">
+    <span class="text-yellow-100 font-medium">{msg}</span>
+    <button phx-click="dm_dismiss_broadcast" class="text-yellow-400 hover:text-white text-xs">
+      &times;
+    </button>
+  </div>
+<% end %>
+
+<%!-- Whisper popup — private, only delivered to targeted player --%>
+<%= for msg <- @dm_whispers do %>
+  <div class="fixed bottom-8 right-8 z-50 bg-purple-900 border border-purple-500 rounded-lg px-6 py-3 flex items-center gap-4 shadow-xl">
+    <div class="text-xs text-purple-400 font-bold uppercase tracking-wide">Whisper</div>
+    <span class="text-purple-100">{msg}</span>
+    <button phx-click="dm_dismiss_whisper" class="text-purple-400 hover:text-white text-xs">
+      &times;
+    </button>
+  </div>
+<% end %>
+
+<%!-- DM broadcast compose modal --%>
+<%= if @dm_panel == :broadcast do %>
+  <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="text-lg font-bold text-white mb-3">Broadcast Message</div>
+      <form phx-submit="dm_broadcast">
+        <input
+          name="text"
+          type="text"
+          placeholder="Message to all players…"
+          autofocus
+          class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-4 border border-gray-500 focus:outline-none focus:border-yellow-500"
+        />
+        <div class="flex gap-3 justify-end">
+          <button
+            type="button"
+            phx-click="dm_close_panel"
+            class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold rounded px-4 py-2 text-sm"
+          >
+            Send
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% end %>
+
+<%!-- DM whisper compose modal --%>
+<%= if @dm_panel == :whisper do %>
+  <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+    <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="text-lg font-bold text-white mb-3">Whisper</div>
+      <form phx-submit="dm_whisper">
+        <select
+          name="user_id"
+          class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3 border border-gray-500"
+        >
+          <%= for member <- Gibbering.Campaigns.list_members(@game_id) do %>
+            <option value={member.id}>{member.username}</option>
+          <% end %>
+        </select>
+        <input
+          name="text"
+          type="text"
+          placeholder="Private message…"
+          autofocus
+          class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-4 border border-gray-500 focus:outline-none focus:border-purple-500"
+        />
+        <div class="flex gap-3 justify-end">
+          <button
+            type="button"
+            phx-click="dm_close_panel"
+            class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="bg-purple-700 hover:bg-purple-600 text-white font-bold rounded px-4 py-2 text-sm"
+          >
+            Whisper
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% end %>
+
 <%!-- Pause overlay — shown to all connected clients while session is paused --%>
 <%= if state.phase == :paused do %>
   <div class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 pointer-events-none">
@@ -96,8 +191,15 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         />
       <% end %>
 
-      <%!-- Layer 4: Entities (depth-sorted) --%>
-      <%= for {id, entity} <- sorted_entities do %>
+      <%!-- Layer 4: Entities (depth-sorted, hidden entities filtered for players) --%>
+      <% visible_entities =
+        if @is_dm,
+          do: sorted_entities,
+          else:
+            Enum.reject(sorted_entities, fn {id, _} ->
+              MapSet.member?(state.hidden_entities || MapSet.new(), id)
+            end) %>
+      <%= for {id, entity} <- visible_entities do %>
         <% is_active = id == active_id %>
         <% is_selected = id == state.selected_id %>
         <% is_target = id in @valid_targets %>
@@ -223,6 +325,81 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           >
             End Session
           </button>
+        <% end %>
+      </div>
+
+      <%!-- DM Intervention panel --%>
+      <div class="bg-gray-800 border border-gray-600 rounded p-3 flex flex-col gap-2">
+        <div class="text-xs text-gray-400 mb-1">Interventions</div>
+        <button
+          phx-click="dm_open_broadcast"
+          class="bg-yellow-800 hover:bg-yellow-700 text-white text-xs rounded px-3 py-1"
+        >
+          Broadcast
+        </button>
+        <button
+          phx-click="dm_open_whisper"
+          class="bg-purple-800 hover:bg-purple-700 text-white text-xs rounded px-3 py-1"
+        >
+          Whisper
+        </button>
+
+        <%!-- Per-entity HP, condition, visibility controls --%>
+        <%= for {eid, entity} <- state.entities do %>
+          <div class="bg-gray-700 rounded px-2 py-1 text-xs flex flex-col gap-1">
+            <div class="font-medium text-gray-200 truncate">{entity.name}</div>
+            <form id={"dm-hp-#{eid}"} phx-submit="dm_adjust_hp" class="flex gap-1 items-center">
+              <input type="hidden" name="entity_id" value={eid} />
+              <input
+                name="delta"
+                type="number"
+                placeholder="±HP"
+                class="w-16 bg-gray-600 text-white rounded px-1 py-0.5 text-xs border border-gray-500"
+              />
+              <button
+                type="submit"
+                class="bg-red-800 hover:bg-red-700 text-white rounded px-2 py-0.5 text-xs"
+              >
+                Adj
+              </button>
+            </form>
+            <form
+              id={"dm-cond-#{eid}"}
+              phx-submit="dm_apply_condition"
+              class="flex gap-1 items-center"
+            >
+              <input type="hidden" name="entity_id" value={eid} />
+              <select
+                name="condition"
+                class="flex-1 bg-gray-600 text-white rounded px-1 py-0.5 text-xs border border-gray-500"
+              >
+                <%= for {cond_id, cond_def} <- Gibbering.Rulesets.DnD5e.Condition.all() do %>
+                  <option value={cond_id}>{cond_def.name}</option>
+                <% end %>
+              </select>
+              <button
+                type="submit"
+                class="bg-orange-800 hover:bg-orange-700 text-white rounded px-2 py-0.5 text-xs"
+              >
+                +
+              </button>
+            </form>
+            <button
+              phx-click="dm_toggle_visibility"
+              phx-value-id={eid}
+              class={[
+                "text-xs rounded px-2 py-0.5 text-white",
+                if(MapSet.member?(state.hidden_entities || MapSet.new(), eid),
+                  do: "bg-gray-500 hover:bg-gray-400",
+                  else: "bg-gray-600 hover:bg-gray-500"
+                )
+              ]}
+            >
+              {if MapSet.member?(state.hidden_entities || MapSet.new(), eid),
+                do: "Show",
+                else: "Hide"}
+            </button>
+          </div>
         <% end %>
       </div>
 

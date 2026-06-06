@@ -20,6 +20,7 @@ defmodule GibberingWeb.GameLive do
         :ok ->
           if connected?(socket) do
             Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+            Phoenix.PubSub.subscribe(Gibbering.PubSub, "game:#{game_id}:user:#{user.id}")
           end
 
           campaign = Campaigns.get!(game_id)
@@ -35,7 +36,10 @@ defmodule GibberingWeb.GameLive do
            |> assign(:valid_targets, [])
            |> assign(:selected_spell, nil)
            |> assign(:spell_targets, [])
-           |> assign(:log, [])}
+           |> assign(:log, [])
+           |> assign(:dm_broadcasts, [])
+           |> assign(:dm_whispers, [])
+           |> assign(:dm_panel, nil)}
 
         {:error, reason} ->
           {:ok,
@@ -261,6 +265,78 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("dm_open_broadcast", _, %{assigns: %{is_dm: true}} = socket) do
+    {:noreply, assign(socket, dm_panel: :broadcast)}
+  end
+
+  @impl true
+  def handle_event("dm_open_whisper", _, %{assigns: %{is_dm: true}} = socket) do
+    {:noreply, assign(socket, dm_panel: :whisper)}
+  end
+
+  @impl true
+  def handle_event("dm_close_panel", _, socket) do
+    {:noreply, assign(socket, dm_panel: nil)}
+  end
+
+  @impl true
+  def handle_event("dm_broadcast", %{"text" => text}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.dm_broadcast(socket.assigns.game_id, text)
+    {:noreply, assign(socket, dm_panel: nil)}
+  end
+
+  @impl true
+  def handle_event(
+        "dm_whisper",
+        %{"user_id" => uid, "text" => text},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    user_id = String.to_integer(uid)
+    SceneServer.dm_whisper(socket.assigns.game_id, user_id, text)
+    {:noreply, assign(socket, dm_panel: nil)}
+  end
+
+  @impl true
+  def handle_event(
+        "dm_apply_condition",
+        %{"entity_id" => eid, "condition" => cond_str},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    entity_id = String.to_integer(eid)
+    condition_id = String.to_existing_atom(cond_str)
+    SceneServer.dm_apply_condition(socket.assigns.game_id, entity_id, condition_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event(
+        "dm_adjust_hp",
+        %{"entity_id" => eid, "delta" => delta_str},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    entity_id = String.to_integer(eid)
+    delta = String.to_integer(delta_str)
+    SceneServer.dm_adjust_hp(socket.assigns.game_id, entity_id, delta)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_toggle_visibility", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.dm_toggle_visibility(socket.assigns.game_id, String.to_integer(id))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_dismiss_broadcast", _, socket) do
+    {:noreply, update(socket, :dm_broadcasts, fn [_ | rest] -> rest end)}
+  end
+
+  @impl true
+  def handle_event("dm_dismiss_whisper", _, socket) do
+    {:noreply, update(socket, :dm_whispers, fn [_ | rest] -> rest end)}
+  end
+
+  @impl true
   def handle_event(event, _, socket)
       when event in [
              "dm_start",
@@ -273,7 +349,17 @@ defmodule GibberingWeb.GameLive do
              "dm_remove_from_order",
              "dm_move_up",
              "dm_move_down",
-             "dm_force_end_turn"
+             "dm_force_end_turn",
+             "dm_open_broadcast",
+             "dm_open_whisper",
+             "dm_close_panel",
+             "dm_broadcast",
+             "dm_whisper",
+             "dm_apply_condition",
+             "dm_adjust_hp",
+             "dm_toggle_visibility",
+             "dm_dismiss_broadcast",
+             "dm_dismiss_whisper"
            ] do
     {:noreply, socket}
   end
@@ -286,6 +372,16 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_info(:session_ended, socket) do
     {:noreply, redirect(socket, to: "/dashboard")}
+  end
+
+  @impl true
+  def handle_info({:dm_broadcast, text}, socket) do
+    {:noreply, update(socket, :dm_broadcasts, fn msgs -> [text | Enum.take(msgs, 4)] end)}
+  end
+
+  @impl true
+  def handle_info({:whisper, text}, socket) do
+    {:noreply, update(socket, :dm_whispers, fn msgs -> [text | Enum.take(msgs, 4)] end)}
   end
 
   # ---------------------------------------------------------------------------
