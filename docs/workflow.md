@@ -135,6 +135,19 @@ If any criterion fails, use Bugfix instead.
 
 ---
 
+## Context usage gate
+
+**When:** Before starting any new flow stage (picking a new issue, opening a new brainstorm, or beginning a new work package cycle).
+
+Check Claude Code's session token usage. If usage is approaching the session limit:
+- **Do not start a new stage unilaterally.**
+- Report the current usage state to the user.
+- Wait for explicit approval before proceeding.
+
+This prevents truncated implementations that span a context boundary and leave the codebase in a half-finished state. A new session has full context (via MEMORY.md + CLAUDE.md); partial work mid-issue does not.
+
+---
+
 ## Decision gates
 
 Apply to paths A, B, C only.
