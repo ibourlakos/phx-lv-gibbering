@@ -1,6 +1,7 @@
 # #97 · Full-viewport scene layout model and overlay z-layer system (discovery)
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-06
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** discovery, rendering, architecture, ui
 
@@ -17,10 +18,14 @@ Questions to resolve:
 Output: a layout spec document and a minimal prototype (even a static HTML/SVG file) proving the approach works before any production LiveView refactor.
 
 **Acceptance criteria**
-- [ ] All open questions above answered with a design decision
-- [ ] Overlay z-layer stack defined with specific z-index values (or stacking context strategy)
-- [ ] HTML/SVG split boundary documented
-- [ ] Pointer-event scoping strategy confirmed
-- [ ] Minimal static prototype shows the full-viewport layout with placeholder overlay panels
-- [ ] No LiveView navigation or socket issues identified (or workarounds documented)
-- [ ] Follow-up implementation issue created if not proceeding directly from this discovery
+- [x] All open questions above answered with a design decision
+- [x] Overlay z-layer stack defined with specific z-index values (or stacking context strategy)
+- [x] HTML/SVG split boundary documented
+- [x] Pointer-event scoping strategy confirmed
+- [x] Minimal static prototype shows the full-viewport layout with placeholder overlay panels
+- [x] No LiveView navigation or socket issues identified (or workarounds documented)
+- [x] Follow-up implementation issue created if not proceeding directly from this discovery
+
+**Decisions:** see `priv/static/art-reference/README.md` (Full-viewport layout model section).
+**Prototype:** `priv/static/art-reference/layout-prototype.html`
+**Follow-up:** #102 GameLive full-viewport layout refactor

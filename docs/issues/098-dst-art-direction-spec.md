@@ -1,6 +1,7 @@
 # #98 · DST-inspired art direction — reference tile and entity spec
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-06
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** rendering
 
@@ -17,9 +18,11 @@ Deliverables:
 This spec gates the multi-style system (#99): you cannot define what a "style" contains until you have a concrete reference instance of one.
 
 **Acceptance criteria**
-- [ ] Tile size constant established and documented (e.g., 64 SVG units per tile side)
-- [ ] Reference ground tile SVG committed to `priv/static/art-reference/` or equivalent
-- [ ] Reference entity SVG committed alongside the tile
-- [ ] CSS/SVG variable palette defined (at minimum: bg, outline, terrain-fill, accent-magic, accent-fire)
-- [ ] Written spec covers: outline technique, texture pass approach, proportion conventions, filter stack
-- [ ] Both reference assets render correctly in Firefox and Chrome without any JS dependency
+- [x] Tile size constant established and documented (64 SVG units wide, 32 tall)
+- [x] Reference ground tile SVG committed to `priv/static/art-reference/tile-reference.svg`
+- [x] Reference entity SVG committed to `priv/static/art-reference/entity-reference.svg`
+- [x] CSS/SVG variable palette defined in `priv/static/art-reference/palette.css`
+- [x] Written spec covers: outline technique, texture pass approach, proportion conventions, filter stack
+- [x] Both reference assets render correctly in Firefox and Chrome without any JS dependency
+
+**Assets:** `priv/static/art-reference/` — tile-reference.svg, entity-reference.svg, palette.css, README.md
