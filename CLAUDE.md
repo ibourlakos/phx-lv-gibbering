@@ -35,6 +35,7 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | [11-game-content-workflow.md](docs/brainstorming/11-game-content-workflow.md) | Game content types & upsert workflow | open |
 | [12-player-dm-full-experience.md](docs/brainstorming/12-player-dm-full-experience.md) | Full player/DM app experience (campaigns, characters, session controls) | open |
 | [13-monitoring-infrastructure.md](docs/brainstorming/13-monitoring-infrastructure.md) | Prometheus + Grafana monitoring stack | open |
+| [14-isometric-scene-view.md](docs/brainstorming/14-isometric-scene-view.md) | Full-viewport isometric rendering, overlay UI, DST-inspired art direction | open |
 
 ## Dev Setup (short form)
 
