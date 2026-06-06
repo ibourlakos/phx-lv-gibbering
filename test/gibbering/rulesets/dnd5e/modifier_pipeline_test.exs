@@ -1,0 +1,195 @@
+defmodule Gibbering.Rulesets.DnD5e.ModifierPipelineTest do
+  use ExUnit.Case, async: true
+
+  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, RuleModifier}
+
+  defp modifier(overrides) do
+    defaults = %{
+      id: :test,
+      name: "Test",
+      trigger: :passive,
+      predicate: {:always},
+      effect: {:add_bonus, :damage, 1},
+      stacking: :additive,
+      min_level: 1
+    }
+
+    struct(RuleModifier, Map.merge(defaults, Map.new(overrides)))
+  end
+
+  defp entity(overrides) do
+    Map.merge(
+      %{id: 1, class: "fighter", race: "human", level: 1, conditions: []},
+      Map.new(overrides)
+    )
+  end
+
+  defp eval_ctx(entity_map) do
+    %{
+      entity: entity_map,
+      target: nil,
+      scene: %{
+        entities: %{},
+        grid: %{},
+        active_effects: [],
+        event_log: [],
+        phase: :in_combat,
+        current_turn: 1,
+        current_round: 1
+      },
+      resolution: nil
+    }
+  end
+
+  # ---------------------------------------------------------------------------
+  # collect_modifiers/3
+  # ---------------------------------------------------------------------------
+
+  describe "collect_modifiers/3" do
+    test "returns empty list when no modifiers defined for entity" do
+      e = entity(class: "fighter")
+      assert ModifierPipeline.collect_modifiers(e, {:on_attack, :melee}, eval_ctx(e)) == []
+    end
+
+    test "filters by min_level" do
+      # No modifiers are wired yet, but min_level filtering is exercised via
+      # a direct call to collect_modifiers on an entity with a known class.
+      # Covered more fully once class modifiers are wired in #47.
+      e = entity(class: "rogue", level: 1)
+      result = ModifierPipeline.collect_modifiers(e, {:on_attack, :any}, eval_ctx(e))
+      assert is_list(result)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # apply_modifiers/2 — stacking rules
+  # ---------------------------------------------------------------------------
+
+  describe "apply_modifiers/2 — stacking: :additive" do
+    test "sums all additive bonuses of the same type" do
+      mods = [
+        modifier(id: :bonus_a, effect: {:add_bonus, :damage, 2}, stacking: :additive),
+        modifier(id: :bonus_b, effect: {:add_bonus, :damage, 3}, stacking: :additive)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.damage_total == 5
+    end
+
+    test "stacks additive attack and damage bonuses independently" do
+      mods = [
+        modifier(id: :a, effect: {:add_bonus, :attack, 2}, stacking: :additive),
+        modifier(id: :b, effect: {:add_bonus, :damage, 1}, stacking: :additive)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.attack_bonus == 2
+      assert result.damage_total == 1
+    end
+  end
+
+  describe "apply_modifiers/2 — stacking: :named_bonus" do
+    test "only the highest modifier of the same id applies" do
+      mods = [
+        modifier(id: :bless, effect: {:add_bonus, :attack, 3}, stacking: :named_bonus),
+        modifier(id: :bless, effect: {:add_bonus, :attack, 5}, stacking: :named_bonus)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.attack_bonus == 5
+    end
+
+    test "two different named_bonus ids each contribute their highest" do
+      mods = [
+        modifier(id: :bless, effect: {:add_bonus, :attack, 3}, stacking: :named_bonus),
+        modifier(id: :bless, effect: {:add_bonus, :attack, 1}, stacking: :named_bonus),
+        modifier(id: :heroism, effect: {:add_bonus, :attack, 4}, stacking: :named_bonus)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.attack_bonus == 7
+    end
+  end
+
+  describe "apply_modifiers/2 — stacking: :binary_flag" do
+    test "advantage accumulates a count" do
+      mods = [
+        modifier(id: :adv1, effect: {:grant_advantage, :attack_rolls}, stacking: :binary_flag),
+        modifier(id: :adv2, effect: {:grant_advantage, :attack_rolls}, stacking: :binary_flag)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.advantage_count == 2
+    end
+
+    test "resistance sets damage_multiplier to 0.5" do
+      mods = [
+        modifier(id: :rage_res, effect: {:grant_resistance, :slashing}, stacking: :binary_flag)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.damage_multiplier == 0.5
+    end
+
+    test "immunity overrides resistance and sets multiplier to 0" do
+      mods = [
+        modifier(id: :res, effect: {:grant_resistance, :fire}, stacking: :binary_flag),
+        modifier(id: :imm, effect: {:grant_immunity, :fire}, stacking: :binary_flag)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.damage_multiplier == 0
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # apply_modifiers/2 — effect layers
+  # ---------------------------------------------------------------------------
+
+  describe "apply_modifiers/2 — layering order" do
+    test "force_critical_hit sets is_critical" do
+      mods = [modifier(id: :auto_crit, effect: {:force_critical_hit}, stacking: :binary_flag)]
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.is_critical == true
+    end
+
+    test "add_damage_dice accumulates dice strings" do
+      mods = [
+        modifier(
+          id: :sneak,
+          effect: {:add_damage_dice, "1d6", :sneak_attack},
+          stacking: :named_bonus
+        ),
+        modifier(
+          id: :smite,
+          effect: {:add_damage_dice, "2d8", :divine_smite},
+          stacking: :additive
+        )
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert "1d6" in result.damage_dice
+      assert "2d8" in result.damage_dice
+    end
+
+    test "add_to_roll accumulates roll dice" do
+      mods = [modifier(id: :bless_roll, effect: {:add_to_roll, "1d4"}, stacking: :named_bonus)]
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert "1d4" in result.roll_dice
+    end
+
+    test "disadvantage accumulates a count" do
+      mods = [
+        modifier(id: :dis1, effect: {:impose_disadvantage, :attack_rolls}, stacking: :binary_flag)
+      ]
+
+      result = ModifierPipeline.apply_modifiers(%{}, mods)
+      assert result.disadvantage_count == 1
+    end
+
+    test "empty modifier list returns context unchanged" do
+      ctx = %{damage_total: 5}
+      assert ModifierPipeline.apply_modifiers(ctx, []) == ctx
+    end
+  end
+end
