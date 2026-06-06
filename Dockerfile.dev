@@ -5,7 +5,9 @@ RUN apk add --no-cache \
     git \
     nodejs \
     npm \
-    inotify-tools
+    inotify-tools \
+    wget \
+    unzip
 
 RUN addgroup -S -g 1000 app && adduser -S -u 1000 -G app app
 
@@ -15,6 +17,14 @@ WORKDIR /app
 RUN chown app:app /app
 
 USER app
+
+ARG ELIXIR_LS_VERSION=0.30.0
+RUN wget -qO /tmp/elixir-ls.zip \
+      "https://github.com/elixir-lsp/elixir-ls/releases/download/v${ELIXIR_LS_VERSION}/elixir-ls-v${ELIXIR_LS_VERSION}.zip" && \
+    unzip -q /tmp/elixir-ls.zip -d /home/app/.elixir-ls && \
+    chmod +x /home/app/.elixir-ls/language_server.sh && \
+    rm /tmp/elixir-ls.zip && \
+    echo "" | MIX_ENV=prod elixir /home/app/.elixir-ls/quiet_install.exs > /dev/null
 
 # Deps cached separately from source so rebuilds are fast.
 # Pre-compile for both dev and test so the build_cache volume is seeded

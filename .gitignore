@@ -52,11 +52,14 @@ Thumbs.db
 
 # === VS Code ===
 # Commit extensions.json (project recommendations) but ignore personal settings.
-.vscode/
+.vscode/*
 !.vscode/extensions.json
 
 # === Claude Code local settings (personal overrides, not project config) ===
 .claude/settings.local.json
+
+# === Docker local overrides (machine-specific, not committed) ===
+compose.override.yaml
 
 # === Binary assets ===
 # Tracked via Git LFS — see .gitattributes and docs/git-policy.md.

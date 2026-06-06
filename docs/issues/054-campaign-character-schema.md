@@ -1,5 +1,6 @@
 # #54 · CampaignCharacter schema
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-06
 **Opened:** 2026-06-05
 **Priority:** medium
 **Tags:** architecture, gameplay
