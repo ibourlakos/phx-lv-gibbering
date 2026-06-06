@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 86 (see `counter`)
+**Next issue number:** 102 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -57,6 +57,20 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
+| [#88](088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | `discovery` `architecture` `gameplay` | medium |
+| [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` | low |
+| [#90](090-player-campaign-overview-page.md) | Player campaign overview page | `ui` `gameplay` | medium |
+| [#91](091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | `architecture` `ui` `gameplay` | medium |
+| [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
+| [#93](093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | `ui` `gameplay` `architecture` | medium |
+| [#94](094-dm-initiative-panel.md) | DM turn and initiative management panel | `ui` `gameplay` | medium |
+| [#95](095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | `ui` `gameplay` `architecture` | medium |
+| [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
+| [#97](097-full-viewport-scene-layout.md) | Full-viewport scene layout model and overlay z-layer system | `discovery` `rendering` `architecture` `ui` | medium |
+| [#98](098-dst-art-direction-spec.md) | DST-inspired art direction — reference tile and entity spec | `rendering` | medium |
+| [#99](099-multi-style-appearance-system.md) | Multi-style appearance system — style_id keying, per-style records, fallback | `architecture` `rendering` | medium |
+| [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline | `discovery` `rendering` `architecture` | medium |
+| [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` | low |
 
 ---
 
