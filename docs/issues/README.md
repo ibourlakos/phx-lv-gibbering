@@ -52,7 +52,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
-| [#57](057-dm-character-adjustment-ui.md) | DM character adjustment UI (campaign prep) | `gameplay` `rendering` | medium |
 | [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | `discovery` `architecture` `gameplay` | low |
 | [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture | `discovery` `rendering` `architecture` | low |
 | [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` | low |
@@ -140,6 +139,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` |
 | [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` |
 | [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | `architecture` `rules` |
+| [#57](057-dm-character-adjustment-ui.md) | DM character adjustment UI (campaign prep) | `gameplay` `rendering` |
 | [#76](076-accounts-context-integration-tests.md) | `Accounts` context integration tests | `architecture` `ops` |
 | [#77](077-catalogue-cache-genserver-tests.md) | `Catalogue.Cache` GenServer tests | `architecture` `ops` |
 | [#78](078-game-live-event-handler-tests.md) | `GameLive` event handler integration tests | `gameplay` `architecture` |

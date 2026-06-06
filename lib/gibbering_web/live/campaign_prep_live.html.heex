@@ -1,0 +1,127 @@
+<div class="prep-page">
+  <h1>Campaign Prep — {@campaign.name}</h1>
+
+  <%= if @campaign_characters == [] do %>
+    <p>No characters have joined this campaign yet.</p>
+  <% else %>
+    <%= for cc <- @campaign_characters do %>
+      <section class="cc-card" id={"cc-#{cc.id}"}>
+        <h2>{cc.character.name}</h2>
+        <p>Owner: <strong>{cc.owner.username}</strong></p>
+        <p>
+          Base: {cc.character.race} {cc.character.class},
+          level {cc.character.level}
+        </p>
+
+        <form phx-submit="save_cc">
+          <input type="hidden" name="cc_id" value={cc.id} />
+
+          <fieldset>
+            <legend>Status</legend>
+
+            <label>
+              Active
+              <select name="cc[active]">
+                <option value="true" selected={cc.active}>Yes</option>
+                <option value="false" selected={!cc.active}>No</option>
+              </select>
+            </label>
+
+            <label>
+              Controller
+              <select name="cc[controller_id]">
+                <option value="">— none —</option>
+                <%= for member <- @members do %>
+                  <option value={member.id} selected={cc.controller_id == member.id}>
+                    {member.username}
+                  </option>
+                <% end %>
+              </select>
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Overrides</legend>
+
+            <label>
+              Level override
+              <input
+                type="number"
+                name="cc[override_level]"
+                min="1"
+                max="20"
+                value={cc.override_level}
+                placeholder="—"
+              />
+            </label>
+
+            <label>
+              Background key override
+              <input
+                type="text"
+                name="cc[override_background_key]"
+                value={cc.override_background_key}
+                placeholder="—"
+              />
+            </label>
+
+            <label>
+              Bonus proficiencies <small>(comma-separated)</small>
+              <input
+                type="text"
+                name="cc[override_bonus_proficiencies]"
+                value={Enum.join(cc.override_bonus_proficiencies, ", ")}
+              />
+            </label>
+
+            <label>
+              Starting item keys <small>(comma-separated)</small>
+              <input
+                type="text"
+                name="cc[override_starting_items]"
+                value={cc.override_starting_items |> Enum.map(& &1["key"]) |> Enum.join(", ")}
+              />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Ability score overrides <small>(blank = use template value)</small></legend>
+            <%= for stat <- ~w(strength dexterity constitution intelligence wisdom charisma) do %>
+              <label>
+                {String.capitalize(stat)}
+                <input
+                  type="number"
+                  name={"cc[override_#{stat}]"}
+                  min="1"
+                  max="30"
+                  value={get_in(cc.override_ability_scores || %{}, [stat])}
+                  placeholder="—"
+                />
+              </label>
+            <% end %>
+          </fieldset>
+
+          <button type="submit">Save</button>
+        </form>
+
+        <details>
+          <summary>DM Life Events ({length(cc.dm_life_events)})</summary>
+
+          <%= if cc.dm_life_events != [] do %>
+            <ul>
+              <%= for event <- cc.dm_life_events do %>
+                <li>{event["text"]} <small>{event["added_at"]}</small></li>
+              <% end %>
+            </ul>
+          <% end %>
+
+          <form phx-submit="add_life_event">
+            <input type="hidden" name="cc_id" value={cc.id} />
+            <input type="text" name="event_text" placeholder="New life event…" required />
+            <button type="submit">Add</button>
+          </form>
+        </details>
+      </section>
+    <% end %>
+  <% end %>
+</div>
