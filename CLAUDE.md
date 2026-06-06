@@ -32,6 +32,9 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 
 | File | Topic | Status |
 |---|---|---|
+| [11-game-content-workflow.md](docs/brainstorming/11-game-content-workflow.md) | Game content types & upsert workflow | open |
+| [12-player-dm-full-experience.md](docs/brainstorming/12-player-dm-full-experience.md) | Full player/DM app experience (campaigns, characters, session controls) | open |
+| [13-monitoring-infrastructure.md](docs/brainstorming/13-monitoring-infrastructure.md) | Prometheus + Grafana monitoring stack | open |
 
 ## Dev Setup (short form)
 
