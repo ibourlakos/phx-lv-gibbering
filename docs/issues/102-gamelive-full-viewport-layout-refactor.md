@@ -1,7 +1,8 @@
 # #102 · GameLive full-viewport layout refactor
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** rendering, ui, architecture
 
@@ -26,11 +27,11 @@ Depends on [#97](097-full-viewport-scene-layout.md) (closed — decisions docume
 6. Verify existing `DiceRoll` hook and all phx-click handlers still work after the refactor.
 
 **Acceptance criteria**
-- [ ] GameLive renders in a full-viewport layout (no navbar, no scroll)
-- [ ] SVG fills 100vw × 100vh via `position: fixed`; `viewBox` tracks map dimensions
-- [ ] Turn order strip, action bar, info panel, DM controls are `position: fixed` overlays
-- [ ] HTML overlay containers have `pointer-events: none`; buttons/inputs have `pointer-events: auto`
-- [ ] `DiceRoll` hook still works
-- [ ] All existing phx-click handlers (select_entity, move, attack, etc.) still fire correctly
-- [ ] `mix precommit` exits 0
-- [ ] No existing test regressions
+- [x] GameLive renders in a full-viewport layout (no navbar, no scroll)
+- [x] SVG fills 100vw × 100vh via `position: fixed`; `viewBox` tracks map dimensions
+- [x] Turn order strip, action bar, info panel, DM controls are `position: fixed` overlays
+- [x] HTML overlay containers have `pointer-events: none`; buttons/inputs have `pointer-events: auto`
+- [x] `DiceRoll` hook still works
+- [x] All existing phx-click handlers (select_entity, move, attack, etc.) still fire correctly
+- [x] `mix precommit` exits 0
+- [x] No existing test regressions
