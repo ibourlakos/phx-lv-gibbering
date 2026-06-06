@@ -108,6 +108,15 @@ All panels should be collapsible, minimal, and positioned at the screen peripher
 - Icons: hand-drawn style consistent with entity art; avoid flat modern icon sets
 - Color coding (HP, action type, damage type) uses the same muted palette — no neon
 
+### Multi-Style Support
+- DST-inspired is the default style, but the system should be designed to support multiple interchangeable art styles
+- Every displayable piece of game content — entities, tiles, decorations, UI icons, effects — should have an appearance record per style, not a single canonical look
+- A "style" is a named set: palette variables, SVG filter definitions, asset references, and typographic choices that together define a coherent visual theme
+- Selecting a style at the campaign or server level swaps the full set; no content should be hardcoded to the DST palette or outline treatment
+- Practically: this means appearance data must be keyed by `(content_id, style_id)` — a content item without an appearance for the active style should fall back gracefully (placeholder silhouette, not a broken render)
+- This has direct implications for brainstorm #11 (game content workflow): every content upsert workflow must include an appearance slot per style, even if only the default style is populated initially
+- New styles can ship as data, not code — the rendering pipeline just resolves which appearance to use
+
 ### Implementation Notes
 - SVG filters (`feTurbulence`, `feDisplacementMap`) can approximate a hand-drawn texture pass on outlines without requiring hand-drawn assets for every element
 - Palette should be defined as a small set of CSS/SVG variables so it can be swapped or themed at the campaign level (e.g., a desert campaign has a warmer palette)
