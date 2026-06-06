@@ -42,7 +42,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | `bug` `rendering` | medium |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk understated in brainstorm | `legal` | medium |
-| [#19](019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | `bug` `architecture` | medium |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons and stat panels | `discovery` `architecture` | medium |
@@ -134,6 +133,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#53](053-composable-svg-appearance-system.md) | Composable SVG appearance system | `rendering` `architecture` |
 | [#41](041-spell-struct.md) | `Spell` struct completion + `Data.Spells` migration | `rules` `gameplay` |
 | [#79](079-data-items-catalogue-module.md) | `Data.Items` catalogue module | `rules` `gameplay` |
+| [#19](019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | `bug` `architecture` |
 | [#20](020-spells-defined-not-castable.md) | Spells are defined but not castable | `gameplay` `rules` |
 | [#2](002-wizard-first-mechanic.md) | Wizard first unique mechanic: ranged attack or AOE spell | `discovery` `gameplay` |
 | [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` |

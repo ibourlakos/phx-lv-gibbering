@@ -1,7 +1,8 @@
 # #19 · Lobby character edits don't propagate to a running GameServer
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** bug, architecture
 
@@ -23,6 +24,8 @@ In practice the GameServer starts on the first `/game/:id` request. If players s
 
 **C. Lobby prevents edits once game is live** — If the GameServer is already running, the lobby goes read-only. Simplest guard; poor UX.
 
+**Decision: Option B** — lobby sends a message. After each entity-mutating event (`save_slot`, `add_slot`, `remove_slot`), `LobbyLive` calls `SceneServer.reload_entities/1` if the server is running. The GenServer re-fetches all entities for the campaign from DB and merges them into the runtime state, preserving per-entity runtime fields (position, action economy, resources, conditions). Heroes removed from the DB are dropped from the state; new heroes are hydrated fresh.
+
 **Acceptance criteria**
-- [ ] Decision recorded here
+- [x] Decision recorded here
 - [ ] Lobby character edits are always reflected in the game board with no manual server restart required
