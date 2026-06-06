@@ -139,12 +139,20 @@ If any criterion fails, use Bugfix instead.
 
 **When:** Before starting any new flow stage (picking a new issue, opening a new brainstorm, or beginning a new work package cycle).
 
-Check Claude Code's session token usage. If usage is approaching the session limit:
+Check all three signals before proceeding:
+
+| Signal | Where to check | Stop if… |
+|---|---|---|
+| **Session context size** | `/cost` or the token counter in the Claude Code UI | Context window is ≥ 60% full |
+| **Per-message token cost** | `/cost` after the last tool-heavy turn | A single turn exceeded ~50k tokens |
+| **Account usage** | Anthropic Console → Usage | Monthly spend is near plan limit or a daily spike is visible |
+
+If any signal is elevated:
 - **Do not start a new stage unilaterally.**
-- Report the current usage state to the user.
+- Report the current state for each signal.
 - Wait for explicit approval before proceeding.
 
-This prevents truncated implementations that span a context boundary and leave the codebase in a half-finished state. A new session has full context (via MEMORY.md + CLAUDE.md); partial work mid-issue does not.
+This prevents truncated implementations that span a context boundary and leave the codebase in a half-finished state. A new session starts cold with full context (via MEMORY.md + CLAUDE.md); partial work mid-issue does not.
 
 ---
 
