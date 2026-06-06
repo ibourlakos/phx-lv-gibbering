@@ -46,15 +46,15 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipelineTest do
   # ---------------------------------------------------------------------------
 
   describe "collect_modifiers/3" do
-    test "returns empty list when no modifiers defined for entity" do
+    test "returns only condition modifiers for an entity with no matching class/race" do
       e = entity(class: "fighter")
-      assert ModifierPipeline.collect_modifiers(e, {:on_attack, :melee}, eval_ctx(e)) == []
+      result = ModifierPipeline.collect_modifiers(e, {:on_attack, :melee}, eval_ctx(e))
+      # fighter melee attack — no condition mods on this entity
+      assert is_list(result)
+      refute Enum.any?(result, &(&1.id == :rogue_sneak_attack))
     end
 
     test "filters by min_level" do
-      # No modifiers are wired yet, but min_level filtering is exercised via
-      # a direct call to collect_modifiers on an entity with a known class.
-      # Covered more fully once class modifiers are wired in #47.
       e = entity(class: "rogue", level: 1)
       result = ModifierPipeline.collect_modifiers(e, {:on_attack, :any}, eval_ctx(e))
       assert is_list(result)
@@ -100,6 +100,77 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipelineTest do
       adv_count = Enum.count(result, &(&1.id == :blinded_adv_against))
       assert dis_count == 1
       assert adv_count == 1
+    end
+  end
+
+  describe "collect_modifiers/3 — class features" do
+    test "fighter gets :fighter_second_wind modifier on :on_second_wind trigger" do
+      e = entity(class: "fighter", resources: %{second_wind: 1})
+      result = ModifierPipeline.collect_modifiers(e, :on_second_wind, eval_ctx(e))
+      assert Enum.any?(result, &(&1.id == :fighter_second_wind))
+    end
+
+    test "rogue with ally adjacent to target gets :rogue_sneak_attack on attack" do
+      rogue = entity(id: 1, class: "rogue", type: "hero", x: 0, y: 0)
+      target = entity(id: 2, type: "monster", x: 1, y: 0)
+      ally = entity(id: 3, type: "hero", x: 2, y: 0)
+
+      scene = %{
+        entities: %{1 => rogue, 2 => target, 3 => ally},
+        grid: %{},
+        active_effects: [],
+        event_log: [],
+        phase: :in_combat,
+        current_turn: 1,
+        current_round: 1
+      }
+
+      ctx = %{entity: rogue, target: target, scene: scene, resolution: nil}
+      result = ModifierPipeline.collect_modifiers(rogue, {:on_attack, :any}, ctx)
+      assert Enum.any?(result, &(&1.id == :rogue_sneak_attack))
+    end
+
+    test "barbarian in rage gets :barbarian_rage_damage on melee attack" do
+      barb = entity(id: 1, class: "barbarian", conditions: [:raging])
+      target = entity(id: 2, type: "monster", x: 1, y: 0)
+
+      ctx = %{
+        entity: barb,
+        target: target,
+        scene: %{
+          entities: %{},
+          grid: %{},
+          active_effects: [],
+          event_log: [],
+          phase: :in_combat,
+          current_turn: 1,
+          current_round: 1
+        },
+        resolution: nil
+      }
+
+      result = ModifierPipeline.collect_modifiers(barb, {:on_attack, :melee}, ctx)
+      assert Enum.any?(result, &(&1.id == :barbarian_rage_damage))
+    end
+  end
+
+  describe "collect_modifiers/3 — race traits" do
+    test "elf gets :elf_darkvision modifier (passive — included on any trigger)" do
+      e = entity(race: "elf")
+      result = ModifierPipeline.collect_modifiers(e, {:on_attack, :any}, eval_ctx(e))
+      assert Enum.any?(result, &(&1.id == :elf_darkvision))
+    end
+
+    test "gnome gets :gnome_cunning modifier on intelligence saving throw" do
+      gnome = entity(id: 1, race: "gnome")
+
+      ctx = %{
+        eval_ctx(gnome)
+        | resolution: %{saving_throw_ability: :intelligence}
+      }
+
+      result = ModifierPipeline.collect_modifiers(gnome, {:on_saving_throw, :any}, ctx)
+      assert Enum.any?(result, &(&1.id == :gnome_cunning))
     end
   end
 

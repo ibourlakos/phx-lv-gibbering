@@ -55,9 +55,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` | medium |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
-| [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` | low |
-| [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` | low |
-| [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` | low |
 | [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` | medium |
 | [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` | medium |
 | [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | `architecture` `rules` | medium |
@@ -132,6 +129,9 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#35](035-entity-schema-level-temp-hp.md) | Entity schema: add `level`, `temp_hp`, `challenge_rating`, `xp_reward` | `architecture` `rules` |
 | [#38](038-dnd5e-stats-module.md) | `DnD5e.Stats`: derived stat computation module | `rules` `architecture` |
 | [#45](045-attack-roll-vs-ac.md) | Attack roll vs AC (replace bare 1d6 in `Rules.attack/3`) | `rules` `gameplay` |
+| [#46](046-equipped-item-jsonb.md) | Equipped weapon/armor in `stats` JSONB + seed data | `rules` `gameplay` |
+| [#47](047-migrate-features-to-rule-modifiers.md) | Migrate `Data.Classes`/`Data.Races` features to `%RuleModifier{}` | `rules` |
+| [#48](048-saving-throw-pipeline.md) | Saving throw pipeline | `rules` `gameplay` |
 | [#49](049-backgrounds-catalogue-module.md) | Backgrounds catalogue module (`Data.Backgrounds`) | `rules` `gameplay` |
 | [#50](050-character-schema-and-context.md) | Character schema and context (player-owned template) | `architecture` `gameplay` |
 | [#51](051-character-collection-liveview.md) | Character collection LiveView (`/characters` roster) | `gameplay` `rendering` |

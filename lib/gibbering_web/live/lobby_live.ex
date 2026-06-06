@@ -126,6 +126,11 @@ defmodule GibberingWeb.LobbyLive do
           s
         end
       end)
+      |> then(fn s ->
+        s
+        |> maybe_preserve(entity.stats, "equipped_weapon")
+        |> maybe_preserve(entity.stats, "equipped_armor")
+      end)
       |> Enum.reject(fn {_, v} -> is_nil(v) end)
       |> Map.new()
 
@@ -242,4 +247,11 @@ defmodule GibberingWeb.LobbyLive do
   defp class_badge_color("wizard"), do: "#7b5ea7"
   defp class_badge_color("rogue"), do: "#6b4c38"
   defp class_badge_color(_), do: "#555"
+
+  defp maybe_preserve(stats, source_stats, key) do
+    case Map.get(source_stats, key) do
+      nil -> stats
+      value -> Map.put(stats, key, value)
+    end
+  end
 end

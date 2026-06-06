@@ -71,4 +71,65 @@ defmodule Gibbering.Data.Races do
   }
 
   def seed_data, do: @seed_data
+
+  @doc "Returns combat-relevant `%RuleModifier{}` structs for the given race."
+  def modifiers(race)
+
+  def modifiers("elf") do
+    alias Gibbering.Rulesets.DnD5e.RuleModifier
+
+    [
+      %RuleModifier{
+        id: :elf_darkvision,
+        name: "Darkvision",
+        source: :elf,
+        trigger: :passive,
+        predicate: {:always},
+        effect: {:grant_sense, :darkvision, 60},
+        stacking: :binary_flag
+      },
+      %RuleModifier{
+        id: :elf_fey_ancestry,
+        name: "Fey Ancestry",
+        source: :elf,
+        trigger: {:on_saving_throw, :any},
+        predicate: {:saving_throw_ability_is, :wisdom},
+        effect: {:grant_advantage, :saving_throw},
+        stacking: :binary_flag
+      }
+    ]
+  end
+
+  def modifiers("gnome") do
+    alias Gibbering.Rulesets.DnD5e.RuleModifier
+
+    [
+      %RuleModifier{
+        id: :gnome_darkvision,
+        name: "Darkvision",
+        source: :gnome,
+        trigger: :passive,
+        predicate: {:always},
+        effect: {:grant_sense, :darkvision, 60},
+        stacking: :binary_flag
+      },
+      %RuleModifier{
+        id: :gnome_cunning,
+        name: "Gnome Cunning",
+        source: :gnome,
+        trigger: {:on_saving_throw, :any},
+        predicate:
+          {:any_of,
+           [
+             {:saving_throw_ability_is, :intelligence},
+             {:saving_throw_ability_is, :wisdom},
+             {:saving_throw_ability_is, :charisma}
+           ]},
+        effect: {:grant_advantage, :saving_throw},
+        stacking: :binary_flag
+      }
+    ]
+  end
+
+  def modifiers(_race), do: []
 end

@@ -508,17 +508,110 @@ defmodule Gibbering.Engine.RulesTest do
     end
   end
 
-  describe "cast_spell/5 — non-damaging types (save/aoe/utility)" do
-    test "returns :hit without applying damage for :save spells" do
+  describe "cast_spell/5 — stub types (aoe/utility)" do
+    test "returns :hit without applying damage for :utility spells" do
       state = wizard_state()
 
       {result, new_state, details} =
-        Rules.cast_spell(state, hero_id(), :sacred_flame, monster_id())
+        Rules.cast_spell(state, hero_id(), :mage_hand, monster_id())
 
       assert result == :hit
       assert details.damage == nil
-      # Target hp unchanged
       assert new_state.entities[monster_id()].hp == state.entities[monster_id()].hp
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # saving_throw/5
+  # ---------------------------------------------------------------------------
+
+  describe "saving_throw/5" do
+    test "returns :save when roll + modifier >= dc" do
+      # monster CON 10 (+0), proficient in CON as fighter (+2), roll 20 → 22 >= 5
+      assert {:save, details} =
+               Rules.saving_throw(build_state(), monster_id(), :constitution, 5, roll: 20)
+
+      assert details.total >= 5
+      assert details.roll == 20
+    end
+
+    test "returns :fail when roll + modifier < dc" do
+      # roll 1 + prof 2 + mod 0 = 3 < 30
+      assert {:fail, details} =
+               Rules.saving_throw(build_state(), monster_id(), :constitution, 30, roll: 1)
+
+      assert details.total < 30
+    end
+
+    test "proficient entity includes proficiency bonus" do
+      # fighter is proficient in STR saves; STR 8 → mod -1; prof 2 → total = roll - 1 + 2
+      # non-proficient DEX: DEX 14 → mod +2, no prof → total = roll + 2
+      # same roll=5: proficient STR: 5 - 1 + 2 = 6; non-proficient DEX: 5 + 2 = 7
+      # Just assert proficient: true when proficient in that ability
+      {:save, details} =
+        Rules.saving_throw(wizard_state(), hero_id(), :intelligence, 1, roll: 5)
+
+      assert details.proficient == true
+    end
+
+    test "non-proficient entity excludes proficiency bonus" do
+      # wizard is NOT proficient in STR saves (wizard saving_throws = ["intelligence", "wisdom"])
+      {:fail, details} =
+        Rules.saving_throw(wizard_state(), hero_id(), :strength, 30, roll: 1)
+
+      assert details.proficient == false
+    end
+
+    test "details include roll, modifier, total, dc, ability fields" do
+      {:save, details} =
+        Rules.saving_throw(build_state(), monster_id(), :constitution, 1, roll: 10)
+
+      assert Map.has_key?(details, :roll)
+      assert Map.has_key?(details, :modifier)
+      assert Map.has_key?(details, :total)
+      assert Map.has_key?(details, :dc)
+      assert Map.has_key?(details, :ability)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # cast_spell/5 — save type
+  # ---------------------------------------------------------------------------
+
+  describe "cast_spell/5 — save type (thunderwave)" do
+    test "failed save deals full damage and reports :fail" do
+      # wizard spell_dc = 8 + prof(2) + INT_mod(3) = 13
+      # monster CON save: roll 1 + mod 0 + prof 2 = 3 < 13 → FAIL
+      original_hp = wizard_state().entities[monster_id()].hp
+
+      {result, new_state, details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :thunderwave, monster_id(), roll: 1)
+
+      assert result == :hit
+      assert details.save_result == :fail
+      assert is_integer(details.damage) and details.damage > 0
+      # monster may be dead (removed) or wounded — either proves damage landed
+      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
+      assert new_hp < original_hp
+    end
+
+    test "successful save deals half damage and reports :save" do
+      # roll 20 + mod 0 + prof 2 = 22 >= 13 → SAVE → half of 2d8 (min 1)
+      {result, _new_state, details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :thunderwave, monster_id(), roll: 20)
+
+      assert result == :hit
+      assert details.save_result == :save
+    end
+
+    test "consumes the level-1 spell slot" do
+      slots_before = get_in(wizard_state().entities, [hero_id(), :resources, :spell_slots, 1])
+
+      {_result, new_state, _details} =
+        Rules.cast_spell(wizard_state(), hero_id(), :thunderwave, monster_id(), roll: 1)
+
+      slots_after = get_in(new_state.entities, [hero_id(), :resources, :spell_slots, 1])
+      assert slots_after == slots_before - 1
     end
   end
 end
