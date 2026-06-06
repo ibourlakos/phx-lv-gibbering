@@ -70,6 +70,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#87](087-elixirls-hover-docs-docker-proxy.md) | ElixirLS hover documentation not working via Docker proxy | `ops` | low |
 | [#86](086-simplify-check-docs-to-git-diff-scope.md) | Simplify `mix check.docs` to git-diff scope | `ops` `architecture` | low |
 | [#58](058-point-buy-ability-scores.md) | Point buy ability score method | `gameplay` `rules` | low |
 | [#59](059-character-export-import.md) | Character export/import with versioned serialization | `architecture` `gameplay` | low |
