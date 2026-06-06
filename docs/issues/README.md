@@ -37,7 +37,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` | low |
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` | low |
 | [#75](075-admin-campaign-member-management.md) | Admin campaign member management | `architecture` `gameplay` | medium |
-| [#76](076-accounts-context-integration-tests.md) | `Accounts` context integration tests | `architecture` `ops` | medium |
 | [#77](077-catalogue-cache-genserver-tests.md) | `Catalogue.Cache` GenServer tests | `architecture` `ops` | medium |
 | [#78](078-game-live-event-handler-tests.md) | `GameLive` event handler integration tests | `gameplay` `architecture` | medium |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
@@ -143,3 +142,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#54](054-campaign-character-schema.md) | CampaignCharacter schema (template-to-instance bridge) | `architecture` `gameplay` |
 | [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | `architecture` `gameplay` |
 | [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | `architecture` `rules` |
+| [#76](076-accounts-context-integration-tests.md) | `Accounts` context integration tests | `architecture` `ops` |
