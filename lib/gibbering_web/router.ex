@@ -40,6 +40,7 @@ defmodule GibberingWeb.Router do
       live "/characters", CharactersLive
       live "/game/:id", GameLive
       live "/lobby/:id", LobbyLive
+      live "/campaigns/:id/prep", CampaignPrepLive
     end
   end
 end

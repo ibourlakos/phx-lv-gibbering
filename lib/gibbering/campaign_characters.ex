@@ -13,6 +13,15 @@ defmodule Gibbering.CampaignCharacters do
     |> Repo.all()
   end
 
+  @doc "Returns campaign characters with their character template, owner, and controller preloaded."
+  def list_for_campaign_preloaded(campaign_id) do
+    CampaignCharacter
+    |> where(campaign_id: ^campaign_id)
+    |> order_by(:id)
+    |> preload([:character, :owner, :controller])
+    |> Repo.all()
+  end
+
   @doc "Returns `{:ok, campaign_character}` for the given campaign and id, or `{:error, :not_found}`."
   def get(campaign_id, id) do
     case Repo.get_by(CampaignCharacter, id: id, campaign_id: campaign_id) do
