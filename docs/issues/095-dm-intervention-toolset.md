@@ -1,6 +1,7 @@
 # #95 · DM intervention toolset (broadcast, whisper, condition/HP override)
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-06
+**Closed:** 2026-06-06
 **Priority:** medium
 **Tags:** ui, gameplay, architecture
 
@@ -14,9 +15,9 @@ Required tools:
 - **Toggle entity visibility** — temporarily hide an entity from player fog-of-war view without removing it from game state
 
 **Acceptance criteria**
-- [ ] Broadcast UI: text input + send button; all player LiveViews show the message as a dismissable banner
-- [ ] Whisper UI: player selector + text input; only the targeted player's socket receives the message
-- [ ] Condition apply: entity selector + condition picker; condition is added to the entity's active effects
-- [ ] HP adjust: entity selector + delta or absolute input; HP is updated and broadcast
-- [ ] Entity visibility toggle: entity selector + toggle; hidden entities disappear from player view but remain in DM view
-- [ ] All interventions are logged in session history (who did what, when)
+- [x] Broadcast UI: text input + send button; all player LiveViews show the message as a dismissable banner
+- [x] Whisper UI: player selector + text input; only the targeted player's socket receives the message
+- [x] Condition apply: entity selector + condition picker; condition is added to the entity's active effects
+- [x] HP adjust: entity selector + delta or absolute input; HP is updated and broadcast
+- [x] Entity visibility toggle: entity selector + toggle; hidden entities disappear from player view but remain in DM view
+- [x] All interventions are logged in session history (who did what, when)

@@ -386,4 +386,82 @@ defmodule GibberingWeb.GameLiveTest do
       assert html =~ "BroadcastHero"
     end
   end
+
+  describe "DM intervention toolset" do
+    test "dm_broadcast event sends a broadcast and shows banner to all", %{conn: conn} do
+      {view, _game_id} = mount_dm_game(conn)
+      view |> element("[phx-click='dm_open_broadcast']") |> render_click()
+      view |> element("form[phx-submit='dm_broadcast']") |> render_submit(%{text: "Hello!"})
+      assert render(view) =~ "Hello!"
+    end
+
+    test "dm_whisper event shows form when triggered", %{conn: conn} do
+      {view, _game_id} = mount_dm_game(conn)
+      view |> element("[phx-click='dm_open_whisper']") |> render_click()
+      assert render(view) =~ "Whisper"
+    end
+
+    test "dm_adjust_hp event updates entity HP in state", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      original_hp = state.entities[hero_id].hp
+
+      view
+      |> element("#dm-hp-#{hero_id}")
+      |> render_submit(%{entity_id: hero_id, delta: "-3"})
+
+      new_hp = SceneServer.get_state(game_id).entities[hero_id].hp
+      assert new_hp == max(original_hp - 3, 0)
+    end
+
+    test "dm_apply_condition event adds condition to entity", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view
+      |> element("#dm-cond-#{hero_id}")
+      |> render_submit(%{entity_id: hero_id, condition: "poisoned"})
+
+      assert :poisoned in SceneServer.get_state(game_id).entities[hero_id].conditions
+    end
+
+    test "dm_toggle_visibility event hides entity from player view", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view
+      |> element("[phx-click='dm_toggle_visibility'][phx-value-id='#{hero_id}']")
+      |> render_click()
+
+      assert MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
+    end
+
+    test "dm_broadcast shows banner on handle_info :dm_broadcast", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        {:dm_broadcast, "Ambient noise fills the room"}
+      )
+
+      assert render(view) =~ "Ambient noise fills the room"
+    end
+
+    test "whisper shows popup on handle_info :whisper", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      user_id = Gibbering.Campaigns.get!(game_id).dm_id
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        "game:#{game_id}:user:#{user_id}",
+        {:whisper, "Secret only for you"}
+      )
+
+      assert render(view) =~ "Secret only for you"
+    end
+  end
 end

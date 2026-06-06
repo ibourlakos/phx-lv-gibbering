@@ -425,4 +425,103 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert_receive {:state_updated, %State{}}, 500
     end
   end
+
+  describe "dm_broadcast/2" do
+    test "broadcasts :dm_broadcast message to all subscribers" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      assert :ok = SceneServer.dm_broadcast(game_id, "Hello players!")
+
+      assert_receive {:dm_broadcast, "Hello players!"}, 500
+    end
+
+    test "appends entry to session_log in state" do
+      game_id = start_server()
+      assert :ok = SceneServer.dm_broadcast(game_id, "Narrative text")
+      state = SceneServer.get_state(game_id)
+      assert Enum.any?(state.session_log, &String.contains?(&1, "Narrative text"))
+    end
+  end
+
+  describe "dm_whisper/3" do
+    test "broadcasts :whisper to the per-user topic" do
+      game_id = start_server()
+      user_id = 42
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, "game:#{game_id}:user:#{user_id}")
+
+      assert :ok = SceneServer.dm_whisper(game_id, user_id, "Secret message")
+
+      assert_receive {:whisper, "Secret message"}, 500
+    end
+
+    test "does not broadcast :whisper to the main game topic" do
+      game_id = start_server()
+      user_id = 42
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      assert :ok = SceneServer.dm_whisper(game_id, user_id, "Secret")
+
+      refute_receive {:whisper, _}, 200
+    end
+  end
+
+  describe "dm_apply_condition/3" do
+    test "adds condition to entity active effects and broadcasts" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      assert :ok = SceneServer.dm_apply_condition(game_id, hero_id, :poisoned)
+
+      new_state = SceneServer.get_state(game_id)
+      assert :poisoned in new_state.entities[hero_id].conditions
+      assert_receive {:state_updated, %State{}}, 500
+    end
+  end
+
+  describe "dm_adjust_hp/3" do
+    test "applies delta to entity HP and broadcasts" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      original_hp = state.entities[hero_id].hp
+
+      assert :ok = SceneServer.dm_adjust_hp(game_id, hero_id, -5)
+
+      new_state = SceneServer.get_state(game_id)
+      assert new_state.entities[hero_id].hp == max(original_hp - 5, 0)
+      assert_receive {:state_updated, %State{}}, 500
+    end
+  end
+
+  describe "dm_toggle_visibility/2" do
+    test "hides entity not yet hidden, then shows it again on second call" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      assert :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
+      assert MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
+
+      assert :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
+      refute MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
+    end
+
+    test "broadcasts state_updated after toggle" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
+
+      assert_receive {:state_updated, %State{}}, 500
+    end
+  end
 end

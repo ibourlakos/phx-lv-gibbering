@@ -158,6 +158,8 @@ The `roll_dice` event carries `%{result: 1..6, label: string}`. The die enters f
 
 No custom WebSocket code. Phoenix PubSub broadcasts `{:state_updated, new_state}` to all LiveViews subscribed to `"game:#{game_id}"`. Each LiveView re-renders only its diff.
 
+**Per-user topics:** Each GameLive socket also subscribes to `"game:#{game_id}:user:#{user_id}"`. The DM can send private whispers (`{:whisper, text}`) to a single player's socket without broadcasting to the main topic. The SceneServer sends the whisper directly via `Phoenix.PubSub.broadcast/3` on that per-user topic without mutating state.
+
 ---
 
 ## Data Pipeline

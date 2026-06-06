@@ -528,4 +528,73 @@ defmodule Gibbering.Engine.StateTest do
       assert new_state.entities[hero_id()].resources.action_surge == 1
     end
   end
+
+  describe "adjust_hp/3" do
+    test "adds a positive delta to entity HP" do
+      state = with_entity(build_state(), hero_id(), hp: 5, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), 10)
+      assert new_state.entities[hero_id()].hp == 15
+    end
+
+    test "clamps HP at max_hp" do
+      state = with_entity(build_state(), hero_id(), hp: 18, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), 10)
+      assert new_state.entities[hero_id()].hp == 20
+    end
+
+    test "subtracts a negative delta" do
+      state = with_entity(build_state(), hero_id(), hp: 15, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), -5)
+      assert new_state.entities[hero_id()].hp == 10
+    end
+
+    test "clamps HP at 0 for negative delta" do
+      state = with_entity(build_state(), hero_id(), hp: 3, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), -10)
+      assert new_state.entities[hero_id()].hp == 0
+    end
+
+    test "no-op for unknown entity_id" do
+      state = build_state()
+      assert State.adjust_hp(state, 99_999, 5) == state
+    end
+  end
+
+  describe "hide_entity/2 and show_entity/2" do
+    test "hide_entity adds entity_id to hidden_entities" do
+      state = build_state()
+      new_state = State.hide_entity(state, hero_id())
+      assert MapSet.member?(new_state.hidden_entities, hero_id())
+    end
+
+    test "show_entity removes entity_id from hidden_entities" do
+      state = build_state()
+      hidden = State.hide_entity(state, hero_id())
+      shown = State.show_entity(hidden, hero_id())
+      refute MapSet.member?(shown.hidden_entities, hero_id())
+    end
+
+    test "hide_entity is idempotent" do
+      state = build_state()
+      once = State.hide_entity(state, hero_id())
+      twice = State.hide_entity(once, hero_id())
+      assert MapSet.equal?(once.hidden_entities, twice.hidden_entities)
+    end
+  end
+
+  describe "add_log_entry/2" do
+    test "prepends an entry to session_log" do
+      state = build_state()
+      new_state = State.add_log_entry(state, "DM broadcast: hello")
+      assert hd(new_state.session_log) == "DM broadcast: hello"
+    end
+
+    test "accumulates multiple entries" do
+      state = build_state()
+      s1 = State.add_log_entry(state, "first")
+      s2 = State.add_log_entry(s1, "second")
+      assert length(s2.session_log) == 2
+      assert hd(s2.session_log) == "second"
+    end
+  end
 end

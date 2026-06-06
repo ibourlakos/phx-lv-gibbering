@@ -39,7 +39,11 @@ defmodule Gibbering.Engine.State do
     # [%{id, entity_id, condition_id, conditions, source, duration}]
     active_effects: [],
     # %{entity_id => integer} — DM-rolled initiative values per entity
-    initiative_values: %{}
+    initiative_values: %{},
+    # MapSet of entity_ids hidden from player view (DM-only visibility)
+    hidden_entities: %MapSet{},
+    # [{timestamp, text}] — chronological intervention log, newest first
+    session_log: []
   ]
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."
@@ -170,6 +174,43 @@ defmodule Gibbering.Engine.State do
     valid = Enum.filter(ordered_ids, &(&1 in state.turn_order))
     new_index = (current && Enum.find_index(valid, &(&1 == current))) || 0
     %{state | turn_order: valid, active_index: new_index}
+  end
+
+  @doc "Applies `delta` HP to `entity_id`, clamping to `[0, max_hp]`. No-op for unknown ids."
+  def adjust_hp(%__MODULE__{} = state, entity_id, delta) do
+    case Map.get(state.entities, entity_id) do
+      nil ->
+        state
+
+      entity ->
+        new_hp = max(0, min(entity.max_hp, entity.hp + delta))
+        updated = Map.put(entity, :hp, new_hp)
+        %{state | entities: Map.put(state.entities, entity_id, updated)}
+    end
+  end
+
+  @doc "Adds `entity_id` to the DM-hidden set."
+  def hide_entity(%__MODULE__{} = state, entity_id) do
+    %{state | hidden_entities: MapSet.put(state.hidden_entities || MapSet.new(), entity_id)}
+  end
+
+  @doc "Removes `entity_id` from the DM-hidden set."
+  def show_entity(%__MODULE__{} = state, entity_id) do
+    %{state | hidden_entities: MapSet.delete(state.hidden_entities || MapSet.new(), entity_id)}
+  end
+
+  @doc "Toggles `entity_id` in the hidden set."
+  def toggle_visibility(%__MODULE__{} = state, entity_id) do
+    set = state.hidden_entities || MapSet.new()
+
+    if MapSet.member?(set, entity_id),
+      do: show_entity(state, entity_id),
+      else: hide_entity(state, entity_id)
+  end
+
+  @doc "Prepends a log entry string to `session_log`."
+  def add_log_entry(%__MODULE__{} = state, entry) do
+    %{state | session_log: [entry | state.session_log || []]}
   end
 
   @doc "Returns the entity id of the hero whose turn it currently is, or `nil` when there is no turn order."
