@@ -43,5 +43,10 @@ defmodule GibberingWeb.Router do
       live "/lobby/:id", LobbyLive
       live "/campaigns/:id/prep", CampaignPrepLive
     end
+
+    live_session :invite,
+      on_mount: [{GibberingWeb.UserAuth, :ensure_authenticated_with_return}] do
+      live "/invites/:token", InviteLive
+    end
   end
 end

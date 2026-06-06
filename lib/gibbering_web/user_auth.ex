@@ -77,6 +77,26 @@ defmodule GibberingWeb.UserAuth do
     end
   end
 
+  def on_mount(:ensure_authenticated_with_return, params, session, socket) do
+    socket = mount_current_user(session, socket)
+
+    if socket.assigns.current_user do
+      {:cont, socket}
+    else
+      return_to = build_return_path(socket, params)
+
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "You must be logged in to access this page.")
+        |> Phoenix.LiveView.redirect(to: "/login?return_to=#{URI.encode(return_to)}")
+
+      {:halt, socket}
+    end
+  end
+
+  defp build_return_path(_socket, %{"token" => token}), do: "/invites/#{token}"
+  defp build_return_path(_socket, _params), do: "/"
+
   defp mount_current_user(session, socket) do
     user =
       case Map.get(session, "user_id") do
