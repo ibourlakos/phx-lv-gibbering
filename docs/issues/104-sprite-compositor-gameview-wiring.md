@@ -1,6 +1,7 @@
 # #104 · Wire SpriteCompositor into GameLive entity rendering
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** rendering, architecture, ui
 
@@ -21,9 +22,9 @@ Design decisions already settled in #100:
   Option (a) is the least-change path; option (b) is the end-state. Start with (a).
 
 **Acceptance criteria**
-- [ ] GameLive template uses `SpriteCompositor.compose/3` to render entity overlay layers (selection ring, HP bar)
-- [ ] Named sprite SVG paths continue to render correctly (no regression)
-- [ ] Fallback body rectangle renders for sprites without a named variant (existing behaviour preserved)
-- [ ] `selected` flag wired: active entity gets selection ring
-- [ ] HP bar visible for all entities with `max_hp > 0`
-- [ ] `mix precommit` passes
+- [x] GameLive template uses `SpriteCompositor.compose/3` to render entity overlay layers (selection ring, HP bar)
+- [x] Named sprite SVG paths continue to render correctly (no regression — 652 tests pass)
+- [x] Fallback body rectangle renders for sprites without a named variant (existing behaviour preserved)
+- [x] `selected` flag wired: active entity gets selection ring
+- [x] HP bar visible for all entities with `max_hp > 0`
+- [x] `mix precommit` passes

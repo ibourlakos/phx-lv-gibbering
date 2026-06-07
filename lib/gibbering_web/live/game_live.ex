@@ -1,7 +1,7 @@
 defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.Engine.{SceneServer, State, Rules}
+  alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
   alias Gibbering.Campaigns
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
@@ -440,18 +440,6 @@ defmodule GibberingWeb.GameLive do
   defp entity_body_color(appearances, sprite) do
     (appearances[{"entity", sprite}] || %{})["body_color"] || "#7f8c8d"
   end
-
-  defp hp_bar_color(hp, max_hp) when max_hp > 0 do
-    pct = hp / max_hp
-
-    cond do
-      pct > 0.6 -> "#2ecc71"
-      pct > 0.3 -> "#f39c12"
-      true -> "#e74c3c"
-    end
-  end
-
-  defp hp_bar_color(_, _), do: "#e74c3c"
 
   # ---------------------------------------------------------------------------
   # Entity sprite components — inline SVG, DST-style ink aesthetic.

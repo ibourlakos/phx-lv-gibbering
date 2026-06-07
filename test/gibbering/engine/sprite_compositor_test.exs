@@ -64,17 +64,34 @@ defmodule Gibbering.Engine.SpriteCompositorTest do
 
     test "bar width proportional to HP fraction" do
       result = SpriteCompositor.compose(entity(hp: 5, max_hp: 10), @appearances)
-      assert result =~ ~s(width="16")
+      assert result =~ ~s(width="28")
+    end
+
+    test "bar is positioned above the sprite box top edge" do
+      result = SpriteCompositor.compose(entity(), @appearances)
+      assert result =~ ~s(y="-9")
     end
 
     test "no HP bar when show_hp: false" do
       result = SpriteCompositor.compose(entity(), @appearances, show_hp: false)
-      refute result =~ "#333333"
+      refute result =~ "#1f2937"
     end
 
     test "no HP bar when max_hp is 0" do
       result = SpriteCompositor.compose(entity(hp: 0, max_hp: 0), @appearances)
-      refute result =~ "#333333"
+      refute result =~ "#1f2937"
+    end
+  end
+
+  describe "compose/3 — show_body opt" do
+    test "body omitted when show_body: false" do
+      result = SpriteCompositor.compose(entity(), @appearances, show_body: false, show_hp: false)
+      refute result =~ "rect"
+    end
+
+    test "body included when show_body: true (default)" do
+      result = SpriteCompositor.compose(entity(), @appearances, show_hp: false)
+      assert result =~ ~s(fill="#4a6fa5")
     end
   end
 

@@ -8,7 +8,6 @@ iso = GibberingWeb.IsoProjection
 
 svg_w = iso.svg_width(map_w, map_h)
 svg_h = iso.svg_height(map_w, map_h)
-tw = iso.tile_w()
 
 {center_sx, center_sy} =
   if active_entity,
@@ -78,8 +77,6 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <% is_spell_target = id in @spell_targets %>
       <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
       <% {ix, iy} = iso.sprite_pos(sx, sy) %>
-      <% hp_w = tw - 8 %>
-      <% hp_fill = round(hp_w * entity.hp / max(entity.max_hp, 1)) %>
 
       <g
         id={"entity-#{id}"}
@@ -140,7 +137,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           />
         <% end %>
 
-        <%!-- Sprite --%>
+        <%!-- Sprite body (named geometry or fallback rect) --%>
         <.entity_sprite
           sprite={entity.sprite}
           x={ix}
@@ -148,16 +145,12 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           body_color={entity_body_color(@appearances, entity.sprite)}
         />
 
-        <%!-- HP bar (world-anchored, above sprite) --%>
-        <rect x={ix + 4} y={iy - 9} width={hp_w} height={5} rx="2" fill="#1f2937" />
-        <rect
-          x={ix + 4}
-          y={iy - 9}
-          width={hp_fill}
-          height={5}
-          rx="2"
-          fill={hp_bar_color(entity.hp, entity.max_hp)}
-        />
+        <%!-- Compositor overlays: selection ring (active entity) + HP bar --%>
+        <g transform={"translate(#{ix}, #{iy})"}>
+          {Phoenix.HTML.raw(
+            SpriteCompositor.compose(entity, @appearances, selected: is_active, show_body: false)
+          )}
+        </g>
       </g>
     <% end %>
 
