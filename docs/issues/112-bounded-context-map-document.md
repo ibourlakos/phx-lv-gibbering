@@ -16,7 +16,7 @@ This project has no such document. `docs/architecture.md` lists modules; the pol
 The context map is a living document, not a one-time artifact. It should be updated whenever a new bounded context is introduced, a seam changes integration pattern, or a known violation is fixed.
 
 **References**
-- `docs/polytope-architecture.md` §3.1, §8 (bounded context graph and dimensions), §2.2 (DDD context map)
+- `docs/papers/polytope-architecture.md` §3.1, §8 (bounded context graph and dimensions), §2.2 (DDD context map)
 - Vernon (2013) — *Implementing Domain-Driven Design*, Chapter 3 (Context Maps)
 - Issue #107 (namespace alignment — must be settled before the map can name modules precisely)
 

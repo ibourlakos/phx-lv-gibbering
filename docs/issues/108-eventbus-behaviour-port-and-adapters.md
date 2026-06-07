@@ -20,7 +20,7 @@ Swapping between adapters must require no change to any bounded context module. 
 This issue is blocked on the namespace decision in #107 (the behaviour module lives under whatever namespace is chosen for the Bus meta-hexagon context). Once the namespace is decided, implementation can proceed.
 
 **References**
-- `docs/polytope-architecture.md` §3.3 (bus as meta-hexagon, fractal self-similarity), §6.3 (vertical bus stack), §10.3 (deployment is an adapter decision)
+- `docs/papers/polytope-architecture.md` §3.3 (bus as meta-hexagon, fractal self-similarity), §6.3 (vertical bus stack), §10.3 (deployment is an adapter decision)
 - Issue #107 (module namespace — must be resolved first)
 - Issue #109 (compound bus command/event separation — relates to what this behaviour exposes)
 

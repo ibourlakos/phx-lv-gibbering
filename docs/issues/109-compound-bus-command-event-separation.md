@@ -15,7 +15,7 @@ The current codebase does not enforce this distinction. Some cross-context commu
 This issue tracks: (1) auditing all cross-context communication, (2) classifying each as command or event, and (3) fixing any misclassifications or opening sub-issues for those that require significant refactoring.
 
 **References**
-- `docs/polytope-architecture.md` §6.2 (command vs event bus), §6.4 (compound bus definition and diagnostic rule)
+- `docs/papers/polytope-architecture.md` §6.2 (command vs event bus), §6.4 (compound bus definition and diagnostic rule)
 - Issue #108 (EventBus behaviour — the implementation of E)
 - Issue #110 (SceneServer single-writer — follows from this classification)
 

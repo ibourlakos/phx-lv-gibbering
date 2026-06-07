@@ -17,7 +17,7 @@ This separation has practical benefits: the player LiveView need not receive the
 This is a discovery issue: decide the projection model before implementing per-role views or the spectator feature (#92).
 
 **References**
-- `docs/polytope-architecture.md` §9 (Temporal dimension: CQRS; Memento for snapshots), §5.2 (event log as unified data/storage/behavior), §8.2 (temporal dimension parallels)
+- `docs/papers/polytope-architecture.md` §9 (Temporal dimension: CQRS; Memento for snapshots), §5.2 (event log as unified data/storage/behavior), §8.2 (temporal dimension parallels)
 - Issue #111 (event cascade batch — provides the event stream projections consume)
 - Issue #92 (spectator role — needs a well-defined projection to work from)
 - Issue #101 (DM top-down projection mode — a distinct view that benefits from a separate projection)

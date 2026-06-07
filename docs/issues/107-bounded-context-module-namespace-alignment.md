@@ -5,7 +5,7 @@
 **Priority:** medium
 **Tags:** discovery, architecture
 
-The polytope treatise (`docs/polytope-architecture.md`) names eight bounded contexts precisely. The current module map in `docs/architecture.md` uses a layered naming convention (Engine, Data, Web) that does not correspond to the polytope decomposition. Before any significant new module work starts, the canonical Elixir namespace for each bounded context must be decided and documented.
+The polytope treatise (`docs/papers/polytope-architecture.md`) names eight bounded contexts precisely. The current module map in `docs/architecture.md` uses a layered naming convention (Engine, Data, Web) that does not correspond to the polytope decomposition. Before any significant new module work starts, the canonical Elixir namespace for each bounded context must be decided and documented.
 
 Contexts surfaced by the treatise that need a canonical home:
 
@@ -23,7 +23,7 @@ Contexts surfaced by the treatise that need a canonical home:
 The decision also determines the correct name for the module-level rename of `GameServer` → whatever the Scene context's primary process is called (SceneServer is the treatise term; the namespace must be settled first).
 
 **References**
-- `docs/polytope-architecture.md` §3.1 (bounded context graph), §8 (five dimensions applied), §3.3 (bus as meta-hexagon)
+- `docs/papers/polytope-architecture.md` §3.1 (bounded context graph), §8 (five dimensions applied), §3.3 (bus as meta-hexagon)
 - `docs/architecture.md` (current module map — to be updated)
 - Issue #108 (EventBus behaviour, blocked by this decision)
 

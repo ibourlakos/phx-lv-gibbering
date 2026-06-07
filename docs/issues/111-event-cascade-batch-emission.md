@@ -21,7 +21,7 @@ The required pattern:
 This is a discovery issue: design the batch structure, the emission API, and how subscribers receive and process batches. The event envelope fields from #106 (§7.3 of the treatise) apply directly here.
 
 **References**
-- `docs/polytope-architecture.md` §7.3 (causation_id, correlation_id in event envelope), §9 (Event Aggregator in Integration dimension patterns), §5.1 (causality as first-class concern)
+- `docs/papers/polytope-architecture.md` §7.3 (causation_id, correlation_id in event envelope), §9 (Event Aggregator in Integration dimension patterns), §5.1 (causality as first-class concern)
 - Issue #106 (event schema methodology — envelope spec)
 - Issue #110 (SceneServer single writer — the actor that produces the batch)
 - Issue #108 (EventBus behaviour — the port through which the batch is emitted)

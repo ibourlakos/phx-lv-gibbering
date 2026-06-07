@@ -5,7 +5,7 @@
 **Priority:** medium
 **Tags:** architecture, discovery
 
-The polytope architecture establishes the event schema registry (Published Language) as the most important contract in the system — a schema change is a system-wide API breaking change, not a local one. As of the treatise (`docs/polytope-architecture.md`, §7), the methodology is described conceptually. This issue tracks operationalizing it for this codebase.
+The polytope architecture establishes the event schema registry (Published Language) as the most important contract in the system — a schema change is a system-wide API breaking change, not a local one. As of the treatise (`docs/papers/polytope-architecture.md`, §7), the methodology is described conceptually. This issue tracks operationalizing it for this codebase.
 
 The required mini-cycle is: Event Storming (discovery) → schema specification → consumer-driven contract validation → versioning policy enforcement. Each step needs concrete workflow artifacts:
 
@@ -18,7 +18,7 @@ The required mini-cycle is: Event Storming (discovery) → schema specification 
 This issue is a prerequisite for any formal event store or persistent event log implementation. It informs the Published Language parallel of the Integration dimension.
 
 **References**
-- `docs/polytope-architecture.md` §3.2 (Published Language as central contract), §6 (compound bus), §7 (schema design methodology)
+- `docs/papers/polytope-architecture.md` §3.2 (Published Language as central contract), §6 (compound bus), §7 (schema design methodology)
 - Issue #32 (DM override event schema) — a concrete instance of this problem
 
 **Acceptance criteria**

@@ -17,7 +17,7 @@ The boundary is:
 This issue is primarily documentation and enforcement, with a potential audit component (similar to #109).
 
 **References**
-- `docs/polytope-architecture.md` §5.4 (single writer per chain — the natural architecture), §5.3 (hash-chained logs — requires single writer)
+- `docs/papers/polytope-architecture.md` §5.4 (single writer per chain — the natural architecture), §5.3 (hash-chained logs — requires single writer)
 - Issue #109 (compound bus separation — establishes what counts as a "scene event")
 - Issue #111 (cascade batch emission — defines what SceneServer emits)
 
