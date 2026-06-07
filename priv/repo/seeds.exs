@@ -1,5 +1,8 @@
 alias Gibbering.{Repo, Campaign, GridTile, Entity, CampaignMember}
+alias Gibbering.{Character, CampaignCharacter, CampaignInvitation, CampaignInviteLink}
+alias Gibbering.Engine.GameSession
 alias Gibbering.Accounts
+alias Gibbering.Accounts.User
 alias Gibbering.Admin
 alias Gibbering.Catalogue.{Race, Class, Spell, Style, Appearance}
 alias Gibbering.Data.{Races, Classes, Spells}
@@ -73,61 +76,45 @@ IO.puts(
   "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells"
 )
 
-# Wipe existing seed data
+# ---------------------------------------------------------------------------
+# Full wipe of all user-generated data (campaigns, characters, users).
+# Safe to re-run; support users and catalogue data are preserved.
+# ---------------------------------------------------------------------------
+
+Repo.delete_all(CampaignInviteLink)
+Repo.delete_all(CampaignInvitation)
+Repo.delete_all(CampaignCharacter)
 Repo.delete_all(CampaignMember)
+Repo.delete_all(GameSession)
 Repo.delete_all(Entity)
 Repo.delete_all(GridTile)
 Repo.delete_all(Campaign)
+Repo.delete_all(Character)
+Repo.delete_all(User)
 
-# Seed users (idempotent — skip if username exists)
-{:ok, dm_user} =
-  case Accounts.get_user_by_username("dungeon_master") do
-    nil ->
-      Accounts.register_user(%{username: "dungeon_master", password: "gibbering"})
+# ---------------------------------------------------------------------------
+# Users  (all password: "gibbering")
+# ---------------------------------------------------------------------------
 
-    existing ->
-      {:ok, existing}
-  end
+{:ok, dm} = Accounts.register_user(%{username: "dungeon_master", password: "gibbering"})
+{:ok, alice} = Accounts.register_user(%{username: "alice", password: "gibbering"})
+{:ok, bob} = Accounts.register_user(%{username: "bob", password: "gibbering"})
+{:ok, charlie} = Accounts.register_user(%{username: "charlie", password: "gibbering"})
 
-{:ok, player1} =
-  case Accounts.get_user_by_username("aldric_player") do
-    nil ->
-      Accounts.register_user(%{username: "aldric_player", password: "gibbering"})
+# ---------------------------------------------------------------------------
+# Campaign: The Proving Grounds  (DM = dungeon_master)
+# ---------------------------------------------------------------------------
 
-    existing ->
-      {:ok, existing}
-  end
-
-{:ok, player2} =
-  case Accounts.get_user_by_username("sylvara_player") do
-    nil ->
-      Accounts.register_user(%{username: "sylvara_player", password: "gibbering"})
-
-    existing ->
-      {:ok, existing}
-  end
-
-{:ok, player3} =
-  case Accounts.get_user_by_username("zippik_player") do
-    nil ->
-      Accounts.register_user(%{username: "zippik_player", password: "gibbering"})
-
-    existing ->
-      {:ok, existing}
-  end
-
-# Campaign
 campaign =
   Repo.insert!(%Campaign{
     name: "The Proving Grounds",
     map_width: 10,
     map_height: 10,
     tile_size: 56,
-    dm_id: dm_user.id
+    dm_id: dm.id
   })
 
-# Campaign membership
-for user <- [dm_user, player1, player2, player3] do
+for user <- [dm, alice, bob, charlie] do
   Repo.insert!(%CampaignMember{campaign_id: campaign.id, user_id: user.id})
 end
 
@@ -336,8 +323,20 @@ Repo.insert!(%Entity{
   campaign_id: campaign.id
 })
 
-IO.puts("Seeded campaign ##{campaign.id}: #{campaign.name}")
-IO.puts("Visit http://localhost:4000/game/#{campaign.id}")
+IO.puts("""
+
+── Dev seed complete ─────────────────────────────────────────────────────────
+Campaign: #{campaign.name} (##{campaign.id})
+  Game:   http://localhost:4000/game/#{campaign.id}
+  Lobby:  http://localhost:4000/lobby/#{campaign.id}
+
+Users (all password: gibbering)
+  dungeon_master  — DM of The Proving Grounds
+  alice           — player
+  bob             — player
+  charlie         — player
+─────────────────────────────────────────────────────────────────────────────
+""")
 
 # Admin support user — dev credentials: admin@gibbering.local / gibbering_admin
 unless Repo.get_by(Gibbering.Admin.SupportUser, email: "admin@gibbering.local") do
