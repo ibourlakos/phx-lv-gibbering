@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 103 (see `counter`)
+**Next issue number:** 104 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -45,7 +45,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
 | [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | `discovery` `architecture` `gameplay` | low |
-| [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture | `discovery` `rendering` `architecture` | low |
+| [#103](103-panzoom-hook-gestures.md) | PanZoom JS hook: pointer drag, wheel zoom, follow active token | `rendering` `architecture` `ui` | low |
 | [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` | low |
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
@@ -158,3 +158,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#102](102-gamelive-full-viewport-layout-refactor.md) | GameLive full-viewport layout refactor | `rendering` `ui` `architecture` |
 | [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | `bug` `rendering` |
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` |
+| [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture | `discovery` `rendering` `architecture` |
