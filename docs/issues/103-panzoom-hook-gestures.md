@@ -1,7 +1,8 @@
 # #103 · PanZoom JS hook: pointer drag, wheel zoom, follow active token
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-07
 **Priority:** low
 **Tags:** rendering, architecture, ui
 
@@ -49,10 +50,10 @@ y_max = svg_h - vbh + (tile_h / 2)
 ```
 
 **Acceptance criteria**
-- [ ] Mouse wheel zooms in/out around the cursor, clamped to [1×, 4×] relative to full SVG
-- [ ] Pointer drag pans the viewBox; viewBox cannot wander more than one tile outside SVG bounds
-- [ ] Arrow keys pan by `tile_w/2` SVG units per press when no text input is focused
-- [ ] When turn changes and `data-follow="true"`, viewBox re-centres on the active entity
-- [ ] SVG element carries `data-center-sx`, `data-center-sy`, `data-svg-w`, `data-svg-h`, `data-follow`
-- [ ] Existing `DiceRoll` hook and all phx-click handlers still work after the changes
-- [ ] `mix precommit` exits 0
+- [x] Mouse wheel zooms in/out around the cursor, clamped to [1×, 4×] relative to full SVG
+- [x] Pointer drag pans the viewBox; viewBox cannot wander more than one tile outside SVG bounds
+- [x] Arrow keys pan by `tile_w/2` SVG units per press when no text input is focused
+- [x] When turn changes and `data-follow="true"`, viewBox re-centres on the active entity
+- [x] SVG element carries `data-center-sx`, `data-center-sy`, `data-svg-w`, `data-svg-h`, `data-follow`
+- [x] Existing `DiceRoll` hook and all phx-click handlers still work after the changes
+- [x] `mix precommit` exits 0
