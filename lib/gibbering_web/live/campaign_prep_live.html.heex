@@ -1,6 +1,38 @@
 <div class="prep-page">
   <h1>Campaign Prep — {@campaign.name}</h1>
 
+  <section style="background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 8px; padding: 1.2rem; margin-bottom: 2rem;">
+    <h2 style="color: #e8d5a0; font-family: serif; margin-bottom: 0.8rem;">Invite Link</h2>
+
+    <%= if @invite_link do %>
+      <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+        <code style="background: #0d0d1e; border: 1px solid #2a2a4a; padding: 0.4rem 0.8rem; border-radius: 4px; color: #a0c8a0; font-size: 0.9rem; word-break: break-all;">
+          {@invite_url}
+        </code>
+        <button
+          phx-click="revoke_invite_link"
+          style="background: #4a1a1a; color: #e07070; border: 1px solid #6a3a3a; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;"
+          data-confirm="Revoke this invite link? It will stop working immediately."
+        >
+          Revoke
+        </button>
+      </div>
+      <div style="color: #5a6070; font-size: 0.8rem; margin-top: 0.5rem;">
+        Expires: {Calendar.strftime(@invite_link.expires_at, "%Y-%m-%d")}
+      </div>
+    <% else %>
+      <p style="color: #7a8090; font-size: 0.9rem; margin-bottom: 0.8rem;">
+        No active invite link.
+      </p>
+      <button
+        phx-click="generate_invite_link"
+        style="background: #2a4a2a; color: #a0e0a0; border: 1px solid #3a6a3a; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem;"
+      >
+        Generate Invite Link
+      </button>
+    <% end %>
+  </section>
+
   <%= if @campaign_characters == [] do %>
     <p>No characters have joined this campaign yet.</p>
   <% else %>

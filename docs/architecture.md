@@ -8,44 +8,124 @@ The Gibbering Engine is a deliberate architectural aberration: a 2D tactical gam
 
 ---
 
-## Module Map
+## Bounded Context Map
 
-### Engine (server-side game authority)
+The module structure follows the polytope bounded context decomposition from
+[docs/papers/polytope-architecture.md](../papers/polytope-architecture.md). Each bounded
+context owns its namespace. No context reaches directly into another's modules — all
+cross-context interaction is via the command bus (C) or event bus (E). See #108 for the
+EventBus port definition, #109 for the bus classification audit, and #112 for the full
+context map document.
+
+### Scene *(Behavioral dimension — core game authority)*
 
 ```
-Gibbering.Engine.GameServer   ← authoritative game state (1 GenServer per session)
+Gibbering.Engine.SceneServer  ← single-writer authoritative process (1 GenServer per session)
 Gibbering.Engine.State        ← immutable state struct (tiles, entities, selection, turn order)
 Gibbering.Engine.Rules        ← pure functions: movement, targeting, combat
+Gibbering.Engine.GameSession  ← session supervisor / registry entry
+Gibbering.Engine.SpriteCompositor ← sprite composition pipeline
 ```
 
-### D&D 5e Data Layer
+Namespace: `Gibbering.Engine.*` (maps to the Scene bounded context in polytope terms;
+rename to `Gibbering.Scene.*` is a future refactor tracked separately if desired).
+
+### Rules Engine *(Structural dimension — core domain)*
 
 ```
-Gibbering.Data.Races          ← race definitions: Human, Elf, Gnome (stat bonuses, traits, speed)
-Gibbering.Data.Classes        ← class definitions: Fighter, Wizard, Rogue (features, spells, base stats)
-Gibbering.Data.Spells         ← spell definitions: cantrips + level-1 spells (damage, range, school)
+Gibbering.Ruleset                        ← behaviour port: any ruleset must implement this
+Gibbering.Rulesets.DnD5e                 ← D&D 5e SRD ruleset (Strategy implementation)
+Gibbering.Rulesets.DnD5e.Stats           ← HP, speed, proficiency, stat modifiers
+Gibbering.Rulesets.DnD5e.Spell           ← spell resolution, damage, saving throws
+Gibbering.Rulesets.DnD5e.RuleModifier    ← modifier struct: source, operation, value
+Gibbering.Rulesets.DnD5e.ModifierPipeline ← Chain of Responsibility over modifiers
+Gibbering.Rulesets.DnD5e.Predicate       ← composable boolean rule conditions
+Gibbering.Rulesets.DnD5e.Condition       ← condition type definitions (Paralyzed, Frightened …)
 ```
 
-These are pure in-memory data modules (no DB). The `Entity` schema stores the result
-(`race`, `class`, `stats` map) after the lobby applies them at character setup time.
-
-### Web Layer
+### Content Catalogue *(Structural dimension — core domain)*
 
 ```
-GibberingWeb.Router           ← /  →  /lobby/:id  →  /game/:id
-GibberingWeb.PageController   ← home page: queries campaigns from DB
-GibberingWeb.LobbyLive        ← party setup LiveView (claim slots, pick race/class, edit name)
-GibberingWeb.GameLive         ← game board LiveView: event handler + SVG template + sprite components
-GibberingWeb.IsoProjection    ← pure functions: grid→screen coordinate math (2:1 dimetric)
+Gibbering.Catalogue           ← context boundary / public API
+Gibbering.Catalogue.Race      ← race definitions with stat bonuses and traits
+Gibbering.Catalogue.Class     ← class definitions with features and base stats
+Gibbering.Catalogue.Spell     ← spell definitions: damage, range, school
+Gibbering.Catalogue.Monster   ← monster stat blocks (SRD-legal subset)
+Gibbering.Catalogue.Appearance ← visual metadata for catalogue entries
+Gibbering.Catalogue.Style     ← display style declarations
+Gibbering.Catalogue.Cache     ← in-process ETS cache over the DB
 ```
 
-### Planned (not yet implemented)
+Legacy in-memory reference modules (`Gibbering.Data.Races`, `Gibbering.Data.Classes`,
+`Gibbering.Data.Spells`, `Gibbering.Data.Monsters`, `Gibbering.Data.Items`,
+`Gibbering.Data.Backgrounds`) are internal helpers within the Content Catalogue context;
+they pre-date the DB-backed `Catalogue.*` layer and will be migrated or removed over time.
+
+### Campaign Lifecycle *(Structural dimension — supporting domain)*
 
 ```
-Gibbering.Ruleset             ← behaviour any ruleset must implement (see #14)
-Gibbering.Rulesets.DnD5e      ← D&D 5e SRD ruleset (see #14)
-Gibbering.Pipeline.Parser     ← SRD action string parser (see #8)
-Gibbering.Pipeline.LegalGuard ← WotC Product Identity filter (see docs/legal.md)
+Gibbering.Campaigns           ← context boundary / public API
+Gibbering.Campaign            ← Ecto schema: campaign record
+Gibbering.CampaignCharacter   ← Ecto schema: character-in-campaign join
+Gibbering.CampaignCharacters  ← context operations over CampaignCharacter
+Gibbering.CampaignMember      ← Ecto schema: player membership
+Gibbering.CampaignInvitation  ← Ecto schema: invitation record
+Gibbering.CampaignInvitations ← context operations over invitations
+Gibbering.CampaignInviteLink  ← Ecto schema: shareable invite link
+Gibbering.CampaignInviteLinks ← context operations over invite links
+Gibbering.Character           ← Ecto schema: character sheet
+Gibbering.Characters          ← context operations over characters
+```
+
+### Identity and Authorization *(Structural dimension — supporting domain)*
+
+```
+Gibbering.Accounts            ← context boundary / public API (users, sessions, auth)
+Gibbering.Accounts.User       ← Ecto schema: player account
+Gibbering.Admin               ← admin surface of this context (support users, audit)
+Gibbering.Admin.SupportUser   ← Ecto schema: admin credential
+Gibbering.Admin.AuditLog      ← Ecto schema: admin action log
+```
+
+### Observability *(Structural dimension — generic domain)*
+
+```
+Gibbering.Monitoring.MetricsStore         ← behaviour port: metric storage backend
+Gibbering.Monitoring.Stores.Local         ← ETS-backed adapter (production)
+Gibbering.Monitoring.Stores.NoOp          ← no-op adapter (test)
+Gibbering.Monitoring.CampaignMetricSnapshot ← snapshot schema
+```
+
+### Notification *(Structural dimension — generic domain)*
+
+Namespace: `Gibbering.Notification` (assigned; no module exists yet). Currently
+implemented as direct `Phoenix.PubSub` calls scattered across contexts. A thin
+wrapper module encapsulating those calls is the planned scope, once the EventBus port
+(#108) and bus classification audit (#109) are complete.
+
+### Bus *(Integration dimension — meta-hexagon)*
+
+Namespace: `Gibbering.EventBus` (port/behaviour to be defined by #108). Current
+implementation: direct `Phoenix.PubSub` calls at call sites. The EventBus port will
+allow swapping to a synchronous in-memory test double or persistent event store without
+touching any bounded context.
+
+### Web Adapter *(Presentational dimension)*
+
+```
+GibberingWeb.Router             ← /  →  /lobby/:id  →  /game/:id
+GibberingWeb.GameLive           ← game board LiveView: event handler + SVG + sprites
+GibberingWeb.LobbyLive          ← party setup LiveView
+GibberingWeb.CampaignPrepLive   ← DM campaign preparation
+GibberingWeb.DashboardLive      ← player dashboard
+GibberingWeb.IsoProjection      ← pure functions: grid→screen coordinate math (2:1 dimetric)
+GibberingWeb.Components.CharacterSprite ← inline SVG sprite components
+```
+
+### Data Pipeline *(Integration dimension — ingestion)*
+
+```
+Gibbering.Pipeline.LegalGuard   ← WotC Product Identity filter
 ```
 
 ---
@@ -53,7 +133,7 @@ Gibbering.Pipeline.LegalGuard ← WotC Product Identity filter (see docs/legal.m
 ## The Ruleset Behaviour
 
 The engine is ruleset-agnostic. `Gibbering.Ruleset` is a **behaviour** (not a protocol — #14 resolved).
-`Engine.State.ruleset` holds the module reference; `SceneServer` delegates all rule decisions to it.
+`Engine.State.ruleset` holds the module reference; `Engine.SceneServer` delegates all rule decisions to it.
 
 ```elixir
 defmodule Gibbering.Ruleset do
@@ -131,14 +211,14 @@ The lobby (`GibberingWeb.LobbyLive`) is a LiveView where players claim character
 
 1. Each browser session gets a player identity (currently derived from the session CSRF token — see #18 for the known limitation).
 2. A player clicks **Play as [name]** to claim a hero entity slot.
-3. They can edit name, race, and class — the lobby recalculates HP, speed, and stat bonuses from `Data.Races` and `Data.Classes`, then persists to the DB.
+3. They can edit name, race, and class — the lobby recalculates HP, speed, and stat bonuses from `Catalogue.Race` and `Catalogue.Class` (and the legacy `Data.*` in-memory tables for now), then persists to the DB.
 4. The DM clicks **Start Game** which navigates to `/game/:id`.
 
 PubSub topic `"lobby:#{campaign_id}"` propagates claim/release events to all connected lobby sessions so multiple browser tabs stay in sync.
 
 > **Known issue (#18):** player identity is tied to the browser session (CSRF token), so two tabs in the same browser share an identity. Proper per-player identity is required before same-browser multi-player works correctly.
 
-> **Known issue (#20):** lobby character edits write to the DB, but a `GameServer` already running for the same campaign holds a stale in-memory snapshot. The server must be restarted (or the lobby must force a reload) for changes to take effect.
+> **Known issue (#20):** lobby character edits write to the DB, but a `SceneServer` already running for the same campaign holds a stale in-memory snapshot. The server must be restarted (or the lobby must force a reload) for changes to take effect.
 
 ---
 
@@ -157,6 +237,8 @@ The `roll_dice` event carries `%{result: 1..6, label: string}`. The die enters f
 ## Multiplayer
 
 No custom WebSocket code. Phoenix PubSub broadcasts `{:state_updated, new_state}` to all LiveViews subscribed to `"game:#{game_id}"`. Each LiveView re-renders only its diff.
+
+**Per-user topics:** Each GameLive socket also subscribes to `"game:#{game_id}:user:#{user_id}"`. The DM can send private whispers (`{:whisper, text}`) to a single player's socket without broadcasting to the main topic. The SceneServer sends the whisper directly via `Phoenix.PubSub.broadcast/3` on that per-user topic without mutating state.
 
 ---
 
@@ -183,4 +265,4 @@ Pipeline.Parser.parse_action_damage/1  ← regex: "Hit: 10 (2d6+3) piercing" →
 - Does fog-of-war calculation belong to the engine or the ruleset?
 - How does a ruleset declare what UI action buttons to render?
 - How should lobby player identity work for same-browser multi-player? (see #18)
-- How should lobby edits propagate to a running `GameServer`? (see #20)
+- How should lobby edits propagate to a running `SceneServer`? (see #20)

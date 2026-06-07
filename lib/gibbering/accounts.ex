@@ -12,6 +12,9 @@ defmodule Gibbering.Accounts do
     user = Repo.get_by(User, username: username)
 
     cond do
+      user && Pbkdf2.verify_pass(password, user.password_hash) && user.suspended_at != nil ->
+        {:error, :suspended}
+
       user && Pbkdf2.verify_pass(password, user.password_hash) ->
         {:ok, user}
 
@@ -19,7 +22,6 @@ defmodule Gibbering.Accounts do
         {:error, :invalid_credentials}
 
       true ->
-        # Constant-time dummy check to prevent timing attacks
         Pbkdf2.no_user_verify()
         {:error, :invalid_credentials}
     end

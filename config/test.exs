@@ -33,3 +33,8 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+# Use minimal rounds in tests so password hashing doesn't saturate CPU under parallel load
+config :pbkdf2_elixir, :rounds, 1
+
+config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitoring.Stores.NoOp

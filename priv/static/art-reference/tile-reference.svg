@@ -1,0 +1,112 @@
+<!--
+  #98 Reference ground tile — DST-inspired grass tile at canonical 64×32 diamond.
+
+  Tile size constant: 64 SVG units wide, 32 SVG units tall.
+  Diamond points (top-vertex at origin): (32,0) → (64,16) → (32,32) → (0,16)
+
+  Techniques demonstrated:
+  1. Base fill: #1c3010 (dark muted green, var(--terrain-grass))
+  2. Texture: feTurbulence fractalNoise → feColorMatrix to darken/desaturate
+     → feBlend multiply over base fill. Adds subtle surface variation without
+     any raster assets.
+  3. Outline: stroke="#0a0a0a" (near-black, var(--outline)), stroke-width="1"
+     for tile grid lines (thinner than entity outlines)
+  4. Elevation shadow: feDropShadow at the SVG level to give the diamond
+     a slight isometric depth. The shadow falls south-east (dx=2, dy=3).
+
+  This file renders standalone in Firefox and Chrome without any JS or server.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="-8 -8 80 52"
+     width="320" height="208"
+     style="background:#111827">
+
+  <defs>
+    <!-- Texture filter: fractal noise composited multiply over base fill -->
+    <filter id="grass-texture" x="0%" y="0%" width="100%" height="100%"
+            color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise"
+                    baseFrequency="0.9 0.7"
+                    numOctaves="3"
+                    seed="42"
+                    result="noise"/>
+      <!-- Darken and desaturate the noise to a very subtle variation -->
+      <feColorMatrix type="matrix"
+                     values="0 0 0 0 0.05
+                             0 0 0 0 0.08
+                             0 0 0 0 0.02
+                             0 0 0 0.35 0"
+                     in="noise"
+                     result="tinted-noise"/>
+      <!-- Blend multiply: darkens base fill where noise is dark, lightens slightly where bright -->
+      <feBlend in="SourceGraphic" in2="tinted-noise" mode="multiply" result="blended"/>
+    </filter>
+
+    <!-- Elevation / depth shadow for the tile diamond -->
+    <filter id="tile-shadow" x="-10%" y="-10%" width="130%" height="150%">
+      <feDropShadow dx="2" dy="4" stdDeviation="2" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <!-- The tile diamond: top-vertex at (32,0) -->
+  <!-- Shadow layer (slightly expanded, solid dark, rendered first) -->
+  <polygon
+    points="32,0 64,16 32,32 0,16"
+    fill="#0a0a0a"
+    opacity="0.5"
+    transform="translate(2, 4)"
+  />
+
+  <!-- Base fill layer (no filter — defines the colour) -->
+  <polygon
+    points="32,0 64,16 32,32 0,16"
+    fill="#1c3010"
+    stroke="#0a0a0a"
+    stroke-width="1"
+    stroke-linejoin="round"
+  />
+
+  <!-- Texture layer (same diamond, filter only — composited on top) -->
+  <polygon
+    points="32,0 64,16 32,32 0,16"
+    fill="#1c3010"
+    stroke="none"
+    filter="url(#grass-texture)"
+  />
+
+  <!-- Alternate shade: show how the checkerboard variant looks -->
+  <!-- (rendered as a second tile to the right, shifted by tile_w/2 in x and tile_h/2 in y) -->
+  <g transform="translate(32, 16)">
+    <polygon
+      points="32,0 64,16 32,32 0,16"
+      fill="#000000"
+      opacity="0.35"
+      transform="translate(2, 4)"
+    />
+    <polygon
+      points="32,0 64,16 32,32 0,16"
+      fill="#1f3a12"
+      stroke="#0a0a0a"
+      stroke-width="1"
+      stroke-linejoin="round"
+    />
+    <polygon
+      points="32,0 64,16 32,32 0,16"
+      fill="#1f3a12"
+      stroke="none"
+      filter="url(#grass-texture)"
+    />
+  </g>
+
+  <!-- Annotation: tile dimensions -->
+  <line x1="0" y1="-4" x2="64" y2="-4" stroke="#4b5563" stroke-width="0.5" stroke-dasharray="3 2"/>
+  <text x="32" y="-6" fill="#6b7280" font-size="5" font-family="monospace" text-anchor="middle">64 units</text>
+  <line x1="-4" y1="0" x2="-4" y2="32" stroke="#4b5563" stroke-width="0.5" stroke-dasharray="3 2"/>
+  <text x="-6" y="18" fill="#6b7280" font-size="5" font-family="monospace" text-anchor="middle"
+        transform="rotate(-90,-6,18)">32 units</text>
+
+  <!-- Labels -->
+  <text x="32" y="42" fill="#9ca3af" font-size="4.5" font-family="monospace" text-anchor="middle">
+    fill: #1c3010 / alt: #1f3a12 · stroke: #0a0a0a w=1
+  </text>
+</svg>

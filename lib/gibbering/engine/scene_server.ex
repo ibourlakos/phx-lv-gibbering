@@ -47,6 +47,56 @@ defmodule Gibbering.Engine.SceneServer do
   def force_transition_phase(game_id, new_phase),
     do: GenServer.call(via(game_id), {:transition_phase, new_phase, true})
 
+  @doc "Transitions the session from lobby to active exploration state."
+  def start_session(game_id), do: transition_phase(game_id, :exploration)
+
+  @doc "Pauses the session, blocking player actions until resumed."
+  def pause_session(game_id), do: transition_phase(game_id, :paused)
+
+  @doc "Resumes a paused session, restoring the phase that was active before pausing."
+  def resume_session(game_id), do: GenServer.call(via(game_id), :resume_session)
+
+  @doc "Ends the session: broadcasts :session_ended to all connected LiveViews."
+  def end_session(game_id), do: GenServer.call(via(game_id), :end_session)
+
+  @doc "Sets the initiative value for `entity_id` and re-sorts the turn order."
+  def set_initiative(game_id, entity_id, value),
+    do: GenServer.call(via(game_id), {:set_initiative, entity_id, value})
+
+  @doc "Adds `entity_id` to the turn order. No-op if already present."
+  def add_to_turn_order(game_id, entity_id),
+    do: GenServer.call(via(game_id), {:add_to_turn_order, entity_id})
+
+  @doc "Removes `entity_id` from the turn order."
+  def remove_from_turn_order(game_id, entity_id),
+    do: GenServer.call(via(game_id), {:remove_from_turn_order, entity_id})
+
+  @doc "Replaces the turn order with `ordered_ids` (DM reorder)."
+  def reorder_turn_order(game_id, ordered_ids),
+    do: GenServer.call(via(game_id), {:reorder_turn_order, ordered_ids})
+
+  @doc "DM-driven turn advance — bypasses the paused guard."
+  def force_end_turn(game_id), do: GenServer.call(via(game_id), :force_end_turn)
+
+  @doc "Broadcasts a narrative text to all players in this session."
+  def dm_broadcast(game_id, text), do: GenServer.call(via(game_id), {:dm_broadcast, text})
+
+  @doc "Delivers a private whisper to a single player's per-user PubSub topic."
+  def dm_whisper(game_id, user_id, text),
+    do: GenServer.call(via(game_id), {:dm_whisper, user_id, text})
+
+  @doc "Applies a condition to `entity_id` via the DM panel."
+  def dm_apply_condition(game_id, entity_id, condition_id),
+    do: GenServer.call(via(game_id), {:dm_apply_condition, entity_id, condition_id})
+
+  @doc "Adjusts HP on `entity_id` by `delta` (positive = heal, negative = damage)."
+  def dm_adjust_hp(game_id, entity_id, delta),
+    do: GenServer.call(via(game_id), {:dm_adjust_hp, entity_id, delta})
+
+  @doc "Toggles `entity_id` in the DM-hidden set."
+  def dm_toggle_visibility(game_id, entity_id),
+    do: GenServer.call(via(game_id), {:dm_toggle_visibility, entity_id})
+
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
     Registry.lookup(Gibbering.GameRegistry, game_id) != []
@@ -88,7 +138,8 @@ defmodule Gibbering.Engine.SceneServer do
     state =
       case Repo.one(from s in GameSession, where: s.game_id == ^game_id) do
         %GameSession{state: binary} ->
-          :erlang.binary_to_term(binary, [:safe])
+          loaded = :erlang.binary_to_term(binary, [:safe])
+          struct(State, Map.from_struct(loaded))
 
         nil ->
           campaign =
@@ -101,6 +152,27 @@ defmodule Gibbering.Engine.SceneServer do
 
     {:ok, state}
   end
+
+  # Player actions are blocked while the session is paused.
+  @impl true
+  def handle_call({:select_entity, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:move_entity, _, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:attack, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:cast_spell, _, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call(:end_turn, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
 
   @impl true
   def handle_call(:get_state, _from, state), do: {:reply, state, state}
@@ -268,6 +340,71 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   @impl true
+  def handle_call(:resume_session, _from, %{phase: :paused, previous_phase: prev} = state)
+      when not is_nil(prev) do
+    case State.transition_phase(state, prev) do
+      {:ok, new_state} ->
+        persist(new_state)
+        broadcast(new_state)
+        {:reply, :ok, new_state}
+
+      {:error, _} = err ->
+        {:reply, err, state}
+    end
+  end
+
+  @impl true
+  def handle_call(:resume_session, _from, state),
+    do: {:reply, {:error, "session is not paused"}, state}
+
+  @impl true
+  def handle_call(:end_session, _from, state) do
+    persist(state)
+    Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), :session_ended)
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:set_initiative, entity_id, value}, _from, state) do
+    new_state = State.set_initiative(state, entity_id, value)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:add_to_turn_order, entity_id}, _from, state) do
+    new_state = State.add_to_turn_order(state, entity_id)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:remove_from_turn_order, entity_id}, _from, state) do
+    new_state = State.remove_from_turn_order(state, entity_id)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:reorder_turn_order, ordered_ids}, _from, state) do
+    new_state = State.reorder_turn_order(state, ordered_ids)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call(:force_end_turn, _from, state) do
+    new_state = State.advance_turn(state)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
   def handle_call({:transition_phase, new_phase, force}, _from, state) do
     result =
       if force do
@@ -285,6 +422,54 @@ defmodule Gibbering.Engine.SceneServer do
       {:error, _reason} = err ->
         {:reply, err, state}
     end
+  end
+
+  @impl true
+  def handle_call({:dm_broadcast, text}, _from, state) do
+    entry = "Broadcast: #{text}"
+    new_state = State.add_log_entry(state, entry)
+    persist(new_state)
+    Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), {:dm_broadcast, text})
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:dm_whisper, user_id, text}, _from, state) do
+    Phoenix.PubSub.broadcast(
+      Gibbering.PubSub,
+      "game:#{state.campaign_id}:user:#{user_id}",
+      {:whisper, text}
+    )
+
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:dm_apply_condition, entity_id, condition_id}, _from, state) do
+    {:ok, new_state} = State.apply_condition(state, entity_id, condition_id)
+    entry = "Condition applied: #{condition_id} → entity #{entity_id}"
+    new_state = State.add_log_entry(new_state, entry)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:dm_adjust_hp, entity_id, delta}, _from, state) do
+    new_state = State.adjust_hp(state, entity_id, delta)
+    entry = "HP adjusted: entity #{entity_id} by #{delta}"
+    new_state = State.add_log_entry(new_state, entry)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:dm_toggle_visibility, entity_id}, _from, state) do
+    new_state = State.toggle_visibility(state, entity_id)
+    persist(new_state)
+    broadcast(new_state)
+    {:reply, :ok, new_state}
   end
 
   # --- Helpers ---

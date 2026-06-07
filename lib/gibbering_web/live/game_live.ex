@@ -1,8 +1,9 @@
 defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.Engine.{SceneServer, State, Rules}
+  alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
   alias Gibbering.Campaigns
+  alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
   @impl true
@@ -20,18 +21,30 @@ defmodule GibberingWeb.GameLive do
         :ok ->
           if connected?(socket) do
             Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+            Phoenix.PubSub.subscribe(Gibbering.PubSub, "game:#{game_id}:user:#{user.id}")
           end
 
+          campaign = Campaigns.get!(game_id)
           state = SceneServer.get_state(game_id)
+          is_dm = campaign.dm_id == user.id
+
+          appearances =
+            Catalogue.appearances_for_style(Catalogue.default_style_slug())
 
           {:ok,
            socket
            |> assign(:game_id, game_id)
            |> assign(:game_state, state)
+           |> assign(:is_dm, is_dm)
+           |> assign(:appearances, appearances)
+           |> assign(:show_end_confirm, false)
            |> assign(:valid_targets, [])
            |> assign(:selected_spell, nil)
            |> assign(:spell_targets, [])
-           |> assign(:log, [])}
+           |> assign(:log, [])
+           |> assign(:dm_broadcasts, [])
+           |> assign(:dm_whispers, [])
+           |> assign(:dm_panel, nil)}
 
         {:error, reason} ->
           {:ok,
@@ -166,8 +179,221 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("dm_start", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.start_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_pause", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.pause_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_resume", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.resume_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_end_confirm", _, %{assigns: %{is_dm: true}} = socket) do
+    {:noreply, assign(socket, show_end_confirm: true)}
+  end
+
+  @impl true
+  def handle_event("dm_end_cancel", _, socket) do
+    {:noreply, assign(socket, show_end_confirm: false)}
+  end
+
+  @impl true
+  def handle_event("dm_end", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.end_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_roll_initiative", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    id = String.to_integer(id)
+    entity = socket.assigns.game_state.entities[id]
+    dex = get_in(entity, [:stats, "dexterity"]) || 10
+    dex_mod = div(dex - 10, 2)
+    value = :rand.uniform(20) + dex_mod
+    SceneServer.set_initiative(socket.assigns.game_id, id, value)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_add_to_order", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.add_to_turn_order(socket.assigns.game_id, String.to_integer(id))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_remove_from_order", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.remove_from_turn_order(socket.assigns.game_id, String.to_integer(id))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_move_up", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    id = String.to_integer(id)
+    order = socket.assigns.game_state.turn_order
+    idx = Enum.find_index(order, &(&1 == id))
+
+    if idx && idx > 0 do
+      new_order = order |> List.delete_at(idx) |> List.insert_at(idx - 1, id)
+      SceneServer.reorder_turn_order(socket.assigns.game_id, new_order)
+    end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_move_down", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    id = String.to_integer(id)
+    order = socket.assigns.game_state.turn_order
+    idx = Enum.find_index(order, &(&1 == id))
+
+    if idx && idx < length(order) - 1 do
+      new_order = order |> List.delete_at(idx) |> List.insert_at(idx + 1, id)
+      SceneServer.reorder_turn_order(socket.assigns.game_id, new_order)
+    end
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_force_end_turn", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.force_end_turn(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_open_broadcast", _, %{assigns: %{is_dm: true}} = socket) do
+    {:noreply, assign(socket, dm_panel: :broadcast)}
+  end
+
+  @impl true
+  def handle_event("dm_open_whisper", _, %{assigns: %{is_dm: true}} = socket) do
+    {:noreply, assign(socket, dm_panel: :whisper)}
+  end
+
+  @impl true
+  def handle_event("dm_close_panel", _, socket) do
+    {:noreply, assign(socket, dm_panel: nil)}
+  end
+
+  @impl true
+  def handle_event("dm_broadcast", %{"text" => text}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.dm_broadcast(socket.assigns.game_id, text)
+    {:noreply, assign(socket, dm_panel: nil)}
+  end
+
+  @impl true
+  def handle_event(
+        "dm_whisper",
+        %{"user_id" => uid, "text" => text},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    user_id = String.to_integer(uid)
+    SceneServer.dm_whisper(socket.assigns.game_id, user_id, text)
+    {:noreply, assign(socket, dm_panel: nil)}
+  end
+
+  @impl true
+  def handle_event(
+        "dm_apply_condition",
+        %{"entity_id" => eid, "condition" => cond_str},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    entity_id = String.to_integer(eid)
+    condition_id = String.to_existing_atom(cond_str)
+    SceneServer.dm_apply_condition(socket.assigns.game_id, entity_id, condition_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event(
+        "dm_adjust_hp",
+        %{"entity_id" => eid, "delta" => delta_str},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    entity_id = String.to_integer(eid)
+    delta = String.to_integer(delta_str)
+    SceneServer.dm_adjust_hp(socket.assigns.game_id, entity_id, delta)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_toggle_visibility", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.dm_toggle_visibility(socket.assigns.game_id, String.to_integer(id))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_dismiss_broadcast", _, socket) do
+    {:noreply, update(socket, :dm_broadcasts, fn [_ | rest] -> rest end)}
+  end
+
+  @impl true
+  def handle_event("dm_dismiss_whisper", _, socket) do
+    {:noreply, update(socket, :dm_whispers, fn [_ | rest] -> rest end)}
+  end
+
+  @impl true
+  def handle_event(event, _, socket)
+      when event in [
+             "dm_start",
+             "dm_pause",
+             "dm_resume",
+             "dm_end_confirm",
+             "dm_end",
+             "dm_roll_initiative",
+             "dm_add_to_order",
+             "dm_remove_from_order",
+             "dm_move_up",
+             "dm_move_down",
+             "dm_force_end_turn",
+             "dm_open_broadcast",
+             "dm_open_whisper",
+             "dm_close_panel",
+             "dm_broadcast",
+             "dm_whisper",
+             "dm_apply_condition",
+             "dm_adjust_hp",
+             "dm_toggle_visibility",
+             "dm_dismiss_broadcast",
+             "dm_dismiss_whisper"
+           ] do
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:state_updated, new_state}, socket) do
     {:noreply, assign(socket, game_state: new_state)}
+  end
+
+  @impl true
+  def handle_info(:session_ended, socket) do
+    {:noreply, redirect(socket, to: "/dashboard")}
+  end
+
+  @impl true
+  def handle_info({:dm_broadcast, text}, socket) do
+    {:noreply, update(socket, :dm_broadcasts, fn msgs -> [text | Enum.take(msgs, 4)] end)}
+  end
+
+  @impl true
+  def handle_info({:whisper, text}, socket) do
+    {:noreply, update(socket, :dm_whispers, fn msgs -> [text | Enum.take(msgs, 4)] end)}
+  end
+
+  def handle_info({:ejected, reason}, socket) do
+    {:noreply,
+     socket
+     |> put_flash(:error, "You have been removed from this campaign: #{reason}")
+     |> push_navigate(to: "/dashboard")}
   end
 
   # ---------------------------------------------------------------------------
@@ -199,44 +425,21 @@ defmodule GibberingWeb.GameLive do
   end
 
   # ---------------------------------------------------------------------------
-  # Tile helpers (DST palette)
+  # Appearance helpers — delegate to the active style's DB records.
+  # Fallback colours ensure graceful degradation when no record exists.
   # ---------------------------------------------------------------------------
 
-  defp tile_fill("grass"), do: "#3d6b45"
-  defp tile_fill("stone"), do: "#555555"
-  defp tile_fill("rubble"), do: "#7a6248"
-  defp tile_fill(_), do: "#3d6b45"
-
-  defp tile_stroke("grass"), do: "#2a4d30"
-  defp tile_stroke("stone"), do: "#383838"
-  defp tile_stroke("rubble"), do: "#4d3d2c"
-  defp tile_stroke(_), do: "#2a4d30"
-
-  defp hp_bar_color(hp, max_hp) when max_hp > 0 do
-    pct = hp / max_hp
-
-    cond do
-      pct > 0.6 -> "#2ecc71"
-      pct > 0.3 -> "#f39c12"
-      true -> "#e74c3c"
-    end
+  defp tile_fill(appearances, texture) do
+    (appearances[{"tile", texture}] || %{})["fill"] || "#7f8c8d"
   end
 
-  defp hp_bar_color(_, _), do: "#e74c3c"
+  defp tile_stroke(appearances, texture) do
+    (appearances[{"tile", texture}] || %{})["stroke"] || "#5d6d7e"
+  end
 
-  defp sprite_color("warrior"), do: "#4a6fa5"
-  defp sprite_color("wizard"), do: "#7b5ea7"
-  defp sprite_color("rock"), do: "#787878"
-  defp sprite_color("human_fighter"), do: "#4a6fa5"
-  defp sprite_color("human_wizard"), do: "#7b5ea7"
-  defp sprite_color("human_rogue"), do: "#6b4c38"
-  defp sprite_color("elf_fighter"), do: "#5a8f6a"
-  defp sprite_color("elf_wizard"), do: "#7b5ea7"
-  defp sprite_color("elf_rogue"), do: "#4a7060"
-  defp sprite_color("gnome_fighter"), do: "#8b4513"
-  defp sprite_color("gnome_wizard"), do: "#9b59b6"
-  defp sprite_color("gnome_rogue"), do: "#5d4037"
-  defp sprite_color(_), do: "#7f8c8d"
+  defp entity_body_color(appearances, sprite) do
+    (appearances[{"entity", sprite}] || %{})["body_color"] || "#7f8c8d"
+  end
 
   # ---------------------------------------------------------------------------
   # Entity sprite components — inline SVG, DST-style ink aesthetic.
@@ -719,7 +922,7 @@ defmodule GibberingWeb.GameLive do
       width="48"
       height="48"
       rx="4"
-      fill={sprite_color(@sprite)}
+      fill={@body_color}
       stroke="#111"
       stroke-width="2"
     />

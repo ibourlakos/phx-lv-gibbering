@@ -162,6 +162,140 @@ const Hooks = {
         rollDiceAnimation(result, label || "Rolled")
       })
     }
+  },
+
+  // ---------------------------------------------------------------------------
+  // PanZoom hook — wheel zoom + pointer drag pan + arrow key pan on the SVG.
+  //
+  // State lives entirely in this hook; the server never sees the viewBox.
+  // updated() restores the client viewBox after every LV patch, and re-centres
+  // on the active entity when data-center-sx/sy changes (if data-follow="true").
+  //
+  // Zoom range: viewBox width clamped to [svgW/4, svgW] (1× – 4× zoom).
+  // Pan clamped to one half-tile beyond each SVG edge.
+  // Drag threshold of 5px distinguishes click (phx-click) from drag.
+  // ---------------------------------------------------------------------------
+  PanZoom: {
+    mounted() {
+      const vb = this.el.getAttribute("viewBox").split(" ").map(Number)
+      this.vbX = vb[0]; this.vbY = vb[1]; this.vbW = vb[2]; this.vbH = vb[3]
+      this.dragging = false
+      this.lastCenterKey = `${this.el.dataset.centerSx},${this.el.dataset.centerSy}`
+
+      this._wheel = e => this.onWheel(e)
+      this._down  = e => this.onPointerDown(e)
+      this._move  = e => this.onPointerMove(e)
+      this._up    = e => this.onPointerUp(e)
+      this._key   = e => this.onKeyDown(e)
+
+      this.el.addEventListener("wheel", this._wheel, {passive: false})
+      this.el.addEventListener("pointerdown", this._down)
+      this.el.addEventListener("pointermove", this._move)
+      this.el.addEventListener("pointerup", this._up)
+      window.addEventListener("keydown", this._key)
+    },
+
+    destroyed() {
+      this.el.removeEventListener("wheel", this._wheel)
+      this.el.removeEventListener("pointerdown", this._down)
+      this.el.removeEventListener("pointermove", this._move)
+      this.el.removeEventListener("pointerup", this._up)
+      window.removeEventListener("keydown", this._key)
+    },
+
+    updated() {
+      this.apply()
+
+      if (this.el.dataset.follow !== "true") return
+      const key = `${this.el.dataset.centerSx},${this.el.dataset.centerSy}`
+      if (key === this.lastCenterKey) return
+      this.lastCenterKey = key
+      this.vbX = parseFloat(this.el.dataset.centerSx) - this.vbW / 2
+      this.vbY = parseFloat(this.el.dataset.centerSy) - this.vbH / 2
+      this.clamp()
+      this.apply()
+    },
+
+    svgW() { return parseFloat(this.el.dataset.svgW) },
+    svgH() { return parseFloat(this.el.dataset.svgH) },
+
+    apply() {
+      this.el.setAttribute("viewBox", `${this.vbX} ${this.vbY} ${this.vbW} ${this.vbH}`)
+    },
+
+    clamp() {
+      const svgW = this.svgW(), svgH = this.svgH()
+      const hw = 32, hh = 16  // half tile_w, half tile_h — one-tile margin
+      this.vbX = Math.max(-hw, Math.min(svgW - this.vbW + hw, this.vbX))
+      this.vbY = Math.max(-hh, Math.min(svgH - this.vbH + hh, this.vbY))
+    },
+
+    onWheel(e) {
+      e.preventDefault()
+      const svgW = this.svgW(), svgH = this.svgH()
+      const rect = this.el.getBoundingClientRect()
+      // Cursor position in SVG coordinate space
+      const cx = this.vbX + (e.clientX - rect.left) / rect.width * this.vbW
+      const cy = this.vbY + (e.clientY - rect.top) / rect.height * this.vbH
+      // Scale factor; clamp so vbW stays in [svgW/4, svgW]
+      const rawF = Math.pow(1.1, -e.deltaY / 100)
+      const newVbW = Math.max(svgW / 4, Math.min(svgW, this.vbW * rawF))
+      const scale = newVbW / this.vbW
+      this.vbH *= scale
+      this.vbW = newVbW
+      // Zoom anchored at cursor
+      this.vbX = cx - (cx - this.vbX) * scale
+      this.vbY = cy - (cy - this.vbY) * scale
+      this.clamp()
+      this.apply()
+    },
+
+    onPointerDown(e) {
+      if (e.button !== 0) return
+      this.dragging = false
+      this.ptrStartX = e.clientX
+      this.ptrStartY = e.clientY
+      this.el.setPointerCapture(e.pointerId)
+    },
+
+    onPointerMove(e) {
+      if (!this.el.hasPointerCapture(e.pointerId)) return
+      if (!this.dragging) {
+        if (Math.abs(e.clientX - this.ptrStartX) + Math.abs(e.clientY - this.ptrStartY) < 5) return
+        this.dragging = true
+        this.ptrLastX = this.ptrStartX
+        this.ptrLastY = this.ptrStartY
+        this.el.style.cursor = "grabbing"
+      }
+      const rect = this.el.getBoundingClientRect()
+      this.vbX -= (e.clientX - this.ptrLastX) * (this.vbW / rect.width)
+      this.vbY -= (e.clientY - this.ptrLastY) * (this.vbH / rect.height)
+      this.ptrLastX = e.clientX
+      this.ptrLastY = e.clientY
+      this.clamp()
+      this.apply()
+    },
+
+    onPointerUp(_e) {
+      this.dragging = false
+      this.el.style.cursor = ""
+    },
+
+    onKeyDown(e) {
+      const tag = document.activeElement?.tagName
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return
+      const step = 32  // tile_w / 2
+      switch (e.key) {
+        case "ArrowLeft":  this.vbX -= step; break
+        case "ArrowRight": this.vbX += step; break
+        case "ArrowUp":    this.vbY -= step; break
+        case "ArrowDown":  this.vbY += step; break
+        default: return
+      }
+      e.preventDefault()
+      this.clamp()
+      this.apply()
+    }
   }
 }
 

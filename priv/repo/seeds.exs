@@ -1,7 +1,11 @@
 alias Gibbering.{Repo, Campaign, GridTile, Entity, CampaignMember}
+alias Gibbering.{Character, CampaignCharacter, CampaignInvitation, CampaignInviteLink}
+alias Gibbering.Engine.GameSession
 alias Gibbering.Accounts
-alias Gibbering.Catalogue.{Race, Class, Spell}
-alias Gibbering.Data.{Races, Classes, Spells}
+alias Gibbering.Accounts.User
+alias Gibbering.Admin
+alias Gibbering.Catalogue.{Race, Class, Spell, Monster, Style, Appearance}
+alias Gibbering.Data.{Races, Classes, Spells, Monsters}
 
 # ---------------------------------------------------------------------------
 # Catalogue tables (idempotent — skip if already present)
@@ -68,65 +72,77 @@ Enum.each(Spells.seed_data(), fn {key, attrs} ->
   end
 end)
 
+Enum.each(Monsters.seed_data(), fn {key, attrs} ->
+  unless Repo.get(Monster, key) do
+    Repo.insert!(%Monster{
+      key: key,
+      name: attrs.name,
+      size: attrs.size,
+      monster_type: attrs.monster_type,
+      alignment: attrs.alignment,
+      armor_class: attrs.armor_class,
+      hit_points: attrs.hit_points,
+      hit_dice: attrs.hit_dice,
+      speed: attrs.speed,
+      strength: attrs.strength,
+      dexterity: attrs.dexterity,
+      constitution: attrs.constitution,
+      intelligence: attrs.intelligence,
+      wisdom: attrs.wisdom,
+      charisma: attrs.charisma,
+      challenge_rating: attrs.challenge_rating,
+      xp_reward: attrs.xp_reward,
+      source_license: attrs.source_license,
+      stat_block: attrs.stat_block,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+end)
+
 IO.puts(
-  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells"
+  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells, #{map_size(Monsters.seed_data())} monsters"
 )
 
-# Wipe existing seed data
+# ---------------------------------------------------------------------------
+# Full wipe of all user-generated data (campaigns, characters, users).
+# Safe to re-run; support users and catalogue data are preserved.
+# ---------------------------------------------------------------------------
+
+Repo.delete_all(CampaignInviteLink)
+Repo.delete_all(CampaignInvitation)
+Repo.delete_all(CampaignCharacter)
 Repo.delete_all(CampaignMember)
+Repo.delete_all(GameSession)
 Repo.delete_all(Entity)
 Repo.delete_all(GridTile)
 Repo.delete_all(Campaign)
+Repo.delete_all(Character)
+Repo.delete_all(User)
 
-# Seed users (idempotent — skip if username exists)
-{:ok, dm_user} =
-  case Accounts.get_user_by_username("dungeon_master") do
-    nil ->
-      Accounts.register_user(%{username: "dungeon_master", password: "gibbering"})
+# ---------------------------------------------------------------------------
+# Users  (all password: "gibbering")
+# ---------------------------------------------------------------------------
 
-    existing ->
-      {:ok, existing}
-  end
+{:ok, dm} = Accounts.register_user(%{username: "dungeon_master", password: "gibbering"})
+{:ok, alice} = Accounts.register_user(%{username: "alice", password: "gibbering"})
+{:ok, bob} = Accounts.register_user(%{username: "bob", password: "gibbering"})
+{:ok, charlie} = Accounts.register_user(%{username: "charlie", password: "gibbering"})
 
-{:ok, player1} =
-  case Accounts.get_user_by_username("aldric_player") do
-    nil ->
-      Accounts.register_user(%{username: "aldric_player", password: "gibbering"})
+# ---------------------------------------------------------------------------
+# Campaign: The Proving Grounds  (DM = dungeon_master)
+# ---------------------------------------------------------------------------
 
-    existing ->
-      {:ok, existing}
-  end
-
-{:ok, player2} =
-  case Accounts.get_user_by_username("sylvara_player") do
-    nil ->
-      Accounts.register_user(%{username: "sylvara_player", password: "gibbering"})
-
-    existing ->
-      {:ok, existing}
-  end
-
-{:ok, player3} =
-  case Accounts.get_user_by_username("zippik_player") do
-    nil ->
-      Accounts.register_user(%{username: "zippik_player", password: "gibbering"})
-
-    existing ->
-      {:ok, existing}
-  end
-
-# Campaign
 campaign =
   Repo.insert!(%Campaign{
     name: "The Proving Grounds",
     map_width: 10,
     map_height: 10,
     tile_size: 56,
-    dm_id: dm_user.id
+    dm_id: dm.id
   })
 
-# Campaign membership
-for user <- [dm_user, player1, player2, player3] do
+for user <- [dm, alice, bob, charlie] do
   Repo.insert!(%CampaignMember{campaign_id: campaign.id, user_id: user.id})
 end
 
@@ -335,5 +351,129 @@ Repo.insert!(%Entity{
   campaign_id: campaign.id
 })
 
-IO.puts("Seeded campaign ##{campaign.id}: #{campaign.name}")
-IO.puts("Visit http://localhost:4000/game/#{campaign.id}")
+IO.puts("""
+
+── Dev seed complete ─────────────────────────────────────────────────────────
+Campaign: #{campaign.name} (##{campaign.id})
+  Game:   http://localhost:4000/game/#{campaign.id}
+  Lobby:  http://localhost:4000/lobby/#{campaign.id}
+
+Users (all password: gibbering)
+  dungeon_master  — DM of The Proving Grounds
+  alice           — player
+  bob             — player
+  charlie         — player
+─────────────────────────────────────────────────────────────────────────────
+""")
+
+# Admin support user — dev credentials: admin@gibbering.local / gibbering_admin
+unless Repo.get_by(Gibbering.Admin.SupportUser, email: "admin@gibbering.local") do
+  {:ok, _} =
+    Admin.create_support_user(%{
+      email: "admin@gibbering.local",
+      password: "gibbering_admin",
+      role: "admin"
+    })
+
+  IO.puts("Seeded support user: admin@gibbering.local (admin) — password: gibbering_admin")
+end
+
+# ---------------------------------------------------------------------------
+# Styles + appearances (idempotent — skip if DST style already present)
+# ---------------------------------------------------------------------------
+
+unless Repo.get_by(Style, slug: "dst") do
+  {:ok, dst} =
+    Repo.insert(%Style{
+      slug: "dst",
+      name: "Don't Starve Together",
+      description:
+        "Muted dark palette, thick near-black outlines, gothic/whimsical ink aesthetic.",
+      inserted_at: now,
+      updated_at: now
+    })
+
+  tile_appearances = [
+    {"grass", %{"fill" => "#3d6b45", "stroke" => "#2a4d30"}},
+    {"stone", %{"fill" => "#555555", "stroke" => "#383838"}},
+    {"rubble", %{"fill" => "#7a6248", "stroke" => "#4d3d2c"}}
+  ]
+
+  entity_appearances = [
+    # Legacy generic sprites
+    {"warrior", %{"body_color" => "#4a6fa5"}},
+    {"wizard", %{"body_color" => "#7b5ea7"}},
+    {"rock", %{"body_color" => "#787878"}},
+    # Human sprites
+    {"human_fighter", %{"body_color" => "#4a6fa5"}},
+    {"human_wizard", %{"body_color" => "#7b5ea7"}},
+    {"human_rogue", %{"body_color" => "#6b4c38"}},
+    # Elf sprites
+    {"elf_fighter", %{"body_color" => "#5a8f6a"}},
+    {"elf_wizard", %{"body_color" => "#7b5ea7"}},
+    {"elf_rogue", %{"body_color" => "#4a7060"}},
+    # Gnome sprites
+    {"gnome_fighter", %{"body_color" => "#8b4513"}},
+    {"gnome_wizard", %{"body_color" => "#9b59b6"}},
+    {"gnome_rogue", %{"body_color" => "#5d4037"}},
+    # Dwarf sprites (fallback rect — named sprite pending)
+    {"dwarf_fighter", %{"body_color" => "#7a5c2a"}},
+    {"dwarf_cleric", %{"body_color" => "#c0a060"}},
+    {"dwarf_rogue", %{"body_color" => "#5a4020"}},
+    # Half-elf sprites
+    {"half_elf_fighter", %{"body_color" => "#5a7a60"}},
+    {"half_elf_wizard", %{"body_color" => "#7060a0"}},
+    {"half_elf_rogue", %{"body_color" => "#486050"}},
+    # Halfling sprites
+    {"halfling_fighter", %{"body_color" => "#c08040"}},
+    {"halfling_rogue", %{"body_color" => "#a06030"}},
+    # Tiefling sprites
+    {"tiefling_warlock", %{"body_color" => "#8b2040"}},
+    {"tiefling_sorcerer", %{"body_color" => "#a03050"}},
+    # Dragonborn sprites
+    {"dragonborn_fighter", %{"body_color" => "#2a7060"}},
+    {"dragonborn_paladin", %{"body_color" => "#206858"}},
+    # Half-orc sprites
+    {"half_orc_barbarian", %{"body_color" => "#4a7830"}},
+    {"half_orc_fighter", %{"body_color" => "#3a6020"}},
+    # Monster sprites (fallback rects — named SVGs pending)
+    {"goblin", %{"body_color" => "#5a7a30"}},
+    {"skeleton", %{"body_color" => "#d8d0b0"}},
+    {"zombie", %{"body_color" => "#5a6a3a"}},
+    {"kobold", %{"body_color" => "#8b3a1a"}},
+    {"bandit", %{"body_color" => "#6b5540"}},
+    {"cultist", %{"body_color" => "#4a2060"}},
+    {"guard", %{"body_color" => "#607890"}},
+    {"wolf", %{"body_color" => "#706050"}},
+    {"orc", %{"body_color" => "#3a6030"}},
+    {"bugbear", %{"body_color" => "#5a5030"}},
+    {"ogre", %{"body_color" => "#7a6040"}},
+    {"troll", %{"body_color" => "#3a6838"}}
+  ]
+
+  for {key, data} <- tile_appearances do
+    Repo.insert!(%Appearance{
+      style_id: dst.id,
+      content_type: "tile",
+      content_key: key,
+      data: data,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+
+  for {key, data} <- entity_appearances do
+    Repo.insert!(%Appearance{
+      style_id: dst.id,
+      content_type: "entity",
+      content_key: key,
+      data: data,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+
+  IO.puts(
+    "Seeded DST style with #{length(tile_appearances)} tile and #{length(entity_appearances)} entity appearances"
+  )
+end

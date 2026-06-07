@@ -8,206 +8,593 @@ iso = GibberingWeb.IsoProjection
 
 svg_w = iso.svg_width(map_w, map_h)
 svg_h = iso.svg_height(map_w, map_h)
-tw = iso.tile_w()
+
+{center_sx, center_sy} =
+  if active_entity,
+    do: iso.to_screen(active_entity.x, active_entity.y, map_w, map_h),
+    else: {div(svg_w, 2), div(svg_h, 2)}
 
 sorted_tiles = Enum.sort_by(state.grid_tiles, fn {{gx, gy}, _} -> iso.depth_key(gx, gy) end)
 sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e.y) end) %>
 
+<%!--
+  Outer wrapper: DiceRoll hook anchor + full-viewport container.
+  All fixed-position children are stacked via z-index layers per #97 spec.
+--%>
 <div
-  class="flex gap-6 p-4 bg-gray-900 min-h-screen text-white"
   id="game-board"
   phx-hook="DiceRoll"
+  style="position:relative; width:100vw; height:100vh; overflow:hidden;"
 >
-  <%!-- Game Board --%>
-  <div>
-    <svg
-      width={svg_w}
-      height={svg_h}
-      style="image-rendering: pixelated; display: block;"
-    >
-      <%!-- Layer 1: Ground tiles --%>
-      <%= for {{x, y}, tile} <- state.grid_tiles do %>
-        <% {sx, sy} = iso.to_screen(x, y, map_h) %>
-        <polygon
-          points={iso.diamond_points(sx, sy)}
-          fill={tile_fill(tile.texture)}
-          stroke={tile_stroke(tile.texture)}
-          stroke-width="1"
-        />
+  <%!--
+    z-0: SVG game scene — fixed, full viewport.
+    viewBox defines the coordinate space; PanZoom hook preserves it across LV patches.
+  --%>
+  <svg
+    id="game-svg"
+    phx-hook="PanZoom"
+    viewBox={"0 0 #{svg_w} #{svg_h}"}
+    preserveAspectRatio="xMidYMid meet"
+    data-svg-w={svg_w}
+    data-svg-h={svg_h}
+    data-center-sx={center_sx}
+    data-center-sy={center_sy}
+    data-follow="true"
+    style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; cursor:grab;"
+  >
+    <%!-- Layer 1: Ground tiles --%>
+    <%= for {{x, y}, tile} <- state.grid_tiles do %>
+      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+      <polygon
+        points={iso.diamond_points(sx, sy)}
+        fill={tile_fill(@appearances, tile.texture)}
+        stroke={tile_stroke(@appearances, tile.texture)}
+        stroke-width="1"
+      />
+    <% end %>
+
+    <%!-- Layer 2: Tile decorations (depth-sorted) --%>
+    <%= for {{x, y}, tile} <- sorted_tiles do %>
+      <%= if dec = Map.get(tile, :decoration) do %>
+        <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+        <% {dx, dy} = iso.sprite_pos(sx, sy) %>
+        <.decoration_sprite decoration={dec} x={dx} y={dy} />
       <% end %>
+    <% end %>
 
-      <%!-- Layer 2: Tile decorations (depth-sorted so upright shapes overlap correctly) --%>
-      <%= for {{x, y}, tile} <- sorted_tiles do %>
-        <%= if dec = Map.get(tile, :decoration) do %>
-          <% {sx, sy} = iso.to_screen(x, y, map_h) %>
-          <% {dx, dy} = iso.sprite_pos(sx, sy) %>
-          <.decoration_sprite decoration={dec} x={dx} y={dy} />
-        <% end %>
-      <% end %>
+    <%!-- Layer 3: Entities (depth-sorted, hidden entities filtered for players) --%>
+    <% visible_entities =
+      if @is_dm,
+        do: sorted_entities,
+        else:
+          Enum.reject(sorted_entities, fn {id, _} ->
+            MapSet.member?(state.hidden_entities || MapSet.new(), id)
+          end) %>
+    <%= for {id, entity} <- visible_entities do %>
+      <% is_active = id == active_id %>
+      <% is_selected = id == state.selected_id %>
+      <% is_target = id in @valid_targets %>
+      <% is_spell_target = id in @spell_targets %>
+      <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
+      <% {ix, iy} = iso.sprite_pos(sx, sy) %>
 
-      <%!-- Layer 3: Move overlay --%>
-      <%= for {x, y} <- state.valid_moves do %>
-        <% {sx, sy} = iso.to_screen(x, y, map_h) %>
-        <polygon
-          points={iso.diamond_points(sx, sy)}
-          fill="rgba(100,180,255,0.25)"
-          stroke="#64b4ff"
-          stroke-width="1.5"
-          phx-click="move"
-          phx-value-x={x}
-          phx-value-y={y}
-          style="cursor: pointer;"
-        />
-      <% end %>
-
-      <%!-- Layer 4: Entities (depth-sorted) --%>
-      <%= for {id, entity} <- sorted_entities do %>
-        <% is_active = id == active_id %>
-        <% is_selected = id == state.selected_id %>
-        <% is_target = id in @valid_targets %>
-        <% is_spell_target = id in @spell_targets %>
-        <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_h) %>
-        <% {ix, iy} = iso.sprite_pos(sx, sy) %>
-        <% hp_w = tw - 8 %>
-        <% hp_fill = round(hp_w * entity.hp / max(entity.max_hp, 1)) %>
-
-        <g
-          id={"entity-#{id}"}
-          phx-click={
-            cond do
-              is_spell_target -> "cast_spell"
-              is_target -> "attack"
-              true -> "select_entity"
-            end
-          }
-          phx-value-id={id}
-          style={"cursor: #{cond do
-            is_spell_target -> "crosshair"
-            is_target -> "crosshair"
-            entity.type == "hero" -> "pointer"
-            true -> "default"
-          end};"}
-        >
-          <%!-- Target highlight --%>
-          <%= if is_target do %>
-            <polygon
-              points={iso.diamond_points(sx, sy)}
-              fill="rgba(231,76,60,0.35)"
-              stroke="#e74c3c"
-              stroke-width="2"
-            />
-          <% end %>
-
-          <%!-- Spell target highlight --%>
-          <%= if is_spell_target do %>
-            <polygon
-              points={iso.diamond_points(sx, sy)}
-              fill="rgba(192,80,255,0.3)"
-              stroke="#c050ff"
-              stroke-width="2"
-              stroke-dasharray="4 3"
-            />
-          <% end %>
-
-          <%!-- Selected ring --%>
-          <%= if is_selected do %>
-            <polygon
-              points={iso.diamond_points(sx, sy)}
-              fill="none"
-              stroke="#ffffff"
-              stroke-width="2.5"
-            />
-          <% end %>
-
-          <%!-- Active turn dashed ring --%>
-          <%= if is_active && !is_selected do %>
-            <polygon
-              points={iso.diamond_points(sx, sy)}
-              fill="none"
-              stroke="#f1c40f"
-              stroke-width="2"
-              stroke-dasharray="4 3"
-            />
-          <% end %>
-
-          <%!-- Sprite --%>
-          <.entity_sprite sprite={entity.sprite} x={ix} y={iy} />
-
-          <%!-- HP bar (screen-aligned, above sprite) --%>
-          <rect x={ix + 4} y={iy - 9} width={hp_w} height={5} rx="2" fill="#333" />
-          <rect
-            x={ix + 4}
-            y={iy - 9}
-            width={hp_fill}
-            height={5}
-            rx="2"
-            fill={hp_bar_color(entity.hp, entity.max_hp)}
+      <g
+        id={"entity-#{id}"}
+        phx-click={
+          cond do
+            is_spell_target -> "cast_spell"
+            is_target -> "attack"
+            true -> "select_entity"
+          end
+        }
+        phx-value-id={id}
+        style={"cursor: #{cond do
+          is_spell_target -> "crosshair"
+          is_target -> "crosshair"
+          entity.type == "hero" -> "pointer"
+          true -> "default"
+        end};"}
+      >
+        <%!-- Target highlight --%>
+        <%= if is_target do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="rgba(231,76,60,0.35)"
+            stroke="#e74c3c"
+            stroke-width="2"
           />
+        <% end %>
+
+        <%!-- Spell target highlight --%>
+        <%= if is_spell_target do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="rgba(192,80,255,0.3)"
+            stroke="#c050ff"
+            stroke-width="2"
+            stroke-dasharray="4 3"
+          />
+        <% end %>
+
+        <%!-- Selected ring --%>
+        <%= if is_selected do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2.5"
+          />
+        <% end %>
+
+        <%!-- Active turn dashed ring --%>
+        <%= if is_active && !is_selected do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="none"
+            stroke="#f1c40f"
+            stroke-width="2"
+            stroke-dasharray="4 3"
+          />
+        <% end %>
+
+        <%!-- Sprite body (named geometry or fallback rect) --%>
+        <.entity_sprite
+          sprite={entity.sprite}
+          x={ix}
+          y={iy}
+          body_color={entity_body_color(@appearances, entity.sprite)}
+        />
+
+        <%!-- Compositor overlays: selection ring (active entity) + HP bar --%>
+        <g transform={"translate(#{ix}, #{iy})"}>
+          {Phoenix.HTML.raw(
+            SpriteCompositor.compose(entity, @appearances, selected: is_active, show_body: false)
+          )}
         </g>
-      <% end %>
-    </svg>
+      </g>
+    <% end %>
+
+    <%!--
+      Layer 4: Move overlay — rendered AFTER entities so diamonds are always visible.
+      Painter's algorithm: overlays on top means tall entity sprites cannot occlude them.
+      Valid-move tiles are never occupied, so pointer-events on these polygons don't
+      conflict with entity click targets.
+    --%>
+    <%= for {x, y} <- state.valid_moves do %>
+      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+      <polygon
+        points={iso.diamond_points(sx, sy)}
+        fill="rgba(100,180,255,0.30)"
+        stroke="#64b4ff"
+        stroke-width="1.5"
+        phx-click="move"
+        phx-value-x={x}
+        phx-value-y={y}
+        style="cursor: pointer;"
+      />
+    <% end %>
+  </svg>
+
+  <%!--
+    z-30: Turn order strip — top-centre, screen-anchored.
+    Container is pointer-events:none; inner panel is pointer-events:auto.
+  --%>
+  <div style="position:fixed; top:0; left:0; right:0; z-index:30; display:flex; justify-content:center; padding-top:0.5rem; pointer-events:none;">
+    <div
+      class="bg-gray-900/90 border border-gray-700 rounded-lg px-4 py-1.5 text-sm flex items-center gap-3"
+      style="pointer-events:auto;"
+    >
+      <span class="text-gray-500 text-xs uppercase tracking-widest">Turn</span>
+      <span class="font-bold text-yellow-400">
+        {if active_entity, do: active_entity.name, else: "—"}
+      </span>
+      <span class="text-xs text-gray-600 font-mono">[{state.phase}]</span>
+    </div>
   </div>
 
-  <%!-- Side Panel --%>
-  <div class="flex flex-col gap-4 min-w-48">
-    <div class="bg-gray-800 rounded p-3">
-      <div class="text-xs text-gray-400 mb-1">Active Turn</div>
-      <div class="font-bold text-yellow-400">
-        {if active_entity, do: active_entity.name, else: "—"}
-      </div>
-    </div>
-
-    <div class="bg-gray-800 rounded p-3">
-      <div class="text-xs text-gray-400 mb-2">Entities</div>
-      <%= for {id, entity} <- state.entities do %>
-        <div class={[
-          "flex items-center gap-2 mb-1",
-          (id == state.selected_id && "opacity-100") || "opacity-70"
-        ]}>
-          <div class="w-3 h-3 rounded-sm" style={"background: #{sprite_color(entity.sprite)}"}>
-          </div>
-          <span class="text-sm flex-1">{entity.name}</span>
-          <span class="text-xs text-gray-400">{entity.hp}/{entity.max_hp}</span>
-        </div>
-      <% end %>
-    </div>
-
-    <div class="bg-gray-800 rounded p-3 flex flex-col gap-2">
-      <div class="text-xs text-gray-400 mb-1">Actions</div>
-      <button
-        phx-click="end_turn"
-        class="bg-gray-600 hover:bg-gray-500 text-white text-sm rounded px-3 py-1"
-      >
-        End Turn
-      </button>
-    </div>
-
-    <%!-- Spell panel — only shown when active entity knows spells --%>
+  <%!--
+    z-20: Action bar — bottom-centre, screen-anchored.
+    End Turn + spell selection buttons.
+  --%>
+  <div style="position:fixed; bottom:0; left:0; right:0; z-index:20; display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding-bottom:1.25rem; pointer-events:none;">
+    <%!-- Spell selection row (only shown when active entity has spells) --%>
     <%= if active_entity && get_in(active_entity, [:stats, "spells"]) do %>
-      <div class="bg-gray-800 rounded p-3 flex flex-col gap-2">
-        <div class="text-xs text-gray-400 mb-1">Spells</div>
+      <div class="flex gap-2 flex-wrap justify-center" style="pointer-events:auto;">
         <%= for spell_key <- active_entity.stats["spells"] do %>
           <button
             phx-click="select_spell"
             phx-value-key={spell_key}
             class={[
-              "text-left text-sm rounded px-3 py-1 flex justify-between items-center",
-              (@selected_spell == spell_key && "bg-purple-700 text-white ring-1 ring-purple-400") ||
-                "bg-gray-700 hover:bg-gray-600 text-gray-200"
+              "text-sm rounded-lg px-3 py-1.5 flex items-center gap-1 border",
+              (@selected_spell == spell_key &&
+                 "bg-purple-700/90 text-white border-purple-400 ring-1 ring-purple-400") ||
+                "bg-gray-800/90 hover:bg-gray-700/90 text-gray-200 border-gray-600"
             ]}
           >
             <span>{spell_display_name(spell_key)}</span>
-            <span class="text-xs text-gray-400 ml-2">{spell_level_label(spell_key)}</span>
+            <span class="text-xs text-gray-400">{spell_level_label(spell_key)}</span>
           </button>
         <% end %>
       </div>
     <% end %>
 
-    <div class="bg-gray-800 rounded p-3 flex-1">
-      <div class="text-xs text-gray-400 mb-2">Log</div>
-      <%= for entry <- @log do %>
-        <div class="text-xs text-gray-300 mb-1">{entry}</div>
-      <% end %>
+    <button
+      phx-click="end_turn"
+      class="bg-gray-700/90 hover:bg-gray-600/90 text-white text-sm font-bold rounded-lg px-8 py-2 border border-gray-500"
+      style="pointer-events:auto;"
+    >
+      End Turn
+    </button>
+  </div>
+
+  <%!--
+    z-40: Info panel — bottom-right, screen-anchored.
+    Entity list + combat log.
+  --%>
+  <div style="position:fixed; bottom:0; right:0; z-index:40; padding:1rem; pointer-events:none;">
+    <div class="flex flex-col gap-2" style="width:11rem; pointer-events:auto;">
+      <div class="bg-gray-900/90 border border-gray-700 rounded p-2">
+        <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Entities</div>
+        <%= for {id, entity} <- state.entities do %>
+          <div class={[
+            "flex items-center gap-2 mb-0.5",
+            (id == state.selected_id && "opacity-100") || "opacity-60"
+          ]}>
+            <div
+              class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+              style={"background:#{entity_body_color(@appearances, entity.sprite)}"}
+            >
+            </div>
+            <span class="text-xs flex-1 truncate text-gray-200">{entity.name}</span>
+            <span class="text-xs text-gray-500 font-mono">{entity.hp}/{entity.max_hp}</span>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="bg-gray-900/90 border border-gray-700 rounded p-2 max-h-28 overflow-y-auto">
+        <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Log</div>
+        <%= for entry <- @log do %>
+          <div class="text-xs text-gray-300 mb-0.5">{entry}</div>
+        <% end %>
+      </div>
     </div>
   </div>
+
+  <%!--
+    z-50: DM controls panel — top-right, screen-anchored.
+    Session controls, interventions, per-entity tools, initiative.
+    Scrollable so it fits the full entity list regardless of viewport height.
+  --%>
+  <%= if @is_dm do %>
+    <div style="position:fixed; top:2.5rem; right:0; z-index:50; padding:0.5rem; pointer-events:none; max-height:calc(100vh - 3rem);">
+      <div
+        class="flex flex-col gap-2 overflow-y-auto"
+        style="width:11rem; max-height:calc(100vh - 3rem); pointer-events:auto;"
+      >
+        <%!-- Session controls --%>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+          <div class="text-xs text-gray-500 uppercase tracking-wide">Session</div>
+          <%= if state.phase == :lobby do %>
+            <button
+              phx-click="dm_start"
+              class="bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded px-2 py-1"
+            >
+              Start Session
+            </button>
+          <% end %>
+          <%= if state.phase in [:exploration, :initiative_rolling, :in_combat] do %>
+            <button
+              phx-click="dm_pause"
+              class="bg-yellow-700 hover:bg-yellow-600 text-white text-xs rounded px-2 py-1"
+            >
+              Pause
+            </button>
+          <% end %>
+          <%= if state.phase == :paused do %>
+            <button
+              phx-click="dm_resume"
+              class="bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded px-2 py-1"
+            >
+              Resume
+            </button>
+          <% end %>
+          <%= if state.phase != :lobby do %>
+            <button
+              phx-click="dm_end_confirm"
+              class="bg-red-900 hover:bg-red-800 text-white text-xs rounded px-2 py-1"
+            >
+              End Session
+            </button>
+          <% end %>
+        </div>
+
+        <%!-- Interventions --%>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+          <div class="text-xs text-gray-500 uppercase tracking-wide">Interventions</div>
+          <button
+            phx-click="dm_open_broadcast"
+            class="bg-yellow-800 hover:bg-yellow-700 text-white text-xs rounded px-2 py-1"
+          >
+            Broadcast
+          </button>
+          <button
+            phx-click="dm_open_whisper"
+            class="bg-purple-800 hover:bg-purple-700 text-white text-xs rounded px-2 py-1"
+          >
+            Whisper
+          </button>
+        </div>
+
+        <%!-- Per-entity controls --%>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+          <div class="text-xs text-gray-500 uppercase tracking-wide">Entities</div>
+          <%= for {eid, entity} <- state.entities do %>
+            <div class="bg-gray-800 rounded px-1.5 py-1 text-xs flex flex-col gap-1">
+              <div class="font-medium text-gray-200 truncate">{entity.name}</div>
+              <form id={"dm-hp-#{eid}"} phx-submit="dm_adjust_hp" class="flex gap-1 items-center">
+                <input type="hidden" name="entity_id" value={eid} />
+                <input
+                  name="delta"
+                  type="number"
+                  placeholder="±HP"
+                  class="w-14 bg-gray-700 text-white rounded px-1 py-0.5 text-xs border border-gray-600"
+                />
+                <button
+                  type="submit"
+                  class="bg-red-800 hover:bg-red-700 text-white rounded px-1.5 py-0.5 text-xs"
+                >
+                  Adj
+                </button>
+              </form>
+              <form
+                id={"dm-cond-#{eid}"}
+                phx-submit="dm_apply_condition"
+                class="flex gap-1 items-center"
+              >
+                <input type="hidden" name="entity_id" value={eid} />
+                <select
+                  name="condition"
+                  class="flex-1 bg-gray-700 text-white rounded px-1 py-0.5 text-xs border border-gray-600"
+                >
+                  <%= for {cond_id, cond_def} <- Gibbering.Rulesets.DnD5e.Condition.all() do %>
+                    <option value={cond_id}>{cond_def.name}</option>
+                  <% end %>
+                </select>
+                <button
+                  type="submit"
+                  class="bg-orange-800 hover:bg-orange-700 text-white rounded px-1.5 py-0.5 text-xs"
+                >
+                  +
+                </button>
+              </form>
+              <button
+                phx-click="dm_toggle_visibility"
+                phx-value-id={eid}
+                class={[
+                  "text-xs rounded px-1.5 py-0.5 text-white",
+                  if(MapSet.member?(state.hidden_entities || MapSet.new(), eid),
+                    do: "bg-gray-500 hover:bg-gray-400",
+                    else: "bg-gray-600 hover:bg-gray-500"
+                  )
+                ]}
+              >
+                {if MapSet.member?(state.hidden_entities || MapSet.new(), eid),
+                  do: "Show",
+                  else: "Hide"}
+              </button>
+            </div>
+          <% end %>
+        </div>
+
+        <%!-- Initiative panel (shown when session is active) --%>
+        <%= if state.phase != :lobby do %>
+          <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Initiative</div>
+            <%= for {entry_id, idx} <- Enum.with_index(state.turn_order) do %>
+              <% entry = state.entities[entry_id] %>
+              <% is_active = idx == state.active_index %>
+              <% ini_val = Map.get(state.initiative_values || %{}, entry_id) %>
+              <div class={[
+                "flex items-center gap-1 text-xs rounded px-1.5 py-0.5",
+                (is_active && "bg-yellow-900 border border-yellow-600") || "bg-gray-800"
+              ]}>
+                <span class="flex-1 truncate">{(entry && entry.name) || "?"}</span>
+                <%= if ini_val do %>
+                  <span class="text-gray-400 font-mono w-5 text-center">{ini_val}</span>
+                <% end %>
+                <button
+                  phx-click="dm_roll_initiative"
+                  phx-value-id={entry_id}
+                  class="text-blue-400 hover:text-blue-300"
+                  title="Roll initiative"
+                >
+                  d
+                </button>
+                <button
+                  phx-click="dm_move_up"
+                  phx-value-id={entry_id}
+                  class="text-gray-400 hover:text-white"
+                >
+                  ↑
+                </button>
+                <button
+                  phx-click="dm_move_down"
+                  phx-value-id={entry_id}
+                  class="text-gray-400 hover:text-white"
+                >
+                  ↓
+                </button>
+                <button
+                  phx-click="dm_remove_from_order"
+                  phx-value-id={entry_id}
+                  class="text-red-500 hover:text-red-400"
+                >
+                  ×
+                </button>
+              </div>
+            <% end %>
+
+            <%= for {eid, entity} <- state.entities, eid not in state.turn_order do %>
+              <button
+                phx-click="dm_add_to_order"
+                phx-value-id={eid}
+                class="text-left text-xs text-green-400 hover:text-green-300 px-1.5 py-0.5 bg-gray-800 rounded"
+              >
+                + {entity.name}
+              </button>
+            <% end %>
+
+            <button
+              phx-click="dm_force_end_turn"
+              class="bg-gray-700 hover:bg-gray-600 text-white text-xs rounded px-2 py-0.5 mt-0.5"
+            >
+              Force End Turn
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%!--
+    z-index:100 — System overlays: banners, whispers, modals.
+    These must render above all game and DM panels.
+  --%>
+
+  <%!-- DM broadcast banner — dismissable, visible to all --%>
+  <%= for msg <- @dm_broadcasts do %>
+    <div
+      style="position:fixed; top:3rem; left:50%; transform:translateX(-50%); z-index:100;"
+      class="bg-yellow-800 border border-yellow-500 rounded-lg px-6 py-3 flex items-center gap-4 shadow-xl"
+    >
+      <span class="text-yellow-100 font-medium">{msg}</span>
+      <button phx-click="dm_dismiss_broadcast" class="text-yellow-400 hover:text-white text-xs">
+        &times;
+      </button>
+    </div>
+  <% end %>
+
+  <%!-- Whisper popup — private, only delivered to targeted player --%>
+  <%= for msg <- @dm_whispers do %>
+    <div
+      style="position:fixed; bottom:8rem; right:2rem; z-index:100;"
+      class="bg-purple-900 border border-purple-500 rounded-lg px-6 py-3 flex items-center gap-4 shadow-xl"
+    >
+      <div class="text-xs text-purple-400 font-bold uppercase tracking-wide">Whisper</div>
+      <span class="text-purple-100">{msg}</span>
+      <button phx-click="dm_dismiss_whisper" class="text-purple-400 hover:text-white text-xs">
+        &times;
+      </button>
+    </div>
+  <% end %>
+
+  <%!-- Pause overlay — shown to all clients while session is paused --%>
+  <%= if state.phase == :paused do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.70); display:flex; align-items:center; justify-content:center; pointer-events:none;">
+      <div class="text-center">
+        <div class="text-5xl font-bold text-yellow-400 mb-3">SESSION PAUSED</div>
+        <div class="text-xl text-gray-300">Waiting for the DM to resume&hellip;</div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- End session confirmation modal — DM only --%>
+  <%= if @show_end_confirm do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-sm w-full mx-4">
+        <div class="text-lg font-bold text-white mb-2">End Session?</div>
+        <div class="text-gray-300 text-sm mb-5">
+          This will archive the current game state and disconnect all players.
+        </div>
+        <div class="flex gap-3 justify-end">
+          <button
+            phx-click="dm_end_cancel"
+            class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            phx-click="dm_end"
+            class="bg-red-700 hover:bg-red-600 text-white rounded px-4 py-2 text-sm font-bold"
+          >
+            End Session
+          </button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- DM broadcast compose modal --%>
+  <%= if @dm_panel == :broadcast do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.60); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="text-lg font-bold text-white mb-3">Broadcast Message</div>
+        <form phx-submit="dm_broadcast">
+          <input
+            name="text"
+            type="text"
+            placeholder="Message to all players…"
+            autofocus
+            class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-4 border border-gray-500 focus:outline-none focus:border-yellow-500"
+          />
+          <div class="flex gap-3 justify-end">
+            <button
+              type="button"
+              phx-click="dm_close_panel"
+              class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold rounded px-4 py-2 text-sm"
+            >
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- DM whisper compose modal --%>
+  <%= if @dm_panel == :whisper do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.60); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="text-lg font-bold text-white mb-3">Whisper</div>
+        <form phx-submit="dm_whisper">
+          <select
+            name="user_id"
+            class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3 border border-gray-500"
+          >
+            <%= for member <- Gibbering.Campaigns.list_members(@game_id) do %>
+              <option value={member.id}>{member.username}</option>
+            <% end %>
+          </select>
+          <input
+            name="text"
+            type="text"
+            placeholder="Private message…"
+            autofocus
+            class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-4 border border-gray-500 focus:outline-none focus:border-purple-500"
+          />
+          <div class="flex gap-3 justify-end">
+            <button
+              type="button"
+              phx-click="dm_close_panel"
+              class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-purple-700 hover:bg-purple-600 text-white font-bold rounded px-4 py-2 text-sm"
+            >
+              Whisper
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <% end %>
 </div>

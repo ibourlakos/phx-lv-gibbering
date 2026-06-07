@@ -406,6 +406,100 @@ defmodule Gibbering.Engine.StateTest do
     end
   end
 
+  describe "set_initiative/3" do
+    test "stores the initiative value for the entity" do
+      state = build_state()
+      new_state = State.set_initiative(state, hero_id(), 15)
+      assert new_state.initiative_values[hero_id()] == 15
+    end
+
+    test "sorts turn_order by initiative descending after roll" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()]}
+
+      # hero gets lower initiative; monster gets higher → monster should go first
+      s1 = State.set_initiative(state, hero_id(), 8)
+      s2 = State.set_initiative(s1, monster_id(), 18)
+
+      assert hd(s2.turn_order) == monster_id()
+    end
+
+    test "preserves the currently active entity across re-sort" do
+      # Start with hero active at index 0, set monster's initiative higher
+      state = %{build_state() | turn_order: [hero_id(), monster_id()], active_index: 0}
+      s1 = State.set_initiative(state, hero_id(), 20)
+      s2 = State.set_initiative(s1, monster_id(), 5)
+
+      # Hero still has highest initiative and is still at front
+      assert State.active_hero_id(s2) == hero_id()
+    end
+
+    test "stores initiative_values as an empty map by default" do
+      state = build_state()
+      assert state.initiative_values == %{}
+    end
+  end
+
+  describe "add_to_turn_order/2" do
+    test "appends entity to the end of turn_order" do
+      state = build_state()
+      new_state = State.add_to_turn_order(state, monster_id())
+      assert List.last(new_state.turn_order) == monster_id()
+    end
+
+    test "is a no-op if entity is already in turn_order" do
+      state = build_state()
+      new_state = State.add_to_turn_order(state, hero_id())
+      assert new_state.turn_order == state.turn_order
+    end
+
+    test "is a no-op if entity_id does not exist in entities" do
+      state = build_state()
+      new_state = State.add_to_turn_order(state, 9999)
+      assert new_state.turn_order == state.turn_order
+    end
+  end
+
+  describe "remove_from_turn_order/2" do
+    test "removes the entity from turn_order" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()]}
+      new_state = State.remove_from_turn_order(state, monster_id())
+      refute monster_id() in new_state.turn_order
+    end
+
+    test "adjusts active_index to stay in bounds when removing" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()], active_index: 1}
+      new_state = State.remove_from_turn_order(state, monster_id())
+      assert new_state.active_index == 0
+    end
+
+    test "is a no-op if entity is not in turn_order" do
+      state = build_state()
+      new_state = State.remove_from_turn_order(state, 9999)
+      assert new_state.turn_order == state.turn_order
+    end
+  end
+
+  describe "reorder_turn_order/2" do
+    test "replaces turn_order with the new order" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()]}
+      new_state = State.reorder_turn_order(state, [monster_id(), hero_id()])
+      assert new_state.turn_order == [monster_id(), hero_id()]
+    end
+
+    test "preserves the currently active entity position after reorder" do
+      state = %{build_state() | turn_order: [hero_id(), monster_id()], active_index: 0}
+      # Move hero to second position; active entity (hero) should remain active
+      new_state = State.reorder_turn_order(state, [monster_id(), hero_id()])
+      assert State.active_hero_id(new_state) == hero_id()
+    end
+
+    test "ignores ids not currently in turn_order" do
+      state = %{build_state() | turn_order: [hero_id()]}
+      new_state = State.reorder_turn_order(state, [hero_id(), 9999])
+      assert new_state.turn_order == [hero_id()]
+    end
+  end
+
   describe "apply_long_rest/2" do
     test "restores spell slots to initial values" do
       state =
@@ -432,6 +526,75 @@ defmodule Gibbering.Engine.StateTest do
       assert {:ok, new_state} = State.apply_short_rest(state, hero_id())
       assert new_state.entities[hero_id()].resources.second_wind == 1
       assert new_state.entities[hero_id()].resources.action_surge == 1
+    end
+  end
+
+  describe "adjust_hp/3" do
+    test "adds a positive delta to entity HP" do
+      state = with_entity(build_state(), hero_id(), hp: 5, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), 10)
+      assert new_state.entities[hero_id()].hp == 15
+    end
+
+    test "clamps HP at max_hp" do
+      state = with_entity(build_state(), hero_id(), hp: 18, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), 10)
+      assert new_state.entities[hero_id()].hp == 20
+    end
+
+    test "subtracts a negative delta" do
+      state = with_entity(build_state(), hero_id(), hp: 15, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), -5)
+      assert new_state.entities[hero_id()].hp == 10
+    end
+
+    test "clamps HP at 0 for negative delta" do
+      state = with_entity(build_state(), hero_id(), hp: 3, max_hp: 20)
+      new_state = State.adjust_hp(state, hero_id(), -10)
+      assert new_state.entities[hero_id()].hp == 0
+    end
+
+    test "no-op for unknown entity_id" do
+      state = build_state()
+      assert State.adjust_hp(state, 99_999, 5) == state
+    end
+  end
+
+  describe "hide_entity/2 and show_entity/2" do
+    test "hide_entity adds entity_id to hidden_entities" do
+      state = build_state()
+      new_state = State.hide_entity(state, hero_id())
+      assert MapSet.member?(new_state.hidden_entities, hero_id())
+    end
+
+    test "show_entity removes entity_id from hidden_entities" do
+      state = build_state()
+      hidden = State.hide_entity(state, hero_id())
+      shown = State.show_entity(hidden, hero_id())
+      refute MapSet.member?(shown.hidden_entities, hero_id())
+    end
+
+    test "hide_entity is idempotent" do
+      state = build_state()
+      once = State.hide_entity(state, hero_id())
+      twice = State.hide_entity(once, hero_id())
+      assert MapSet.equal?(once.hidden_entities, twice.hidden_entities)
+    end
+  end
+
+  describe "add_log_entry/2" do
+    test "prepends an entry to session_log" do
+      state = build_state()
+      new_state = State.add_log_entry(state, "DM broadcast: hello")
+      assert hd(new_state.session_log) == "DM broadcast: hello"
+    end
+
+    test "accumulates multiple entries" do
+      state = build_state()
+      s1 = State.add_log_entry(state, "first")
+      s2 = State.add_log_entry(s1, "second")
+      assert length(s2.session_log) == 2
+      assert hd(s2.session_log) == "second"
     end
   end
 end

@@ -13,6 +13,7 @@ Four paths depending on how well the problem is understood and how large the fix
 [B] Feature:    Issue ──────────────────────► Branch → Red → Green → Refactor → Verify → Commit
 [C] Bugfix:     Issue (bug) ────────────────► Branch → Red (reproduce) → Green → Verify → Commit
 [D] Hotfix:                                                              Verify → Commit
+[E] Work Package: Triage batch ──────────────► work-packages.md → pick next issue → repeat B/C
 ```
 
 | Path | When to use |
@@ -21,6 +22,7 @@ Four paths depending on how well the problem is understood and how large the fix
 | **[B] Feature** | New behaviour; issue exists with acceptance criteria |
 | **[C] Bugfix** | Reproducible defect; needs a regression test to prove and prevent recurrence |
 | **[D] Hotfix** | Caught at smoke test; ≤ 1 file; no behaviour change; no new test needed |
+| **[E] Work Package** | Many issues extracted from brainstorms; need ordering + dependency tracking across phases |
 
 **The gate between Bugfix and Hotfix is the regression test.** If you need a test to prove the fix holds — Bugfix. If the only proof is "the app boots and the action works" — Hotfix.
 
@@ -133,6 +135,27 @@ If any criterion fails, use Bugfix instead.
 
 ---
 
+## Context usage gate
+
+**When:** Before starting any new flow stage (picking a new issue, opening a new brainstorm, or beginning a new work package cycle).
+
+Check all three signals before proceeding:
+
+| Signal | Where to check | Stop if… |
+|---|---|---|
+| **Session context size** | `/cost` or the token counter in the Claude Code UI | Context window is ≥ 60% full |
+| **Per-message token cost** | `/cost` after the last tool-heavy turn | A single turn exceeded ~50k tokens |
+| **Account usage** | Anthropic Console → Usage | Monthly spend is near plan limit or a daily spike is visible |
+
+If any signal is elevated:
+- **Do not start a new stage unilaterally.**
+- Report the current state for each signal.
+- Wait for explicit approval before proceeding.
+
+This prevents truncated implementations that span a context boundary and leave the codebase in a half-finished state. A new session starts cold with full context (via MEMORY.md + CLAUDE.md); partial work mid-issue does not.
+
+---
+
 ## Decision gates
 
 Apply to paths A, B, C only.
@@ -156,6 +179,33 @@ Apply to paths A, B, C only.
 
 **Trigger:** Any incoming updates that have affected the architecture, the data model, or testing policy.
 **Action:** Read `docs/{architecture,data-model,testing}.md` and update them.
+
+---
+
+## [E] Work Package subflow
+
+A work package is a temporary planning document (`docs/issues/work-packages.md`) that groups issues by concern and establishes sequencing across phases. It sits *above* the per-issue workflow — it tells you which issue to pick up next and what it depends on.
+
+### When to use a work package
+
+Open or update `work-packages.md` after a brainstorm triage batch produces many issues at once, or when you need to reason about ordering across several unrelated tracks. It is not an issue file and does not go in the issue tracker.
+
+### Work package lifecycle
+
+| Step | Action |
+|---|---|
+| **Create / update** | After triage (path A Commit step), rewrite `work-packages.md` with all open issues grouped by phase, with sequencing notes and a critical path. |
+| **Pick next issue** | Read `work-packages.md`. Follow the critical path. Before starting a concrete task, check whether any discovery issue blocks it — if yes, resolve the discovery first (path A or B). |
+| **Discovery issue handling** | Do not resolve all discovery issues upfront. Resolve one *just before* you need to implement the thing it scopes. This avoids stale decisions. |
+| **Delete** | When all issues in all packages are closed or deferred. |
+
+### Interaction with discovery issues
+
+A discovery issue has tag `discovery` and no implementation work — its acceptance criteria are design decisions, not code. The trigger to resolve it is *"I am about to start the implementation it gates."* If no concrete issue is blocked by it right now, leave it in the backlog.
+
+### Critical path rule
+
+The work package defines a critical path. Always work the critical path first unless a parallel track is explicitly marked as unblocked and higher priority. The critical path ends when WP-D is complete (full campaign lifecycle + live DM session toolset operational).
 
 ---
 

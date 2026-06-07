@@ -1,7 +1,8 @@
 # #13 · Move overlay occluded by entities in isometric depth order
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-04
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** bug, rendering
 
@@ -15,6 +16,6 @@ Possible fixes:
 - Use SVG `pointer-events` to keep overlays clickable even when visually behind sprites.
 
 **Acceptance criteria**
-- [ ] All valid-move diamonds are visible regardless of which entities stand nearby
-- [ ] Click targets on valid-move diamonds remain functional (not occluded by entity `<g>` hit areas)
-- [ ] No visual regression on the attack/select highlights that already live inside entity `<g>` groups
+- [x] All valid-move diamonds are visible regardless of which entities stand nearby
+- [x] Click targets on valid-move diamonds remain functional (not occluded by entity `<g>` hit areas)
+- [x] No visual regression on the attack/select highlights that already live inside entity `<g>` groups

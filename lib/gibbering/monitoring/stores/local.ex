@@ -1,0 +1,212 @@
+defmodule Gibbering.Monitoring.Stores.Local do
+  @moduledoc """
+  MetricsStore adapter backed by an ETS ring buffer (5-min window, ~1 sample/10s)
+  and periodic DB snapshots (~60s). Emits PubSub strain alerts on `system:admin`.
+
+  Polls active campaigns from GameRegistry every 10 seconds.
+  Snapshots ETS buffer to DB every 60 seconds.
+  Prunes snapshots older than 7 days every hour.
+  """
+
+  use GenServer
+
+  @behaviour Gibbering.Monitoring.MetricsStore
+
+  import Ecto.Query
+
+  alias Gibbering.{Repo, PubSub}
+  alias Gibbering.Engine.SceneServer
+  alias Gibbering.Monitoring.CampaignMetricSnapshot
+
+  @ets_table :gibbering_metrics_buffer
+  # 5 minutes in milliseconds
+  @buffer_window_ms 5 * 60 * 1000
+  @poll_interval_ms 10_000
+  @snapshot_interval_ms 60_000
+  @prune_interval_ms 60 * 60_000
+  @strain_memory_bytes 100 * 1024 * 1024
+  @strain_queue_depth 500
+  @strain_window_s 10
+
+  # ---------------------------------------------------------------------------
+  # Public API (MetricsStore behaviour)
+  # ---------------------------------------------------------------------------
+
+  @impl Gibbering.Monitoring.MetricsStore
+  def record(campaign_id, metric, value) do
+    now_ms = System.system_time(:millisecond)
+    cutoff_ms = now_ms - @buffer_window_ms
+
+    :ets.insert(@ets_table, {{campaign_id, metric, now_ms}, value})
+
+    # Prune entries outside the 5-min window for this campaign+metric
+    match_spec = [
+      {{{:"$1", :"$2", :"$3"}, :_},
+       [{:==, :"$1", campaign_id}, {:==, :"$2", metric}, {:<, :"$3", cutoff_ms}], [true]}
+    ]
+
+    :ets.select_delete(@ets_table, match_spec)
+
+    :ok
+  end
+
+  @impl Gibbering.Monitoring.MetricsStore
+  def history(campaign_id, metric) do
+    match_spec = [
+      {{{:"$1", :"$2", :"$3"}, :"$4"}, [{:==, :"$1", campaign_id}, {:==, :"$2", metric}],
+       [{{:"$3", :"$4"}}]}
+    ]
+
+    @ets_table
+    |> :ets.select(match_spec)
+    |> Enum.sort_by(&elem(&1, 0))
+    |> Enum.map(fn {ts_ms, value} ->
+      dt = DateTime.from_unix!(div(ts_ms, 1000))
+      {dt, value}
+    end)
+  end
+
+  # ---------------------------------------------------------------------------
+  # GenServer
+  # ---------------------------------------------------------------------------
+
+  def start_link(_opts) do
+    GenServer.start_link(__MODULE__, [], name: __MODULE__)
+  end
+
+  @impl GenServer
+  def init(_) do
+    :ets.new(@ets_table, [:named_table, :public, :ordered_set])
+    schedule_poll()
+    schedule_snapshot()
+    schedule_prune()
+    {:ok, %{strain_state: %{}}}
+  end
+
+  @impl GenServer
+  def handle_info(:poll, state) do
+    active = active_campaigns()
+    strain_state = poll_and_detect_strain(active, state.strain_state)
+    schedule_poll()
+    {:noreply, %{state | strain_state: strain_state}}
+  end
+
+  def handle_info(:snapshot, state) do
+    snapshot_to_db()
+    schedule_snapshot()
+    {:noreply, state}
+  end
+
+  def handle_info(:prune, state) do
+    prune_old_snapshots()
+    schedule_prune()
+    {:noreply, state}
+  end
+
+  # ---------------------------------------------------------------------------
+  # Internals
+  # ---------------------------------------------------------------------------
+
+  defp schedule_poll, do: Process.send_after(self(), :poll, @poll_interval_ms)
+  defp schedule_snapshot, do: Process.send_after(self(), :snapshot, @snapshot_interval_ms)
+  defp schedule_prune, do: Process.send_after(self(), :prune, @prune_interval_ms)
+
+  defp active_campaigns do
+    Registry.select(Gibbering.GameRegistry, [{{:"$1", :"$2", :_}, [], [{{:"$1", :"$2"}}]}])
+  end
+
+  defp poll_and_detect_strain(active_campaigns, strain_state) do
+    now = DateTime.utc_now()
+
+    Enum.reduce(active_campaigns, strain_state, fn {campaign_id, pid}, acc ->
+      proc = :erlang.process_info(pid, [:memory, :message_queue_len])
+      {entity_count, _phase} = try_get_scene_info(campaign_id)
+
+      memory = proc[:memory] || 0
+      queue_depth = proc[:message_queue_len] || 0
+
+      record(campaign_id, "memory_bytes", memory)
+      record(campaign_id, "queue_depth", queue_depth)
+
+      if is_integer(entity_count) do
+        record(campaign_id, "entity_count", entity_count)
+      end
+
+      acc
+      |> check_strain(campaign_id, :memory, memory, @strain_memory_bytes, now)
+      |> check_strain(campaign_id, :queue_depth, queue_depth, @strain_queue_depth, now)
+    end)
+  end
+
+  defp try_get_scene_info(campaign_id) do
+    state = SceneServer.get_state(campaign_id)
+    {map_size(state.entities), state.phase}
+  rescue
+    _ -> {"?", "?"}
+  end
+
+  defp check_strain(strain_state, campaign_id, key, value, threshold, now) do
+    strain_key = {campaign_id, key}
+
+    if value >= threshold do
+      case Map.get(strain_state, strain_key) do
+        nil ->
+          Map.put(strain_state, strain_key, now)
+
+        first_at ->
+          if DateTime.diff(now, first_at) >= @strain_window_s do
+            maybe_broadcast_strain(campaign_id, key, value, threshold)
+          end
+
+          strain_state
+      end
+    else
+      Map.delete(strain_state, strain_key)
+    end
+  end
+
+  defp maybe_broadcast_strain(campaign_id, metric, value, threshold) do
+    Phoenix.PubSub.broadcast(PubSub, "system:admin", %{
+      event: :campaign_strain,
+      campaign_id: campaign_id,
+      metric: metric,
+      value: value,
+      threshold: threshold
+    })
+  end
+
+  defp snapshot_to_db do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    match_spec = [
+      {{{:"$1", :"$2", :"$3"}, :"$4"}, [], [{{:"$1", :"$2", :"$3", :"$4"}}]}
+    ]
+
+    rows = :ets.select(@ets_table, match_spec)
+
+    Enum.each(rows, fn {campaign_id, metric, ts_ms, value} ->
+      recorded_at = DateTime.from_unix!(div(ts_ms, 1000)) |> DateTime.truncate(:second)
+
+      Repo.insert_all(CampaignMetricSnapshot, [
+        %{
+          campaign_id: campaign_id,
+          metric: metric,
+          value: value / 1,
+          recorded_at: recorded_at,
+          inserted_at: now
+        }
+      ])
+    end)
+  rescue
+    _ -> :ok
+  end
+
+  defp prune_old_snapshots do
+    cutoff = DateTime.utc_now() |> DateTime.add(-7 * 24 * 3600) |> DateTime.truncate(:second)
+
+    from(s in CampaignMetricSnapshot, where: s.recorded_at < ^cutoff)
+    |> Repo.delete_all()
+  rescue
+    _ -> :ok
+  end
+end

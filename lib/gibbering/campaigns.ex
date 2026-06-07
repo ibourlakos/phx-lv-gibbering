@@ -3,7 +3,7 @@ defmodule Gibbering.Campaigns do
 
   import Ecto.Query
 
-  alias Gibbering.{Repo, Campaign, CampaignMember}
+  alias Gibbering.{Repo, Campaign, CampaignMember, CampaignCharacter}
   alias Gibbering.Accounts.User
 
   @doc "Returns the campaign with the given id, or nil."
@@ -28,6 +28,35 @@ defmodule Gibbering.Campaigns do
     |> join(:inner, [c], m in CampaignMember, on: m.campaign_id == c.id and m.user_id == ^user_id)
     |> order_by([c], asc: c.id)
     |> Repo.all()
+  end
+
+  @doc """
+  Returns `[{campaign, [campaign_characters]}]` for the given user.
+
+  Each campaign has `dm` preloaded. Each campaign_character has `character` preloaded.
+  Only campaign_characters owned by `user_id` are included.
+  """
+  def list_campaigns_for_user_with_characters(user_id) do
+    campaigns =
+      Campaign
+      |> join(:inner, [c], m in CampaignMember,
+        on: m.campaign_id == c.id and m.user_id == ^user_id
+      )
+      |> order_by([c], asc: c.id)
+      |> preload(:dm)
+      |> Repo.all()
+
+    ccs_by_campaign =
+      CampaignCharacter
+      |> where([cc], cc.owner_id == ^user_id)
+      |> where([cc], cc.campaign_id in ^Enum.map(campaigns, & &1.id))
+      |> preload(:character)
+      |> Repo.all()
+      |> Enum.group_by(& &1.campaign_id)
+
+    Enum.map(campaigns, fn campaign ->
+      {campaign, Map.get(ccs_by_campaign, campaign.id, [])}
+    end)
   end
 
   @doc "Returns true when the user is a member of the campaign."

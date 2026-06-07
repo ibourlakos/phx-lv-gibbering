@@ -1,7 +1,7 @@
 defmodule GibberingWeb.CampaignPrepLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.{Campaigns, CampaignCharacters}
+  alias Gibbering.{Campaigns, CampaignCharacters, CampaignInviteLinks}
 
   @ability_keys ~w(strength dexterity constitution intelligence wisdom charisma)
 
@@ -22,6 +22,8 @@ defmodule GibberingWeb.CampaignPrepLive do
          |> redirect(to: "/")}
 
       true ->
+        invite_link = invite_link_or_nil(campaign_id)
+
         {:ok,
          socket
          |> assign(:campaign, campaign)
@@ -29,7 +31,43 @@ defmodule GibberingWeb.CampaignPrepLive do
          |> assign(
            :campaign_characters,
            CampaignCharacters.list_for_campaign_preloaded(campaign_id)
-         )}
+         )
+         |> assign(:invite_link, invite_link)
+         |> assign(:invite_url, invite_url(invite_link))}
+    end
+  end
+
+  @impl true
+  def handle_event("generate_invite_link", _params, socket) do
+    campaign = socket.assigns.campaign
+
+    case CampaignInviteLinks.create_for_campaign(campaign.id, socket.assigns.current_user.id) do
+      {:ok, link} ->
+        {:noreply,
+         socket
+         |> assign(:invite_link, link)
+         |> assign(:invite_url, invite_url(link))
+         |> put_flash(:info, "Invite link generated.")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to generate invite link.")}
+    end
+  end
+
+  @impl true
+  def handle_event("revoke_invite_link", _params, socket) do
+    case socket.assigns.invite_link do
+      nil ->
+        {:noreply, socket}
+
+      link ->
+        CampaignInviteLinks.revoke(link)
+
+        {:noreply,
+         socket
+         |> assign(:invite_link, nil)
+         |> assign(:invite_url, nil)
+         |> put_flash(:info, "Invite link revoked.")}
     end
   end
 
@@ -99,6 +137,19 @@ defmodule GibberingWeb.CampaignPrepLive do
 
   defp reload_ccs(socket),
     do: CampaignCharacters.list_for_campaign_preloaded(socket.assigns.campaign.id)
+
+  defp invite_link_or_nil(campaign_id) do
+    case CampaignInviteLinks.active_for_campaign(campaign_id) do
+      {:ok, link} -> link
+      {:error, :none} -> nil
+    end
+  end
+
+  defp invite_url(nil), do: nil
+
+  defp invite_url(link) do
+    GibberingWeb.Endpoint.url() <> "/invites/#{link.token}"
+  end
 
   defp parse_int(nil), do: nil
   defp parse_int(""), do: nil

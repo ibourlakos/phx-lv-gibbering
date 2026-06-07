@@ -3,31 +3,66 @@ defmodule GibberingWeb.IsoProjectionTest do
 
   alias GibberingWeb.IsoProjection
 
-  describe "to_screen/3" do
+  describe "to_screen/4" do
     test "origin tile (0,0) maps to origin offset" do
-      {sx, sy} = IsoProjection.to_screen(0, 0, 10)
-      assert sx == IsoProjection.origin_x(10)
+      {sx, sy} = IsoProjection.to_screen(0, 0, 10, 10)
+      assert sx == IsoProjection.origin_x(10, 10)
       assert sy == IsoProjection.origin_y()
     end
 
     test "moving along x increases both sx and sy" do
-      {sx0, sy0} = IsoProjection.to_screen(0, 0, 10)
-      {sx1, sy1} = IsoProjection.to_screen(1, 0, 10)
+      {sx0, sy0} = IsoProjection.to_screen(0, 0, 10, 10)
+      {sx1, sy1} = IsoProjection.to_screen(1, 0, 10, 10)
       assert sx1 > sx0
       assert sy1 > sy0
     end
 
     test "moving along y decreases sx and increases sy" do
-      {sx0, sy0} = IsoProjection.to_screen(0, 0, 10)
-      {sx1, sy1} = IsoProjection.to_screen(0, 1, 10)
+      {sx0, sy0} = IsoProjection.to_screen(0, 0, 10, 10)
+      {sx1, sy1} = IsoProjection.to_screen(0, 1, 10, 10)
       assert sx1 < sx0
       assert sy1 > sy0
     end
 
     test "diagonal (n,n) lands back at same sx as origin" do
-      {sx0, _} = IsoProjection.to_screen(0, 0, 10)
-      {sx5, _} = IsoProjection.to_screen(5, 5, 10)
+      {sx0, _} = IsoProjection.to_screen(0, 0, 10, 10)
+      {sx5, _} = IsoProjection.to_screen(5, 5, 10, 10)
       assert sx0 == sx5
+    end
+  end
+
+  describe "origin_x/2" do
+    # The correct invariant: left and right diamond tips of the grid have equal half-tile
+    # margins. Centring the top tile at svg_width/2 is only coincidentally true for square
+    # maps; enforcing it for wide maps shifts the grid left and clips the right edge.
+    test "square map: leftmost tile left tip lands at tile_w/2 from SVG edge" do
+      map_w = 10
+      map_h = 10
+      origin = IsoProjection.origin_x(map_w, map_h)
+      # left tip of tile (0, map_h-1) = origin - map_h * tile_w/2
+      left_tip = origin - map_h * div(IsoProjection.tile_w(), 2)
+      assert left_tip == div(IsoProjection.tile_w(), 2)
+    end
+
+    test "non-square map: equal half-tile margins on both sides" do
+      map_w = 16
+      map_h = 10
+      tw2 = div(IsoProjection.tile_w(), 2)
+      origin = IsoProjection.origin_x(map_w, map_h)
+      svg_w = IsoProjection.svg_width(map_w, map_h)
+      left_margin = origin - map_h * tw2
+      right_margin = svg_w - (origin + map_w * tw2)
+      assert left_margin == tw2
+      assert right_margin == tw2
+    end
+
+    test "origin_x depends only on map_h, not map_w" do
+      assert IsoProjection.origin_x(10, 10) == IsoProjection.origin_x(16, 10)
+      assert IsoProjection.origin_x(10, 10) == IsoProjection.origin_x(5, 10)
+    end
+
+    test "tall map: origin_x grows with map_h" do
+      assert IsoProjection.origin_x(10, 10) < IsoProjection.origin_x(10, 16)
     end
   end
 
@@ -75,13 +110,13 @@ defmodule GibberingWeb.IsoProjectionTest do
 
   describe "sprite_pos/2" do
     test "sprite is centered horizontally on tile top" do
-      {sx, sy} = IsoProjection.to_screen(5, 5, 10)
+      {sx, sy} = IsoProjection.to_screen(5, 5, 10, 10)
       {ix, _iy} = IsoProjection.sprite_pos(sx, sy)
       assert ix == sx - div(IsoProjection.tile_w(), 2)
     end
 
     test "sprite extends upward from tile position" do
-      {sx, sy} = IsoProjection.to_screen(5, 5, 10)
+      {sx, sy} = IsoProjection.to_screen(5, 5, 10, 10)
       {_ix, iy} = IsoProjection.sprite_pos(sx, sy)
       assert iy < sy
     end
@@ -103,7 +138,27 @@ defmodule GibberingWeb.IsoProjectionTest do
       svg_h = IsoProjection.svg_height(map_w, map_h)
 
       for x <- 0..(map_w - 1), y <- 0..(map_h - 1) do
-        {sx, sy} = IsoProjection.to_screen(x, y, map_h)
+        {sx, sy} = IsoProjection.to_screen(x, y, map_w, map_h)
+        {_ix, iy} = IsoProjection.sprite_pos(sx, sy)
+        tw2 = div(IsoProjection.tile_w(), 2)
+
+        assert sx - tw2 >= 0, "tile (#{x},#{y}) left tip at #{sx - tw2} < 0"
+        assert sx + tw2 <= svg_w, "tile (#{x},#{y}) right tip at #{sx + tw2} > svg_w #{svg_w}"
+        assert iy >= 0, "tile (#{x},#{y}) sprite top at #{iy} < 0"
+
+        assert sy + IsoProjection.tile_h() <= svg_h,
+               "tile (#{x},#{y}) diamond bottom #{sy + IsoProjection.tile_h()} > svg_h #{svg_h}"
+      end
+    end
+
+    test "all tiles fit within the svg dimensions for a non-square 16x10 map" do
+      map_w = 16
+      map_h = 10
+      svg_w = IsoProjection.svg_width(map_w, map_h)
+      svg_h = IsoProjection.svg_height(map_w, map_h)
+
+      for x <- 0..(map_w - 1), y <- 0..(map_h - 1) do
+        {sx, sy} = IsoProjection.to_screen(x, y, map_w, map_h)
         {_ix, iy} = IsoProjection.sprite_pos(sx, sy)
         tw2 = div(IsoProjection.tile_w(), 2)
 
