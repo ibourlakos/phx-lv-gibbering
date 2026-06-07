@@ -35,7 +35,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
   >
     <%!-- Layer 1: Ground tiles --%>
     <%= for {{x, y}, tile} <- state.grid_tiles do %>
-      <% {sx, sy} = iso.to_screen(x, y, map_h) %>
+      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
       <polygon
         points={iso.diamond_points(sx, sy)}
         fill={tile_fill(tile.texture)}
@@ -47,7 +47,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     <%!-- Layer 2: Tile decorations (depth-sorted) --%>
     <%= for {{x, y}, tile} <- sorted_tiles do %>
       <%= if dec = Map.get(tile, :decoration) do %>
-        <% {sx, sy} = iso.to_screen(x, y, map_h) %>
+        <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
         <% {dx, dy} = iso.sprite_pos(sx, sy) %>
         <.decoration_sprite decoration={dec} x={dx} y={dy} />
       <% end %>
@@ -66,7 +66,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <% is_selected = id == state.selected_id %>
       <% is_target = id in @valid_targets %>
       <% is_spell_target = id in @spell_targets %>
-      <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_h) %>
+      <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
       <% {ix, iy} = iso.sprite_pos(sx, sy) %>
       <% hp_w = tw - 8 %>
       <% hp_fill = round(hp_w * entity.hp / max(entity.max_hp, 1)) %>
@@ -153,7 +153,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       conflict with entity click targets.
     --%>
     <%= for {x, y} <- state.valid_moves do %>
-      <% {sx, sy} = iso.to_screen(x, y, map_h) %>
+      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
       <polygon
         points={iso.diamond_points(sx, sy)}
         fill="rgba(100,180,255,0.30)"

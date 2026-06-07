@@ -14,8 +14,8 @@ defmodule GibberingWeb.IsoProjection do
   def sprite_h, do: @sprite_h
   def origin_y, do: @origin_y
 
-  # Horizontal origin: shifts the grid right so the leftmost column (y=map_h-1) starts at ~tile_w/2.
-  def origin_x(map_h), do: map_h * div(@tile_w, 2) + div(@tile_w, 2)
+  # Anchors leftmost column (y=map_h-1) with a half-tile margin; equal margins on both sides for any shape.
+  def origin_x(_map_w, map_h), do: map_h * div(@tile_w, 2) + div(@tile_w, 2)
 
   # Total SVG canvas dimensions for a given map size.
   def svg_width(map_w, map_h), do: (map_w + map_h) * div(@tile_w, 2) + @tile_w
@@ -24,8 +24,8 @@ defmodule GibberingWeb.IsoProjection do
     do: (map_w + map_h) * div(@tile_h, 2) + @origin_y + @sprite_h + @tile_h
 
   # Grid (x, y) → screen (sx, sy).  sx/sy is the *top vertex* of the diamond tile.
-  def to_screen(x, y, map_h) do
-    sx = (x - y) * div(@tile_w, 2) + origin_x(map_h)
+  def to_screen(x, y, map_w, map_h) do
+    sx = (x - y) * div(@tile_w, 2) + origin_x(map_w, map_h)
     sy = (x + y) * div(@tile_h, 2) + @origin_y
     {sx, sy}
   end
