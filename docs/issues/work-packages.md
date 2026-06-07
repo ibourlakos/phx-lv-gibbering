@@ -1,7 +1,7 @@
 # Work Packages
 _Temporary planning doc — not an issue file. Delete when packages are actioned._
 
-Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-F: closed #97, #98, #13, #99, #81, #103, #10; #100 in-progress)
+Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-D ✓ complete except #92 discovery; WP-G ✓ complete; WP-F: closed through #104; WP-H #88 in-progress)
 
 ---
 
@@ -28,36 +28,17 @@ _All 13 issues closed as of 2026-06-06._
 
 ---
 
-## WP-D — Campaign & Character Lifecycle + DM Session Toolset
-_WP-D now spans the full campaign lifecycle: backend schema through live DM session controls. #54→#55→#56 are still the strict foundation. New issues (#90–#95) build on top._
+## WP-D — Campaign & Character Lifecycle + DM Session Toolset ✓ complete
+_#54–#57, #90–#95 all closed as of 2026-06-06. One discovery straggler remains._
 
 | # | Title | Priority |
 |---|---|---|
-| [#54](054-campaign-character-schema.md) | `CampaignCharacter` schema (template-to-instance bridge) | medium |
-| [#55](055-bidirectional-campaign-joining.md) | Bidirectional campaign joining (player request + DM invite) | medium |
-| [#56](056-character-template-merge-logic.md) | Character template → live entity merge logic | medium |
-| [#57](057-dm-character-adjustment-ui.md) | DM character adjustment UI (campaign prep) | medium |
-| [#90](090-player-campaign-overview-page.md) | Player campaign overview page | medium |
-| [#91](091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | medium |
-| [#93](093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | medium |
-| [#94](094-dm-initiative-panel.md) | DM turn and initiative management panel | medium |
-| [#95](095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | medium |
 | [#92](092-spectator-role-discovery.md) | Spectator role — membership and session view (discovery) | low |
-
-Sequencing: #54 → #55 → #56 are strictly sequential. #57 is the prep-UI face of the schema work. #90 and #91 depend on #55 (membership exists). #93 → #94 → #95 are the DM session toolset; they depend on a running GameServer (i.e., #56 merged). #92 (spectator) is discovery and can be done any time but gates any spectator implementation.
 
 ---
 
-## WP-G — Integration Test Coverage
-_#76 and #77 are independent. #78 depends on WP-D (#54–#56)._
-
-| # | Title | Priority |
-|---|---|---|
-| [#76](076-accounts-context-integration-tests.md) | `Accounts` context integration tests | medium |
-| [#77](077-catalogue-cache-genserver-tests.md) | `Catalogue.Cache` GenServer tests | medium |
-| [#78](078-game-live-event-handler-tests.md) | `GameLive` event handler integration tests | medium |
-
-#76 and #77 can be done any time (no phase dependency). #78 requires WP-D (#54–#56) to be merged.
+## WP-G — Integration Test Coverage ✓ complete
+_#76, #77, #78 all closed as of 2026-06-06._
 
 ---
 
@@ -152,4 +133,4 @@ WP-A ✓  →  WP-B ✓  →  WP-C ✓  →  WP-D  →  WP-G (#78)
                           WP-G: #76 and #77 free-floating — can start now
 ```
 
-WP-A, WP-B, and WP-C are complete. **Current critical path: WP-D (#54 → #55 → #56 → #57 → #90/#91 → #93 → #94 → #95).** WP-E, WP-F discoveries, and WP-H (#88) can run in parallel. WP-I (#96) is fully independent. WP-G #76 and #77 are free-floating.
+WP-A, WP-B, WP-C, WP-D, and WP-G are complete. **Current focus: WP-H #88 (content taxonomy discovery, medium) → #89 (content population). WP-E stragglers (#69, #68, #74) and WP-F discoveries (#25, #26, #34) can run in parallel. WP-I (#96) is fully independent.**
