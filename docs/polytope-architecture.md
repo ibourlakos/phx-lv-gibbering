@@ -1,19 +1,19 @@
 # The Bounded Context Polytope
-## A Multidimensional Architecture Model for Complex Domain Systems
+## A Practitioner's Synthesis — Architecture Vocabulary for Complex Domain Systems
 
 **Authors:** Ioannis (John) Bourlakos · Claude Sonnet 4.6 (Anthropic)
 
 *Developed from the architectural design sessions of The Gibbering Engine, a turn-based D&D 5e tactical grid game built with Elixir and Phoenix LiveView. The game-specific examples throughout are illustrations of general principles applicable to any sufficiently complex software system.*
 
+*This is a practitioner's synthesis document. A companion scientific paper with explicit claim status, formal treatment sketches, and full prior-art engagement is at [docs/papers/bounded-context-graph.md](papers/bounded-context-graph.md). The term "polytope" here is a geometric metaphor for multidimensionality — it is not used in its strict mathematical sense. For an accurate term, the companion paper uses "Bounded Context Graph."*
+
 ---
 
-## Abstract
+## Overview
 
 Hexagonal architecture provides a clean separation between a software domain and the infrastructure surrounding it, but it assumes a single primary concern at the center. Real systems of moderate complexity violate this assumption: they contain multiple orthogonal concerns — rules, content, lifecycle management, rendering, communication — each demanding a center of its own.
 
-This paper introduces the *bounded context polytope*: a multidimensional generalization of hexagonal architecture in which each node of a directed graph is itself a fully encapsulated hexagon (a bounded context in the Domain-Driven Design sense), and the edges are mediated by a typed event bus rather than direct adapter pairs. The polytope resolves the O(N²) adapter-pair problem that arises when N bounded contexts must communicate, consolidates the coupling surface onto a single shared Published Language (the event schema registry), and preserves the full port-and-adapter discipline of hexagonal architecture within each node.
-
-We develop a four-level taxonomy — dimension, parallel, context, aspect — grounded in established literature on multidimensional separation of concerns and aspect-oriented programming. We examine five dimensions the polytope exhibits: structural, temporal, behavioral, presentational, and integration. We give a semi-formal definition of the compound event bus as a hierarchical composition of transport mechanisms spanning from hardware interrupt lines to external message brokers. We address the concurrent event ordering problem inherent in multi-writer event logs and its resolution. We propose an event schema design methodology grounded in Event Storming and consumer-driven contract testing. We show that the model subsumes context-aware computing in the Dey (2001) sense, with precise mapping between context-awareness concepts and polytope primitives. Finally, we observe that the development lifecycle is itself a polytope at the meta-level, and explore the roles of human and AI actors within it.
+This guide develops the *bounded context polytope* vocabulary: a directed graph of bounded contexts connected by a typed event bus, each node itself a fully encapsulated hexagon. It provides a four-level taxonomy (dimension, parallel, context, aspect), a working definition of the compound event bus, a methodology for event schema design, and a mapping between this model and other bodies of work including context-aware computing. The polytope is a synthesis of established ideas — hexagonal architecture, DDD bounded contexts, multidimensional separation of concerns, CQRS/event sourcing — unified under a shared vocabulary for reasoning about complex domain systems.
 
 ---
 
@@ -27,17 +27,15 @@ In many systems this is the right model. But it carries a hidden assumption: the
 
 That assumption breaks the moment a system acquires multiple genuinely orthogonal primary concerns. Consider adding a new character class — Barbarian — to a D&D game engine. The change propagates through the rules engine (rage mechanics, new action economy interactions), the content catalogue (class definition, resource tables, trait list), the campaign lifecycle (the DM can now offer this class during session preparation), the rendering layer (a rage indicator, a visual cue on rage entry), and the notification system (the combat log entry "Aldric enters a RAGE"). In a single-hexagon model, all of these land in "the domain," which is no longer a coherent single thing. Or the designer attempts to split into independent services and encounters the question hexagonal architecture was never designed to answer: how do independent domains communicate without recreating the entanglement just removed?
 
-### 1.2 Contributions
+### 1.2 What This Guide Covers
 
-This paper makes the following contributions:
+This guide is organized around five topics:
 
-1. **The bounded context polytope**: a named model for a directed graph of bounded contexts connected by a typed event bus, generalizing hexagonal architecture to N orthogonal concerns.
-2. **A four-level taxonomy**: dimension, parallel, context, and aspect — grounded in the MDSOC and AOP literature and consistent with DDD terminology.
-3. **A semi-formal bus definition**: the compound bus B = (C, E) as a hierarchical composition, distinguishing the command bus from the event bus and characterizing both within the vertical transport stack.
-4. **A resolution of the concurrent event ordering problem** in hash-chained event logs under multi-writer conditions.
-5. **An event schema design methodology**: a mini-cycle from Event Storming through consumer-driven contract validation and versioning policy.
-6. **Absorption of context-aware computing**: a formal mapping showing that the polytope subsumes the Dey (2001) context-awareness model and extends it to a distributed setting.
-7. **The meta-polytope**: the development lifecycle and its actors formalized using the same vocabulary.
+- **Taxonomy** — the four-level vocabulary (dimension, parallel, context, aspect) for naming architectural concerns precisely
+- **The event bus** — a working definition of the compound bus B = (C, E) and its placement in the vertical transport stack
+- **Temporal ordering** — event sourcing, causal chains, and the single-writer contract for concurrent event streams
+- **Schema methodology** — a mini-cycle from Event Storming through consumer-driven contract validation and versioning policy
+- **Cross-cutting mappings** — how the polytope vocabulary relates to context-aware computing, game engine architectures, and the development lifecycle itself
 
 ### 1.3 Paper Organization
 
@@ -97,7 +95,7 @@ This constraint gives each bounded context the freedom to evolve its internals i
 
 If bounded contexts communicate through direct adapter pairs, then with N contexts there are up to N(N−1) directed adapter implementations. Every time a new context is added, every existing context that must react gets a new adapter. This is quadratic cost in the number of contexts — the practical reason large codebases become rigid as they grow.
 
-The solution is a **typed event bus**. Each bounded context connects to the bus exactly once: it publishes typed events when its internal state changes, and subscribes to the events it cares about from other contexts. With N contexts, the adapter count is O(N). Adding a context costs one publisher and one subscriber, regardless of how many others must react.
+The solution is a **typed event bus**. Each bounded context connects to the bus exactly once: it publishes typed events when its internal state changes, and subscribes to the events it cares about from other contexts. With N contexts, the bus reduces worst-case adapter count from O(N²) to O(N). The savings are most significant when multiple contexts subscribe to the same event type (true fan-out), when publisher and subscriber release cycles must be decoupled, or when a single observation point for inter-context events is needed. In sparse topologies where most contexts don't react to most events, the bus adds operational overhead (schema registry, versioning) without proportionate adapter savings — direct synchronous ports may be the right choice in those cases.
 
 This is the Mediator pattern applied at the architectural level. Coupling does not disappear — it moves. In the direct-adapter model, coupling is structural: Context A imports Context B's module. In the bus model, coupling is semantic: both contexts depend on the definition of the event type `DamageDealt`. Rename a field and every publisher and subscriber must be updated. This makes **the event schema registry the most important contract in the system**. It deserves the same discipline as a public API: versioning, deprecation, and migration paths. Section 7 addresses the design methodology for this contract.
 
@@ -145,7 +143,7 @@ An **aspect** is a concern that cannot be cleanly assigned to any single context
 
 ### 4.5 Relationship to Literature
 
-The full term is the **reactive bounded context polytope**: a synthesis of MDSOC (dimensions), DDD (bounded contexts and Published Language), AOP (aspects), hexagonal architecture (Cockburn, 2005), and event-driven architecture. It is a genuine synthesis, not a renaming of existing work. The terms *polytope*, *parallel*, and *meta-hexagon* are coined here. All others are established.
+The model is a **synthesis**: MDSOC (dimensions), DDD (bounded contexts and Published Language), AOP (aspects), hexagonal architecture (Cockburn, 2005), and event-driven architecture combined under one vocabulary. The structural claim — a directed graph of bounded contexts connected by a typed event bus — is the content of Vernon's reactive DDD (2011–2013) and Richardson's (2018) event-driven microservices decomposition. The taxonomy and vocabulary are the synthesis contribution, not the structural claim itself. The terms *polytope* (as metaphor), *parallel*, and *meta-hexagon* are coined here. All others are established.
 
 ---
 
@@ -207,7 +205,7 @@ The resolution for this system follows from the architecture: SceneServer is the
 
 ## 6. The Event Bus: A Hierarchical Composition
 
-### 6.1 Semi-Formal Definition
+### 6.1 Working Definition
 
 The polytope model refers to "the bus" as though it were one mechanism. It is not. The bus is a hierarchical composition of lower-level transport mechanisms, each satisfying a different subset of a shared set of properties.
 
@@ -229,7 +227,7 @@ A **command bus** has fan-out = 1 (exactly one recipient), tight temporal coupli
 
 An **event bus** has fan-out ∈ [0, ∞) (zero or more recipients), loose temporal coupling (the sender does not block on receiver processing), and unaddressed broadcast (the sender holds no reference to any receiver). This is the CQRS event side. In Phoenix, `PubSub.broadcast` implements the event bus. A persistent event store extends it to full temporal decoupling — messages survive receiver downtime and can be replayed.
 
-These are not interchangeable. Every cross-context message is either a command or an event. No cross-context message should travel outside the compound bus. Direct module imports across a bounded context boundary violate this property regardless of how they are implemented at the language level.
+These are not interchangeable. Every cross-context message is either a command or an event. Event-typed cross-context messages must travel through the bus. Command-typed cross-context messages may be direct synchronous port calls where the calling context needs to block on the result — for instance, the Scene context calling a Rules port to validate an action before applying it. What must never happen is a direct module import from one context's *internal domain model* into another's, bypassing any port boundary entirely.
 
 ### 6.3 The Vertical Bus Stack
 
@@ -461,30 +459,21 @@ Dey's four primary dimensions appear as polytope equivalents:
 | Activity | Scene phase, action economy state, active conditions |
 | Time | Temporal dimension — event timestamps, causal ordering |
 
-These are not analogies — they are the same concepts named differently. The scene phase `:in_combat` is situational context in Dey's precise sense. The entity's `conditions: [:paralyzed]` is situational context for that entity. `collect_modifiers(entity, action, state)` is context reasoning: given the entity's current situation, which rules apply?
+The mapping is precise enough to be useful: the scene phase `:in_combat` is situational context in Dey's sense; `conditions: [:paralyzed]` is situational context for that entity; `collect_modifiers(entity, action, state)` is context reasoning. The polytope vocabulary can express context-aware systems naturally. Whether the mapping is a formal bijection — subsumption in the strict logical sense — has not been proved; that would require showing no concept in context-aware computing falls outside the polytope's vocabulary, and vice versa. The practical value is that the polytope gives context-aware system designers a ready-made architectural vocabulary, not that it supersedes the context-awareness literature.
 
 **What the polytope does not absorb.** The context-aware literature devotes significant effort to *imperfect context* — sensor readings with error margins, inferred activity from ambiguous signals, conflicting sources (Henricksen and Indulska, 2004). For a game engine, game state is deterministic and authoritative; this gap is irrelevant by design. For systems that sense the physical world, an explicit context-provider bounded context would handle uncertainty before publishing clean typed events to the polytope. External physical context (GPS, proximity sensors) would be handled by a sensor-facing bounded context. The polytope absorbs it; it simply has no instance of it in this system.
 
-**The theoretical claim.** Context-aware computing solved the adaptation problem for single applications: one system senses its environment and adapts. The polytope extends this to a distributed domain graph: N local context models, each maintaining its own situational state, synchronized through typed event distribution. The polytope is a *distributed context-aware architecture*. The behavioral dimension's state machines are a formalization of the context model at the system scale.
+**The practical observation.** Context-aware computing solved the adaptation problem for single applications: one system senses its environment and adapts. The polytope extends the same structural ideas to a distributed domain graph: N local context models, each maintaining its own situational state, synchronized through typed event distribution. Teams building context-aware distributed systems can apply the polytope vocabulary directly.
 
 ---
 
-## 12. The Meta-Polytope: Lifecycle and Actors
+## 12. The Development Lifecycle and Actors
 
-### 12.1 The Development Lifecycle as a Polytope
+### 12.1 The Lifecycle Observation
 
-The process by which the system is built and evolved is itself a structured system with bounded contexts, ports, and a Published Language — a polytope operating on the software polytope. Its bounded contexts:
+Conway's Law (Conway 1968): organizations that design systems produce systems mirroring their communication structure. In polytope terms, the bounded context decomposition of the software tends to follow the decomposition of the team. Teams organized around functional layers produce layer-based systems; teams organized around bounded contexts produce clean context boundaries.
 
-- **Discovery and requirements** — domain experts, product owners, user research. Published Language: problem statements, user stories, acceptance criteria, the ubiquitous language of the domain being built.
-- **Design** — architects and technical leads. Published Language: bounded context maps, port definitions, event schemas, architectural decisions.
-- **Implementation** — developers. Published Language: programming language, internal codebase conventions.
-- **Verification** — automated tests, QA, CI pipelines. Published Language: test specifications, coverage reports, pass/fail signals.
-- **Deployment** — DevOps, infrastructure tooling, release management. Published Language: deployment configurations, infrastructure-as-code.
-- **Observation** — monitoring, alerting, metrics, structured logs. Published Language: metrics schemas, alert definitions, log structures. Observation data closes the loop back into Discovery.
-
-These contexts communicate via their own event chain: problem statements flow from Discovery into Design; design decisions flow into Implementation; implementation artifacts flow into Verification; verification gates Deployment; observation data closes the loop.
-
-Conway's Law (Conway, 1968): organizations that design systems produce systems mirroring their communication structure. In polytope terms, the bounded context decomposition of the software tends to follow the bounded context decomposition of the team. Teams organized around functional layers (all frontend engineers together) produce layer-based systems resistant to independent evolution. Teams organized around bounded contexts produce clean bounded context boundaries.
+The polytope vocabulary can also be applied to the development process itself — Discovery, Design, Implementation, Verification, Deployment, Observation each have their own Published Language (problem statements, event schemas, code conventions, test specs, configurations, metrics). This is an observation, not a formal claim; it is useful as a reminder that team structure and system structure are not independent.
 
 ### 12.2 Actors: Human and AI
 
@@ -518,9 +507,11 @@ Section 5.2 argued that the event log unifies data, storage, and behavior into a
 
 In an event-sourced polytope, all three are immediate: the audit trail is the event log (the primary storage); testing a historical scenario means replaying the recorded event sequence; debugging a wrong outcome means replaying to the moment of failure with additional instrumentation. The event log earns its complexity cost in observability alone.
 
-### 13.3 The Central Dogma Applied
+### 13.3 One-Way Information Flow
 
-The analogy between the central dogma of molecular biology (DNA → RNA → Protein) and the polytope's information flow (Commands → Events → State) is more than decorative. Both systems depend on *one-way information flow* as a load-bearing property. In molecular biology, violating the central dogma — reverse transcription — is both rare and disruptive; it is the exception, not the rule, and it requires specialized machinery. In the polytope, violating the one-way flow — allowing a context to mutate another's state directly, bypassing events — is the architectural equivalent: it breaks the coherence of the whole system, requires special-case handling everywhere, and is a symptom of a decomposition failure.
+The polytope's information flow — Commands → Events → State — is deliberately one-way. A context cannot mutate another's state directly, bypassing events. Doing so breaks the coherence of the event log, prevents replay and audit, and reintroduces the coupling the bus was designed to eliminate.
+
+The analogy to the central dogma of molecular biology (DNA → RNA → Protein) is illustrative: both systems use one-way flow as a structural property. Note, however, that the biological system contains bidirectional correction — transcription factors (proteins) regulate gene expression, constituting feedback from downstream to upstream. The polytope's equivalent of this feedback is the saga pattern: compensating sagas allow a downstream failure to trigger an upstream undo. One-way flow is the default; compensating corrections are the deliberate, explicitly modeled exception, not a violation of the model.
 
 ---
 
@@ -582,7 +573,7 @@ The concurrent event ordering problem in hash-chained logs is resolved by observ
 
 The event schema design methodology — Event Storming, schema specification, consumer-driven validation, versioning policy — operationalizes the Published Language as a development practice, not just an architectural concept.
 
-Context-aware computing is shown to be subsumed by the polytope at a higher level of abstraction: the polytope is a distributed context-aware architecture in Dey's (2001) formal sense, extending the single-application context-awareness model to N cooperating bounded contexts.
+Context-aware computing maps naturally onto the polytope vocabulary: Dey's (2001) dimensions (location, identity, activity, time) find direct counterparts in bounded context state and the temporal dimension. The polytope provides context-aware system designers a ready-made architectural vocabulary.
 
 The development lifecycle is itself a polytope, with Conway's Law as the fundamental coupling between the organizational polytope and the software polytope. AI systems, properly understood, are `«boundary»` or `«control»` adapters in the meta-polytope — powerful and useful, but not domain authorities. The documentation system serves as the event store that provides continuity across stateless AI sessions.
 
@@ -590,134 +581,64 @@ The model is not formally verified, not empirically validated, and not fully ope
 
 ---
 
-## Appendix A: The Biological Analogy
+## Appendix A: The Two-Bus Distinction in Biology
 
-The polytope's structure has a precise biological analogue at every level of organization. The analogy is productive rather than decorative — it points to structural properties that are not otherwise obvious.
-
-### A.1 The Molecular Level: Published Language and Event Flow
-
-**The event schemas (the Published Language) are the genetic code.** The genetic code is the shared vocabulary that gives meaning to nucleotide sequences — the alphabet and grammar that all cellular machinery must agree on to communicate correctly. The event schema registry plays the same role.
-
-**The persistent event store is DNA.** DNA is the authoritative, append-only record from which the organism's expressed state is derived. Everything the organism does or builds traces back to it. The event log is the same: the authoritative record from which all bounded context state is derived. Current state is always a materialized view over the event history.
-
-**Events in flight through the bus are messenger RNA (mRNA).** mRNA is produced from a DNA template, carries a specific message from the nucleus to the ribosome, and is transient — degraded after translation. Individual events flowing through the bus are the same: produced from a domain action, typed and addressed to subscribers, ephemeral in fire-and-forget transport.
-
-**Bounded contexts are cells.** Each cell contains the complete DNA but expresses only the genes relevant to its specialization. A liver cell and a neuron have identical DNA but radically different expressed proteins. Each bounded context has access to the complete event bus but subscribes only to the events relevant to its domain. Same bus, different expression.
-
-**Read models and projections are proteins** — the expressed outputs derived from the genetic information. Proteins are what the organism actually does and builds. Read models are the projected state that adapters use for rendering and interaction.
-
-| Biology | Architecture |
-|---|---|
-| Genetic code | Published Language (event schema vocabulary) |
-| DNA | Persistent event store (append-only record) |
-| mRNA | Event instances in flight through the bus |
-| Nuclear membrane | Port boundary (regulated access) |
-| Ribosome | Bounded context consumer |
-| Protein | Read model / projected state |
-| Cell | Bounded context (same bus, different subscriptions) |
-| Organism | The whole system (the polytope) |
-
-**The central dogma of molecular biology** — DNA → RNA → Protein — maps to Commands → Events → State. Information flows in one direction and cannot reverse. You cannot un-transcribe a gene. You cannot un-publish an event. State is derived from events, not the reverse. Both systems depend on this one-way information flow as a load-bearing property.
-
-### A.2 The Two-Bus Distinction in Biology
-
-The nervous system and the endocrine system are the biological command bus and event bus respectively.
+One analogy earns its place: the nervous system and the endocrine system are the biological command bus and event bus respectively.
 
 The *nervous system* is the command bus: point-to-point (a neuron synapses to one specific target cell), fast (millisecond transmission), addressed (axons are wired to specific destinations), acknowledged (post-synaptic potentials confirm reception). This is `GenServer.call` at the biological level.
 
-The *endocrine system* is the event bus: broadcast (hormones are released into the bloodstream and reach all cells), slow (minutes to hours), unaddressed (the hormone does not know its recipients), with fan-out determined by receptor presence — only cells expressing the appropriate receptor respond. This is `PubSub.broadcast` at the biological level. The receptor specificity *is* the subscription mechanism: a cell that does not express the insulin receptor does not respond to insulin, exactly as a subscriber that does not subscribe to `DamageDealt` does not receive it.
+The *endocrine system* is the event bus: broadcast (hormones released into the bloodstream reach all cells), slow (minutes to hours), unaddressed (the hormone does not know its recipients), with fan-out determined by receptor presence — only cells expressing the appropriate receptor respond. This is `PubSub.broadcast` at the biological level. Receptor specificity *is* the subscription mechanism: a cell that does not express the insulin receptor does not respond to insulin, exactly as a subscriber that does not subscribe to `DamageDealt` does not receive it.
 
-### A.3 The Vertical Bus Stack in Biology
-
-Biology exhibits the same layered bus structure as the software stack:
-
-| Level | Biological mechanism | Fan-out | Temporal decoupling | "Published Language" |
-|---|---|---|---|---|
-| Hardware | Ion channels, action potential | 1 | None | Voltage / ion concentration |
-| Intracellular | Second messengers (cAMP, Ca²⁺) | N (within cell) | Seconds | Molecular signal cascades |
-| Local chemical | Neurotransmitters (synaptic) | 1 | Milliseconds | Neurotransmitter identity + receptor |
-| Systemic chemical | Hormones (endocrine) | N | Minutes to hours | Hormone + receptor specificity |
-| Genetic | Gene expression, epigenetics | N | Hours to lifetime | Transcription factor binding sites |
-
-Each row is a bus at its level. The action potential is implemented over ion channel physics. Hormonal signaling runs over the cardiovascular system — the network transport layer. Gene expression changes persist for the cell's lifetime and are heritable across cell division: the biological equivalent of the persistent event store.
-
-### A.4 Context-Awareness in Biology
-
-Dey's context framework — acquisition, distribution, reasoning, adaptation — maps directly to biological signal transduction:
-
-Context *acquisition* is sensory reception: membrane receptors, photoreceptors, mechanoreceptors, chemoreceptors. Each is a port on the cell boundary that accepts specific molecular signals and translates them into intracellular signals. The receptor is the anti-corruption layer: it translates the external signal into the internal language of the cell.
-
-Context *distribution* is the nervous and endocrine systems — the biological event bus.
-
-Context *reasoning* is gene regulation: transcription factors assess the cell's current state (active signaling pathways, developmental stage, metabolic state) and determine which genes to express. This is `collect_modifiers(entity, action, state)` at the molecular level.
-
-Context *adaptation* is differentiation and response: a muscle cell responds to acetylcholine by contracting; a liver cell responds to glucagon by releasing glucose. Same organism, same hormone, radically different adaptation based on cell identity — exactly as different bounded contexts respond differently to the same event.
-
-### A.5 Polytope Taxonomy in Biology
-
-| Biology | Polytope |
-|---|---|
-| Molecule | Data primitive (struct field) |
-| Organelle | Sub-function within a context |
-| Cell | Bounded context |
-| Tissue | Parallel (cells of the same specialization) |
-| Organ | Dimension (organized tissues serving one function) |
-| Organ system | Cross-dimensional concern (aspect) |
-| Organism | The polytope |
-
-The organism's nervous and endocrine systems span all organs — they are aspects in the AOP sense, cross-cutting concerns that cannot be assigned to any single organ because they serve all of them. Security and observability in software are structurally identical.
-
-### A.6 Development Lifecycle and Embryogenesis
-
-An organism develops from a single cell through a precisely ordered sequence of context-driven adaptations. Each cell receives context signals (morphogens, physical gradients, cell-cell contacts) and adapts its gene expression accordingly. The developmental program is an event-sourced state machine: the zygote's initial state plus the ordered sequence of context events during development deterministically produces the adult organism. The organism cannot be understood at any developmental stage without the history of context changes that produced it.
-
-The biologist's model of development: initial state + event history → current state. This is identical to the event sourcing claim. Biology discovered this architecture three billion years before we named it.
+The analogy is useful for explaining the command/event distinction to audiences unfamiliar with CQRS. It should not be taken further than that; biology contains bidirectional feedback (§13.3) and the mapping breaks under pressure.
 
 ---
 
-## References
+## Further Reading
 
-**Foundational architecture**
-1. Cockburn, A. (2005). *Hexagonal Architecture*. c2.com.
-2. Dijkstra, E.W. (1968). The Structure of "THE" Multiprogramming System. *Communications of the ACM*, 11(5).
-3. Parnas, D.L. (1972). On the Criteria To Be Used in Decomposing Systems into Modules. *Communications of the ACM*, 15(12).
-4. Buschmann, F., Meunier, R., Rohnert, H., Sommerlad, P., Stal, M. (1996). *Pattern-Oriented Software Architecture, Vol. 1: A System of Patterns*. Wiley.
+**The primary synthesis sources**
 
-**Domain-Driven Design**
-5. Evans, E. (2003). *Domain-Driven Design: Tackling Complexity in the Heart of Software*. Addison-Wesley.
-6. Vernon, V. (2013). *Implementing Domain-Driven Design*. Addison-Wesley.
+The polytope is a synthesis of these bodies of work. Reading them in order gives the full intellectual lineage:
 
-**Multidimensional separation of concerns**
-7. Tarr, P., Ossher, H., Harrison, W., Sutton, S. (1999). N Degrees of Separation: Multi-Dimensional Separation of Concerns. *ICSE 1999*.
-8. Kiczales, G. et al. (1997). Aspect-Oriented Programming. *ECOOP 1997*. LNCS 1241.
+- Cockburn, A. (2005). *Hexagonal Architecture*. The foundation: ports and adapters.
+- Evans, E. (2003). *Domain-Driven Design*. Addison-Wesley. Bounded contexts, context maps, Published Language, Anti-Corruption Layer.
+- Vernon, V. (2013). *Implementing Domain-Driven Design*. Addison-Wesley. The practitioner's DDD reference; his reactive DDD writings (2011–2013) describe the directed-graph-of-contexts-on-a-bus configuration that this guide names.
+- Tarr, P., Ossher, H., Harrison, W., Sutton, S. (1999). N Degrees of Separation: Multi-Dimensional Separation of Concerns. *ICSE 1999*. The source of the dimensions/hyperslices vocabulary.
+- Kiczales, G. et al. (1997). Aspect-Oriented Programming. *ECOOP 1997*. The source of the aspect vocabulary.
+- Young, G. (2010). *CQRS Documents*. The command/event distinction; event sourcing as primary source of truth.
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns*. Addison-Wesley. The canonical pattern catalog for message-based integration; Event Aggregator, Publish-Subscribe, Message Broker are all here.
+- Richardson, C. (2018). *Microservices Patterns*. Manning. The most comprehensive modern treatment of event-driven microservices, sagas, and consumer-driven contract testing.
 
-**Event-driven architecture and CQRS**
-9. Young, G. (2010). *CQRS Documents*. cqrs.files.wordpress.com.
-10. Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns*. Addison-Wesley.
-11. Richardson, C. (2018). *Microservices Patterns*. Manning.
+**Related architectural frameworks**
 
-**Design patterns**
-12. Gamma, E., Helm, R., Johnson, R., Vlissides, J. (1994). *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley.
+- Tilkov, S. et al. *Self-Contained Systems* (scs-architecture.org). Structurally similar to the polytope decomposition; a useful comparison.
+- Brown, S. (2018). *The C4 Model for Software Architecture*. A complementary modeling tool; the BCG's bounded context level maps to C4's Container level.
+- Dahan, U. (2012). *Autonomous Components*. Conference presentations. The "autonomous components" framing of the same directed-graph-of-contexts configuration.
 
-**Deployment and organizational structure**
-13. Newman, S. (2015). *Building Microservices*. O'Reilly.
-14. Fowler, M. (2015). *MonolithFirst*. martinfowler.com.
-15. Humble, J. & Farley, D. (2010). *Continuous Delivery*. Addison-Wesley.
-16. Conway, M. (1968). How Do Committees Invent? *Datamation*, 14(4).
+**Formal foundations (for the companion scientific paper)**
 
-**Essential complexity and the limits of automation**
-17. Brooks, F. (1987). No Silver Bullet: Essence and Accident in Software Engineering. *IEEE Computer*, 20(4).
-18. Foote, B. & Yoder, J. (1997). Big Ball of Mud. *PLoP 1997*.
+- Hoare, C.A.R. (1978). Communicating Sequential Processes. *CACM*, 21(8). The formal apparatus for specifying the bus properties in §6.
+- Milner, R. (1980). *A Calculus of Communicating Systems*. An alternative formal apparatus.
+- Hewitt, C., Bishop, P., Steiger, R. (1973). A universal modular ACTOR formalism. *IJCAI 1973*. The actor model; validates the single-writer contract via sequential mailbox processing.
+- Welsh, M., Culler, D., Brewer, E. (2001). SEDA. *SOSP 2001*. Staged event-driven architecture; a structural analogue to the polytope from the systems side.
+
+**CloudEvents and schema standards**
+
+- CNCF CloudEvents (2018). *CloudEvents Specification v1.0*. cloudevents.io. A production standard for event envelopes; evaluate before defining a proprietary format.
+- Brandolini, A. (2013). *Introducing EventStorming*. Leanpub. The Event Storming discovery technique (§7.2).
 
 **Context-aware computing**
-19. Schilit, B. & Theimer, M. (1994). Disseminating Active Map Information to Mobile Hosts. *IEEE Network*, 8(5).
-20. Weiser, M. (1991). The Computer for the 21st Century. *Scientific American*, 265(3).
-21. Dey, A.K. (2001). Understanding and Using Context. *Personal and Ubiquitous Computing*, 5(1).
-22. Henricksen, K. & Indulska, J. (2004). A Software Engineering Framework for Context-Aware Pervasive Computing. *IEEE PerCom 2004*.
 
-**Event schema design**
-23. Brandolini, A. (2021). *Introducing EventStorming*. Leanpub.
+- Dey, A.K. (2001). Understanding and Using Context. *Personal and Ubiquitous Computing*, 5(1). The formal context-aware computing framework; §11 applies its vocabulary to the polytope.
+- Henricksen, K. & Indulska, J. (2004). A Software Engineering Framework for Context-Aware Pervasive Computing. *IEEE PerCom 2004*. Extension to imperfect and uncertain context.
+- Schilit, B. & Theimer, M. (1994). Disseminating Active Map Information to Mobile Hosts. *IEEE Network*, 8(5). The original coinage of "context-aware."
 
-**Event integrity and sequencing**
-24. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. *CACM*, 21(7).
-25. Nakamoto, S. (2008). Bitcoin: A Peer-to-Peer Electronic Cash System. *bitcoin.org*.
+**Deployment, organization, and complexity**
+
+- Parnas, D.L. (1972). On the Criteria To Be Used in Decomposing Systems into Modules. *CACM*, 15(12). Modular decomposition; still the clearest statement of why boundaries matter.
+- Conway, M. (1968). How Do Committees Invent? *Datamation*, 14(4). Conway's Law; §12.1.
+- Fowler, M. (2015). *MonolithFirst*. martinfowler.com. The case for starting with a monolith and extracting contexts when operational pressure warrants.
+- Brooks, F. (1987). No Silver Bullet. *IEEE Computer*, 20(4). Essential vs. accidental complexity; the limit on what any framework can solve.
+
+**Sequencing and integrity**
+
+- Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. *CACM*, 21(7). Causal ordering; concurrent events have no meaningful total order.
