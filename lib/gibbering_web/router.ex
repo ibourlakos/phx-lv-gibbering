@@ -58,6 +58,8 @@ defmodule GibberingWeb.Router do
     get "/campaigns/:id", AdminCampaignsController, :show
     post "/campaigns/:id/force_close", AdminCampaignsController, :force_close
     post "/campaigns/:id/remove_member", AdminCampaignsController, :remove_member
+    get "/characters", AdminCharactersController, :index
+    get "/characters/:id", AdminCharactersController, :show
   end
 
   # Authenticated routes
