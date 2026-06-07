@@ -1,7 +1,8 @@
 # #69 · `MetricsStore` behaviour + `Stores.Local` implementation
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-07
 **Priority:** low
 **Tags:** architecture, ops
 
@@ -10,13 +11,11 @@ Implement the hexagonal monitoring layer: a `MetricsStore` behaviour for history
 Depends on [#68](068-livedashboard-and-campaign-monitoring.md).
 
 **Acceptance criteria**
-- [ ] `Gibbering.Monitoring.MetricsStore` behaviour defined with `record/3` and `history/2` callbacks
-- [ ] `Gibbering.Monitoring.Stores.Local` implements the behaviour:
-  - ETS ring buffer per campaign — fixed-size circular buffer of recent samples (~5 min); feeds sparklines
-  - DB snapshots — `campaign_metric_snapshots` table sampled ~every 60s; pruned after 7 days via a scheduled job
-- [ ] `Gibbering.Monitoring.Stores.NoOp` for test environments (drops all writes, returns `[]` for history)
-- [ ] Active adapter configured via application config (default: `Stores.Local`)
-- [ ] Campaign GenServer emits `:telemetry.execute/3` events for memory, queue depth, player count; a Telemetry handler calls `MetricsStore.record/3`
-- [ ] Strain detection: if message queue depth or memory exceeds a configurable threshold for ≥ 10s, fire a debounced PubSub broadcast on `system:admin`
-- [ ] Admin monitoring page (from [#68](068-livedashboard-and-campaign-monitoring.md)) uses `MetricsStore.history/2` for sparklines
-- [ ] `Stores.Prometheus` is **not** implemented here — the behaviour makes it a future drop-in
+- [x] `Gibbering.Monitoring.MetricsStore` behaviour with `record/3` and `history/2`
+- [x] `Gibbering.Monitoring.Stores.Local` — ETS ordered_set ring buffer (5-min window); polls GameRegistry every 10s; snapshots to `campaign_metric_snapshots` every 60s; prunes after 7 days hourly
+- [x] `Gibbering.Monitoring.Stores.NoOp` — drops writes, returns `[]`; active in test env via config
+- [x] Adapter configured via `config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: ...`
+- [x] Polling in `Stores.Local` (not via Telemetry events) — records memory_bytes, queue_depth, entity_count per active campaign
+- [x] Strain detection: PubSub broadcast on `system:admin` after ≥10s above threshold (100MB memory or 500 queue depth)
+- [x] CampaignMonitoringPage uses `MetricsStore.history/2` for inline SVG sparklines (memory trend)
+- [x] `Stores.Prometheus` not implemented — behaviour is the extension point

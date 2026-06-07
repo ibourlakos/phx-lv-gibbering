@@ -42,14 +42,8 @@ _#76, #77, #78 all closed as of 2026-06-06._
 
 ---
 
-## WP-E — Admin App
-_#64, #65, #66, #67, #74, #75, #68 all closed. One low-priority straggler remains._
-
-| # | Title | Priority |
-|---|---|---|
-| [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` impl | low |
-
-#69 feeds sparklines into the #68 dashboard. Deferred pending #69 implementation.
+## WP-E — Admin App ✓ complete
+_All 8 issues closed as of 2026-06-07: #64, #65, #66, #67, #68, #69, #74, #75._
 
 ---
 

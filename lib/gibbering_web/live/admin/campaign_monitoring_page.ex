@@ -4,9 +4,11 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
   use Phoenix.LiveDashboard.PageBuilder
 
   import Ecto.Query
+  import Phoenix.HTML, only: [raw: 1]
 
   alias Gibbering.{Admin, Campaign, Repo}
   alias Gibbering.Engine.SceneServer
+  alias Gibbering.Monitoring.MetricsStore
 
   @impl true
   def menu_link(_, _), do: {:ok, "Campaigns"}
@@ -49,6 +51,7 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
               <th style="text-align: left; padding: 0.5rem 1rem;">Campaign</th>
               <th style="text-align: left; padding: 0.5rem 1rem;">PID</th>
               <th style="text-align: right; padding: 0.5rem 1rem;">Memory (KB)</th>
+              <th style="text-align: left; padding: 0.5rem 1rem; min-width: 80px;">Mem trend</th>
               <th style="text-align: right; padding: 0.5rem 1rem;">Queue</th>
               <th style="text-align: right; padding: 0.5rem 1rem;">Entities</th>
               <th style="text-align: right; padding: 0.5rem 1rem;">Phase</th>
@@ -69,6 +72,9 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
                 </td>
                 <td style="padding: 0.5rem 1rem; text-align: right; font-family: monospace;">
                   {Float.round(row.memory / 1024, 1)}
+                </td>
+                <td style="padding: 0.5rem 1rem;">
+                  {raw(sparkline(row.campaign_id, "memory_bytes"))}
                 </td>
                 <td style="padding: 0.5rem 1rem; text-align: right; font-family: monospace;">
                   {row.message_queue_len}
@@ -94,6 +100,32 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
       <% end %>
     </div>
     """
+  end
+
+  defp sparkline(campaign_id, metric) do
+    samples = MetricsStore.history(campaign_id, metric)
+
+    if length(samples) < 2 do
+      ~s(<svg width="80" height="20"></svg>)
+    else
+      values = Enum.map(samples, &elem(&1, 1))
+      min_v = Enum.min(values)
+      max_v = Enum.max(values)
+      range = max(max_v - min_v, 1)
+      n = length(values)
+
+      points =
+        values
+        |> Enum.with_index()
+        |> Enum.map(fn {v, i} ->
+          x = Float.round(i / (n - 1) * 78 + 1, 1)
+          y = Float.round(18 - (v - min_v) / range * 16, 1)
+          "#{x},#{y}"
+        end)
+        |> Enum.join(" ")
+
+      ~s(<svg width="80" height="20" style="overflow:visible"><polyline points="#{points}" fill="none" stroke="#60a5fa" stroke-width="1.5"/></svg>)
+    end
   end
 
   defp fetch_rows do

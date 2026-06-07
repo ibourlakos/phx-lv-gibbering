@@ -29,7 +29,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | # | Title | Tags | Priority |
 |---|---|---|---|
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
-| [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk understated in brainstorm | `legal` | medium |
@@ -160,3 +159,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` |
 | [#74](074-admin-character-moderation-view.md) | Admin character moderation view | `architecture` `gameplay` |
 | [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring page | `ops` `architecture` |
+| [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` implementation | `architecture` `ops` |
