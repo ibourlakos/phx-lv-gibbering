@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 114 (see `counter`)
+**Next issue number:** 115 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -32,7 +32,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#112](112-bounded-context-map-document.md) | Bounded context map document — integration patterns at each seam | `discovery` `architecture` | low |
 | [#111](111-event-cascade-batch-emission.md) | Event cascade batch emission — Event Aggregator pattern | `discovery` `architecture` | medium |
 | [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract — scene event stream ownership | `architecture` | medium |
-| [#109](109-compound-bus-command-event-separation.md) | Compound bus: command/event bus separation — B=(C,E) enforcement | `discovery` `architecture` | medium |
+| [#114](114-observability-admin-direct-scene-reads.md) | Observability and admin: replace direct SceneServer reads with event subscriptions | `architecture` `admin` | low |
 | [#108](108-eventbus-behaviour-port-and-adapters.md) | EventBus behaviour: port and adapters — PubSub behind a port | `architecture` | medium |
 | [#106](106-event-schema-design-methodology.md) | Event schema design methodology — Published Language mini-cycle | `architecture` `discovery` | medium |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
@@ -92,6 +92,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#109](109-compound-bus-command-event-separation.md) | Compound bus: command/event bus separation — B=(C,E) enforcement | `discovery` `architecture` |
 | [#107](107-bounded-context-module-namespace-alignment.md) | Bounded context module namespace alignment — polytope naming | `discovery` `architecture` |
 | [#105](105-polytope-architecture-treatise.md) | Polytope architecture model — mini-treatise and terminology reference | `architecture` `discovery` |
 | [#87](087-elixirls-hover-docs-docker-proxy.md) | ElixirLS hover documentation not working via Docker proxy | `ops` |

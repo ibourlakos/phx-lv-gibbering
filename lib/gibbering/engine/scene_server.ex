@@ -254,7 +254,8 @@ defmodule Gibbering.Engine.SceneServer do
     new_state =
       if entity_id == active do
         moves = Rules.valid_moves(state, entity_id)
-        %{state | selected_id: entity_id, valid_moves: moves}
+        targets = Rules.valid_targets(state, entity_id)
+        %{state | selected_id: entity_id, valid_moves: moves, valid_targets: targets}
       else
         state
       end
@@ -474,7 +475,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   # --- Helpers ---
 
-  defp put_targets(state, targets), do: Map.put(state, :valid_targets, targets)
+  defp put_targets(state, targets), do: %{state | valid_targets: targets}
 
   defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
 
