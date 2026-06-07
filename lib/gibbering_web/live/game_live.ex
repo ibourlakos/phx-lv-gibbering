@@ -3,6 +3,7 @@ defmodule GibberingWeb.GameLive do
 
   alias Gibbering.Engine.{SceneServer, State, Rules}
   alias Gibbering.Campaigns
+  alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
   @impl true
@@ -27,11 +28,15 @@ defmodule GibberingWeb.GameLive do
           state = SceneServer.get_state(game_id)
           is_dm = campaign.dm_id == user.id
 
+          appearances =
+            Catalogue.appearances_for_style(Catalogue.default_style_slug())
+
           {:ok,
            socket
            |> assign(:game_id, game_id)
            |> assign(:game_state, state)
            |> assign(:is_dm, is_dm)
+           |> assign(:appearances, appearances)
            |> assign(:show_end_confirm, false)
            |> assign(:valid_targets, [])
            |> assign(:selected_spell, nil)
@@ -420,18 +425,21 @@ defmodule GibberingWeb.GameLive do
   end
 
   # ---------------------------------------------------------------------------
-  # Tile helpers (DST palette)
+  # Appearance helpers — delegate to the active style's DB records.
+  # Fallback colours ensure graceful degradation when no record exists.
   # ---------------------------------------------------------------------------
 
-  defp tile_fill("grass"), do: "#3d6b45"
-  defp tile_fill("stone"), do: "#555555"
-  defp tile_fill("rubble"), do: "#7a6248"
-  defp tile_fill(_), do: "#3d6b45"
+  defp tile_fill(appearances, texture) do
+    (appearances[{"tile", texture}] || %{})["fill"] || "#7f8c8d"
+  end
 
-  defp tile_stroke("grass"), do: "#2a4d30"
-  defp tile_stroke("stone"), do: "#383838"
-  defp tile_stroke("rubble"), do: "#4d3d2c"
-  defp tile_stroke(_), do: "#2a4d30"
+  defp tile_stroke(appearances, texture) do
+    (appearances[{"tile", texture}] || %{})["stroke"] || "#5d6d7e"
+  end
+
+  defp entity_body_color(appearances, sprite) do
+    (appearances[{"entity", sprite}] || %{})["body_color"] || "#7f8c8d"
+  end
 
   defp hp_bar_color(hp, max_hp) when max_hp > 0 do
     pct = hp / max_hp
@@ -444,20 +452,6 @@ defmodule GibberingWeb.GameLive do
   end
 
   defp hp_bar_color(_, _), do: "#e74c3c"
-
-  defp sprite_color("warrior"), do: "#4a6fa5"
-  defp sprite_color("wizard"), do: "#7b5ea7"
-  defp sprite_color("rock"), do: "#787878"
-  defp sprite_color("human_fighter"), do: "#4a6fa5"
-  defp sprite_color("human_wizard"), do: "#7b5ea7"
-  defp sprite_color("human_rogue"), do: "#6b4c38"
-  defp sprite_color("elf_fighter"), do: "#5a8f6a"
-  defp sprite_color("elf_wizard"), do: "#7b5ea7"
-  defp sprite_color("elf_rogue"), do: "#4a7060"
-  defp sprite_color("gnome_fighter"), do: "#8b4513"
-  defp sprite_color("gnome_wizard"), do: "#9b59b6"
-  defp sprite_color("gnome_rogue"), do: "#5d4037"
-  defp sprite_color(_), do: "#7f8c8d"
 
   # ---------------------------------------------------------------------------
   # Entity sprite components — inline SVG, DST-style ink aesthetic.
@@ -940,7 +934,7 @@ defmodule GibberingWeb.GameLive do
       width="48"
       height="48"
       rx="4"
-      fill={sprite_color(@sprite)}
+      fill={@body_color}
       stroke="#111"
       stroke-width="2"
     />

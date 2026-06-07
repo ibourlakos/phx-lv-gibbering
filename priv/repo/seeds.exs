@@ -1,7 +1,7 @@
 alias Gibbering.{Repo, Campaign, GridTile, Entity, CampaignMember}
 alias Gibbering.Accounts
 alias Gibbering.Admin
-alias Gibbering.Catalogue.{Race, Class, Spell}
+alias Gibbering.Catalogue.{Race, Class, Spell, Style, Appearance}
 alias Gibbering.Data.{Races, Classes, Spells}
 
 # ---------------------------------------------------------------------------
@@ -349,4 +349,67 @@ unless Repo.get_by(Gibbering.Admin.SupportUser, email: "admin@gibbering.local") 
     })
 
   IO.puts("Seeded support user: admin@gibbering.local (admin) — password: gibbering_admin")
+end
+
+# ---------------------------------------------------------------------------
+# Styles + appearances (idempotent — skip if DST style already present)
+# ---------------------------------------------------------------------------
+
+unless Repo.get_by(Style, slug: "dst") do
+  {:ok, dst} =
+    Repo.insert(%Style{
+      slug: "dst",
+      name: "Don't Starve Together",
+      description:
+        "Muted dark palette, thick near-black outlines, gothic/whimsical ink aesthetic.",
+      inserted_at: now,
+      updated_at: now
+    })
+
+  tile_appearances = [
+    {"grass", %{"fill" => "#3d6b45", "stroke" => "#2a4d30"}},
+    {"stone", %{"fill" => "#555555", "stroke" => "#383838"}},
+    {"rubble", %{"fill" => "#7a6248", "stroke" => "#4d3d2c"}}
+  ]
+
+  entity_appearances = [
+    {"warrior", %{"body_color" => "#4a6fa5"}},
+    {"wizard", %{"body_color" => "#7b5ea7"}},
+    {"rock", %{"body_color" => "#787878"}},
+    {"human_fighter", %{"body_color" => "#4a6fa5"}},
+    {"human_wizard", %{"body_color" => "#7b5ea7"}},
+    {"human_rogue", %{"body_color" => "#6b4c38"}},
+    {"elf_fighter", %{"body_color" => "#5a8f6a"}},
+    {"elf_wizard", %{"body_color" => "#7b5ea7"}},
+    {"elf_rogue", %{"body_color" => "#4a7060"}},
+    {"gnome_fighter", %{"body_color" => "#8b4513"}},
+    {"gnome_wizard", %{"body_color" => "#9b59b6"}},
+    {"gnome_rogue", %{"body_color" => "#5d4037"}}
+  ]
+
+  for {key, data} <- tile_appearances do
+    Repo.insert!(%Appearance{
+      style_id: dst.id,
+      content_type: "tile",
+      content_key: key,
+      data: data,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+
+  for {key, data} <- entity_appearances do
+    Repo.insert!(%Appearance{
+      style_id: dst.id,
+      content_type: "entity",
+      content_key: key,
+      data: data,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+
+  IO.puts(
+    "Seeded DST style with #{length(tile_appearances)} tile and #{length(entity_appearances)} entity appearances"
+  )
 end

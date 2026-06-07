@@ -48,8 +48,8 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
       <polygon
         points={iso.diamond_points(sx, sy)}
-        fill={tile_fill(tile.texture)}
-        stroke={tile_stroke(tile.texture)}
+        fill={tile_fill(@appearances, tile.texture)}
+        stroke={tile_stroke(@appearances, tile.texture)}
         stroke-width="1"
       />
     <% end %>
@@ -141,7 +141,12 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         <% end %>
 
         <%!-- Sprite --%>
-        <.entity_sprite sprite={entity.sprite} x={ix} y={iy} />
+        <.entity_sprite
+          sprite={entity.sprite}
+          x={ix}
+          y={iy}
+          body_color={entity_body_color(@appearances, entity.sprite)}
+        />
 
         <%!-- HP bar (world-anchored, above sprite) --%>
         <rect x={ix + 4} y={iy - 9} width={hp_w} height={5} rx="2" fill="#1f2937" />
@@ -244,7 +249,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           ]}>
             <div
               class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-              style={"background:#{sprite_color(entity.sprite)}"}
+              style={"background:#{entity_body_color(@appearances, entity.sprite)}"}
             >
             </div>
             <span class="text-xs flex-1 truncate text-gray-200">{entity.name}</span>

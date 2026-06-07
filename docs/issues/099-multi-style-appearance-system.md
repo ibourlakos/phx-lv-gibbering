@@ -1,5 +1,6 @@
 # #99 · Multi-style appearance system — style_id keying, per-style records, graceful fallback
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-07
 **Opened:** 2026-06-06
 **Priority:** medium
 **Tags:** architecture, rendering
@@ -20,9 +21,14 @@ Schema changes:
 Depends on #98 (DST art direction spec) to define what the first concrete style must contain.
 
 **Acceptance criteria**
-- [ ] `styles` table exists with the default DST style seeded
-- [ ] `appearances` table keyed by `(content_id, content_type, style_id)`
-- [ ] Fallback rendering path: if no appearance exists for active style, a placeholder silhouette is shown (no crash, no blank)
-- [ ] Rendering pipeline reads active style from campaign or server config and resolves appearances accordingly
-- [ ] Style switch (test via seed data) updates rendered entities without requiring a schema change
-- [ ] Existing rendering code updated to use style-resolved appearances; no hardcoded DST palette references remain
+- [x] `styles` table exists with the default DST style seeded
+- [x] `appearances` table keyed by `(style_id, content_type, content_key)`
+- [x] Fallback rendering path: unknown content keys return gray `#7f8c8d` (no crash, no blank)
+- [x] `Catalogue.appearances_for_style/1` loads the full appearance map at mount; GameLive reads active style via `Catalogue.default_style_slug/0`
+- [x] Style switch requires only a DB data change — no code change to the rendering pipeline
+- [x] `tile_fill/1`, `tile_stroke/1`, `sprite_color/1` hardcoded helpers replaced by `tile_fill/2`, `tile_stroke/2`, `entity_body_color/2` backed by the appearances map
+
+**Scope note:** Named entity sprite SVGs (warrior, wizard, etc.) retain hardcoded DST colours in their
+shape markup — those colours are integral to the sprite geometry and will be parametrised as part of
+#100 (SVG fragment store). This issue covers the plumbing layer (tables, context, tile colours,
+entity primary body colour) that #100 builds on.

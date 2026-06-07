@@ -53,7 +53,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` | low |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
-| [#99](099-multi-style-appearance-system.md) | Multi-style appearance system — style_id keying, per-style records, fallback | `architecture` `rendering` | medium |
 | [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline | `discovery` `rendering` `architecture` | medium |
 | [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` | low |
 
@@ -159,3 +158,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | `bug` `rendering` |
 | [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture | `discovery` `rendering` `architecture` |
 | [#103](103-panzoom-hook-gestures.md) | PanZoom JS hook: pointer drag, wheel zoom, follow active token | `rendering` `architecture` `ui` |
+| [#99](099-multi-style-appearance-system.md) | Multi-style appearance system — style_id keying, per-style records, fallback | `architecture` `rendering` |
