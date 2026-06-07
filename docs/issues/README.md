@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 105 (see `counter`)
+**Next issue number:** 107 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -28,6 +28,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#106](106-event-schema-design-methodology.md) | Event schema design methodology — Published Language mini-cycle | `architecture` `discovery` | medium |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
@@ -85,6 +86,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#105](105-polytope-architecture-treatise.md) | Polytope architecture model — mini-treatise and terminology reference | `architecture` `discovery` |
 | [#87](087-elixirls-hover-docs-docker-proxy.md) | ElixirLS hover documentation not working via Docker proxy | `ops` |
 | [#1](001-establish-git-remote.md) | Establish git remote | `ops` |
 | [#72](072-drop-users-role-column.md) | Drop `users.role` column | `architecture` |
