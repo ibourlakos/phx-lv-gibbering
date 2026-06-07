@@ -11,6 +11,8 @@ config :gibbering,
   ecto_repos: [Gibbering.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitoring.Stores.Local
+
 # Configure the endpoint
 config :gibbering, GibberingWeb.Endpoint,
   url: [host: "localhost"],

@@ -1,7 +1,7 @@
 # Work Packages
 _Temporary planning doc — not an issue file. Delete when packages are actioned._
 
-Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-D ✓ complete except #92 discovery; WP-G ✓ complete; WP-F: closed through #104; WP-H #88 in-progress)
+Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-D ✓ complete except #92 discovery; WP-G ✓ complete; WP-F: closed through #104; WP-H ✓ complete)
 
 ---
 
@@ -42,21 +42,8 @@ _#76, #77, #78 all closed as of 2026-06-06._
 
 ---
 
-## WP-E — Admin App
-_Mostly independent of the rules engine. Can be done in parallel with WP-D._
-
-| # | Title | Priority |
-|---|---|---|
-| [#65](065-support-users-schema-and-auth.md) | `support_users` schema, migration, context, and auth | medium |
-| [#64](064-admin-router-scope-and-pipeline.md) | Admin router scope and pipeline | medium |
-| [#66](066-support-audit-log.md) | Support audit log | medium |
-| [#67](067-admin-crud-users-and-campaigns.md) | Admin CRUD — Users and Campaigns | medium |
-| [#75](075-admin-campaign-member-management.md) | Admin campaign member management | medium |
-| [#69](069-metrics-store-behaviour-and-local-impl.md) | `MetricsStore` behaviour + `Stores.Local` impl | low |
-| [#68](068-livedashboard-and-campaign-monitoring.md) | LiveDashboard mount + custom campaign monitoring | low |
-| [#74](074-admin-character-moderation-view.md) | Admin character moderation view | low |
-
-#65 is the foundation — everything else gates on it. #64 → #67 → (#74, #75). #69 is a prerequisite for #68.
+## WP-E — Admin App ✓ complete
+_All 8 issues closed as of 2026-06-07: #64, #65, #66, #67, #68, #69, #74, #75._
 
 ---
 
@@ -66,7 +53,6 @@ _Closed: #97, #98, #13, #99, #81, #103, #10, #102._
 
 | # | Title | Priority |
 |---|---|---|
-| [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline (discovery) | medium |
 | [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons + stat panels (discovery) | medium |
 | [#26](026-fog-of-war-ownership.md) | Fog-of-war ownership: ruleset or engine? (discovery) | medium |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation (discovery) | medium |
@@ -82,15 +68,8 @@ Sequencing: #100 first (compositing pipeline discovery — unblocks SVG fragment
 
 ---
 
-## WP-H — Game Content *(new)*
-_Content taxonomy and initial data population. Depends on WP-C (rules engine done) and needs legal clearance (#16) before any non-SRD content._
-
-| # | Title | Priority |
-|---|---|---|
-| [#88](088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow (discovery) | medium |
-| [#89](089-initial-game-content-population.md) | Initial content population — races, classes, starter monsters/items | low |
-
-#88 is the discovery gate. #89 is blocked on #88 and on #16 (LPC sprite legal risk) for any non-SRD content. Art direction (#98 in WP-F) should be settled before the appearance slot in #88 is finalised, since it defines what a per-style appearance record contains.
+## WP-H — Game Content ✓ complete
+_#88 (taxonomy) and #89 (initial population: 9 races, 12 classes, 12 monsters) both closed 2026-06-07._
 
 ---
 

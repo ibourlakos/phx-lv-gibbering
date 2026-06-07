@@ -1,6 +1,7 @@
 # #88 · Game content type taxonomy and upsert workflow
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-06
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** discovery, architecture, gameplay
 
@@ -13,8 +14,8 @@ For each type, the upsert workflow touches: DB schema and migration, seed and te
 The output of this issue is a reference document (or structured discovery notes) that future content work can follow. It also defines what a "content slot" looks like in the multi-style appearance system (#99).
 
 **Acceptance criteria**
-- [ ] All game content types enumerated with a brief definition of each
-- [ ] For each type: checklist of layers touched during upsert (schema, seed, appearance, UI, rendering, tests)
-- [ ] Multi-style appearance slot defined: which types need per-style appearance records, and what fields each appearance record must carry
-- [ ] Open questions from brainstorm #11 answered or explicitly deferred with rationale
-- [ ] Document committed to `docs/` or equivalent reference location
+- [x] All game content types enumerated with a brief definition of each
+- [x] For each type: checklist of layers touched during upsert (schema, seed, appearance, UI, rendering, tests)
+- [x] Multi-style appearance slot defined: which types need per-style appearance records, and what fields each appearance record must carry
+- [x] Open questions from brainstorm #11 answered or explicitly deferred with rationale
+- [x] Document committed to `docs/game-content-taxonomy.md`

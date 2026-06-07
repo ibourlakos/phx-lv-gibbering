@@ -36,3 +36,5 @@ config :phoenix,
 
 # Use minimal rounds in tests so password hashing doesn't saturate CPU under parallel load
 config :pbkdf2_elixir, :rounds, 1
+
+config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitoring.Stores.NoOp

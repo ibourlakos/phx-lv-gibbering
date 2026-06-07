@@ -6,7 +6,7 @@ defmodule Gibbering.Admin do
   alias Gibbering.Repo
   alias Gibbering.Admin.{SupportUser, AuditLog}
   alias Gibbering.Accounts.User
-  alias Gibbering.{Campaign, CampaignMember}
+  alias Gibbering.{Campaign, CampaignMember, Character}
 
   @doc "Creates a support user. Returns `{:ok, user}` or `{:error, changeset}`."
   def create_support_user(attrs) do
@@ -230,6 +230,37 @@ defmodule Gibbering.Admin do
       {:ejected, "Removed from campaign by admin"}
     )
   end
+
+  # ---------------------------------------------------------------------------
+  # Character admin operations
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Returns all characters ordered by name, with user preloaded.
+  Accepts `search:` opt — ilike match on character name OR owner username.
+  """
+  def list_characters_for_admin(opts \\ []) do
+    from(c in Character,
+      join: u in assoc(c, :user),
+      preload: [user: u],
+      order_by: [asc: c.name]
+    )
+    |> maybe_search_character(Keyword.get(opts, :search))
+    |> Repo.all()
+  end
+
+  @doc "Returns character with user and user's campaign_members preloaded. Raises if not found."
+  def get_character_for_admin!(id) do
+    Character
+    |> preload([:user, user: :campaign_members])
+    |> Repo.get!(id)
+  end
+
+  defp maybe_search_character(q, nil), do: q
+  defp maybe_search_character(q, ""), do: q
+
+  defp maybe_search_character(q, term),
+    do: where(q, [c, u], ilike(c.name, ^"%#{term}%") or ilike(u.username, ^"%#{term}%"))
 
   defp maybe_terminate_scene_server(campaign_id) do
     case Registry.lookup(Gibbering.GameRegistry, campaign_id) do

@@ -3,14 +3,14 @@ defmodule Gibbering.Data.RacesTest do
 
   alias Gibbering.Data.Races
 
-  @all_keys ~w(human elf gnome)
+  @core_keys ~w(human elf gnome dwarf half_elf halfling tiefling dragonborn half_orc)
 
   describe "seed_data/0" do
-    test "returns a map with exactly 3 SRD races" do
+    test "returns all SRD races" do
       data = Races.seed_data()
-      assert map_size(data) == 3
+      assert map_size(data) == length(@core_keys)
 
-      for key <- @all_keys do
+      for key <- @core_keys do
         assert Map.has_key?(data, key), "Missing race: #{key}"
       end
     end

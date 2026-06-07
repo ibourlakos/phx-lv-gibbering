@@ -67,6 +67,137 @@ defmodule Gibbering.Data.Races do
         }
       ],
       darkvision: true
+    },
+    "dwarf" => %{
+      name: "Dwarf",
+      description: "Hardy and resilient, dwarves are skilled craftspeople and fierce warriors.",
+      speed: 25,
+      stat_bonuses: %{"constitution" => 2, "wisdom" => 1},
+      traits: [
+        %{
+          name: "Darkvision",
+          description: "See in dim light within 60 ft as if bright; darkness as dim."
+        },
+        %{
+          name: "Dwarven Resilience",
+          description: "Advantage on saving throws against poison; resistance to poison damage."
+        },
+        %{name: "Stonecunning", description: "+2 bonus to History checks related to stonework."},
+        %{
+          name: "Dwarven Combat Training",
+          description: "Proficiency with battleaxe, handaxe, light hammer, and warhammer."
+        }
+      ],
+      darkvision: true
+    },
+    "half_elf" => %{
+      name: "Half-Elf",
+      description: "Bridging two worlds, half-elves inherit elven grace and human ambition.",
+      speed: 30,
+      stat_bonuses: %{"charisma" => 2, "dexterity" => 1, "constitution" => 1},
+      traits: [
+        %{
+          name: "Darkvision",
+          description: "See in dim light within 60 ft as if bright; darkness as dim."
+        },
+        %{
+          name: "Fey Ancestry",
+          description:
+            "Advantage on saving throws against being charmed; magic can't put you to sleep."
+        },
+        %{
+          name: "Skill Versatility",
+          description: "Gain proficiency in two skills of your choice."
+        }
+      ],
+      darkvision: true
+    },
+    "halfling" => %{
+      name: "Halfling",
+      description:
+        "Small, cheerful, and lucky beyond reason — halflings thrive where others stumble.",
+      speed: 25,
+      stat_bonuses: %{"dexterity" => 2, "charisma" => 1},
+      traits: [
+        %{
+          name: "Lucky",
+          description: "When you roll a 1 on a d20, reroll and use the new result."
+        },
+        %{name: "Brave", description: "Advantage on saving throws against being frightened."},
+        %{
+          name: "Halfling Nimbleness",
+          description: "Move through the space of any creature larger than you."
+        }
+      ],
+      darkvision: false
+    },
+    "tiefling" => %{
+      name: "Tiefling",
+      description: "Touched by infernal heritage, tieflings carry fiendish power in human form.",
+      speed: 30,
+      stat_bonuses: %{"intelligence" => 1, "charisma" => 2},
+      traits: [
+        %{
+          name: "Darkvision",
+          description: "See in dim light within 60 ft as if bright; darkness as dim."
+        },
+        %{name: "Hellish Resistance", description: "Resistance to fire damage."},
+        %{
+          name: "Infernal Legacy",
+          description:
+            "Know the Thaumaturgy cantrip; at 3rd level cast Hellish Rebuke 1/day; at 5th level Darkness 1/day."
+        }
+      ],
+      darkvision: true
+    },
+    "dragonborn" => %{
+      name: "Dragonborn",
+      description:
+        "Born of draconic lineage, dragonborn breathe elemental power and carry ancient pride.",
+      speed: 30,
+      stat_bonuses: %{"strength" => 2, "charisma" => 1},
+      traits: [
+        %{
+          name: "Breath Weapon",
+          description:
+            "Exhale destructive energy matching your draconic ancestry (15 ft cone or 30 ft line); save DC 8 + CON mod + proficiency."
+        },
+        %{
+          name: "Damage Resistance",
+          description: "Resistance to the damage type of your draconic ancestry."
+        },
+        %{
+          name: "Draconic Ancestry",
+          description:
+            "Choose a dragon type at character creation; this determines your breath weapon element and resistance."
+        }
+      ],
+      darkvision: false
+    },
+    "half_orc" => %{
+      name: "Half-Orc",
+      description:
+        "Powerful and tenacious, half-orcs combine orcish ferocity with human adaptability.",
+      speed: 30,
+      stat_bonuses: %{"strength" => 2, "constitution" => 1},
+      traits: [
+        %{
+          name: "Darkvision",
+          description: "See in dim light within 60 ft as if bright; darkness as dim."
+        },
+        %{name: "Menacing", description: "Proficiency in the Intimidation skill."},
+        %{
+          name: "Relentless Endurance",
+          description:
+            "When reduced to 0 HP but not killed, drop to 1 HP instead. Once per long rest."
+        },
+        %{
+          name: "Savage Attacks",
+          description:
+            "When you score a critical hit with a melee weapon attack, roll one extra damage die."
+        }
+      ],
+      darkvision: true
     }
   }
 
