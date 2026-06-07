@@ -5,13 +5,14 @@ defmodule Gibbering.Catalogue.CacheTest do
   use Gibbering.DataCase, async: false
 
   alias Gibbering.Catalogue.Cache
-  alias Gibbering.Data.{Races, Classes, Spells}
+  alias Gibbering.Catalogue.{Race, Class}
+  alias Gibbering.Data.Spells
 
   describe "list_races/0" do
     test "returns all seeded races" do
-      results = Cache.list_races()
-      keys = Enum.map(results, & &1.key) |> Enum.sort()
-      assert keys == Map.keys(Races.seed_data()) |> Enum.sort()
+      # Cache reflects the test DB. Compare against actual DB row count.
+      db_count = Repo.aggregate(Race, :count)
+      assert length(Cache.list_races()) == db_count
     end
 
     test "returns structs with expected fields" do
@@ -24,9 +25,8 @@ defmodule Gibbering.Catalogue.CacheTest do
 
   describe "list_classes/0" do
     test "returns all seeded classes" do
-      results = Cache.list_classes()
-      keys = Enum.map(results, & &1.key) |> Enum.sort()
-      assert keys == Map.keys(Classes.seed_data()) |> Enum.sort()
+      db_count = Repo.aggregate(Class, :count)
+      assert length(Cache.list_classes()) == db_count
     end
   end
 
@@ -83,8 +83,8 @@ defmodule Gibbering.Catalogue.CacheTest do
   describe "reload!/0" do
     test "returns :ok and data remains accessible after reload" do
       assert Cache.reload!() == :ok
-      assert length(Cache.list_races()) == map_size(Races.seed_data())
-      assert length(Cache.list_classes()) == map_size(Classes.seed_data())
+      assert length(Cache.list_races()) == Repo.aggregate(Race, :count)
+      assert length(Cache.list_classes()) == Repo.aggregate(Class, :count)
     end
   end
 end

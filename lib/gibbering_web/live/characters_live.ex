@@ -384,8 +384,15 @@ defmodule GibberingWeb.CharactersLive do
   # ---------------------------------------------------------------------------
 
   def render_step(%{modal: :identity} = assigns) do
-    races = [{"Human", "human"}, {"Elf", "elf"}, {"Gnome", "gnome"}]
-    classes = [{"Fighter", "fighter"}, {"Wizard", "wizard"}, {"Rogue", "rogue"}]
+    races =
+      Catalogue.list_races()
+      |> Enum.map(fn r -> {r.name, r.key} end)
+      |> Enum.sort_by(&elem(&1, 0))
+
+    classes =
+      Catalogue.list_classes()
+      |> Enum.map(fn c -> {c.name, c.key} end)
+      |> Enum.sort_by(&elem(&1, 0))
 
     alignments = [
       {"Lawful Good", "lawful_good"},

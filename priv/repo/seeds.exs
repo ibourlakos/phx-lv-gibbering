@@ -4,8 +4,8 @@ alias Gibbering.Engine.GameSession
 alias Gibbering.Accounts
 alias Gibbering.Accounts.User
 alias Gibbering.Admin
-alias Gibbering.Catalogue.{Race, Class, Spell, Style, Appearance}
-alias Gibbering.Data.{Races, Classes, Spells}
+alias Gibbering.Catalogue.{Race, Class, Spell, Monster, Style, Appearance}
+alias Gibbering.Data.{Races, Classes, Spells, Monsters}
 
 # ---------------------------------------------------------------------------
 # Catalogue tables (idempotent — skip if already present)
@@ -72,8 +72,36 @@ Enum.each(Spells.seed_data(), fn {key, attrs} ->
   end
 end)
 
+Enum.each(Monsters.seed_data(), fn {key, attrs} ->
+  unless Repo.get(Monster, key) do
+    Repo.insert!(%Monster{
+      key: key,
+      name: attrs.name,
+      size: attrs.size,
+      monster_type: attrs.monster_type,
+      alignment: attrs.alignment,
+      armor_class: attrs.armor_class,
+      hit_points: attrs.hit_points,
+      hit_dice: attrs.hit_dice,
+      speed: attrs.speed,
+      strength: attrs.strength,
+      dexterity: attrs.dexterity,
+      constitution: attrs.constitution,
+      intelligence: attrs.intelligence,
+      wisdom: attrs.wisdom,
+      charisma: attrs.charisma,
+      challenge_rating: attrs.challenge_rating,
+      xp_reward: attrs.xp_reward,
+      source_license: attrs.source_license,
+      stat_block: attrs.stat_block,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+end)
+
 IO.puts(
-  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells"
+  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells, #{map_size(Monsters.seed_data())} monsters"
 )
 
 # ---------------------------------------------------------------------------
@@ -372,18 +400,55 @@ unless Repo.get_by(Style, slug: "dst") do
   ]
 
   entity_appearances = [
+    # Legacy generic sprites
     {"warrior", %{"body_color" => "#4a6fa5"}},
     {"wizard", %{"body_color" => "#7b5ea7"}},
     {"rock", %{"body_color" => "#787878"}},
+    # Human sprites
     {"human_fighter", %{"body_color" => "#4a6fa5"}},
     {"human_wizard", %{"body_color" => "#7b5ea7"}},
     {"human_rogue", %{"body_color" => "#6b4c38"}},
+    # Elf sprites
     {"elf_fighter", %{"body_color" => "#5a8f6a"}},
     {"elf_wizard", %{"body_color" => "#7b5ea7"}},
     {"elf_rogue", %{"body_color" => "#4a7060"}},
+    # Gnome sprites
     {"gnome_fighter", %{"body_color" => "#8b4513"}},
     {"gnome_wizard", %{"body_color" => "#9b59b6"}},
-    {"gnome_rogue", %{"body_color" => "#5d4037"}}
+    {"gnome_rogue", %{"body_color" => "#5d4037"}},
+    # Dwarf sprites (fallback rect — named sprite pending)
+    {"dwarf_fighter", %{"body_color" => "#7a5c2a"}},
+    {"dwarf_cleric", %{"body_color" => "#c0a060"}},
+    {"dwarf_rogue", %{"body_color" => "#5a4020"}},
+    # Half-elf sprites
+    {"half_elf_fighter", %{"body_color" => "#5a7a60"}},
+    {"half_elf_wizard", %{"body_color" => "#7060a0"}},
+    {"half_elf_rogue", %{"body_color" => "#486050"}},
+    # Halfling sprites
+    {"halfling_fighter", %{"body_color" => "#c08040"}},
+    {"halfling_rogue", %{"body_color" => "#a06030"}},
+    # Tiefling sprites
+    {"tiefling_warlock", %{"body_color" => "#8b2040"}},
+    {"tiefling_sorcerer", %{"body_color" => "#a03050"}},
+    # Dragonborn sprites
+    {"dragonborn_fighter", %{"body_color" => "#2a7060"}},
+    {"dragonborn_paladin", %{"body_color" => "#206858"}},
+    # Half-orc sprites
+    {"half_orc_barbarian", %{"body_color" => "#4a7830"}},
+    {"half_orc_fighter", %{"body_color" => "#3a6020"}},
+    # Monster sprites (fallback rects — named SVGs pending)
+    {"goblin", %{"body_color" => "#5a7a30"}},
+    {"skeleton", %{"body_color" => "#d8d0b0"}},
+    {"zombie", %{"body_color" => "#5a6a3a"}},
+    {"kobold", %{"body_color" => "#8b3a1a"}},
+    {"bandit", %{"body_color" => "#6b5540"}},
+    {"cultist", %{"body_color" => "#4a2060"}},
+    {"guard", %{"body_color" => "#607890"}},
+    {"wolf", %{"body_color" => "#706050"}},
+    {"orc", %{"body_color" => "#3a6030"}},
+    {"bugbear", %{"body_color" => "#5a5030"}},
+    {"ogre", %{"body_color" => "#7a6040"}},
+    {"troll", %{"body_color" => "#3a6838"}}
   ]
 
   for {key, data} <- tile_appearances do

@@ -3,12 +3,12 @@ defmodule Gibbering.Data.ClassesTest do
 
   alias Gibbering.Data.Classes
 
-  @all_keys ~w(fighter wizard rogue)
+  @all_keys ~w(barbarian bard cleric druid fighter monk paladin ranger rogue sorcerer warlock wizard)
 
   describe "seed_data/0" do
-    test "returns a map with exactly 3 SRD classes" do
+    test "returns all standard SRD classes" do
       data = Classes.seed_data()
-      assert map_size(data) == 3
+      assert map_size(data) == length(@all_keys)
 
       for key <- @all_keys do
         assert Map.has_key?(data, key), "Missing class: #{key}"
