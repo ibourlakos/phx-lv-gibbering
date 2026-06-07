@@ -1,7 +1,7 @@
 # Work Packages
 _Temporary planning doc — not an issue file. Delete when packages are actioned._
 
-Generated: 2026-06-05 · Last updated: 2026-06-06 (added WP-H, WP-I; expanded WP-D and WP-F from brainstorms #11–14)
+Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-F: closed #97, #98, #13, #99, #81, #103, #10; #100 in-progress)
 
 ---
 
@@ -81,28 +81,23 @@ _Mostly independent of the rules engine. Can be done in parallel with WP-D._
 
 ## WP-F — Rendering & Frontend
 _SVG pipeline bugs, viewport architecture, and art direction. Expanded with discoveries from brainstorm #14._
+_Closed: #97, #98, #13, #99, #81, #103, #10, #102._
 
 | # | Title | Priority |
 |---|---|---|
-| [#97](097-full-viewport-scene-layout.md) | Full-viewport scene layout model and overlay z-layer system (discovery) | medium |
-| [#98](098-dst-art-direction-spec.md) | DST-inspired art direction — reference tile and entity spec | medium |
-| [#13](013-move-overlay-depth-isometric.md) | Move overlay occluded by entities in isometric depth order | medium |
+| [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline (discovery) | medium |
 | [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons + stat panels (discovery) | medium |
 | [#26](026-fog-of-war-ownership.md) | Fog-of-war ownership: ruleset or engine? (discovery) | medium |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation (discovery) | medium |
-| [#99](099-multi-style-appearance-system.md) | Multi-style appearance system — `style_id` keying, per-style records, fallback | medium |
-| [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline (discovery) | medium |
-| [#81](081-viewport-zoom-pan-architecture.md) | Viewport zoom/pan architecture (discovery) | low |
 | [#82](082-z-axis-elevation-projection-and-los.md) | Z-axis elevation — projection, depth sorting, and LOS (discovery) | low |
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering (discovery) | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom (discovery) | low |
 | [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode (discovery) | low |
-| [#10](010-origin-x-non-square-maps.md) | Isometric `origin_x` formula breaks on non-square maps | low |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll cycling faces | low |
 | [#27](027-tile-decoration-storage.md) | Tile decoration storage (discovery) | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints (discovery) | low |
 
-Discovery issues must be answered before writing the corresponding rendering code. Suggested internal sequencing: #97 (viewport layout) and #98 (art direction) first — they unblock #81 (zoom/pan) and #99 (multi-style). #99 unblocks #100 (compositing). #84 (LOD) after #81 (zoom). #83 (volumetric) after #82 (elevation). #101 (top-down) is best after the coordinate system is projection-agnostic (which should be validated in #97).
+Sequencing: #100 first (compositing pipeline discovery — unblocks SVG fragment wiring). #25/#26/#34 are independent discovery items. #84 (LOD) after zoom is stable. #83/#82/#101 are long-horizon discoveries.
 
 ---
 
