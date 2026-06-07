@@ -49,7 +49,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
-| [#88](088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | `discovery` `architecture` `gameplay` | medium |
 | [#89](089-initial-game-content-population.md) | Initial game content population — races, classes, starter monsters/items | `gameplay` `rules` `admin` | low |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
@@ -160,3 +159,4 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#99](099-multi-style-appearance-system.md) | Multi-style appearance system — style_id keying, per-style records, fallback | `architecture` `rendering` |
 | [#100](100-svg-fragment-store-compositing.md) | SVG fragment store and compositing pipeline | `discovery` `rendering` `architecture` |
 | [#104](104-sprite-compositor-gameview-wiring.md) | Wire SpriteCompositor into GameLive entity rendering | `rendering` `architecture` `ui` |
+| [#88](088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | `discovery` `architecture` `gameplay` |
