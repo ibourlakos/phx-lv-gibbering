@@ -34,7 +34,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract — scene event stream ownership | `architecture` | medium |
 | [#109](109-compound-bus-command-event-separation.md) | Compound bus: command/event bus separation — B=(C,E) enforcement | `discovery` `architecture` | medium |
 | [#108](108-eventbus-behaviour-port-and-adapters.md) | EventBus behaviour: port and adapters — PubSub behind a port | `architecture` | medium |
-| [#107](107-bounded-context-module-namespace-alignment.md) | Bounded context module namespace alignment — polytope naming | `discovery` `architecture` | medium |
 | [#106](106-event-schema-design-methodology.md) | Event schema design methodology — Published Language mini-cycle | `architecture` `discovery` | medium |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
@@ -93,6 +92,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#107](107-bounded-context-module-namespace-alignment.md) | Bounded context module namespace alignment — polytope naming | `discovery` `architecture` |
 | [#105](105-polytope-architecture-treatise.md) | Polytope architecture model — mini-treatise and terminology reference | `architecture` `discovery` |
 | [#87](087-elixirls-hover-docs-docker-proxy.md) | ElixirLS hover documentation not working via Docker proxy | `ops` |
 | [#1](001-establish-git-remote.md) | Establish git remote | `ops` |

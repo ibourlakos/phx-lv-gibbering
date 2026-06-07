@@ -1,7 +1,7 @@
 # Work Packages
 _Temporary planning doc — not an issue file. Delete when packages are actioned._
 
-Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-D ✓ complete except #92 discovery; WP-G ✓ complete; WP-F: closed through #104; WP-H ✓ complete)
+Generated: 2026-06-05 · Last updated: 2026-06-07 (WP-D ✓ complete except #92 discovery; WP-G ✓ complete; WP-F: closed through #104; WP-H ✓ complete; WP-J added — polytope operationalization wave #107–#113)
 
 ---
 
@@ -59,12 +59,12 @@ _Closed: #97, #98, #13, #99, #81, #103, #10, #102._
 | [#82](082-z-axis-elevation-projection-and-los.md) | Z-axis elevation — projection, depth sorting, and LOS (discovery) | low |
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering (discovery) | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom (discovery) | low |
-| [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode (discovery) | low |
+| [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode (discovery) — **gated by WP-J #113** | low |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll cycling faces | low |
 | [#27](027-tile-decoration-storage.md) | Tile decoration storage (discovery) | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints (discovery) | low |
 
-Sequencing: #100 first (compositing pipeline discovery — unblocks SVG fragment wiring). #25/#26/#34 are independent discovery items. #84 (LOD) after zoom is stable. #83/#82/#101 are long-horizon discoveries.
+Sequencing: #25/#26/#34 are the live medium-priority items. #84 (LOD) after zoom is stable. #83/#82 are long-horizon discoveries. **#101 (DM top-down projection) is gated by WP-J #113 (CQRS read model formalization) — do not start until #113 is closed.**
 
 ---
 
@@ -84,6 +84,35 @@ _Observability stack. Independent of all other WPs; can be done any time._
 
 ---
 
+## WP-J — Architecture Operationalization *(active)*
+_Making the polytope bounded-context architecture (docs/papers/polytope-architecture.md) actionable in the codebase. All issues are medium or low priority. Largely independent of WP-F, but #113 gates two downstream items — see note below._
+
+Dependency chain:
+
+```
+#107 ✓ (namespace alignment) → #108 (EventBus port/adapter) → #111 (batch emission) → #113 (CQRS read model)
+#107 ✓ → #112 (bounded context map doc)
+#109 (compound bus enforcement) — independent
+#110 (SceneServer single-writer) → #111
+```
+
+| # | Title | Priority | Depends on |
+|---|---|---|---|
+| ~~[#107](107-bounded-context-namespace-alignment.md)~~ | ~~Bounded context module namespace alignment~~ ✓ | medium | — |
+| [#109](109-compound-bus-command-event-separation.md) | Compound bus: command/event separation — B=(C,E) enforcement | medium | — |
+| [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract | medium | — |
+| [#108](108-eventbus-behaviour-port-adapters.md) | EventBus behaviour: port and adapters | medium | #107 ✓ |
+| [#111](111-event-cascade-batch-emission.md) | Event cascade batch emission — Event Aggregator pattern | medium | #110, #108 |
+| [#112](112-bounded-context-map-document.md) | Bounded context map document | low | #107 ✓ |
+| [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | low | #111 |
+
+**Suggested WP-J sequencing:** Start #107, #109, and #110 in parallel (all independent). Once #107 lands, open #108. Once #108 and #110 land, open #111. #112 can follow #107 at any time. #113 closes the chain and is a prerequisite for two other items:
+
+- **#113 gates #92** (spectator role — membership and session view; currently a discovery in WP-D cross-cutting thread): the read model must be formalized before the spectator adapter can be specified.
+- **#113 gates #101** (DM top-down projection mode; currently in WP-F): the projection mode is itself a read model; implement only after #113 defines the pattern.
+
+---
+
 ## Cross-cutting Threads
 _No strict phase placement. Resolve in parallel or as needed._
 
@@ -97,19 +126,22 @@ _No strict phase placement. Resolve in parallel or as needed._
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke tests + smoke Docker env | Ops |
 | [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | Discovery — depends on #79 + WP-C |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | Discovery — spans WP-E + future UGC |
-| [#92](092-spectator-role-discovery.md) | Spectator role (discovery) | Discovery — gates spectator impl in WP-D |
+| [#92](092-spectator-role-discovery.md) | Spectator role (discovery) | Discovery — gates spectator impl in WP-D; **gated by WP-J #113** |
 
 ---
 
 ## Suggested sequencing
 
 ```
-WP-A ✓  →  WP-B ✓  →  WP-C ✓  →  WP-D  →  WP-G (#78)
-                       ↘  WP-E  (parallel with WP-D)
-                       ↘  WP-F: #97+#98 first, then #81/#99, then remaining discoveries
-                       ↘  WP-H: #88 discovery, then #89 (needs #16 clear)
-                          WP-I: #96 any time
-                          WP-G: #76 and #77 free-floating — can start now
+WP-A ✓  →  WP-B ✓  →  WP-C ✓  →  WP-D ✓  →  WP-G ✓
+                       ↘  WP-E ✓  (parallel with WP-D)
+                       ↘  WP-F: #25/#26/#34 active; #101 gated by WP-J #113
+                       ↘  WP-H ✓
+                          WP-I: #96 any time (independent)
+                          WP-J: #107/#109/#110 in parallel →
+                                #108 (after #107), #111 (after #108+#110) →
+                                #113 → unblocks WP-F #101 and cross-cutting #92
+                                #112 (after #107, low priority, any time)
 ```
 
-WP-A, WP-B, WP-C, WP-D, and WP-G are complete. **Current focus: WP-H #88 (content taxonomy discovery, medium) → #89 (content population). WP-E stragglers (#69, #68, #74) and WP-F discoveries (#25, #26, #34) can run in parallel. WP-I (#96) is fully independent.**
+**Current focus:** WP-F medium items (#25, #26, #34) are the live work. WP-J can begin immediately and runs in parallel — start with #107, #109, #110 (all independent of each other and of WP-F). WP-I (#96) is fully independent. **Do not begin WP-F #101 or cross-cutting #92 until WP-J #113 is closed.**

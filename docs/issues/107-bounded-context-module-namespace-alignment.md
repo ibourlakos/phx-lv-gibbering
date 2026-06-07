@@ -1,7 +1,8 @@
 # #107 · Bounded context module namespace alignment
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-07
 **Priority:** medium
 **Tags:** discovery, architecture
 
