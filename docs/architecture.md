@@ -309,6 +309,29 @@ violation. Use the bus classification table above to determine the correct path.
 
 ---
 
+## Single-Writer Contract
+
+`Engine.SceneServer` is the **sole emitter** of scene-domain events on its PubSub game
+topic. This is the single-writer guarantee that gives total ordering to the scene event
+stream:
+
+- SceneServer emits: `{:state_updated, state}`, `:session_ended`, `{:dm_broadcast, text}`,
+  `{:whisper, text}` on `SceneServer.topic/1`.
+- The Web Adapter (GameLive) **relays** UI-level messages to players but does **not** emit
+  domain events on behalf of the Scene context.
+- No other bounded context emits events on the scene topic.
+
+The invariant is enforced by convention and verified in `test/engine/scene_server_test.exs`
+under the "single-writer contract" describe block. If any process outside SceneServer
+broadcasts a scene-domain message on the game topic, total ordering is broken and any future
+persistent event log or hash-chained event stream becomes corrupted.
+
+This contract is a prerequisite for the event cascade batch emission pattern (#111) and the
+CQRS read model formalization (#113). It also directly constrains the boundary violation
+tracked in #114 (Observability and admin querying SceneServer directly).
+
+---
+
 ## Open Questions
 
 - ~~Should `Gibbering.Ruleset` be a `behaviour` or a `protocol`?~~ Decided: behaviour (#14 closed)

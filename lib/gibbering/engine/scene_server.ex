@@ -1,5 +1,14 @@
 defmodule Gibbering.Engine.SceneServer do
-  @moduledoc "GenServer process that owns a running scene's `State`, dispatches player actions, and broadcasts state updates via PubSub."
+  @moduledoc """
+  GenServer process that owns a running scene's `State` and dispatches player and DM
+  actions. **Single-writer contract:** SceneServer is the sole emitter of scene-domain
+  events (`{:state_updated, state}`, `:session_ended`, `{:dm_broadcast, text}`,
+  `{:whisper, text}`) on the game PubSub topic. No other process may broadcast to
+  `SceneServer.topic/1` with scene-domain messages. All commands targeting the scene
+  must route through this module's public API.
+
+  See the "Single-Writer Contract" section in docs/architecture.md for rationale.
+  """
 
   use GenServer
 
