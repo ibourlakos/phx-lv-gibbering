@@ -65,7 +65,8 @@ defmodule Gibbering.MixProject do
       {:bandit, "~> 1.5"},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:pbkdf2_elixir, "~> 2.0"},
-      {:req, "~> 0.5"}
+      {:req, "~> 0.5"},
+      {:phoenix_live_dashboard, "~> 0.8"}
     ]
   end
 

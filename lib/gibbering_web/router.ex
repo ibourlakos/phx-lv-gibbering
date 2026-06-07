@@ -2,6 +2,7 @@ defmodule GibberingWeb.Router do
   use GibberingWeb, :router
 
   import GibberingWeb.UserAuth, only: [fetch_current_user: 2]
+  import Phoenix.LiveDashboard.Router
 
   alias GibberingWeb.Plugs.RequireSupportUser
 
@@ -60,6 +61,12 @@ defmodule GibberingWeb.Router do
     post "/campaigns/:id/remove_member", AdminCampaignsController, :remove_member
     get "/characters", AdminCharactersController, :index
     get "/characters/:id", AdminCharactersController, :show
+
+    live_dashboard "/dashboard",
+      metrics: GibberingWeb.Telemetry,
+      additional_pages: [
+        campaigns: {GibberingWeb.Admin.CampaignMonitoringPage, []}
+      ]
   end
 
   # Authenticated routes
