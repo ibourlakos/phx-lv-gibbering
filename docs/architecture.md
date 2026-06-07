@@ -259,6 +259,56 @@ Pipeline.Parser.parse_action_damage/1  ← regex: "Hit: 10 (2d6+3) piercing" →
 
 ---
 
+## Command Bus (C) vs Event Bus (E) Classification
+
+The polytope compound bus is B = (C, E). Command bus (C): fan-out = 1, addressed, synchronous
+(`GenServer.call/cast`). Event bus (E): fan-out ∈ [0, ∞), unaddressed, async (`Phoenix.PubSub`).
+The two sets of message types are disjoint — nothing crosses both buses.
+
+**Event bus (E) — PubSub topics and their publishers:**
+
+| Topic | Publisher | Message type | Classification |
+|---|---|---|---|
+| `"game:#{id}"` | `Engine.SceneServer` | `{:state_updated, state}` | Scene event ✅ |
+| `"game:#{id}"` | `Engine.SceneServer` | `:session_ended` | Scene event ✅ |
+| `"game:#{id}"` | `Engine.SceneServer` | `{:dm_broadcast, text}` | Notification event ✅ |
+| `"game:#{id}:user:#{uid}"` | `Engine.SceneServer` | `{:whisper, text}` | Notification event ✅ |
+| `"game:#{id}:user:#{uid}"` | `Gibbering.Admin` | `{:ejected, reason}` | Admin notification ✅ |
+| `"system:admin"` | `Monitoring.Stores.Local` | metrics map | Observability event ✅ |
+| `"lobby:#{id}"` | `GibberingWeb.LobbyLive` | `:refresh` | UI coordination (intra-web) ✅ |
+
+**Command bus (C) — direct GenServer / function calls between contexts:**
+
+| Caller | Callee | Call type | Classification |
+|---|---|---|---|
+| Web Adapter (GameLive) | `Engine.SceneServer.*` | `GenServer.call` | Player/DM commands ✅ |
+| Web Adapter (LobbyLive) | `Engine.SceneServer.{running?,reload_entities}` | `GenServer.call` | Session lifecycle ✅ |
+| Web Adapter | `Campaigns.*` | DB query | Campaign reads ✅ |
+| Web Adapter | `Catalogue.*` | ETS/DB query | Reference data reads ✅ |
+| Web Adapter | `Accounts.*` | DB query | Identity reads ✅ |
+| `CampaignInvitations` | `Campaigns.join_campaign` | function call | Intra-context ✅ |
+
+**Known boundary violations (tracked as issues):**
+
+| Caller | Callee | Issue |
+|---|---|---|
+| `Monitoring.Stores.Local` | `Engine.SceneServer.get_state` | #114 — Observability queries Scene directly; should subscribe to events |
+| `GibberingWeb.Live.Admin.CampaignMonitoringPage` | `Engine.SceneServer.get_state` | #114 — Admin reads Scene directly; same fix |
+
+The violation of `GameLive` calling `Engine.Rules.valid_targets` directly was fixed in #109:
+`valid_targets` is now computed inside SceneServer and included in `Engine.State`, so callers
+read it from the returned state rather than calling the Rules context directly.
+
+**Enforcement rule:** No bounded context may import or call another context's internal modules.
+All cross-context interaction must go through one of:
+- **C** — `GenServer.call/cast` on the target context's public API module
+- **E** — `Phoenix.PubSub.broadcast/subscribe` on the event bus
+
+A direct module import from one context into another's non-public internals is a boundary
+violation. Use the bus classification table above to determine the correct path.
+
+---
+
 ## Open Questions
 
 - ~~Should `Gibbering.Ruleset` be a `behaviour` or a `protocol`?~~ Decided: behaviour (#14 closed)

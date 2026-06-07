@@ -59,8 +59,7 @@ defmodule GibberingWeb.GameLive do
   def handle_event("select_entity", %{"id" => id}, socket) do
     id = String.to_integer(id)
     new_state = SceneServer.select_entity(socket.assigns.game_id, id)
-    targets = Gibbering.Engine.Rules.valid_targets(new_state, id)
-    {:noreply, assign(socket, game_state: new_state, valid_targets: targets)}
+    {:noreply, assign(socket, game_state: new_state, valid_targets: new_state.valid_targets)}
   end
 
   @impl true
@@ -68,9 +67,7 @@ defmodule GibberingWeb.GameLive do
     new_state =
       SceneServer.move_entity(socket.assigns.game_id, String.to_integer(x), String.to_integer(y))
 
-    active = State.active_hero_id(new_state)
-    targets = if active, do: Gibbering.Engine.Rules.valid_targets(new_state, active), else: []
-    {:noreply, assign(socket, game_state: new_state, valid_targets: targets)}
+    {:noreply, assign(socket, game_state: new_state, valid_targets: new_state.valid_targets)}
   end
 
   @impl true

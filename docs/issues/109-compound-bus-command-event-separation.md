@@ -1,6 +1,7 @@
 # #109 · Compound bus: command/event bus separation
 
-**Status:** open
+**Status:** closed
+**Closed:** 2026-06-07
 **Opened:** 2026-06-07
 **Priority:** medium
 **Tags:** discovery, architecture
