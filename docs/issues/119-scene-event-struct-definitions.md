@@ -1,4 +1,4 @@
-# #114 · Scene event struct definitions — Gibbering.Events.* Published Language registry
+# #119 · Scene event struct definitions — Gibbering.Events.* Published Language registry
 
 **Status:** open
 **Opened:** 2026-06-09

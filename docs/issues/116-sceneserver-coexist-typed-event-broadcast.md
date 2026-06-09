@@ -5,7 +5,7 @@
 **Priority:** medium
 **Tags:** architecture, rules
 
-**Blocked by:** #114 (event struct definitions must exist first)
+**Blocked by:** #119 (event struct definitions must exist first)
 
 Remove all bare-tuple broadcasts from `SceneServer` and replace them with typed `%EventBatch{}` emission per command. This is a clean break — no coexistence with `{:state_updated, state}`.
 
@@ -27,7 +27,7 @@ Envelope fields per event:
 
 **References:**
 - Brainstorm #15 (Q1 and Q4 decisions)
-- Issue #114 (event struct definitions — must land first)
+- Issue #119 (event struct definitions — must land first)
 - Issue #115 (notification topic migration — coordinate removal of dm_broadcast)
 - Issue #118 (LiveView projection — must ship with or immediately after this)
 - Issue #108 (EventBus behaviour — route through it once available)

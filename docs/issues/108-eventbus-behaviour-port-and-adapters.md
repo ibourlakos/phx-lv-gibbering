@@ -17,16 +17,16 @@ Gibbering.EventBus          ← behaviour (the port)
 
 Swapping between adapters must require no change to any bounded context module. The bus adapter is selected at the application configuration level (or passed as a dependency to the relevant supervisor).
 
-Namespace decision (#107) is closed: the behaviour lives at `Gibbering.EventBus`. Event types are defined in `Gibbering.Events.*` (see #114 — struct definitions must land before full implementation). The behaviour must include a `broadcast_batch/2` callback to support the `%EventBatch{}` pattern from brainstorm #15.
+Namespace decision (#107) is closed: the behaviour lives at `Gibbering.EventBus`. Event types are defined in `Gibbering.Events.*` (see #119 — struct definitions must land before full implementation). The behaviour must include a `broadcast_batch/2` callback to support the `%EventBatch{}` pattern from brainstorm #15.
 
 **References**
 - `docs/papers/polytope-architecture.md` §3.3 (bus as meta-hexagon, fractal self-similarity), §6.3 (vertical bus stack), §10.3 (deployment is an adapter decision)
 - Issue #107 (module namespace — closed)
 - Issue #109 (compound bus command/event separation — closed)
-- Issue #114 (event struct definitions — complete before implementing broadcast_batch)
+- Issue #119 (event struct definitions — complete before implementing broadcast_batch)
 - Brainstorm #15 (event schema decisions)
 
-**Blocked by:** #114
+**Blocked by:** #119
 
 **Acceptance criteria**
 - [ ] `Gibbering.EventBus` behaviour defined with at minimum: `broadcast/2`, `broadcast_batch/2`, `subscribe/1`, `unsubscribe/1`

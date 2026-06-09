@@ -162,4 +162,4 @@ Gibbering.Events
 - **#116** — SceneServer: replace bare-tuple broadcasts with typed `%EventBatch{}`
 - **#117** — Architecture doc: document `Gibbering.Events` as Published Language registry
 - **#118** — LiveView event projection (scoped; depends on #116)
-- **Brainstorm #16** — Schema versioning design (must settle before #114 is fully implemented)
+- **Brainstorm #16** — Schema versioning design (must settle before #119 is fully implemented)
