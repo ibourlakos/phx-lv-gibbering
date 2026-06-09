@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 118 (see `counter`)
+**Next issue number:** 119 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -28,13 +28,14 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
-| [#117](117-architecture-doc-published-language-registry.md) | Architecture doc: document Gibbering.Events as Published Language registry | `architecture` | low |
-| [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: coexist typed event broadcast pattern | `architecture` `rules` | medium |
-| [#115](115-notification-event-structs-topic-migration.md) | Notification event structs and dedicated topic migration | `architecture` `ui` | medium |
 | [#114](114-scene-event-struct-definitions.md) | Scene event struct definitions — Gibbering.Events.* Published Language registry | `architecture` `rules` | high |
-| [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | `discovery` `architecture` | low |
-| [#112](112-bounded-context-map-document.md) | Bounded context map document — integration patterns at each seam | `discovery` `architecture` | low |
+| [#115](115-notification-event-structs-topic-migration.md) | Notification event structs and dedicated topic migration | `architecture` `ui` | medium |
+| [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: replace bare-tuple broadcasts with typed %EventBatch{} | `architecture` `rules` | medium |
+| [#118](118-liveview-event-projection.md) | LiveView event projection from %EventBatch{} | `architecture` `ui` | medium |
 | [#111](111-event-cascade-batch-emission.md) | Event cascade batch emission — Event Aggregator pattern | `discovery` `architecture` | medium |
+| [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | `discovery` `architecture` | low |
+| [#117](117-architecture-doc-published-language-registry.md) | Architecture doc: document Gibbering.Events as Published Language registry | `architecture` | low |
+| [#112](112-bounded-context-map-document.md) | Bounded context map document — integration patterns at each seam | `discovery` `architecture` | low |
 | [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract — scene event stream ownership | `architecture` | medium |
 | [#106](106-event-schema-design-methodology.md) | Event schema design methodology — Published Language mini-cycle | `architecture` `discovery` | medium |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
