@@ -1,6 +1,6 @@
 # Brainstorm #15 — Scene event schema and Published Language
 
-**Status:** open
+**Status:** settled
 
 ## Context
 
@@ -12,82 +12,158 @@ This is not a Published Language. The polytope treatise (§8.5) names the intend
 
 ---
 
-## Open questions
+## Decisions
 
 ### 1. Replace or coexist with `{:state_updated, state}`?
 
-Currently every mutation broadcasts the full `Engine.State`. LiveView subscribes and re-renders the entire game board from it. Two options:
+**Decision: Coexist as a transitional strategy; Replace is the long-term goal.**
 
-- **Replace** — replace `{:state_updated, state}` with a batch of typed events per command; LiveView projects them into local state. Clean Published Language, but LiveView must maintain its own projection rather than receiving ready-to-render state.
-- **Coexist** — keep `{:state_updated, state}` for the Web Adapter (it's a convenience projection), and also emit typed events for all other subscribers (Observability, future event log, spectator feed). Two distinct bus messages per command, but LiveView migration cost is deferred.
+The `{:state_updated, state}` message ships raw `Engine.State` across a context boundary — a clear Published Language violation. However, LiveView is today's only subscriber and re-renders the entire board from it. Replacing it requires LiveView to maintain a local projection from typed events, which is meaningful scope not yet designed.
 
-Which model do we adopt?
+The coexist model:
+- SceneServer emits a typed `%EventBatch{}` on the bus for all subscribers that care about semantics (Observability, future event log, spectator feed, animation sequencer).
+- SceneServer also continues to emit `{:state_updated, state}` **exclusively for the Web Adapter**, explicitly labelled as a convenience projection pending LiveView migration.
+- The two messages share the same PubSub game topic (subscribers filter by pattern).
+- A dedicated follow-up issue tracks removing `{:state_updated, state}` once LiveView projects from events.
 
-### 2. What are the canonical scene event types?
+This is intentional and time-bounded — not "both forever."
 
-The treatise names five. Are they the right set, and are they granular enough?
+---
 
-| Proposed event | Triggered by | Key payload fields |
+### 2. Canonical set of scene event types
+
+**Decision: 11 events for the initial set (10 from the proposed table + `HPAdjusted`).**
+
+| Event | Triggered by | Key payload fields |
 |---|---|---|
-| `EntityMoved` | `move_entity` | entity_id, from: {x,y}, to: {x,y}, cost_ft |
-| `AttackResolved` | `attack_entity` | attacker_id, target_id, roll, hit?, damage |
-| `DamageDealt` | attack or spell that hits | target_id, amount, damage_type, new_hp |
-| `ConditionApplied` | attack effect, DM apply | entity_id, condition_id, source_id, duration |
-| `ConditionRemoved` | end of duration, save, DM | entity_id, condition_id, reason |
-| `TurnAdvanced` | `end_turn`, `force_end_turn` | from_entity_id, to_entity_id, round_number |
-| `PhaseTransitioned` | `transition_phase` | from_phase, to_phase |
-| `SpellCast` | `cast_spell` | caster_id, spell_key, target_id, outcome |
-| `ResourceConsumed` | spell slot use, rage | entity_id, resource_key, amount_used, remaining |
-| `SessionEnded` | `end_session` | campaign_id |
+| `EntityMoved` | `move_entity` | `entity_id`, `from`, `to`, `cost_ft` |
+| `AttackResolved` | `attack_entity` | `attacker_id`, `target_id`, `roll`, `hit?` |
+| `DamageDealt` | attack or spell that hits | `target_id`, `amount`, `damage_type`, `new_hp` |
+| `ConditionApplied` | attack effect, DM apply | `entity_id`, `condition_id`, `source_id`, `duration` |
+| `ConditionRemoved` | end of duration, save, DM | `entity_id`, `condition_id`, `reason` |
+| `TurnAdvanced` | `end_turn`, `force_end_turn` | `from_entity_id`, `to_entity_id`, `round_number` |
+| `PhaseTransitioned` | `transition_phase` | `from_phase`, `to_phase` |
+| `SpellCast` | `cast_spell` | `caster_id`, `spell_key`, `target_id`, `outcome` |
+| `ResourceConsumed` | spell slot use, rage | `entity_id`, `resource_key`, `amount_used`, `remaining` |
+| `SessionEnded` | `end_session` | `campaign_id` |
+| `HPAdjusted` | DM override | `entity_id`, `old_hp`, `new_hp`, `reason` |
 
-Are `AttackResolved` and `DamageDealt` separate events or one? (They are separate in real 5e: a miss produces an attack event but no damage event.)
+**`AttackResolved` and `DamageDealt` are separate events.** A miss produces `AttackResolved(hit?: false)` with no `DamageDealt`. This mirrors real 5e mechanics: the attack resolution and the damage resolution are distinct steps. Subscribers (combat log, animation) need to distinguish them.
 
-Are there DM-intervention events (`HPAdjusted`, `VisibilityToggled`) or are those projected differently?
+**`HPAdjusted` is added** as a DM intervention event. DMs can set HP directly (outside normal combat flow, see #32). Without it, HP deltas caused by DM override are invisible to Observability and the event log.
 
-### 3. What fields belong in each event vs what is derivable?
+**`VisibilityToggled` is deferred** — requires fog-of-war infrastructure not yet designed.
 
-The event schema is a Published Language contract — changing field names or types is a breaking change. Guideline: include the minimum fields that every subscriber needs; do not include fields that require knowledge of another context's internal model.
+---
 
-- Should events carry denormalized entity names (e.g. `attacker_name: "Aldric"`) for display, or only IDs?
-- Should `DamageDealt` carry `new_hp` (post-damage HP) or only `amount`? Post-damage HP is convenient for the Web Adapter but requires SceneServer to include it, coupling the event to the current state snapshot.
-- Should events carry a `causation_id` linking a child event to the parent command that triggered it?
-- Should events carry a `sequence_number` for total ordering within a command's batch?
+### 3. Event envelope and per-event fields
+
+**Decision: IDs only; include `new_hp`; include `causation_id`, `correlation_id`, and `sequence_number`.**
+
+**Denormalized names vs IDs only:** IDs only. Entity names are derivable from the Content catalog. Including `attacker_name: "Aldric"` creates an update anomaly — a rename would require schema migration. Names belong in each subscriber's ACL/projection, not in the Published Language.
+
+**`new_hp` in `DamageDealt`:** Include it. Post-damage HP is a fact about the event outcome that Observability (health tracking) and the Web Adapter (HP bar rendering) both need immediately. Omitting it forces every subscriber to track cumulative state themselves, which is a worse coupling. The binding concern — "it requires SceneServer to include current state" — is acceptable because SceneServer is the Single Writer and already holds this state authoritatively at emit time.
+
+**`causation_id` and `correlation_id`:** Include on every event per #106 and #111:
+- `correlation_id` — the user action (command) that initiated the cascade. All events in a batch share it.
+- `causation_id` — the direct cause of this specific event within the cascade (the preceding event's `event_id`, or the command id for the first event).
+
+**`sequence_number`:** Include as a per-batch integer, not global. Orders events within a single `%EventBatch{}`. Subscribers can reconstruct causal order from the `causation_id` chain; `sequence_number` is a convenience for ordered iteration.
+
+**Canonical event envelope** (applied to every scene event struct):
+```
+event_id          :: UUID
+event_type        :: atom  (module name alias, e.g. :entity_moved)
+schema_version    :: integer
+occurred_at       :: DateTime
+correlation_id    :: UUID
+causation_id      :: UUID
+sequence_number   :: non_neg_integer
+payload           :: map   (event-specific fields)
+```
+
+---
 
 ### 4. Cascade batch structure
 
-Issue #111 proposes the Event Aggregator pattern: SceneServer emits a causally ordered batch per command rather than individual events. What is the batch envelope?
+**Decision: `%Gibbering.Events.EventBatch{}` typed struct.**
 
-Options:
-- `{:events, [event1, event2, ...]}` — bare list wrapped in a tuple, same PubSub topic.
-- `%EventBatch{command: atom, events: [event], sequence: integer}` — typed struct with metadata.
-- Keep individual events but add a `batch_id` field to each — subscribers can reassemble the batch if they care.
+```elixir
+%Gibbering.Events.EventBatch{
+  batch_id:       UUID,
+  command:        atom,
+  correlation_id: UUID,
+  occurred_at:    DateTime,
+  events:         [%Gibbering.Events.Scene.*{...}]
+}
+```
 
-Which structure best serves the Web Adapter (animation sequencing), Observability (metrics), and future event log (replay)?
+**Rejected: `{:events, [...]}`** — a bare tuple is marginally better than `{:state_updated, state}` but still untyped and unpattern-matchable by struct guards. Inconsistent with the Published Language goal.
 
-### 5. What happens to `{:dm_broadcast, text}` and `{:whisper, text}`?
+**Rejected: per-event `batch_id`** — requires every subscriber that cares about causal order to reassemble from raw events. Adds complexity to every subscriber and makes atomic receipt of a causal chain impossible.
 
-These are notification events, not scene-domain events. They belong to the Notification context (#107 assigned `Gibbering.Notification`). Should they:
-- Stay as bare tuples on the same game topic (current behaviour)?
-- Move to a dedicated notification topic?
-- Become typed notification event structs?
+**Chosen: `%EventBatch{}`** — first-class typed concept. Subscribers pattern-match `%EventBatch{}` cleanly. The Web Adapter gets the full ordered `events` list for animation sequencing. The event log stores it atomically. Observability iterates events for metric counters. `EventBus` exposes a `broadcast_batch/2` call.
+
+The `correlation_id` on the batch matches the `correlation_id` on each contained event (the batch is the causal envelope; events point back to it).
+
+---
+
+### 5. Fate of `{:dm_broadcast, text}` and `{:whisper, text}`
+
+**Decision: Move to a dedicated notification topic + typed structs under `Gibbering.Events.Notification.*`.**
+
+These are not scene-domain events — they are notifications from the DM to players. The polytope treatise (§8.5) explicitly separates Notification events (`BroadcastSent`, `WhisperDelivered`) from scene events. Keeping them on the game topic mixes concerns and forces scene subscribers to pattern-match them away.
+
+Typed structs:
+- `{:dm_broadcast, text}` → `%Gibbering.Events.Notification.BroadcastSent{campaign_id, text, sent_at}`
+- `{:whisper, text}` → `%Gibbering.Events.Notification.WhisperDelivered{campaign_id, target_player_id, text, sent_at}`
+
+PubSub topic: `"notifications:#{campaign_id}"` — separate from `"game:#{campaign_id}"`.
+
+LiveView (and any future player client) subscribes to both topics. Scene analytics subscribers need only the game topic.
+
+---
 
 ### 6. Module location for event struct definitions
 
-Where do the event struct modules live?
+**Decision: `Gibbering.Events.*` — top-level, owned by no single bounded context.**
 
-- `Gibbering.Engine.Events.*` — owned by the Scene context; other contexts depend on it.
-- `Gibbering.Events.*` — top-level, treated as the Published Language registry shared by all contexts.
-- Inline in `Gibbering.EventBus` — co-located with the bus port definition.
+Per treatise §3.2: "the Published Language is the polytope's shared artifact. No single context should own the event schema definition for events that cross its boundary."
 
-The polytope treatise (§3.2) is explicit: the event schema registry is the most important contract in the system. It should be treated as a top-level concern, not owned by any single bounded context.
+- `Gibbering.Engine.Events.*` — wrong: owned by the Engine context.
+- Inline in `Gibbering.EventBus` — wrong: co-located with transport infrastructure.
+- **`Gibbering.Events.*`** — correct: top-level shared namespace, no single bounded context owns it.
+
+Sub-namespace layout:
+```
+Gibbering.Events
+├── EventBatch          ← the batch envelope (not scene-specific)
+├── Scene
+│   ├── EntityMoved
+│   ├── AttackResolved
+│   ├── DamageDealt
+│   ├── ConditionApplied
+│   ├── ConditionRemoved
+│   ├── TurnAdvanced
+│   ├── PhaseTransitioned
+│   ├── SpellCast
+│   ├── ResourceConsumed
+│   ├── SessionEnded
+│   └── HPAdjusted
+├── Notification
+│   ├── BroadcastSent
+│   └── WhisperDelivered
+└── Campaign            ← future: PlayerJoined, SessionStarted, etc.
+```
+
+`docs/architecture.md` will reference `Gibbering.Events` as the Published Language registry.
 
 ---
 
 ## Issues to open after settling
 
-_(Fill in after decisions are made)_
-
-- Scene event struct definitions (typed structs + field specs)
-- EventBus behaviour port (#108 — unblocked once event types are known)
-- Update `SceneServer` broadcast calls to emit typed events (or coexist pattern)
-- Any notation in `docs/architecture.md` for the Published Language registry location
+- **Scene event struct definitions** — define `%EventBatch{}` and all `Gibbering.Events.Scene.*` structs with typed fields; follow the envelope spec from #106. This directly unblocks #108.
+- **Notification event structs + topic migration** — define `Gibbering.Events.Notification.*` structs; update SceneServer to broadcast on `"notifications:#{campaign_id}"`; update LiveView subscription.
+- **SceneServer: coexist broadcast pattern** — update SceneServer to emit `%EventBatch{}` per command alongside the existing `{:state_updated, state}` (which remains for Web Adapter until LiveView projection is ready). Track removal of `{:state_updated, state}` as a follow-up.
+- **#108 (EventBus behaviour)** — now unblocked: namespace is `Gibbering.EventBus`, event types are `Gibbering.Events.*`, `broadcast_batch/2` is a required callback.
+- **Architecture doc update** — document `Gibbering.Events.*` as the Published Language registry in `docs/architecture.md`; note the coexist transition status of `{:state_updated, state}`.
