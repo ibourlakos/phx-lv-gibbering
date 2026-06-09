@@ -144,6 +144,40 @@ defmodule Gibbering.Engine.SceneServerTest do
     end
   end
 
+  # Single-writer contract (see docs/architecture.md): SceneServer is the sole
+  # emitter of scene-domain events on the game topic. No other process may broadcast
+  # {:state_updated, _} to this topic.
+  describe "single-writer contract" do
+    test "no state_updated arrives without a SceneServer command" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      # SceneServer init does not emit state_updated; only mutations do.
+      refute_receive {:state_updated, _}, 100
+    end
+
+    test "exactly one state_updated arrives per command, not more" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      SceneServer.select_entity(game_id, State.active_hero_id(state))
+
+      assert_receive {:state_updated, %State{}}, 500
+      refute_receive {:state_updated, _}, 100
+    end
+
+    test "state_updated carries a well-formed State for the correct campaign" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      SceneServer.select_entity(game_id, State.active_hero_id(state))
+
+      assert_receive {:state_updated, %State{campaign_id: ^game_id}}, 500
+    end
+  end
+
   describe "running?/1" do
     test "returns false when no server is registered for the game" do
       refute SceneServer.running?(999_999_999)

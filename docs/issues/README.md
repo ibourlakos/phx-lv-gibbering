@@ -31,7 +31,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | `discovery` `architecture` | low |
 | [#112](112-bounded-context-map-document.md) | Bounded context map document — integration patterns at each seam | `discovery` `architecture` | low |
 | [#111](111-event-cascade-batch-emission.md) | Event cascade batch emission — Event Aggregator pattern | `discovery` `architecture` | medium |
-| [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract — scene event stream ownership | `architecture` | medium |
 | [#114](114-observability-admin-direct-scene-reads.md) | Observability and admin: replace direct SceneServer reads with event subscriptions | `architecture` `admin` | low |
 | [#108](108-eventbus-behaviour-port-and-adapters.md) | EventBus behaviour: port and adapters — PubSub behind a port | `architecture` | medium |
 | [#106](106-event-schema-design-methodology.md) | Event schema design methodology — Published Language mini-cycle | `architecture` `discovery` | medium |
@@ -92,6 +91,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract — scene event stream ownership | `architecture` |
 | [#109](109-compound-bus-command-event-separation.md) | Compound bus: command/event bus separation — B=(C,E) enforcement | `discovery` `architecture` |
 | [#107](107-bounded-context-module-namespace-alignment.md) | Bounded context module namespace alignment — polytope naming | `discovery` `architecture` |
 | [#105](105-polytope-architecture-treatise.md) | Polytope architecture model — mini-treatise and terminology reference | `architecture` `discovery` |
