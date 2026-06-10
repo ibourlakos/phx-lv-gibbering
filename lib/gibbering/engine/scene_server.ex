@@ -2,10 +2,10 @@ defmodule Gibbering.Engine.SceneServer do
   @moduledoc """
   GenServer process that owns a running scene's `State` and dispatches player and DM
   actions. **Single-writer contract:** SceneServer is the sole emitter of scene-domain
-  events (`{:state_updated, state}`, `:session_ended`, `{:dm_broadcast, text}`,
-  `{:whisper, text}`) on the game PubSub topic. No other process may broadcast to
-  `SceneServer.topic/1` with scene-domain messages. All commands targeting the scene
-  must route through this module's public API.
+  events (`{:state_updated, state}`, `:session_ended`) on the game PubSub topic, and
+  notification events (`%BroadcastSent{}`, `%WhisperDelivered{}`) on the notifications
+  topic. No other process may broadcast to these topics with scene or notification
+  messages. All commands targeting the scene must route through this module's public API.
 
   See the "Single-Writer Contract" section in docs/architecture.md for rationale.
   """
@@ -15,9 +15,11 @@ defmodule Gibbering.Engine.SceneServer do
   import Ecto.Query
   alias Gibbering.{Repo, Campaign, Entity, EventBus}
   alias Gibbering.Engine.{State, Rules, GameSession}
+  alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias Gibbering.Rulesets.DnD5e.Stats
 
   @topic_prefix "game:"
+  @notifications_prefix "notifications:"
 
   # --- Public API ---
 
@@ -120,6 +122,9 @@ defmodule Gibbering.Engine.SceneServer do
 
   @doc "Returns the PubSub topic string for broadcasting scene updates to subscribers."
   def topic(game_id), do: @topic_prefix <> to_string(game_id)
+
+  @doc "Returns the PubSub topic string for broadcasting notification events to subscribers."
+  def notifications_topic(game_id), do: @notifications_prefix <> to_string(game_id)
 
   @doc """
   Ensures a SceneServer for `game_id` is running under the SceneSupervisor.
@@ -439,14 +444,29 @@ defmodule Gibbering.Engine.SceneServer do
     entry = "Broadcast: #{text}"
     new_state = State.add_log_entry(state, entry)
     persist(new_state)
-    EventBus.broadcast(topic(state.campaign_id), {:dm_broadcast, text})
+
+    event = %BroadcastSent{
+      event_id: Ecto.UUID.generate(),
+      campaign_id: state.campaign_id,
+      text: text,
+      sent_at: DateTime.utc_now()
+    }
+
+    EventBus.broadcast(notifications_topic(state.campaign_id), event)
     {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:dm_whisper, user_id, text}, _from, state) do
-    EventBus.broadcast("game:#{state.campaign_id}:user:#{user_id}", {:whisper, text})
+    event = %WhisperDelivered{
+      event_id: Ecto.UUID.generate(),
+      campaign_id: state.campaign_id,
+      target_player_id: user_id,
+      text: text,
+      sent_at: DateTime.utc_now()
+    }
 
+    EventBus.broadcast(notifications_topic(state.campaign_id), event)
     {:reply, :ok, state}
   end
 

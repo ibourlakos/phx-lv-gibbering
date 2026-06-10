@@ -439,26 +439,39 @@ defmodule GibberingWeb.GameLiveTest do
       assert MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
     end
 
-    test "dm_broadcast shows banner on handle_info :dm_broadcast", %{conn: conn} do
+    test "dm_broadcast shows banner on handle_info %BroadcastSent{}", %{conn: conn} do
       {view, game_id} = mount_dm_game(conn)
 
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
-        SceneServer.topic(game_id),
-        {:dm_broadcast, "Ambient noise fills the room"}
+        SceneServer.notifications_topic(game_id),
+        %Gibbering.Events.Notification.BroadcastSent{
+          event_id: "evt-test",
+          campaign_id: game_id,
+          text: "Ambient noise fills the room",
+          sent_at: DateTime.utc_now()
+        }
       )
 
       assert render(view) =~ "Ambient noise fills the room"
     end
 
-    test "whisper shows popup on handle_info :whisper", %{conn: conn} do
+    test "whisper shows popup on handle_info %WhisperDelivered{} for the current user", %{
+      conn: conn
+    } do
       {view, game_id} = mount_dm_game(conn)
       user_id = Gibbering.Campaigns.get!(game_id).dm_id
 
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
-        "game:#{game_id}:user:#{user_id}",
-        {:whisper, "Secret only for you"}
+        SceneServer.notifications_topic(game_id),
+        %Gibbering.Events.Notification.WhisperDelivered{
+          event_id: "evt-test",
+          campaign_id: game_id,
+          target_player_id: user_id,
+          text: "Secret only for you",
+          sent_at: DateTime.utc_now()
+        }
       )
 
       assert render(view) =~ "Secret only for you"

@@ -3,6 +3,7 @@ defmodule GibberingWeb.GameLive do
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
   alias Gibbering.{Campaigns, EventBus}
+  alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
@@ -21,6 +22,7 @@ defmodule GibberingWeb.GameLive do
         :ok ->
           if connected?(socket) do
             EventBus.subscribe(SceneServer.topic(game_id))
+            EventBus.subscribe(SceneServer.notifications_topic(game_id))
             EventBus.subscribe("game:#{game_id}:user:#{user.id}")
           end
 
@@ -377,13 +379,17 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
-  def handle_info({:dm_broadcast, text}, socket) do
+  def handle_info(%BroadcastSent{text: text}, socket) do
     {:noreply, update(socket, :dm_broadcasts, fn msgs -> [text | Enum.take(msgs, 4)] end)}
   end
 
   @impl true
-  def handle_info({:whisper, text}, socket) do
-    {:noreply, update(socket, :dm_whispers, fn msgs -> [text | Enum.take(msgs, 4)] end)}
+  def handle_info(%WhisperDelivered{text: text, target_player_id: target_id}, socket) do
+    if target_id == socket.assigns.current_user.id do
+      {:noreply, update(socket, :dm_whispers, fn msgs -> [text | Enum.take(msgs, 4)] end)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_info({:ejected, reason}, socket) do

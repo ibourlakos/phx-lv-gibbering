@@ -1,7 +1,8 @@
 # #115 · Notification event structs and dedicated topic migration
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-09
+**Closed:** 2026-06-10
 **Priority:** medium
 **Tags:** architecture, ui
 
@@ -34,9 +35,9 @@ Update:
 - Issue #107 (namespace: `Gibbering.Notification` assigned)
 
 **Acceptance criteria**
-- [ ] `Gibbering.Events.Notification.BroadcastSent` struct defined
-- [ ] `Gibbering.Events.Notification.WhisperDelivered` struct defined
-- [ ] `SceneServer` broadcasts on `"notifications:#{campaign_id}"` using the typed structs
-- [ ] LiveView subscribes to the notifications topic and handles the new structs
-- [ ] No bare `{:dm_broadcast, _}` or `{:whisper, _}` tuples remain in any broadcast or `handle_info` clause
-- [ ] Existing DM broadcast tests pass with the new structs
+- [x] `Gibbering.Events.Notification.BroadcastSent` struct defined
+- [x] `Gibbering.Events.Notification.WhisperDelivered` struct defined
+- [x] `SceneServer` broadcasts on `"notifications:#{campaign_id}"` using the typed structs
+- [x] LiveView subscribes to the notifications topic and handles the new structs
+- [x] No bare `{:dm_broadcast, _}` or `{:whisper, _}` tuples remain in any broadcast or `handle_info` clause
+- [x] Existing DM broadcast tests pass with the new structs
