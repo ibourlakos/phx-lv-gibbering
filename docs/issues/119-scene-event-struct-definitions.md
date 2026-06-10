@@ -1,7 +1,8 @@
 # #119 · Scene event struct definitions — Gibbering.Events.* Published Language registry
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-09
+**Closed:** 2026-06-10
 **Priority:** high
 **Tags:** architecture, rules
 

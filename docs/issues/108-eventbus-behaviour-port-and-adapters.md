@@ -1,6 +1,6 @@
 # #108 · EventBus behaviour: port and adapters
 
-**Status:** blocked
+**Status:** open
 **Opened:** 2026-06-07
 **Priority:** medium
 **Tags:** architecture
@@ -26,7 +26,6 @@ Namespace decision (#107) is closed: the behaviour lives at `Gibbering.EventBus`
 - Issue #119 (event struct definitions — complete before implementing broadcast_batch)
 - Brainstorm #15 (event schema decisions)
 
-**Blocked by:** #119
 
 **Acceptance criteria**
 - [ ] `Gibbering.EventBus` behaviour defined with at minimum: `broadcast/2`, `broadcast_batch/2`, `subscribe/1`, `unsubscribe/1`
