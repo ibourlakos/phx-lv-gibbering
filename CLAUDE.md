@@ -37,7 +37,7 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | [13-monitoring-infrastructure.md](docs/brainstorming/13-monitoring-infrastructure.md) | Prometheus + Grafana monitoring stack | open |
 | [14-isometric-scene-view.md](docs/brainstorming/14-isometric-scene-view.md) | Full-viewport isometric rendering, overlay UI, DST-inspired art direction | open |
 | [15-scene-event-schema.md](docs/brainstorming/15-scene-event-schema.md) | Scene event types, Published Language schema, batch structure | settled |
-| [16-schema-versioning-design.md](docs/brainstorming/16-schema-versioning-design.md) | Event schema versioning policy — schema_version field design | open |
+| [16-schema-versioning-design.md](docs/brainstorming/16-schema-versioning-design.md) | Event schema versioning policy — schema_version field design | settled |
 
 ## Dev Setup (short form)
 
