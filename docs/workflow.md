@@ -170,6 +170,17 @@ Apply to paths A, B, C only.
 **Trigger:** Modifies a shared interface, spans more than two modules, or affects the SVG pipeline end-to-end.  
 **Action:** Discuss and update [docs/architecture.md](architecture.md) before writing any code.
 
+**Event schema sub-gate:** Adding or changing any `Gibbering.Events.*` struct is a Published
+Language change — a system-wide API contract, not a local code change. Before implementing:
+1. Run the mini-cycle: Event Storming (brainstorm) → envelope spec → versioning policy review
+2. Confirm the change is additive-only or justify a new event type
+3. Update the Published Language Registry and the Event Cascade Batch Emission table in
+   `docs/architecture.md`
+
+This gate precedes any bus extension, event store implementation, or persistent event log work.
+See the Published Language Registry section in [docs/architecture.md](architecture.md) for the
+full convention.
+
 ### Discovery gate
 
 **Trigger:** A question that requires prototyping, research, or external input to answer.  

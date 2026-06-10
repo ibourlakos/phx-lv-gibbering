@@ -157,6 +157,19 @@ implements `Gibbering.Events.Upcaster`. Fields are never renamed or removed once
 (additive-only discipline). Breaking changes produce a new event type. Version checking lives
 exclusively in the `Decoder` at the event-log boundary; in-process events are live typed structs.
 
+**Consumer-driven contract testing:** In-process events are compile-time contracts — struct
+pattern matching in `handle_info/2` is a compile-time guarantee; shape mismatches are compiler
+errors. Formal consumer-driven contract (CDC) testing (e.g. Pact-style per-consumer contract
+files) is deferred until the persistent event log and a multi-process consumer topology are
+introduced. At that point, the `ContractRegistry` described in the polytope treatise §15.2 is
+the appropriate home. Until then, the `Gibbering.Events.Decoder` + `Upcaster` chain is the
+sole contract enforcement boundary that must be covered by tests.
+
+**Event Storming output:** Brainstorm #15 is the canonical Event Storming record for the scene
+context — it lists the domain events, their single producer (SceneServer), and known consumers
+(GameLive, admin). The event bus classification table and the Event Cascade Batch Emission
+section above are the living architecture artefacts derived from that record.
+
 ---
 
 ## The Ruleset Behaviour
