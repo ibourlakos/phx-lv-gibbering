@@ -2,7 +2,7 @@ defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
-  alias Gibbering.Campaigns
+  alias Gibbering.{Campaigns, EventBus}
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
@@ -20,8 +20,8 @@ defmodule GibberingWeb.GameLive do
       case ensure_game_server(game_id) do
         :ok ->
           if connected?(socket) do
-            Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
-            Phoenix.PubSub.subscribe(Gibbering.PubSub, "game:#{game_id}:user:#{user.id}")
+            EventBus.subscribe(SceneServer.topic(game_id))
+            EventBus.subscribe("game:#{game_id}:user:#{user.id}")
           end
 
           campaign = Campaigns.get!(game_id)

@@ -28,7 +28,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
-| [#108](108-eventbus-behaviour-port-and-adapters.md) | EventBus behaviour: port and adapters — PubSub behind a port | `architecture` | medium |
 | [#115](115-notification-event-structs-topic-migration.md) | Notification event structs and dedicated topic migration | `architecture` `ui` | medium |
 | [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: replace bare-tuple broadcasts with typed %EventBatch{} | `architecture` `rules` | medium |
 | [#118](118-liveview-event-projection.md) | LiveView event projection from %EventBatch{} | `architecture` `ui` | medium |
@@ -96,6 +95,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 |---|---|---|
 | [#119](119-scene-event-struct-definitions.md) | Scene event struct definitions — Gibbering.Events.* Published Language registry | `architecture` `rules` |
 | [#117](117-architecture-doc-published-language-registry.md) | Architecture doc: document Gibbering.Events as Published Language registry | `architecture` |
+| [#108](108-eventbus-behaviour-port-and-adapters.md) | EventBus behaviour: port and adapters — PubSub behind a port | `architecture` |
 | [#110](110-sceneserver-single-writer-contract.md) | SceneServer single-writer contract — scene event stream ownership | `architecture` |
 | [#109](109-compound-bus-command-event-separation.md) | Compound bus: command/event bus separation — B=(C,E) enforcement | `discovery` `architecture` |
 | [#107](107-bounded-context-module-namespace-alignment.md) | Bounded context module namespace alignment — polytope naming | `discovery` `architecture` |

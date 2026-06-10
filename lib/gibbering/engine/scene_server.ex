@@ -13,7 +13,7 @@ defmodule Gibbering.Engine.SceneServer do
   use GenServer
 
   import Ecto.Query
-  alias Gibbering.{Repo, Campaign, Entity}
+  alias Gibbering.{Repo, Campaign, Entity, EventBus}
   alias Gibbering.Engine.{State, Rules, GameSession}
   alias Gibbering.Rulesets.DnD5e.Stats
 
@@ -370,7 +370,7 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call(:end_session, _from, state) do
     persist(state)
-    Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), :session_ended)
+    EventBus.broadcast(topic(state.campaign_id), :session_ended)
     {:reply, :ok, state}
   end
 
@@ -439,17 +439,13 @@ defmodule Gibbering.Engine.SceneServer do
     entry = "Broadcast: #{text}"
     new_state = State.add_log_entry(state, entry)
     persist(new_state)
-    Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), {:dm_broadcast, text})
+    EventBus.broadcast(topic(state.campaign_id), {:dm_broadcast, text})
     {:reply, :ok, new_state}
   end
 
   @impl true
   def handle_call({:dm_whisper, user_id, text}, _from, state) do
-    Phoenix.PubSub.broadcast(
-      Gibbering.PubSub,
-      "game:#{state.campaign_id}:user:#{user_id}",
-      {:whisper, text}
-    )
+    EventBus.broadcast("game:#{state.campaign_id}:user:#{user_id}", {:whisper, text})
 
     {:reply, :ok, state}
   end
@@ -508,7 +504,7 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   defp broadcast(state) do
-    Phoenix.PubSub.broadcast(Gibbering.PubSub, topic(state.campaign_id), {:state_updated, state})
+    EventBus.broadcast(topic(state.campaign_id), {:state_updated, state})
   end
 
   defp via(game_id), do: {:via, Registry, {Gibbering.GameRegistry, game_id}}

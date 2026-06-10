@@ -105,10 +105,19 @@ wrapper module encapsulating those calls is the planned scope, once the EventBus
 
 ### Bus *(Integration dimension — meta-hexagon)*
 
-Namespace: `Gibbering.EventBus` (port/behaviour to be defined by #108). Current
-implementation: direct `Phoenix.PubSub` calls at call sites. The EventBus port will
-allow swapping to a synchronous in-memory test double or persistent event store without
-touching any bounded context.
+```
+Gibbering.EventBus              ← behaviour port: broadcast/2, broadcast_batch/2, subscribe/1, unsubscribe/1
+Gibbering.EventBus.PubSub       ← adapter: Phoenix.PubSub (production + integration tests)
+Gibbering.EventBus.Local        ← adapter: in-memory ETS GenServer (unit tests, no PubSub process)
+```
+
+All cross-context event broadcasts and subscriptions go through `Gibbering.EventBus`. No bounded
+context calls `Phoenix.PubSub` directly. The active adapter is selected via application config:
+
+    config :gibbering, Gibbering.EventBus, adapter: Gibbering.EventBus.PubSub
+
+Swapping adapters requires no change to any bounded context module. See §3.3, §10.3 of the
+polytope paper for the port/adapter rationale.
 
 ### Web Adapter *(Presentational dimension)*
 
