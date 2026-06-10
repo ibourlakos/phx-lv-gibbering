@@ -16,6 +16,25 @@ The driving analogy from the project: **think of event schema versioning like lo
 
 ---
 
+## Decisions
+
+### Q1 — `schema_version` semantics: per-event-type integer
+
+Each event struct carries its own independent `schema_version` integer starting at `1`. `DamageDealt` and `EntityMoved` version independently. This matches the industry consensus in event sourcing (EventStore, Axon, Commanded) and the DB-analogy: each table has its own migration history. It is the most precise identifier when deserialising persisted events for replay and upcasting.
+
+### Q2 — Breaking changes: additive-only discipline
+
+Events are append-only contracts. The rules:
+- **Non-breaking (safe):** Adding a field with a default that is truthful for every prior event — i.e. no subscriber would behave incorrectly on an event carrying that default.
+- **Breaking:** Renaming a field, removing a field, changing a field's type, tightening a constraint, or adding a field where no truthful default exists for prior events.
+- **The additive-only rule:** Once a field is published, it is never renamed or removed. Breaking changes produce a new event type, not a new version of the old one. When in doubt, treat an addition as breaking and bump the version.
+
+The truthfulness test cannot be evaluated by the producer alone — it requires knowing what each subscriber would do with the default. In a system where the consumer set is not fully observable (microservices, future consumers), the conservative default is: if the default's correctness cannot be guaranteed for all possible consumers, it is a breaking change.
+
+**Noted for future implementation:** two architectural patterns to enforce these guarantees at scale are recorded in `docs/papers/polytope-architecture.md` §7.4 and §15.2: (1) a subscriber contract port (`contract/0` callback on `EventBus.Subscriber` behaviour), and (2) a `SchemaViolation` meta-event emitted by subscribers at runtime when they receive an unrecognised schema version.
+
+---
+
 ## Open questions
 
 ### 1. What does `schema_version` mean on a struct?
