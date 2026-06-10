@@ -26,6 +26,8 @@ defmodule Gibbering.Engine.State do
     :selected_id,
     # [{x, y}]
     :valid_moves,
+    # [entity_id] — entities the selected entity can attack or target this turn
+    :valid_targets,
     # [entity_id] — hero ids in sequence
     :turn_order,
     # index into turn_order
@@ -100,6 +102,7 @@ defmodule Gibbering.Engine.State do
       entities: entities,
       selected_id: nil,
       valid_moves: [],
+      valid_targets: [],
       turn_order: hero_ids,
       active_index: 0,
       phase: :lobby,
@@ -368,6 +371,13 @@ defmodule Gibbering.Engine.State do
         state.entities
       end
 
-    %{state | active_index: next, selected_id: nil, valid_moves: [], entities: entities}
+    %{
+      state
+      | active_index: next,
+        selected_id: nil,
+        valid_moves: [],
+        valid_targets: [],
+        entities: entities
+    }
   end
 end
