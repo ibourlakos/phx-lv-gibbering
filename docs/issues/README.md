@@ -28,8 +28,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
-| [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: replace bare-tuple broadcasts with typed %EventBatch{} | `architecture` `rules` | medium |
-| [#118](118-liveview-event-projection.md) | LiveView event projection from %EventBatch{} | `architecture` `ui` | medium |
 | [#111](111-event-cascade-batch-emission.md) | Event cascade batch emission — Event Aggregator pattern | `discovery` `architecture` | medium |
 | [#114](114-observability-admin-direct-scene-reads.md) | Observability and admin: replace direct SceneServer reads with event subscriptions | `architecture` `admin` | low |
 | [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | `discovery` `architecture` | low |
@@ -92,6 +90,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#118](118-liveview-event-projection.md) | LiveView event projection from %EventBatch{} | `architecture` `ui` |
+| [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: replace bare-tuple broadcasts with typed %EventBatch{} | `architecture` `rules` |
 | [#115](115-notification-event-structs-topic-migration.md) | Notification event structs and dedicated topic migration | `architecture` `ui` |
 | [#119](119-scene-event-struct-definitions.md) | Scene event struct definitions — Gibbering.Events.* Published Language registry | `architecture` `rules` |
 | [#117](117-architecture-doc-published-language-registry.md) | Architecture doc: document Gibbering.Events as Published Language registry | `architecture` |

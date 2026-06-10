@@ -1,11 +1,10 @@
 # #118 · LiveView event projection from %EventBatch{}
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-10
+**Closed:** 2026-06-10
 **Priority:** medium
 **Tags:** architecture, ui
-
-**Blocked by:** #116 (SceneServer must emit %EventBatch{} before LiveView can subscribe to it)
 
 With `{:state_updated, state}` removed (#116), LiveView can no longer re-render the game board from a full state snapshot. It must instead subscribe to the event bus, receive `%EventBatch{}` messages, and project them into its own local socket state.
 
@@ -26,9 +25,9 @@ With `{:state_updated, state}` removed (#116), LiveView can no longer re-render 
 - `docs/papers/polytope-architecture.md` §9 (CQRS — LiveView assigns as informal read model)
 
 **Acceptance criteria**
-- [ ] `GameLive` no longer has a `handle_info({:state_updated, state}, ...)` clause
-- [ ] `GameLive` handles `%EventBatch{}` and projects each contained event into socket assigns
-- [ ] `GameLive` handles `%BroadcastSent{}` and `%WhisperDelivered{}` from the notifications topic
-- [ ] The game board renders correctly after a move, attack, and turn-advance command
-- [ ] Late-join / reconnect renders the current scene state (not a blank board)
-- [ ] All existing GameLive integration tests pass with updated event handling
+- [x] `GameLive` no longer has a `handle_info({:state_updated, state}, ...)` clause
+- [x] `GameLive` handles `%EventBatch{}` and projects each contained event into socket assigns
+- [x] `GameLive` handles `%BroadcastSent{}` and `%WhisperDelivered{}` from the notifications topic
+- [x] The game board renders correctly after a move, attack, and turn-advance command
+- [x] Late-join / reconnect renders the current scene state (not a blank board)
+- [x] All existing GameLive integration tests pass with updated event handling

@@ -1,11 +1,10 @@
 # #116 · SceneServer: replace bare-tuple broadcasts with typed %EventBatch{}
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-09
+**Closed:** 2026-06-10
 **Priority:** medium
 **Tags:** architecture, rules
-
-**Blocked by:** #119 (event struct definitions must exist first)
 
 Remove all bare-tuple broadcasts from `SceneServer` and replace them with typed `%EventBatch{}` emission per command. This is a clean break — no coexistence with `{:state_updated, state}`.
 
@@ -34,10 +33,10 @@ Envelope fields per event:
 - Issue #111 (Event Aggregator pattern — command handler return signature)
 
 **Acceptance criteria**
-- [ ] All `Phoenix.PubSub.broadcast` calls in `SceneServer` that emit bare tuples are removed
-- [ ] Every command handler builds and broadcasts a `%EventBatch{}` with typed events
-- [ ] `{:state_updated, state}` is gone entirely
-- [ ] `:session_ended` bare atom is gone; replaced by a `SessionEnded` event inside a batch
-- [ ] `{:dm_broadcast, text}` removed (handled by #115)
-- [ ] At least one integration test verifies `%EventBatch{}` receipt on a move command
-- [ ] Existing tests pass (LiveView tests updated as part of #118)
+- [x] All `Phoenix.PubSub.broadcast` calls in `SceneServer` that emit bare tuples are removed
+- [x] Every command handler builds and broadcasts a `%EventBatch{}` with typed events
+- [x] `{:state_updated, state}` is gone entirely
+- [x] `:session_ended` bare atom is gone; replaced by a `SessionEnded` event inside a batch
+- [x] `{:dm_broadcast, text}` removed (handled by #115)
+- [x] At least one integration test verifies `%EventBatch{}` receipt on a move command
+- [x] Existing tests pass (LiveView tests updated as part of #118)
