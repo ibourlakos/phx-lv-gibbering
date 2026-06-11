@@ -11,7 +11,7 @@ Covers:
 - Define `priv/static/images/sprites/` as the canonical sprite directory
 - Update `GibberingWeb.Endpoint` static config if needed
 - Document the legal gate in `docs/legal.md`: every file added to `sprites/` must have its license recorded before the commit
-- Evaluate CC0 candidates (Kenney "Tiny Dungeon", LPC) and record findings in `docs/legal.md` — see also #16 for LPC copyleft risk
+- Evaluate CC0 candidates (Kenney "Tiny Dungeon", LPC) and record findings in `docs/license-inventory.md` — LPC ruling settled in #16: CC-BY-SA 3.0 option only, GPL 2.0 option prohibited
 - Render path: `<image href="/images/sprites/<key>.png">` in the entity SVG group, gated on `entity.sprite != nil` and file existence
 
 **Acceptance criteria**

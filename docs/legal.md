@@ -30,9 +30,10 @@ Every image, sprite sheet, tileset, icon, and font file must have a verified lic
 |---|---|---|
 | CC0 (Public Domain) | Yes | No |
 | CC-BY 4.0 | Yes | Yes — credit in README/about screen |
-| CC-BY-SA 4.0 | Yes (with care) | Yes — derivatives must stay SA |
+| CC-BY-SA 3.0 / 4.0 | Yes | Yes — see ShareAlike rules below |
 | MIT / Apache 2.0 (code-bundled assets) | Yes | Yes |
 | Royalty-free (purchased) | Yes | Per terms |
+| GPL 2.0 (as asset license) | **No** — see LPC ruling below |
 | CC-BY-NC | **No** — prohibits commercial use |  |
 | All Rights Reserved | **No** |  |
 
@@ -41,6 +42,29 @@ Every image, sprite sheet, tileset, icon, and font file must have a verified lic
 Good sources for legally clean pixel art: [OpenGameArt.org](https://opengameart.org) (filter by CC0/CC-BY), [Kenney.nl](https://kenney.nl) (CC0).
 
 Fonts: check [Google Fonts](https://fonts.google.com) (OFL — permissive) or [Font Squirrel](https://www.fontsquirrel.com) (filter "100% free").
+
+### CC-BY-SA ShareAlike rules
+
+ShareAlike applies to the **creative work itself and its derivatives** — not to the code that displays it. Concretely:
+
+- Game engine code, DB schema, and rendering modules are not derivatives of a sprite. They are not required to be CC-BY-SA.
+- Any **modified sprite** derived from a CC-BY-SA original must also be released under CC-BY-SA.
+- When sprites are distributed (served to players), they must carry attribution and remain under CC-BY-SA — DRM that prevents access to the sprite files is prohibited.
+
+### LPC (Liberated Pixel Cup) ruling — **CC-BY-SA only; GPL 2.0 option prohibited**
+
+LPC assets are dual-licensed: CC-BY-SA 3.0 **or** GPL 2.0. The two licenses are independent options — contributors chose which to apply per asset.
+
+**Decision (issue #16):** LPC assets are permissible **only when the specific asset is available under CC-BY-SA 3.0** and is committed under that license. The GPL 2.0 option is prohibited for this project regardless of the asset.
+
+**Rationale:** GPL 2.0 was designed for software. When used as an asset license, a conservative reading requires distributing the entire application under GPL 2.0. The risk is not speculative — it has been litigated. CC-BY-SA 3.0 carries no such risk to the codebase (see ShareAlike rules above).
+
+**Compliance checklist for any LPC asset committed:**
+- [ ] The specific asset's OpenGameArt page (or source) explicitly lists CC-BY-SA 3.0
+- [ ] Attribution credited in `docs/license-inventory.md` with artist name and source URL
+- [ ] No DRM applied to the sprite files in `priv/static/`
+
+See `docs/license-inventory.md` for the full record of assets in use.
 
 ---
 
