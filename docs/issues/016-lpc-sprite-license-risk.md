@@ -1,7 +1,8 @@
 # #16 · LPC sprite copyleft risk understated in brainstorm
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-04
+**Closed:** 2026-06-11
 **Priority:** medium
 **Tags:** legal
 
@@ -12,6 +13,6 @@
 This must be resolved before LPC assets are evaluated in #6, so `docs/legal.md` does not inadvertently greenlight a problematic asset class.
 
 **Acceptance criteria**
-- [ ] `docs/legal.md` explicitly states the CC-BY-SA share-alike consequence for LPC sprites
-- [ ] A decision is recorded: either commit to open-sourcing under a compatible license, or rule out LPC entirely and remove it from the candidate list
-- [ ] `06-raster-sprite-pipeline.md` evaluation criteria updated to reflect this verdict
+- [x] `docs/legal.md` explicitly states the CC-BY-SA share-alike consequence for LPC sprites
+- [x] A decision is recorded: either commit to open-sourcing under a compatible license, or rule out LPC entirely and remove it from the candidate list
+- [x] `06-raster-sprite-pipeline.md` evaluation criteria updated to reflect this verdict
