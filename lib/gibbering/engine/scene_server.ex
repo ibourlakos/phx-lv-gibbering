@@ -1,11 +1,10 @@
 defmodule Gibbering.Engine.SceneServer do
   @moduledoc """
   GenServer process that owns a running scene's `State` and dispatches player and DM
-  actions. **Single-writer contract:** SceneServer is the sole emitter of scene-domain
-  events (`{:state_updated, state}`, `:session_ended`) on the game PubSub topic, and
-  notification events (`%BroadcastSent{}`, `%WhisperDelivered{}`) on the notifications
-  topic. No other process may broadcast to these topics with scene or notification
-  messages. All commands targeting the scene must route through this module's public API.
+  actions. **Single-writer contract:** SceneServer is the sole emitter of `%EventBatch{}`
+  messages on the game PubSub topic, and notification events (`%BroadcastSent{}`,
+  `%WhisperDelivered{}`) on the notifications topic. No other process may broadcast to
+  these topics. All commands targeting the scene must route through this module's public API.
 
   See the "Single-Writer Contract" section in docs/architecture.md for rationale.
   """
@@ -15,7 +14,21 @@ defmodule Gibbering.Engine.SceneServer do
   import Ecto.Query
   alias Gibbering.{Repo, Campaign, Entity, EventBus}
   alias Gibbering.Engine.{State, Rules, GameSession}
+  alias Gibbering.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
+
+  alias Gibbering.Events.Scene.{
+    AttackResolved,
+    ConditionApplied,
+    DamageDealt,
+    EntityMoved,
+    HPAdjusted,
+    PhaseTransitioned,
+    SessionEnded,
+    SpellCast,
+    TurnAdvanced
+  }
+
   alias Gibbering.Rulesets.DnD5e.Stats
 
   @topic_prefix "game:"
@@ -67,7 +80,7 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "Resumes a paused session, restoring the phase that was active before pausing."
   def resume_session(game_id), do: GenServer.call(via(game_id), :resume_session)
 
-  @doc "Ends the session: broadcasts :session_ended to all connected LiveViews."
+  @doc "Ends the session: broadcasts a batch containing %SessionEnded{} to all connected LiveViews."
   def end_session(game_id), do: GenServer.call(via(game_id), :end_session)
 
   @doc "Sets the initiative value for `entity_id` and re-sorts the turn order."
@@ -257,7 +270,7 @@ defmodule Gibbering.Engine.SceneServer do
     }
 
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :reload_entities)
     {:reply, :ok, new_state}
   end
 
@@ -275,7 +288,7 @@ defmodule Gibbering.Engine.SceneServer do
       end
 
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :select_entity)
     {:reply, new_state, new_state}
   end
 
@@ -283,7 +296,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:move_entity, x, y}, _from, state) do
     selected = state.selected_id
 
-    new_state =
+    {new_state, events} =
       if selected && {x, y} in state.valid_moves do
         entity = state.entities[selected]
         cost_ft = chebyshev(entity.x, entity.y, x, y) * 5
@@ -300,49 +313,135 @@ defmodule Gibbering.Engine.SceneServer do
           end
 
         targets = Rules.valid_targets(after_move, selected)
+        result = %{after_move | valid_moves: [], selected_id: selected} |> put_targets(targets)
 
-        %{after_move | valid_moves: [], selected_id: selected}
-        |> put_targets(targets)
+        event = %EntityMoved{
+          entity_id: selected,
+          entity_name: entity.name,
+          from: {entity.x, entity.y},
+          to: {x, y},
+          cost_ft: cost_ft
+        }
+
+        {result, [event]}
       else
-        state
+        {state, []}
       end
 
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, events, :move_entity)
     {:reply, new_state, new_state}
   end
 
   @impl true
   def handle_call({:attack, target_id}, _from, state) do
-    new_state =
+    {new_state, events} =
       if state.selected_id do
-        case Rules.attack(state, state.selected_id, target_id) do
-          {:error, _reason} -> state
-          {_result, after_attack, _details} -> State.advance_turn(after_attack)
+        attacker_id = state.selected_id
+        attacker = state.entities[attacker_id]
+        target = state.entities[target_id]
+
+        case Rules.attack(state, attacker_id, target_id) do
+          {:error, _reason} ->
+            {state, []}
+
+          {_result, after_attack, details} ->
+            advanced = State.advance_turn(after_attack)
+
+            attack_event = %AttackResolved{
+              attacker_id: attacker_id,
+              attacker_name: attacker.name,
+              target_id: target_id,
+              target_name: target.name,
+              roll: details.roll,
+              hit?: details.hit
+            }
+
+            damage_events =
+              if details.hit do
+                new_hp =
+                  case Map.get(after_attack.entities, target_id) do
+                    nil -> 0
+                    e -> e.hp
+                  end
+
+                [
+                  %DamageDealt{
+                    target_id: target_id,
+                    target_name: target.name,
+                    amount: details.damage,
+                    damage_type: nil,
+                    new_hp: new_hp
+                  }
+                ]
+              else
+                []
+              end
+
+            {advanced, [attack_event] ++ damage_events ++ [build_turn_advanced(state, advanced)]}
         end
       else
-        state
+        {state, []}
       end
 
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, events, :attack)
     {:reply, new_state, new_state}
   end
 
   @impl true
   def handle_call({:cast_spell, spell_key, target_id}, _from, state) do
-    new_state =
+    {new_state, events} =
       if state.selected_id do
-        case Rules.cast_spell(state, state.selected_id, spell_key, target_id) do
-          {:error, _reason} -> state
-          {_result, after_cast, _details} -> State.advance_turn(after_cast)
+        caster_id = state.selected_id
+        caster = state.entities[caster_id]
+        target = state.entities[target_id]
+
+        case Rules.cast_spell(state, caster_id, spell_key, target_id) do
+          {:error, _reason} ->
+            {state, []}
+
+          {result, after_cast, details} ->
+            advanced = State.advance_turn(after_cast)
+
+            spell_event = %SpellCast{
+              caster_id: caster_id,
+              caster_name: caster.name,
+              spell_key: spell_key,
+              target_id: target_id,
+              target_name: target.name,
+              outcome: result
+            }
+
+            damage_events =
+              if details[:hit] && details[:damage] do
+                new_hp =
+                  case Map.get(after_cast.entities, target_id) do
+                    nil -> 0
+                    e -> e.hp
+                  end
+
+                [
+                  %DamageDealt{
+                    target_id: target_id,
+                    target_name: target.name,
+                    amount: details[:damage],
+                    damage_type: nil,
+                    new_hp: new_hp
+                  }
+                ]
+              else
+                []
+              end
+
+            {advanced, [spell_event] ++ damage_events ++ [build_turn_advanced(state, advanced)]}
         end
       else
-        state
+        {state, []}
       end
 
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, events, :cast_spell)
     {:reply, new_state, new_state}
   end
 
@@ -350,7 +449,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call(:end_turn, _from, state) do
     new_state = State.advance_turn(state)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [build_turn_advanced(state, new_state)], :end_turn)
     {:reply, new_state, new_state}
   end
 
@@ -359,8 +458,9 @@ defmodule Gibbering.Engine.SceneServer do
       when not is_nil(prev) do
     case State.transition_phase(state, prev) do
       {:ok, new_state} ->
+        event = %PhaseTransitioned{from_phase: state.phase, to_phase: new_state.phase}
         persist(new_state)
-        broadcast(new_state)
+        broadcast_batch(new_state, [event], :resume_session)
         {:reply, :ok, new_state}
 
       {:error, _} = err ->
@@ -374,8 +474,9 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call(:end_session, _from, state) do
+    event = %SessionEnded{campaign_id: state.campaign_id}
     persist(state)
-    EventBus.broadcast(topic(state.campaign_id), :session_ended)
+    broadcast_batch(state, [event], :end_session)
     {:reply, :ok, state}
   end
 
@@ -383,7 +484,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:set_initiative, entity_id, value}, _from, state) do
     new_state = State.set_initiative(state, entity_id, value)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :set_initiative)
     {:reply, :ok, new_state}
   end
 
@@ -391,7 +492,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:add_to_turn_order, entity_id}, _from, state) do
     new_state = State.add_to_turn_order(state, entity_id)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :add_to_turn_order)
     {:reply, :ok, new_state}
   end
 
@@ -399,7 +500,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:remove_from_turn_order, entity_id}, _from, state) do
     new_state = State.remove_from_turn_order(state, entity_id)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :remove_from_turn_order)
     {:reply, :ok, new_state}
   end
 
@@ -407,7 +508,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:reorder_turn_order, ordered_ids}, _from, state) do
     new_state = State.reorder_turn_order(state, ordered_ids)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :reorder_turn_order)
     {:reply, :ok, new_state}
   end
 
@@ -415,7 +516,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call(:force_end_turn, _from, state) do
     new_state = State.advance_turn(state)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [build_turn_advanced(state, new_state)], :force_end_turn)
     {:reply, :ok, new_state}
   end
 
@@ -430,8 +531,9 @@ defmodule Gibbering.Engine.SceneServer do
 
     case result do
       {:ok, new_state} ->
+        event = %PhaseTransitioned{from_phase: state.phase, to_phase: new_state.phase}
         persist(new_state)
-        broadcast(new_state)
+        broadcast_batch(new_state, [event], :transition_phase)
         {:reply, :ok, new_state}
 
       {:error, _reason} = err ->
@@ -475,8 +577,16 @@ defmodule Gibbering.Engine.SceneServer do
     {:ok, new_state} = State.apply_condition(state, entity_id, condition_id)
     entry = "Condition applied: #{condition_id} → entity #{entity_id}"
     new_state = State.add_log_entry(new_state, entry)
+    entity = state.entities[entity_id]
+
+    event = %ConditionApplied{
+      entity_id: entity_id,
+      entity_name: entity && entity.name,
+      condition_id: condition_id
+    }
+
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [event], :dm_apply_condition)
     {:reply, :ok, new_state}
   end
 
@@ -485,8 +595,22 @@ defmodule Gibbering.Engine.SceneServer do
     new_state = State.adjust_hp(state, entity_id, delta)
     entry = "HP adjusted: entity #{entity_id} by #{delta}"
     new_state = State.add_log_entry(new_state, entry)
+    entity = state.entities[entity_id]
+    old_hp = if entity, do: entity.hp, else: nil
+
+    new_hp =
+      if entity, do: new_state.entities[entity_id] && new_state.entities[entity_id].hp, else: nil
+
+    event = %HPAdjusted{
+      entity_id: entity_id,
+      entity_name: entity && entity.name,
+      old_hp: old_hp,
+      new_hp: new_hp,
+      reason: :dm_adjust
+    }
+
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [event], :dm_adjust_hp)
     {:reply, :ok, new_state}
   end
 
@@ -494,7 +618,7 @@ defmodule Gibbering.Engine.SceneServer do
   def handle_call({:dm_toggle_visibility, entity_id}, _from, state) do
     new_state = State.toggle_visibility(state, entity_id)
     persist(new_state)
-    broadcast(new_state)
+    broadcast_batch(new_state, [], :dm_toggle_visibility)
     {:reply, :ok, new_state}
   end
 
@@ -503,6 +627,50 @@ defmodule Gibbering.Engine.SceneServer do
   defp put_targets(state, targets), do: %{state | valid_targets: targets}
 
   defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
+
+  defp broadcast_batch(state, raw_events, command) do
+    now = DateTime.utc_now()
+    corr_id = Ecto.UUID.generate()
+    event_ids = Enum.map(raw_events, fn _ -> Ecto.UUID.generate() end)
+
+    events =
+      raw_events
+      |> Enum.with_index()
+      |> Enum.map(fn {event, i} ->
+        %{
+          event
+          | event_id: Enum.at(event_ids, i),
+            occurred_at: now,
+            correlation_id: corr_id,
+            causation_id: if(i == 0, do: corr_id, else: Enum.at(event_ids, i - 1)),
+            sequence_number: i
+        }
+      end)
+
+    batch = %EventBatch{
+      batch_id: Ecto.UUID.generate(),
+      command: command,
+      correlation_id: corr_id,
+      occurred_at: now,
+      events: events,
+      state_snapshot: state
+    }
+
+    EventBus.broadcast(topic(state.campaign_id), batch)
+  end
+
+  defp build_turn_advanced(before_state, after_state) do
+    from_id = State.active_hero_id(before_state)
+    to_id = State.active_hero_id(after_state)
+
+    %TurnAdvanced{
+      from_entity_id: from_id,
+      from_entity_name: from_id && before_state.entities[from_id].name,
+      to_entity_id: to_id,
+      to_entity_name: to_id && (Map.get(after_state.entities, to_id) || %{name: nil}).name,
+      round_number: nil
+    }
+  end
 
   defp persist(state) do
     binary = :erlang.term_to_binary(state, [:compressed])
@@ -521,10 +689,6 @@ defmodule Gibbering.Engine.SceneServer do
     end
 
     state
-  end
-
-  defp broadcast(state) do
-    EventBus.broadcast(topic(state.campaign_id), {:state_updated, state})
   end
 
   defp via(game_id), do: {:via, Registry, {Gibbering.GameRegistry, game_id}}

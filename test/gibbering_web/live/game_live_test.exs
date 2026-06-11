@@ -276,19 +276,33 @@ defmodule GibberingWeb.GameLiveTest do
       assert html =~ "dm_end"
     end
 
-    test "confirming end session sends session_ended PubSub event", %{conn: conn} do
+    test "confirming end session sends %EventBatch{SessionEnded} PubSub event", %{conn: conn} do
       {view, game_id} = mount_dm_game(conn)
       SceneServer.start_session(game_id)
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
       view |> element("[phx-click='dm_end_confirm']") |> render_click()
       view |> element("[phx-click='dm_end']") |> render_click()
-      assert_receive :session_ended, 500
+
+      assert_receive %Gibbering.Events.EventBatch{
+                       events: [%Gibbering.Events.Scene.SessionEnded{} | _]
+                     },
+                     500
     end
 
-    test "session_ended broadcast redirects all connected clients to dashboard", %{conn: conn} do
+    test "%EventBatch{SessionEnded} broadcast redirects all connected clients to dashboard", %{
+      conn: conn
+    } do
       {view, game_id} = mount_game(conn)
       SceneServer.ensure_started(game_id)
-      Phoenix.PubSub.broadcast(Gibbering.PubSub, SceneServer.topic(game_id), :session_ended)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{
+          events: [%Gibbering.Events.Scene.SessionEnded{campaign_id: game_id}]
+        }
+      )
+
       assert_redirect(view, "/dashboard")
     end
   end
@@ -368,18 +382,18 @@ defmodule GibberingWeb.GameLiveTest do
   end
 
   describe "handle_info PubSub broadcast" do
-    test "state_updated broadcast updates the game board", %{conn: conn} do
+    test "%EventBatch{} state_snapshot updates the game board", %{conn: conn} do
       {view, game_id} = mount_combat_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
-      # Broadcast a modified state with a renamed entity directly via PubSub.
+      # Broadcast a batch with a modified state snapshot — entity renamed.
       renamed = put_in(state.entities[hero_id].name, "BroadcastHero")
 
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        {:state_updated, renamed}
+        %Gibbering.Events.EventBatch{state_snapshot: renamed}
       )
 
       html = render(view)

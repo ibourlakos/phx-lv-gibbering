@@ -149,13 +149,26 @@ Gibbering.Events.EventBatch       ← batch envelope: command, batch_id, correla
 Gibbering.Events.Upcaster         ← behaviour: upcast/2, current_version/0 (event-log migration)
 Gibbering.Events.Decoder          ← decode(module, raw_map) — event-log read path
 Gibbering.Events.Scene.*          ← 11 scene-domain event structs (combat, movement, turns)
-Gibbering.Events.Notification.*   ← out-of-band DM/player message structs (future: #115)
+Gibbering.Events.Notification.*   ← out-of-band DM/player message structs: BroadcastSent, WhisperDelivered
 ```
 
 **Versioning policy (brainstorm #16):** Each event struct declares `@current_version 1` and
 implements `Gibbering.Events.Upcaster`. Fields are never renamed or removed once published
 (additive-only discipline). Breaking changes produce a new event type. Version checking lives
 exclusively in the `Decoder` at the event-log boundary; in-process events are live typed structs.
+
+**Consumer-driven contract testing:** In-process events are compile-time contracts — struct
+pattern matching in `handle_info/2` is a compile-time guarantee; shape mismatches are compiler
+errors. Formal consumer-driven contract (CDC) testing (e.g. Pact-style per-consumer contract
+files) is deferred until the persistent event log and a multi-process consumer topology are
+introduced. At that point, the `ContractRegistry` described in the polytope treatise §15.2 is
+the appropriate home. Until then, the `Gibbering.Events.Decoder` + `Upcaster` chain is the
+sole contract enforcement boundary that must be covered by tests.
+
+**Event Storming output:** Brainstorm #15 is the canonical Event Storming record for the scene
+context — it lists the domain events, their single producer (SceneServer), and known consumers
+(GameLive, admin). The event bus classification table and the Event Cascade Batch Emission
+section above are the living architecture artefacts derived from that record.
 
 ---
 
@@ -314,9 +327,14 @@ Looping/pulsing sustain animations (Concentration, Rage) use CSS `@keyframes` cl
 
 ## Multiplayer
 
-No custom WebSocket code. Phoenix PubSub broadcasts `{:state_updated, new_state}` to all LiveViews subscribed to `"game:#{game_id}"`. Each LiveView re-renders only its diff.
+No custom WebSocket code. SceneServer broadcasts `%EventBatch{}` to all LiveViews subscribed to `"game:#{game_id}"` via `Gibbering.EventBus`. Each LiveView re-renders only its diff.
 
-**Per-user topics:** Each GameLive socket also subscribes to `"game:#{game_id}:user:#{user_id}"`. The DM can send private whispers (`{:whisper, text}`) to a single player's socket without broadcasting to the main topic. The SceneServer sends the whisper directly via `Phoenix.PubSub.broadcast/3` on that per-user topic without mutating state.
+`GameLive` subscribes to two topics on mount:
+
+- `"game:#{id}"` — receives `%EventBatch{}` after every command
+- `"notifications:#{id}"` — receives `%BroadcastSent{}` and `%WhisperDelivered{}`
+
+`GameLive.handle_info(%EventBatch{} = batch, socket)` checks whether the batch contains a `%SessionEnded{}` event (redirect) and otherwise projects `batch.state_snapshot` into `socket.assigns.game_state`. All LiveView subscribers receive `%WhisperDelivered{}` on the notifications topic; GameLive guards on `target_player_id == current_user.id` so only the intended recipient renders the whisper.
 
 ---
 
@@ -347,10 +365,9 @@ The two sets of message types are disjoint — nothing crosses both buses.
 
 | Topic | Publisher | Message type | Classification |
 |---|---|---|---|
-| `"game:#{id}"` | `Engine.SceneServer` | `{:state_updated, state}` | Scene event ✅ |
-| `"game:#{id}"` | `Engine.SceneServer` | `:session_ended` | Scene event ✅ |
-| `"game:#{id}"` | `Engine.SceneServer` | `{:dm_broadcast, text}` | Notification event ✅ |
-| `"game:#{id}:user:#{uid}"` | `Engine.SceneServer` | `{:whisper, text}` | Notification event ✅ |
+| `"game:#{id}"` | `Engine.SceneServer` | `%EventBatch{}` | Scene event cascade ✅ |
+| `"notifications:#{id}"` | `Engine.SceneServer` | `%BroadcastSent{}` | DM narrative broadcast ✅ |
+| `"notifications:#{id}"` | `Engine.SceneServer` | `%WhisperDelivered{}` | DM private whisper ✅ |
 | `"game:#{id}:user:#{uid}"` | `Gibbering.Admin` | `{:ejected, reason}` | Admin notification ✅ |
 | `"system:admin"` | `Monitoring.Stores.Local` | metrics map | Observability event ✅ |
 | `"lobby:#{id}"` | `GibberingWeb.LobbyLive` | `:refresh` | UI coordination (intra-web) ✅ |
@@ -389,24 +406,101 @@ violation. Use the bus classification table above to determine the correct path.
 
 ## Single-Writer Contract
 
-`Engine.SceneServer` is the **sole emitter** of scene-domain events on its PubSub game
-topic. This is the single-writer guarantee that gives total ordering to the scene event
-stream:
+`Engine.SceneServer` is the **sole emitter** on its two PubSub topics. This single-writer
+guarantee gives total ordering to the scene event stream:
 
-- SceneServer emits: `{:state_updated, state}`, `:session_ended`, `{:dm_broadcast, text}`,
-  `{:whisper, text}` on `SceneServer.topic/1`.
+- `SceneServer.topic/1` (`"game:#{id}"`) — exclusively emits `%EventBatch{}` after every
+  command that mutates scene state. No bare tuples; no other process broadcasts here.
+- `SceneServer.notifications_topic/1` (`"notifications:#{id}"`) — exclusively emits
+  `%BroadcastSent{}` and `%WhisperDelivered{}`. Also exclusively owned by SceneServer.
 - The Web Adapter (GameLive) **relays** UI-level messages to players but does **not** emit
   domain events on behalf of the Scene context.
-- No other bounded context emits events on the scene topic.
+- No other bounded context emits events on these topics.
 
 The invariant is enforced by convention and verified in `test/engine/scene_server_test.exs`
 under the "single-writer contract" describe block. If any process outside SceneServer
-broadcasts a scene-domain message on the game topic, total ordering is broken and any future
+broadcasts a scene-domain message on either topic, total ordering is broken and any future
 persistent event log or hash-chained event stream becomes corrupted.
 
-This contract is a prerequisite for the event cascade batch emission pattern (#111) and the
+This contract is realised by the event cascade batch emission pattern (#111) and the
 CQRS read model formalization (#113). It also directly constrains the boundary violation
 tracked in #114 (Observability and admin querying SceneServer directly).
+
+---
+
+## Event Cascade Batch Emission
+
+Every command that mutates scene state produces a causally ordered `%EventBatch{}` emitted
+atomically after the command succeeds. Subscribers always receive the full batch — never a
+partial cascade. This satisfies §5.1 (causality as first-class concern) and §9 (Event
+Aggregator) of the polytope paper.
+
+### Batch structure
+
+```
+%EventBatch{
+  batch_id:       UUID,        # unique per broadcast
+  command:        atom,        # :move_entity, :attack, :end_turn, …
+  correlation_id: UUID,        # shared by all events in this batch
+  occurred_at:    DateTime,    # timestamp at command execution
+  state_snapshot: %State{},   # post-command state; LiveView projects from this
+  events:         [%Scene.*{}, …]
+}
+```
+
+### Per-event envelope fields
+
+Each event struct in `Gibbering.Events.Scene.*` carries:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `event_id` | UUID | Unique identifier for this event |
+| `correlation_id` | UUID | Top-level user action (shared across the batch) |
+| `causation_id` | UUID | Preceding cause: `correlation_id` for the first event, `event_id` of the prior event for all others |
+| `sequence_number` | integer | 0-indexed position within the batch |
+| `occurred_at` | DateTime | Timestamp at command execution |
+
+### Causation chain
+
+```
+command (correlation_id = C)
+  ├─ event[0]  event_id=E0, causation_id=C   (caused by the command itself)
+  ├─ event[1]  event_id=E1, causation_id=E0  (caused by event[0])
+  └─ event[2]  event_id=E2, causation_id=E1  (caused by event[1])
+```
+
+Subscribers can reconstruct causal order from the `causation_id` chain without relying on
+arrival order.
+
+### Command → event cascade examples
+
+| Command | Events emitted |
+|---|---|
+| `move_entity` | `[%EntityMoved{}]` |
+| `attack_entity` (hit) | `[%AttackResolved{}, %DamageDealt{}, %TurnAdvanced{}]` |
+| `attack_entity` (miss) | `[%AttackResolved{}, %TurnAdvanced{}]` |
+| `cast_spell` (hit) | `[%SpellCast{}, %DamageDealt{}, %TurnAdvanced{}]` |
+| `end_turn` / `force_end_turn` | `[%TurnAdvanced{}]` |
+| `transition_phase` / `resume_session` | `[%PhaseTransitioned{}]` |
+| `end_session` | `[%SessionEnded{}]` |
+| `dm_apply_condition` | `[%ConditionApplied{}]` |
+| `dm_adjust_hp` | `[%HPAdjusted{}]` |
+| UI-only commands (select, reload, order, visibility) | `events: []` (snapshot only) |
+
+### state_snapshot and late-join
+
+`batch.state_snapshot` carries the complete post-command `%Engine.State{}`. LiveView
+projects it directly into `socket.assigns.game_state`. This means:
+
+- Commands without typed event mappings (e.g. `select_entity`, `reload_entities`) still
+  trigger a full board re-render via the snapshot.
+- A LiveView that mounts after events have already been emitted receives the current state
+  from `SceneServer.get_state/1` at mount time (not from replaying the event log), so
+  late-join and reconnect scenarios render correctly.
+
+The snapshot is the pragmatic short-circuit for the CQRS read model described in #113.
+When per-event projection functions exist for all event types, the snapshot becomes an
+optional optimisation rather than a necessity.
 
 ---
 

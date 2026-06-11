@@ -6,6 +6,8 @@ defmodule Gibbering.Engine.SceneServerTest do
   import Gibbering.GameFixtures
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
+  alias Gibbering.Events.EventBatch
+  alias Gibbering.Events.Scene.{EntityMoved, SessionEnded}
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.
   # Returns the game_id. The server is supervised by the test process
@@ -84,6 +86,25 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert new_state.entities[hero_id].x == original_x
       assert new_state.entities[hero_id].y == original_y
     end
+
+    test "broadcasts %EventBatch{} containing %EntityMoved{} on valid move" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      SceneServer.select_entity(game_id, hero_id)
+
+      selected_state = SceneServer.get_state(game_id)
+      {tx, ty} = hd(selected_state.valid_moves)
+
+      # Drain the select_entity broadcast first.
+      assert_receive %EventBatch{}, 500
+
+      SceneServer.move_entity(game_id, tx, ty)
+
+      assert_receive %EventBatch{events: [%EntityMoved{to: {^tx, ^ty}} | _]}, 500
+    end
   end
 
   describe "attack_entity/2" do
@@ -133,48 +154,48 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "PubSub broadcast" do
-    test "broadcasts :state_updated after each mutation" do
+    test "broadcasts %EventBatch{} after each mutation" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
       state = SceneServer.get_state(game_id)
       SceneServer.select_entity(game_id, State.active_hero_id(state))
 
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{}, 500
     end
   end
 
   # Single-writer contract (see docs/architecture.md): SceneServer is the sole
-  # emitter of scene-domain events on the game topic. No other process may broadcast
-  # {:state_updated, _} to this topic.
+  # emitter of %EventBatch{} messages on the game topic. No other process may
+  # broadcast to this topic.
   describe "single-writer contract" do
-    test "no state_updated arrives without a SceneServer command" do
+    test "no %EventBatch{} arrives without a SceneServer command" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
-      # SceneServer init does not emit state_updated; only mutations do.
-      refute_receive {:state_updated, _}, 100
+      # SceneServer init does not emit; only mutations do.
+      refute_receive %EventBatch{}, 100
     end
 
-    test "exactly one state_updated arrives per command, not more" do
+    test "exactly one %EventBatch{} arrives per command, not more" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
       state = SceneServer.get_state(game_id)
       SceneServer.select_entity(game_id, State.active_hero_id(state))
 
-      assert_receive {:state_updated, %State{}}, 500
-      refute_receive {:state_updated, _}, 100
+      assert_receive %EventBatch{}, 500
+      refute_receive %EventBatch{}, 100
     end
 
-    test "state_updated carries a well-formed State for the correct campaign" do
+    test "%EventBatch{} carries state_snapshot for the correct campaign" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
       state = SceneServer.get_state(game_id)
       SceneServer.select_entity(game_id, State.active_hero_id(state))
 
-      assert_receive {:state_updated, %State{campaign_id: ^game_id}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{campaign_id: ^game_id}}, 500
     end
   end
 
@@ -236,13 +257,13 @@ defmodule Gibbering.Engine.SceneServerTest do
       refute Map.has_key?(new_state.entities, hero_id)
     end
 
-    test "broadcasts :state_updated after reload" do
+    test "broadcasts %EventBatch{} after reload" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
       :ok = SceneServer.reload_entities(game_id)
 
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
 
@@ -253,11 +274,11 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert SceneServer.get_state(game_id).phase == :exploration
     end
 
-    test "broadcasts state_updated after start" do
+    test "broadcasts %EventBatch{} with exploration phase after start" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
       :ok = SceneServer.start_session(game_id)
-      assert_receive {:state_updated, %State{phase: :exploration}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{phase: :exploration}}, 500
     end
   end
 
@@ -296,11 +317,11 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "end_session/1" do
-    test "broadcasts :session_ended PubSub event" do
+    test "broadcasts %EventBatch{} containing %SessionEnded{}" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
       assert :ok = SceneServer.end_session(game_id)
-      assert_receive :session_ended, 500
+      assert_receive %EventBatch{events: [%SessionEnded{}]}, 500
     end
   end
 
@@ -384,7 +405,7 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "set_initiative/3" do
-    test "stores initiative value and broadcasts updated state" do
+    test "stores initiative value and broadcasts %EventBatch{}" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
@@ -395,7 +416,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.get_state(game_id)
       assert new_state.initiative_values[hero_id] == 14
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
 
@@ -450,13 +471,13 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert SceneServer.get_state(game_id).active_index == before_index
     end
 
-    test "broadcasts state_updated after force end turn" do
+    test "broadcasts %EventBatch{} with %TurnAdvanced{} after force end turn" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
       :ok = SceneServer.force_end_turn(game_id)
 
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
 
@@ -516,7 +537,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.get_state(game_id)
       assert :poisoned in new_state.entities[hero_id].conditions
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
 
@@ -533,7 +554,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.get_state(game_id)
       assert new_state.entities[hero_id].hp == max(original_hp - 5, 0)
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
 
@@ -550,7 +571,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       refute MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
     end
 
-    test "broadcasts state_updated after toggle" do
+    test "broadcasts %EventBatch{} after toggle" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
@@ -559,7 +580,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
 
-      assert_receive {:state_updated, %State{}}, 500
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
 end

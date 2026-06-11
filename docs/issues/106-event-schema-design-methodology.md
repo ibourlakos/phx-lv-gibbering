@@ -1,7 +1,8 @@
 # #106 · Event schema design methodology — Published Language mini-cycle
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-11
 **Priority:** medium
 **Tags:** architecture, discovery
 
@@ -22,8 +23,8 @@ This issue is a prerequisite for any formal event store or persistent event log 
 - Issue #32 (DM override event schema) — a concrete instance of this problem
 
 **Acceptance criteria**
-- [ ] An event envelope struct (or convention) is defined and documented, covering the required fields
-- [ ] A convention for schema versioning is documented (where versions live, what constitutes a breaking change, how migration windows work)
-- [ ] A consumer-driven contract testing approach is defined for this stack (ExUnit-based or deferred with justification)
-- [ ] An Event Storming output format is established (at minimum: a brainstorming document listing domain events, their producers, and their known consumers for the current scene context)
-- [ ] The schema design workflow is referenced from `docs/workflow.md` or `docs/architecture.md` as the step that precedes any bus or event store implementation
+- [x] An event envelope struct (or convention) is defined and documented, covering the required fields
+- [x] A convention for schema versioning is documented (where versions live, what constitutes a breaking change, how migration windows work)
+- [x] A consumer-driven contract testing approach is defined for this stack (ExUnit-based or deferred with justification)
+- [x] An Event Storming output format is established (at minimum: a brainstorming document listing domain events, their producers, and their known consumers for the current scene context)
+- [x] The schema design workflow is referenced from `docs/workflow.md` or `docs/architecture.md` as the step that precedes any bus or event store implementation
