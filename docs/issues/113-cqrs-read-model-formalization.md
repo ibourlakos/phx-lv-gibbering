@@ -1,7 +1,8 @@
 # #113 · CQRS read model formalization
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-12
 **Priority:** low
 **Tags:** discovery, architecture
 
@@ -23,7 +24,7 @@ This is a discovery issue: decide the projection model before implementing per-r
 - Issue #101 (DM top-down projection mode — a distinct view that benefits from a separate projection)
 
 **Acceptance criteria**
-- [ ] A discovery document or section in `docs/architecture.md` defines what projections exist (player view, DM view, spectator view at minimum) and which event types update each one
-- [ ] The boundary is stated: SceneServer does not push its internal state struct to subscribers; adapters subscribe to events and maintain their own projections
-- [ ] The migration path from the current full-state-push model is described (can be incremental: project only the fields each view actually uses)
-- [ ] Memento/snapshot strategy is noted for reducing replay cost (rebuild projection from last snapshot + events since)
+- [x] A discovery document or section in `docs/architecture.md` defines what projections exist (player view, DM view, spectator view at minimum) and which event types update each one
+- [x] The boundary is stated: SceneServer does not push its internal state struct to subscribers; adapters subscribe to events and maintain their own projections
+- [x] The migration path from the current full-state-push model is described (can be incremental: project only the fields each view actually uses)
+- [x] Memento/snapshot strategy is noted for reducing replay cost (rebuild projection from last snapshot + events since)
