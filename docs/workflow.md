@@ -174,12 +174,14 @@ Apply to paths A, B, C only.
 Language change — a system-wide API contract, not a local code change. Before implementing:
 1. Run the mini-cycle: Event Storming (brainstorm) → envelope spec → versioning policy review
 2. Confirm the change is additive-only or justify a new event type
-3. Update the Published Language Registry and the Event Cascade Batch Emission table in
-   `docs/architecture.md`
+3. Update the Published Language Registry in
+   [docs/architecture/bounded-contexts.md](architecture/bounded-contexts.md) and the
+   Event Cascade Batch Emission table in
+   [docs/architecture/event-cascade.md](architecture/event-cascade.md)
 
 This gate precedes any bus extension, event store implementation, or persistent event log work.
-See the Published Language Registry section in [docs/architecture.md](architecture.md) for the
-full convention.
+See the [Published Language Registry](architecture/bounded-contexts.md#published-language-registry-cross-cutting--shared-contract)
+for the full convention.
 
 ### Discovery gate
 
