@@ -1,7 +1,8 @@
 # #112 · Bounded context map document
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-12
 **Priority:** low
 **Tags:** discovery, architecture
 
@@ -21,9 +22,9 @@ The context map is a living document, not a one-time artifact. It should be upda
 - Issue #107 (namespace alignment — must be settled before the map can name modules precisely)
 
 **Acceptance criteria**
-- [ ] A `docs/context-map.md` document exists listing all bounded contexts with their canonical module namespace (from #107)
-- [ ] Each inter-context relationship names its integration pattern at the seam
-- [ ] ACL obligations are called out: which contexts wrap incoming bus events in translation layers
-- [ ] All Published Language seams (event bus subscriptions) are enumerated
-- [ ] The document is linked from `docs/architecture.md`
-- [ ] A convention is established for how to update the map when a new context or seam is introduced
+- [x] A `docs/context-map.md` document exists listing all bounded contexts with their canonical module namespace (from #107)
+- [x] Each inter-context relationship names its integration pattern at the seam
+- [x] ACL obligations are called out: which contexts wrap incoming bus events in translation layers
+- [x] All Published Language seams (event bus subscriptions) are enumerated
+- [x] The document is linked from `docs/architecture.md`
+- [x] A convention is established for how to update the map when a new context or seam is introduced
