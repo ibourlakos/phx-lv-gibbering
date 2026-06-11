@@ -1,6 +1,7 @@
 # #26 · Fog-of-war ownership: ruleset or engine?
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-11
 **Priority:** medium
 **Tags:** discovery, architecture, rendering
 
@@ -14,6 +15,6 @@ Options:
 Currently no fog of war is implemented, so this can be designed before the first implementation.
 
 **Acceptance criteria**
-- [ ] Decision written: which module owns fog calculation and what the contract looks like
-- [ ] Decision reflected in `Gibbering.Ruleset` behaviour (callback or absence of one)
-- [ ] First fog implementation follows the decided ownership model
+- [x] Decision written: which module owns fog calculation and what the contract looks like
+- [x] Decision reflected in `Gibbering.Ruleset` behaviour (callback or absence of one)
+- [x] First fog implementation follows the decided ownership model
