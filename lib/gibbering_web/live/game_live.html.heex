@@ -197,22 +197,25 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     End Turn + spell selection buttons.
   --%>
   <div style="position:fixed; bottom:0; left:0; right:0; z-index:20; display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding-bottom:1.25rem; pointer-events:none;">
-    <%!-- Spell selection row (only shown when active entity has spells) --%>
-    <%= if active_entity && get_in(active_entity, [:stats, "spells"]) do %>
+    <%!-- Action buttons — declared by the active ruleset for the current entity --%>
+    <% action_btns = ruleset_action_buttons(active_entity, state) %>
+    <%= if action_btns != [] do %>
       <div class="flex gap-2 flex-wrap justify-center" style="pointer-events:auto;">
-        <%= for spell_key <- active_entity.stats["spells"] do %>
+        <%= for btn <- action_btns do %>
           <button
-            phx-click="select_spell"
-            phx-value-key={spell_key}
+            phx-click={btn.event}
+            phx-value-key={btn.value["key"]}
             class={[
               "text-sm rounded-lg px-3 py-1.5 flex items-center gap-1 border",
-              (@selected_spell == spell_key &&
+              (@selected_spell == btn.value["key"] &&
                  "bg-purple-700/90 text-white border-purple-400 ring-1 ring-purple-400") ||
                 "bg-gray-800/90 hover:bg-gray-700/90 text-gray-200 border-gray-600"
             ]}
           >
-            <span>{spell_display_name(spell_key)}</span>
-            <span class="text-xs text-gray-400">{spell_level_label(spell_key)}</span>
+            <span>{btn.label}</span>
+            <%= if btn[:sublabel] && btn.sublabel != "" do %>
+              <span class="text-xs text-gray-400">{btn.sublabel}</span>
+            <% end %>
           </button>
         <% end %>
       </div>
@@ -356,8 +359,8 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
                   name="condition"
                   class="flex-1 bg-gray-700 text-white rounded px-1 py-0.5 text-xs border border-gray-600"
                 >
-                  <%= for {cond_id, cond_def} <- Gibbering.Rulesets.DnD5e.Condition.all() do %>
-                    <option value={cond_id}>{cond_def.name}</option>
+                  <%= for {cond_id, cond_label} <- ruleset_conditions(state) do %>
+                    <option value={cond_id}>{cond_label}</option>
                   <% end %>
                 </select>
                 <button

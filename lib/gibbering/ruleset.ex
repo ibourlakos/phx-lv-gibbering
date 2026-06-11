@@ -49,4 +49,29 @@ defmodule Gibbering.Ruleset do
   Returns the updated entity map.
   """
   @callback long_rest_entity(entity :: map()) :: map()
+
+  @typedoc """
+  A single action button to render in the player action bar.
+  `event` is the phx-click event name; `value` is the phx-value map;
+  `sublabel` is optional secondary text (e.g. spell level).
+  """
+  @type action_button :: %{
+          required(:label) => String.t(),
+          required(:event) => String.t(),
+          required(:value) => %{String.t() => String.t()},
+          optional(:sublabel) => String.t() | nil
+        }
+
+  @doc """
+  Returns the list of action buttons to render in the action bar for the
+  currently active entity. Called with the active entity and current state.
+  Returns `[]` when the entity has no ruleset-specific actions available.
+  """
+  @callback action_buttons(entity :: map(), state :: term()) :: [action_button()]
+
+  @doc """
+  Returns the list of condition options available for the DM condition picker.
+  Each entry is `{condition_id :: atom(), label :: String.t()}`.
+  """
+  @callback available_conditions() :: [{atom(), String.t()}]
 end
