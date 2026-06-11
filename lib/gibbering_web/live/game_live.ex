@@ -3,7 +3,9 @@ defmodule GibberingWeb.GameLive do
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
   alias Gibbering.{Campaigns, EventBus}
+  alias Gibbering.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
+  alias Gibbering.Events.Scene.SessionEnded
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
@@ -369,13 +371,17 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
-  def handle_info({:state_updated, new_state}, socket) do
-    {:noreply, assign(socket, game_state: new_state)}
-  end
+  def handle_info(%EventBatch{events: events} = batch, socket) do
+    if Enum.any?(events, &match?(%SessionEnded{}, &1)) do
+      {:noreply, redirect(socket, to: "/dashboard")}
+    else
+      new_socket =
+        if batch.state_snapshot,
+          do: assign(socket, game_state: batch.state_snapshot),
+          else: socket
 
-  @impl true
-  def handle_info(:session_ended, socket) do
-    {:noreply, redirect(socket, to: "/dashboard")}
+      {:noreply, new_socket}
+    end
   end
 
   @impl true

@@ -1,7 +1,8 @@
 # #111 · Event cascade batch emission — Event Aggregator pattern
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-10
 **Priority:** medium
 **Tags:** discovery, architecture
 
@@ -27,8 +28,8 @@ This is a discovery issue: design the batch structure, the emission API, and how
 - Issue #108 (EventBus behaviour — the port through which the batch is emitted)
 
 **Acceptance criteria**
-- [ ] A command handler in SceneServer returns `{new_state, [%Event{...}]}` — a batch of typed events, not individual broadcast calls
-- [ ] Each event in the batch carries `causation_id` (the event that caused it in this cascade, or the command id for the first event) and `correlation_id` (the user action that initiated the whole cascade)
-- [ ] The EventBus behaviour includes a `broadcast_batch/2` or equivalent that emits the batch in causal order
-- [ ] Subscribers can reconstruct causal order from the `causation_id` chain without relying on arrival order
-- [ ] The design is documented in `docs/architecture.md` or a dedicated subsection
+- [x] A command handler in SceneServer returns `{new_state, [%Event{...}]}` — a batch of typed events, not individual broadcast calls
+- [x] Each event in the batch carries `causation_id` (the event that caused it in this cascade, or the command id for the first event) and `correlation_id` (the user action that initiated the whole cascade)
+- [x] The EventBus behaviour includes a `broadcast_batch/2` or equivalent that emits the batch in causal order
+- [x] Subscribers can reconstruct causal order from the `causation_id` chain without relying on arrival order
+- [x] The design is documented in `docs/architecture.md` or a dedicated subsection
