@@ -1,7 +1,8 @@
 # #32 · DM override event schema and god-mode mechanics
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-11
 **Priority:** medium
 **Tags:** discovery, architecture, gameplay
 
@@ -28,7 +29,7 @@ The DM needs the ability to override essentially anything in a running scene: un
 - Scene-level `ActiveEffect` registry (#30) is the mechanism for most DM overrides
 
 **Acceptance criteria**
-- [ ] DM override event taxonomy documented
-- [ ] Payload schema for each override type defined
-- [ ] Authorisation / audit trail approach decided
-- [ ] Interaction with predicate evaluation documented (DM overrides go through the same pipeline, not around it)
+- [x] DM override event taxonomy documented
+- [x] Payload schema for each override type defined
+- [x] Authorisation / audit trail approach decided
+- [x] Interaction with predicate evaluation documented (DM overrides go through the same pipeline, not around it)
