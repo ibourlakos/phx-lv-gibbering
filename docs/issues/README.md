@@ -43,7 +43,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
-| [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` | medium |
 | [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | `discovery` `architecture` `gameplay` | low |
 | [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` | low |
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
@@ -88,6 +87,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` |
 | [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons and stat panels | `discovery` `architecture` |
 | [#32](032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | `discovery` `architecture` `gameplay` |
 | [#16](016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk understated in brainstorm | `legal` |
