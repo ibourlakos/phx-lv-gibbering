@@ -13,8 +13,9 @@ defmodule Gibbering.Events.EventBatch do
           command: atom(),
           correlation_id: String.t(),
           occurred_at: DateTime.t(),
-          events: [struct()]
+          events: [struct()],
+          state_snapshot: struct() | nil
         }
 
-  defstruct [:batch_id, :command, :correlation_id, :occurred_at, events: []]
+  defstruct [:batch_id, :command, :correlation_id, :occurred_at, :state_snapshot, events: []]
 end
