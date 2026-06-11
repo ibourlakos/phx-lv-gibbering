@@ -151,9 +151,43 @@ defmodule Gibbering.Rulesets.DnD5e do
     Map.put(entity, :resources, initial_resources(entity))
   end
 
+  @impl Gibbering.Ruleset
+  def action_buttons(entity, _state) do
+    spells = get_in(entity, [:stats, "spells"]) || []
+
+    Enum.map(spells, fn spell_key ->
+      spell = Gibbering.Data.Spells.get(spell_key)
+
+      %{
+        event: "select_spell",
+        value: %{"key" => spell_key},
+        label: if(spell, do: spell.name, else: humanize_key(spell_key)),
+        sublabel: spell_level_label(spell)
+      }
+    end)
+  end
+
+  @impl Gibbering.Ruleset
+  def available_conditions do
+    Gibbering.Rulesets.DnD5e.Condition.all()
+    |> Enum.map(fn {id, defn} -> {id, defn.name} end)
+  end
+
   # ---------------------------------------------------------------------------
   # Private helpers
   # ---------------------------------------------------------------------------
+
+  defp humanize_key(key) do
+    key
+    |> String.replace("_", " ")
+    |> String.split()
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join(" ")
+  end
+
+  defp spell_level_label(nil), do: ""
+  defp spell_level_label(%{level: 0}), do: "cantrip"
+  defp spell_level_label(%{level: n}), do: "L#{n}"
 
   defp warlock_pact_slots(level) do
     cond do

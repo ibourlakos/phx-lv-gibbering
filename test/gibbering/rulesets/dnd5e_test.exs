@@ -165,4 +165,57 @@ defmodule Gibbering.Rulesets.DnD5eTest do
       assert refreshed.hp == 15
     end
   end
+
+  describe "action_buttons/2" do
+    test "returns empty list for entity with no spells" do
+      assert DnD5e.action_buttons(entity(), %{}) == []
+    end
+
+    test "returns one button per spell in stats[\"spells\"]" do
+      e = entity() |> Map.put(:stats, %{"spells" => ["fire_bolt", "magic_missile"]})
+      buttons = DnD5e.action_buttons(e, %{})
+      assert length(buttons) == 2
+    end
+
+    test "each button has required keys" do
+      e = entity() |> Map.put(:stats, %{"spells" => ["fire_bolt"]})
+      [btn] = DnD5e.action_buttons(e, %{})
+      assert is_binary(btn.label)
+      assert btn.event == "select_spell"
+      assert btn.value == %{"key" => "fire_bolt"}
+      assert Map.has_key?(btn, :sublabel)
+    end
+
+    test "known spell gets display name and level label" do
+      e = entity() |> Map.put(:stats, %{"spells" => ["fire_bolt"]})
+      [btn] = DnD5e.action_buttons(e, %{})
+      assert btn.label == "Fire Bolt"
+      assert btn.sublabel == "cantrip"
+    end
+
+    test "unknown spell key gets humanized name" do
+      e = entity() |> Map.put(:stats, %{"spells" => ["custom_blast"]})
+      [btn] = DnD5e.action_buttons(e, %{})
+      assert btn.label == "Custom Blast"
+    end
+  end
+
+  describe "available_conditions/0" do
+    test "returns a non-empty list" do
+      assert DnD5e.available_conditions() != []
+    end
+
+    test "each entry is {atom, string}" do
+      for {id, label} <- DnD5e.available_conditions() do
+        assert is_atom(id)
+        assert is_binary(label)
+      end
+    end
+
+    test "includes common D&D 5e conditions" do
+      condition_ids = DnD5e.available_conditions() |> Enum.map(&elem(&1, 0))
+      assert :poisoned in condition_ids
+      assert :paralyzed in condition_ids
+    end
+  end
 end

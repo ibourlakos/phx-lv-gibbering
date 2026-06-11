@@ -405,27 +405,10 @@ defmodule GibberingWeb.GameLive do
 
   defp ensure_game_server(game_id), do: SceneServer.ensure_started(game_id)
 
-  defp spell_display_name(key) do
-    case Spells.get(key) do
-      %{name: name} ->
-        name
+  defp ruleset_action_buttons(nil, _state), do: []
+  defp ruleset_action_buttons(entity, state), do: state.ruleset.action_buttons(entity, state)
 
-      nil ->
-        key
-        |> String.replace("_", " ")
-        |> String.split()
-        |> Enum.map(&String.capitalize/1)
-        |> Enum.join(" ")
-    end
-  end
-
-  defp spell_level_label(key) do
-    case Spells.get(key) do
-      %{level: 0} -> "cantrip"
-      %{level: n} -> "L#{n}"
-      nil -> ""
-    end
-  end
+  defp ruleset_conditions(state), do: state.ruleset.available_conditions()
 
   # ---------------------------------------------------------------------------
   # Appearance helpers — delegate to the active style's DB records.
