@@ -105,10 +105,19 @@ wrapper module encapsulating those calls is the planned scope, once the EventBus
 
 ### Bus *(Integration dimension — meta-hexagon)*
 
-Namespace: `Gibbering.EventBus` (port/behaviour to be defined by #108). Current
-implementation: direct `Phoenix.PubSub` calls at call sites. The EventBus port will
-allow swapping to a synchronous in-memory test double or persistent event store without
-touching any bounded context.
+```
+Gibbering.EventBus              ← behaviour port: broadcast/2, broadcast_batch/2, subscribe/1, unsubscribe/1
+Gibbering.EventBus.PubSub       ← adapter: Phoenix.PubSub (production + integration tests)
+Gibbering.EventBus.Local        ← adapter: in-memory ETS GenServer (unit tests, no PubSub process)
+```
+
+All cross-context event broadcasts and subscriptions go through `Gibbering.EventBus`. No bounded
+context calls `Phoenix.PubSub` directly. The active adapter is selected via application config:
+
+    config :gibbering, Gibbering.EventBus, adapter: Gibbering.EventBus.PubSub
+
+Swapping adapters requires no change to any bounded context module. See §3.3, §10.3 of the
+polytope paper for the port/adapter rationale.
 
 ### Web Adapter *(Presentational dimension)*
 
@@ -127,6 +136,26 @@ GibberingWeb.Components.CharacterSprite ← inline SVG sprite components
 ```
 Gibbering.Pipeline.LegalGuard   ← WotC Product Identity filter
 ```
+
+### Published Language Registry *(Cross-cutting — shared contract)*
+
+`Gibbering.Events.*` is the **Published Language** for all cross-context event contracts.
+It is owned by no single bounded context. Every event type that flows across a context
+boundary on the event bus is defined here. See `docs/papers/polytope-architecture.md` §3.2.
+
+```
+Gibbering.Events                  ← registry root / namespace documentation
+Gibbering.Events.EventBatch       ← batch envelope: command, batch_id, correlation_id, events
+Gibbering.Events.Upcaster         ← behaviour: upcast/2, current_version/0 (event-log migration)
+Gibbering.Events.Decoder          ← decode(module, raw_map) — event-log read path
+Gibbering.Events.Scene.*          ← 11 scene-domain event structs (combat, movement, turns)
+Gibbering.Events.Notification.*   ← out-of-band DM/player message structs (future: #115)
+```
+
+**Versioning policy (brainstorm #16):** Each event struct declares `@current_version 1` and
+implements `Gibbering.Events.Upcaster`. Fields are never renamed or removed once published
+(additive-only discipline). Breaking changes produce a new event type. Version checking lives
+exclusively in the `Decoder` at the event-log boundary; in-process events are live typed structs.
 
 ---
 

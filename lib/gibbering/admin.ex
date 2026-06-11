@@ -6,7 +6,7 @@ defmodule Gibbering.Admin do
   alias Gibbering.Repo
   alias Gibbering.Admin.{SupportUser, AuditLog}
   alias Gibbering.Accounts.User
-  alias Gibbering.{Campaign, CampaignMember, Character}
+  alias Gibbering.{Campaign, CampaignMember, Character, EventBus}
 
   @doc "Creates a support user. Returns `{:ok, user}` or `{:error, changeset}`."
   def create_support_user(attrs) do
@@ -224,8 +224,7 @@ defmodule Gibbering.Admin do
   end
 
   defp broadcast_ejection(campaign_id, user_id) do
-    Phoenix.PubSub.broadcast(
-      Gibbering.PubSub,
+    EventBus.broadcast(
       "game:#{campaign_id}:user:#{user_id}",
       {:ejected, "Removed from campaign by admin"}
     )

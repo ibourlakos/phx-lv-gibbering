@@ -300,6 +300,8 @@ Consumer-driven contract testing (the Pact protocol) formalizes this: each consu
 
 Producers and consumers are independently deployable only when this discipline is enforced. Without it, changing an event schema is a coordination problem: all consumers must be updated simultaneously, which is the microservices equivalent of a distributed two-phase commit.
 
+A complementary runtime mechanism is the **schema violation meta-event**: a subscriber that receives an event carrying an unrecognised `schema_version` does not crash silently — it emits a structured `SchemaViolation` event on a dedicated system meta-topic, carrying the event type, the expected and received schema versions, and the subscriber's identity. This provides runtime observability of compatibility failures, including failures from consumers unknown at schema-change time. To prevent circular dependency, the meta-event schema must itself be frozen and deliberately minimal — it cannot participate in the same versioning lifecycle it exists to observe.
+
 ### 7.5 Versioning and the Breaking-Change Problem
 
 Not all schema changes are equal:
@@ -548,6 +550,8 @@ The polytope is informally defined as a directed graph of bounded contexts conne
 ### 15.2 Tool Support for Schema Contract Enforcement
 
 Consumer-driven contract testing (Section 7.4) is the operational mechanism for enforcing Published Language contracts, but current tooling (Pact) is oriented toward HTTP API contracts, not typed event struct contracts in BEAM languages. A tool that: (1) generates event consumer contracts from Elixir subscriber modules, (2) verifies producer compliance in CI, and (3) tracks the breaking-change blast radius of a proposed schema change, would make the methodology practical at scale.
+
+A more structural approach would embed consumer contracts directly into the architecture as a port. Each subscriber module implements a `contract/0` callback as part of an `EventBus.Subscriber` behaviour, declaring which event types it consumes, which fields it reads, and which schema versions it supports. A `ContractRegistry` verifies at startup or CI time that every declared contract is satisfied by the current Published Language — making compatibility a structural property of the bus port rather than an external test artefact. This is the compile-time complement to the runtime schema violation meta-event described in Section 7.4: the contract port catches known incompatibilities before production; the meta-event catches unknown ones at runtime.
 
 ### 15.3 Extension to Context Uncertainty
 

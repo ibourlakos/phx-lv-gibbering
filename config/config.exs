@@ -13,6 +13,8 @@ config :gibbering,
 
 config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitoring.Stores.Local
 
+config :gibbering, Gibbering.EventBus, adapter: Gibbering.EventBus.PubSub
+
 # Configure the endpoint
 config :gibbering, GibberingWeb.Endpoint,
   url: [host: "localhost"],

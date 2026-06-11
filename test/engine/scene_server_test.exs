@@ -461,13 +461,13 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "dm_broadcast/2" do
-    test "broadcasts :dm_broadcast message to all subscribers" do
+    test "broadcasts %BroadcastSent{} to notifications topic subscribers" do
       game_id = start_server()
-      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.notifications_topic(game_id))
 
       assert :ok = SceneServer.dm_broadcast(game_id, "Hello players!")
 
-      assert_receive {:dm_broadcast, "Hello players!"}, 500
+      assert_receive %Gibbering.Events.Notification.BroadcastSent{text: "Hello players!"}, 500
     end
 
     test "appends entry to session_log in state" do
@@ -479,24 +479,28 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "dm_whisper/3" do
-    test "broadcasts :whisper to the per-user topic" do
+    test "broadcasts %WhisperDelivered{} to the notifications topic" do
       game_id = start_server()
       user_id = 42
-      Phoenix.PubSub.subscribe(Gibbering.PubSub, "game:#{game_id}:user:#{user_id}")
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.notifications_topic(game_id))
 
       assert :ok = SceneServer.dm_whisper(game_id, user_id, "Secret message")
 
-      assert_receive {:whisper, "Secret message"}, 500
+      assert_receive %Gibbering.Events.Notification.WhisperDelivered{
+                       target_player_id: 42,
+                       text: "Secret message"
+                     },
+                     500
     end
 
-    test "does not broadcast :whisper to the main game topic" do
+    test "does not broadcast to the main game topic" do
       game_id = start_server()
       user_id = 42
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
 
       assert :ok = SceneServer.dm_whisper(game_id, user_id, "Secret")
 
-      refute_receive {:whisper, _}, 200
+      refute_receive %Gibbering.Events.Notification.WhisperDelivered{}, 200
     end
   end
 
