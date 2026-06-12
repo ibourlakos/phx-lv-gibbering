@@ -1,5 +1,7 @@
 # 12 — Player & DM Full App Experience
 
+**Status:** settled
+
 ## Context
 
 Currently the app has a lobby + game session flow, and a DM prep view at `/campaigns/:id/prep`.
@@ -7,115 +9,40 @@ This brainstorm defines the full experience both player types need end-to-end: c
 
 ---
 
-## Player Side — Campaign & Character Creation
+## Decisions
 
-A "player" in this context means anyone who intends to join a game as a PC (player character).
-
-### Campaign Discovery / Joining
-- Players need a way to discover or be invited to campaigns
-- Options: invite link / code, DM-pushes invite, email
-- What does "joining a campaign" mean at the data level? (a campaign membership record)
-- Players should be able to see their active campaigns and their characters per campaign
-
-### Character Creation
-- Characters are scoped to a campaign (or portable — to decide)
-- Minimum creation fields: name, race, class, background, ability score method (standard array / point buy / rolled)
-- Appearance: token art, colors, body shape choices (ties into brainstorm #11 content workflow)
-- Class-specific choices: starting equipment, skill proficiencies, subclass (if applicable at level 1)
-- Character sheet view (read-only in game, editable in prep)
-- Where does leveling up live? (out of scope for now but flag it)
-
-### Pre-Session Prep (Player)
-- Review / edit character sheet before session
-- See who else is in the campaign
-- See session schedule (if we add scheduling — defer for now)
-
----
-
-## DM Side — Campaign Management
-
-### Campaign Creation
-- DM creates a campaign: name, description, starting map, ruleset variant (if any)
-- DM is the owner; ownership transfer is out of scope for now
-- DM can manage campaign membership: invite, remove, view characters
-
-### Inviting Players & Spectators
-- Invite mechanism options: shareable link (token-based), direct invite by username/email
-- Spectators: can observe a session live but have no in-game actions
-- Spectator vs. player distinction: separate roles, separate lobby slots?
-- Should spectators see the full map (including fog of war areas the DM sees) or only the player view?
-
----
-
-## DM Side — Session (Game) Controls
-
-This is the minimum viable DM toolset needed to run a live session.
-
-### Session Lifecycle
-- Start session (transitions lobby to active game)
-- Pause session — all player inputs frozen, a "paused" banner shown to players
-- Resume session
-- End session — archive state, return to lobby or campaign overview
-
-### Map Control Overrides
-- DM can move any entity on the map: PCs (override), NPCs, monsters, objects
-- Move should bypass turn order and action economy (it's a DM override, not a game action)
-- Visual distinction when DM is moving a PC (so players know it's an override)
-- DM can place / remove entities mid-session (spawning monsters, placing items)
-- DM can reveal / hide fog of war zones independently of player position
-
-### Turn & Initiative Management
-- DM controls initiative order (can reorder, add/remove entries mid-combat)
-- DM can skip a turn (e.g., player AFK) or force end a player's turn
-- DM can roll initiative on behalf of absent player
-
-### Intervention Toolset
-- Direct message / whisper to a specific player (in-app, not chat — more like a DM note popup)
-- Broadcast message to all players (narrative text, ambient description)
-- Apply a condition to any entity (e.g., poisoned, prone) outside of normal game flow
-- Adjust HP of any entity directly (damage / heal override)
-- Temporarily hide an entity from player view without removing it from state
-
-### DM-Only View vs. Player View
-- DM sees full map, all entity HP, all conditions, fog of war cleared
-- DM panel should not bleed into the player's viewport (separate LiveView mount or conditional rendering)
-
----
-
-## Open Questions
-
-- Are characters campaign-scoped or account-global (portable across campaigns)?
-- Do spectators get a separate LiveView or share the player view with action controls hidden?
-- Invite mechanism: link/token only, or do we need username lookup?
-- Should DM map overrides be logged in session history (for post-session review)?
-- Where does the DM broadcast/whisper UI live — modal, sidebar, or floating panel?
-- Pause behavior: does the server halt tick processing, or just reject player inputs?
-- Does character creation happen inside the app or is it always done at the DM prep screen?
-- What is the minimum set of character creation choices to unblock a first real playtest session?
+| # | Question | Decision |
+|---|---|---|
+| 1 | Campaign membership model | `CampaignCharacter` join record: portable `characters` table + campaign-scoped membership; character sheet is editable in prep, read-only in session (#54, closed) |
+| 2 | Invite mechanism | Link/token only — no username/email lookup in the first pass; shareable URL contains a short-lived token (#91, closed) |
+| 3 | Spectator role design | Deferred to discovery phase — requires a full design decision on LiveView strategy (shared mount vs. separate), visibility scope (player fog vs. DM fog), and lobby slot model (#92, open) |
+| 4 | Session lifecycle | Server-side control: start transitions lobby → active, pause rejects player inputs on the server (not just UI-frozen), resume re-enables them, end archives state (#93, closed) |
+| 5 | DM initiative management | DM can reorder, add/remove initiative entries, skip/force-end turns, roll on behalf of absent players; own panel component (#94, closed) |
+| 6 | DM intervention toolset | Broadcast/whisper messages, apply conditions, adjust HP, hide/show entities — all out-of-turn DM overrides; separate from normal game action flow (#95, closed) |
+| 7 | Player campaign overview | Dedicated `/campaigns` page listing active campaigns and character per campaign; entry point to join or prep (#90, closed) |
+| 8 | Character creation location | In-app creation flow, accessible from the player campaign overview; not embedded in the DM prep screen |
+| 9 | Leveling up | Explicitly out of scope for now; flag for a future brainstorm |
+| 10 | Session scheduling | Deferred indefinitely |
+| 11 | DM override logging | Partial: HP and condition overrides noted in #95 ACs; full session history design deferred to a future issue |
 
 ---
 
 ## Cross-References
 
 - Brainstorm #11 — game content workflow (race/class/background data needed for character creation)
+- Issue #92 — spectator role (open discovery issue derived from this brainstorm)
 
 ---
 
-## Issues Opened
-_Triaged 2026-06-06_
+## Issues
 
-| # | Title | Open questions handled |
+_Triaged 2026-06-06, settled 2026-06-12_
+
+| # | Title | Status |
 |---|---|---|
-| [#90](../issues/090-player-campaign-overview-page.md) | Player campaign overview page | Players need to see active campaigns and characters per campaign |
-| [#91](../issues/091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | Invite mechanism: link/token vs. username lookup |
-| [#92](../issues/092-spectator-role-discovery.md) | Spectator role — membership and session view (discovery) | Spectator role design, visibility scope, LiveView strategy |
-| [#93](../issues/093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | Session lifecycle; pause behavior (server-side vs. UI-only) |
-| [#94](../issues/094-dm-initiative-panel.md) | DM turn and initiative management panel | DM initiative override, skip/force-end, roll on behalf of player |
-| [#95](../issues/095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | DM broadcast/whisper UI placement; apply condition; adjust HP; entity visibility toggle |
-
-Deferred open questions (not yet resolved):
-- Characters campaign-scoped vs. account-global — deferred to [#54](../issues/054-campaign-character-schema.md) (`CampaignCharacter` schema)
-- Leveling up — explicitly out of scope for now
-- Session history / DM override logging — noted in #95 acceptance criteria but full history design is deferred
-- Scheduling — deferred indefinitely
-- Minimum character creation choices to unblock first playtest — tracked in [#89](../issues/089-initial-game-content-population.md)
+| [#90](../issues/090-player-campaign-overview-page.md) | Player campaign overview page | closed |
+| [#91](../issues/091-campaign-invite-link-token.md) | Campaign invite link / shareable token mechanism | closed |
+| [#92](../issues/092-spectator-role-discovery.md) | Spectator role — membership and session view (discovery) | open |
+| [#93](../issues/093-dm-session-lifecycle-controls.md) | DM session lifecycle controls (start, pause, resume, end) | closed |
+| [#94](../issues/094-dm-initiative-panel.md) | DM turn and initiative management panel | closed |
+| [#95](../issues/095-dm-intervention-toolset.md) | DM intervention toolset (broadcast, whisper, condition/HP override) | closed |
