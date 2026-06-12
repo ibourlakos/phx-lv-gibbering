@@ -8,7 +8,7 @@ Named after the Gibbering Mouther (SRD-legal aberration). The architecture is th
 
 ## Docs
 
-- [Architecture](docs/architecture.md) — module map, ruleset behaviour, SVG pipeline, data pipeline
+- [Architecture](docs/architecture.md) — TOC; sub-docs in `docs/architecture/` (bounded contexts, event system, CQRS) and `docs/architecture/features/` (rendering, fog of war, DM overrides, etc.)
 - [Data Model](docs/data-model.md) — DB schema, runtime State struct, static reference data
 - [Dev Setup](docs/dev-setup.md) — prerequisites, workflow, DB ops, Docker housekeeping
 - [Testing](docs/testing.md) — three-layer strategy, fixtures, TDD workflow, running tests

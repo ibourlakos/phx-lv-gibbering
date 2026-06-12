@@ -29,7 +29,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | # | Title | Tags | Priority |
 |---|---|---|---|
 | [#114](114-observability-admin-direct-scene-reads.md) | Observability and admin: replace direct SceneServer reads with event subscriptions | `architecture` `admin` | low |
-| [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | `discovery` `architecture` | low |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
@@ -82,6 +81,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#113](113-cqrs-read-model-formalization.md) | CQRS read model formalization — explicit projections per adapter | `discovery` `architecture` |
 | [#112](112-bounded-context-map-document.md) | Bounded context map document — integration patterns at each seam | `discovery` `architecture` |
 | [#34](034-active-effect-visual-and-animation.md) | Active effect visual representation and animation | `discovery` `rendering` `gameplay` |
 | [#25](025-ruleset-ui-declaration.md) | Ruleset UI declaration: action buttons and stat panels | `discovery` `architecture` |
