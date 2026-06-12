@@ -10,9 +10,13 @@ The full workflow has three entry points (see [docs/workflow.md](../docs/workflo
 [A] Brainstorm → Settle → Triage ─┐
 [B]                      Issue ───┼──► Branch → Red → Green → Refactor → Verify → Commit
 [C]                     Branch ───┘
+
+[F] discovery Issue → too broad → Brainstorm (enter [A]) → defer original Issue
 ```
 
 Enter at **Brainstorm** when a topic is too wide or ambiguous to write a crisp acceptance criterion. Brainstorming maps trade-offs, domain knowledge, or design space before committing to a direction. Once the questions are settled and issues are triaged, the brainstorm feeds into the Issue phase and the rest of the standard flow proceeds unchanged.
+
+A `discovery` issue can also **escalate** into a brainstorm (path [F]) when working it reveals the problem is larger than an issue's scope. In that case: open a brainstorm file, defer the discovery issue referencing the new brainstorm number, and let the brainstorm's extracted issues replace it.
 
 ---
 

@@ -14,6 +14,7 @@ Four paths depending on how well the problem is understood and how large the fix
 [C] Bugfix:     Issue (bug) ────────────────► Branch → Red (reproduce) → Green → Verify → Commit
 [D] Hotfix:                                                              Verify → Commit
 [E] Work Package: Triage batch ──────────────► work-packages.md → pick next issue → repeat B/C
+[F] Escalation: discovery Issue → too broad → open Brainstorm → defer Issue → enter [A]
 ```
 
 | Path | When to use |
@@ -23,6 +24,7 @@ Four paths depending on how well the problem is understood and how large the fix
 | **[C] Bugfix** | Reproducible defect; needs a regression test to prove and prevent recurrence |
 | **[D] Hotfix** | Caught at smoke test; ≤ 1 file; no behaviour change; no new test needed |
 | **[E] Work Package** | Many issues extracted from brainstorms; need ordering + dependency tracking across phases |
+| **[F] Escalation** | A `discovery` issue turns out too broad to produce ACs directly; promote it to a brainstorm |
 
 **The gate between Bugfix and Hotfix is the regression test.** If you need a test to prove the fix holds — Bugfix. If the only proof is "the app boots and the action works" — Hotfix.
 
@@ -187,6 +189,8 @@ for the full convention.
 
 **Trigger:** A question that requires prototyping, research, or external input to answer.  
 **Action:** Open a discovery issue. Do not proceed until the question is answered.
+
+**Escalation (path [F]):** If working a discovery issue reveals it is too broad to produce crisp ACs directly, promote it to a brainstorm (path [A]): open a brainstorm file, defer the original discovery issue with `Deferred because: promoted to brainstorm #N`, and let the brainstorm's extracted issues replace it. The discovery issue may be closed once the brainstorm is settled and its replacement issues are open.
 
 ### Up-to-date docs gate
 
