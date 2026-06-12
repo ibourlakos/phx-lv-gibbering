@@ -3,7 +3,9 @@ defmodule Gibbering.Monitoring.Stores.Local do
   MetricsStore adapter backed by an ETS ring buffer (5-min window, ~1 sample/10s)
   and periodic DB snapshots (~60s). Emits PubSub strain alerts on `system:admin`.
 
-  Polls active campaigns from GameRegistry every 10 seconds.
+  Polls active campaigns from GameRegistry every 10 seconds and subscribes to each
+  campaign's game topic. Scene info (entity count and phase) is updated from
+  `%EventBatch{}` arrivals rather than calling `SceneServer.get_state/1`.
   Snapshots ETS buffer to DB every 60 seconds.
   Prunes snapshots older than 7 days every hour.
   """
@@ -15,10 +17,13 @@ defmodule Gibbering.Monitoring.Stores.Local do
   import Ecto.Query
 
   alias Gibbering.{Repo, PubSub}
-  alias Gibbering.Engine.SceneServer
+  alias Gibbering.EventBus
+  alias Gibbering.Events.EventBatch
+  alias Gibbering.Events.Scene.SessionEnded
   alias Gibbering.Monitoring.CampaignMetricSnapshot
 
   @ets_table :gibbering_metrics_buffer
+  @scene_info_table :gibbering_scene_info
   # 5 minutes in milliseconds
   @buffer_window_ms 5 * 60 * 1000
   @poll_interval_ms 10_000
@@ -66,6 +71,14 @@ defmodule Gibbering.Monitoring.Stores.Local do
     end)
   end
 
+  @impl Gibbering.Monitoring.MetricsStore
+  def scene_snapshot(campaign_id) do
+    case :ets.lookup(@scene_info_table, campaign_id) do
+      [{^campaign_id, entity_count, phase}] -> {entity_count, phase}
+      [] -> {"?", "?"}
+    end
+  end
+
   # ---------------------------------------------------------------------------
   # GenServer
   # ---------------------------------------------------------------------------
@@ -77,15 +90,17 @@ defmodule Gibbering.Monitoring.Stores.Local do
   @impl GenServer
   def init(_) do
     :ets.new(@ets_table, [:named_table, :public, :ordered_set])
+    :ets.new(@scene_info_table, [:named_table, :public, :set])
     schedule_poll()
     schedule_snapshot()
     schedule_prune()
-    {:ok, %{strain_state: %{}}}
+    {:ok, %{strain_state: %{}, subscribed_campaigns: MapSet.new()}}
   end
 
   @impl GenServer
   def handle_info(:poll, state) do
     active = active_campaigns()
+    state = update_subscriptions(active, state)
     strain_state = poll_and_detect_strain(active, state.strain_state)
     schedule_poll()
     {:noreply, %{state | strain_state: strain_state}}
@@ -103,6 +118,21 @@ defmodule Gibbering.Monitoring.Stores.Local do
     {:noreply, state}
   end
 
+  def handle_info(%EventBatch{state_snapshot: snapshot, events: events}, state) do
+    campaign_id = snapshot.campaign_id
+
+    if Enum.any?(events, &match?(%SessionEnded{}, &1)) do
+      EventBus.unsubscribe("game:#{campaign_id}")
+      :ets.delete(@scene_info_table, campaign_id)
+
+      {:noreply,
+       %{state | subscribed_campaigns: MapSet.delete(state.subscribed_campaigns, campaign_id)}}
+    else
+      :ets.insert(@scene_info_table, {campaign_id, map_size(snapshot.entities), snapshot.phase})
+      {:noreply, state}
+    end
+  end
+
   # ---------------------------------------------------------------------------
   # Internals
   # ---------------------------------------------------------------------------
@@ -115,12 +145,26 @@ defmodule Gibbering.Monitoring.Stores.Local do
     Registry.select(Gibbering.GameRegistry, [{{:"$1", :"$2", :_}, [], [{{:"$1", :"$2"}}]}])
   end
 
+  defp update_subscriptions(active_campaigns, state) do
+    active_ids = MapSet.new(active_campaigns, fn {id, _pid} -> id end)
+    subscribed = state.subscribed_campaigns
+
+    MapSet.difference(active_ids, subscribed)
+    |> Enum.each(&EventBus.subscribe("game:#{&1}"))
+
+    dropped_ids = MapSet.difference(subscribed, active_ids)
+    Enum.each(dropped_ids, &EventBus.unsubscribe("game:#{&1}"))
+    Enum.each(dropped_ids, &:ets.delete(@scene_info_table, &1))
+
+    %{state | subscribed_campaigns: active_ids}
+  end
+
   defp poll_and_detect_strain(active_campaigns, strain_state) do
     now = DateTime.utc_now()
 
     Enum.reduce(active_campaigns, strain_state, fn {campaign_id, pid}, acc ->
       proc = :erlang.process_info(pid, [:memory, :message_queue_len])
-      {entity_count, _phase} = try_get_scene_info(campaign_id)
+      {entity_count, _phase} = scene_snapshot(campaign_id)
 
       memory = proc[:memory] || 0
       queue_depth = proc[:message_queue_len] || 0
@@ -136,13 +180,6 @@ defmodule Gibbering.Monitoring.Stores.Local do
       |> check_strain(campaign_id, :memory, memory, @strain_memory_bytes, now)
       |> check_strain(campaign_id, :queue_depth, queue_depth, @strain_queue_depth, now)
     end)
-  end
-
-  defp try_get_scene_info(campaign_id) do
-    state = SceneServer.get_state(campaign_id)
-    {map_size(state.entities), state.phase}
-  rescue
-    _ -> {"?", "?"}
   end
 
   defp check_strain(strain_state, campaign_id, key, value, threshold, now) do

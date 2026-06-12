@@ -8,4 +8,7 @@ defmodule Gibbering.Monitoring.Stores.NoOp do
 
   @impl true
   def history(_campaign_id, _metric), do: []
+
+  @impl true
+  def scene_snapshot(_campaign_id), do: {"?", "?"}
 end

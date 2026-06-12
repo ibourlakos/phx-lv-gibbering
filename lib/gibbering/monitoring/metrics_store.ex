@@ -7,6 +7,8 @@ defmodule Gibbering.Monitoring.MetricsStore do
   @callback record(campaign_id :: integer, metric :: String.t(), value :: number()) :: :ok
   @callback history(campaign_id :: integer, metric :: String.t()) ::
               [{DateTime.t(), number()}]
+  @callback scene_snapshot(campaign_id :: integer) ::
+              {entity_count :: non_neg_integer() | String.t(), phase :: atom() | String.t()}
 
   defp adapter do
     Application.get_env(:gibbering, __MODULE__, [])
@@ -18,4 +20,7 @@ defmodule Gibbering.Monitoring.MetricsStore do
 
   @doc "Return recent samples as `[{datetime, value}]`, oldest first."
   def history(campaign_id, metric), do: adapter().history(campaign_id, metric)
+
+  @doc "Return the latest observed entity count and phase for a campaign."
+  def scene_snapshot(campaign_id), do: adapter().scene_snapshot(campaign_id)
 end
