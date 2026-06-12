@@ -1,5 +1,7 @@
 # 14 — Isometric Scene View & Full-Viewport Rendering
 
+**Status:** settled
+
 ## Context
 
 The current game scene renders into a constrained area alongside other page chrome.
