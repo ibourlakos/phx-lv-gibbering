@@ -1,7 +1,8 @@
 # #114 · Observability and admin: replace direct SceneServer reads with event subscriptions
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-07
+**Closed:** 2026-06-12
 **Priority:** low
 **Tags:** architecture, admin
 
@@ -24,6 +25,6 @@ Both violations stem from the absence of a dedicated read model for scene state 
 - Issue #113 (CQRS read model formalization — prerequisite)
 
 **Acceptance criteria**
-- [ ] `Monitoring.Stores.Local` subscribes to scene events and maintains a local snapshot rather than calling `SceneServer.get_state`
-- [ ] `Admin.CampaignMonitoringPage` reads from the Observability read model (or a dedicated admin projection) rather than calling `SceneServer.get_state`
-- [ ] No module outside the Scene bounded context calls `SceneServer.get_state` directly
+- [x] `Monitoring.Stores.Local` subscribes to scene events and maintains a local snapshot rather than calling `SceneServer.get_state`
+- [x] `Admin.CampaignMonitoringPage` reads from the Observability read model (or a dedicated admin projection) rather than calling `SceneServer.get_state`
+- [x] No module outside the Scene bounded context calls `SceneServer.get_state` directly

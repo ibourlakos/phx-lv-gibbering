@@ -7,7 +7,6 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
   import Phoenix.HTML, only: [raw: 1]
 
   alias Gibbering.{Admin, Campaign, Repo}
-  alias Gibbering.Engine.SceneServer
   alias Gibbering.Monitoring.MetricsStore
 
   @impl true
@@ -161,9 +160,6 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
   end
 
   defp try_get_scene_info(campaign_id) do
-    state = SceneServer.get_state(campaign_id)
-    {map_size(state.entities), state.phase}
-  rescue
-    _ -> {"?", "?"}
+    MetricsStore.scene_snapshot(campaign_id)
   end
 end
