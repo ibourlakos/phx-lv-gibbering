@@ -42,7 +42,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` | low |
-| [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
 | [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` | low |
 
 ---
@@ -59,6 +58,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#62](062-multi-environment-infra.md) | Multi-environment infrastructure (QA + production) | `ops` `architecture` | low |
 | [#70](070-ugc-content-schema-and-moderation.md) | UGC content schema, `content_trust` flag, and moderation queue | `architecture` `gameplay` | low |
 | [#71](071-admin-catalogue-crud.md) | Admin catalogue CRUD | `architecture` `gameplay` | low |
+| [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
 
 ---
 

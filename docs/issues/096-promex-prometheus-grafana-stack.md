@@ -1,6 +1,7 @@
 # #96 · PromEx + Prometheus + Grafana monitoring stack
-**Status:** open
+**Status:** deferred
 **Opened:** 2026-06-06
+**Deferred because:** Monitoring infrastructure is not on the critical path; implement after content and gameplay foundation is established. Brainstorm #13 is settled — un-defer this when ready to proceed.
 **Priority:** low
 **Tags:** ops, architecture
 

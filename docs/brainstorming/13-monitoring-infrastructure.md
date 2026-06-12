@@ -1,5 +1,7 @@
 # 13 — Monitoring Infrastructure (Prometheus + Grafana)
 
+**Status:** settled
+
 ## Context
 
 As the app grows — multiple game sessions, LiveView processes, PubSub channels, DB load — we need
@@ -97,15 +99,18 @@ Likely winner: **Option A** to start, **Option B** as a later enhancement once m
 
 ---
 
-## Open Questions
+## Decisions
 
-- Do we want Grafana self-hosted (Docker) or Grafana Cloud free tier?
-- Separate `compose.monitoring.yml` overlay or baked into the main `docker-compose.yml`?
-- Should the admin app embed Grafana from day one or treat it as phase 2?
-- What is the minimum set of dashboards / alerts to have before first real-player session?
-- Do we want alerting (PagerDuty/email/Slack) — or just dashboards for now?
-- Is PromEx the right choice, or roll minimal custom telemetry? (PromEx has good Elixir community support — lean toward it)
-- Retention policy for Prometheus data in dev vs. prod?
+| # | Question | Decision |
+|---|---|---|
+| 1 | Library choice | **PromEx** — strong Elixir/Phoenix community support, ships pre-built Grafana dashboards for Phoenix, Ecto, and Erlang VM, minimal instrumentation code on top of existing `:telemetry` events |
+| 2 | Grafana hosting | **Self-hosted Docker** — no third-party data sharing, consistent with Docker-first approach; Grafana Cloud deferred to production infra phase |
+| 3 | Compose strategy | **Separate `compose.monitoring.yml` overlay** — keeps dev startup lean; monitoring is opt-in via `docker compose -f docker-compose.yml -f compose.monitoring.yml up` |
+| 4 | Admin embed (Option B) | **Phase 2** — start with standalone Grafana at `localhost:3000`; embedding in the admin LiveView is deferred until metrics are proven stable |
+| 5 | Minimum dashboards | **PromEx defaults: Phoenix, Ecto, Erlang VM** — covers the baseline before any real-player session; custom game-level dashboards are a separate follow-up |
+| 6 | Alerting | **Deferred indefinitely** — dashboards-first; no PagerDuty, email, or Slack integration planned in the near term |
+| 7 | Retention policy | **Deferred to production infra phase** — local dev uses Prometheus default retention; prod strategy tracked with [#62](../issues/062-multi-environment-infra.md) |
+| 8 | `/metrics` security | **Not public** — endpoint restricted to internal Docker network only; admin credentials via `.env` |
 
 ---
 
@@ -115,16 +120,14 @@ Likely winner: **Option A** to start, **Option B** as a later enhancement once m
 
 ---
 
-## Issues Opened
-_Triaged 2026-06-06_
+## Issues
 
-| # | Title | Open questions handled |
+_Triaged 2026-06-06, deferred 2026-06-12_
+
+| # | Title | Status |
 |---|---|---|
-| [#96](../issues/096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | Stack choice (PromEx), Docker compose strategy, security for `/metrics` endpoint |
+| [#96](../issues/096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | deferred — monitoring infrastructure is not on the critical path; implement after content and gameplay foundation is established |
 
-Deferred open questions (not yet resolved in #96):
-- Grafana self-hosted vs. Grafana Cloud — deferred; #96 defaults to self-hosted Docker
-- Alerting (PagerDuty/email/Slack) — deferred indefinitely; dashboards-first
-- Custom game-level metrics (active sessions, turn latency) — follow-up issue after #96 lands
-- Retention policy dev vs. prod — deferred to production infra phase ([#62](../issues/062-multi-environment-infra.md))
-- Admin app Grafana embed (Option B) — tracked in [#68](../issues/068-livedashboard-and-campaign-monitoring.md) as a later enhancement
+Deferred follow-ons (no issue yet — open when #96 is un-deferred):
+- Custom game-level metrics (active sessions, turn processing latency, connected players) — depends on #96
+- Admin app Grafana embed (Option B) — depends on #96 and stable metrics baseline
