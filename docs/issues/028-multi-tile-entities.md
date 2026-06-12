@@ -1,6 +1,7 @@
 # #28 · Multi-tile entity footprints in isometric rendering
-**Status:** open
+**Status:** deferred
 **Opened:** 2026-06-05
+**Deferred because:** No large creatures (2×2+) exist in the game yet. All entities are currently 1×1. The depth-sort and movement-distance design questions are real but have no urgency. Un-defer when the first Large creature is added to the content catalogue.
 **Priority:** low
 **Tags:** discovery, architecture, rendering
 

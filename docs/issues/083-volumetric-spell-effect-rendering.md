@@ -1,7 +1,8 @@
 # #83 · Volumetric spell effect rendering
 
-**Status:** open
+**Status:** deferred
 **Opened:** 2026-06-05
+**Deferred because:** Depends on #82 (Z-axis elevation), which is deferred. The first open question in this issue — "Does volumetric rendering depend on elevation to be meaningful?" — cannot be answered until the elevation brainstorm resolves. Un-defer after BS-82 settles.
 **Priority:** low
 **Tags:** discovery, rendering
 
