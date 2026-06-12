@@ -39,7 +39,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#121](121-spectator-membership-model.md) | Campaign membership: spectator role and invite flow | `architecture` `gameplay` | low |
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
-| [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` | low |
+| [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` | low |
+| [#124](124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | `rendering` `ui` `architecture` | low |
 
 ---
 
@@ -95,6 +96,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#111](111-event-cascade-batch-emission.md) | Event cascade batch emission — Event Aggregator pattern | `discovery` `architecture` |
 | [#118](118-liveview-event-projection.md) | LiveView event projection from %EventBatch{} | `architecture` `ui` |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` |
+| [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` |
 | [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: replace bare-tuple broadcasts with typed %EventBatch{} | `architecture` `rules` |
 | [#115](115-notification-event-structs-topic-migration.md) | Notification event structs and dedicated topic migration | `architecture` `ui` |
 | [#119](119-scene-event-struct-definitions.md) | Scene event struct definitions — Gibbering.Events.* Published Language registry | `architecture` `rules` |

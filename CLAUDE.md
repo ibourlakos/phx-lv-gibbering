@@ -30,9 +30,7 @@ Any unresolved legal issue is a blocker. See [docs/legal.md](docs/legal.md) for 
 
 Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See the [README](docs/brainstorming/README.md) for counter rules and workflow.
 
-| File | Topic | Status |
-|---|---|---|
-| [14-isometric-scene-view.md](docs/brainstorming/14-isometric-scene-view.md) | Full-viewport isometric rendering, overlay UI, DST-inspired art direction | settled |
+No open brainstorms. Next brainstorm number: 17 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
