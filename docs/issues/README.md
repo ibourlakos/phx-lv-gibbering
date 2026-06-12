@@ -59,6 +59,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#70](070-ugc-content-schema-and-moderation.md) | UGC content schema, `content_trust` flag, and moderation queue | `architecture` `gameplay` | low |
 | [#71](071-admin-catalogue-crud.md) | Admin catalogue CRUD | `architecture` `gameplay` | low |
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
+| [#120](120-items-data-population.md) | Items data module population — ≥20 SRD-legal items with appearance records | `gameplay` `rules` `architecture` | low |
 
 ---
 

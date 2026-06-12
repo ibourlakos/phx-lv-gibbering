@@ -1,50 +1,43 @@
-I want to define what changes will be required when upserting game content.
+# 11 — Game Content Workflow
 
-Potential game content (there may be more types):
- - races
- - classes, subclasses, character backgrounds
- - spells and active effects
- - abilities
- - items (weapons, consumables, armor, clothing, etc)
- - static maps (sizes, look and feel etc)
- - static map decorations (rocks, buildings, trees, etc)
- - interactive map content (boxes, doors, etc)
- - monsters
- - notable individuals (similar to monsters essentially but not necessarily evil or opponents)
- - event visual effects
- - maybe more events?
- - appearance components
+**Status:** settled
 
-Change span:
- - data model and records
- - seed and testing data
- - derived data
- - appearance visuals
- - player/dm interface (e.g. new abilities should be added with their theme and whatnot)
- - rendering requirements
- - testing routines
- - maybe web frontend changes?
- - game/scene state or other equivalent changes
+## Context
 
-
-The goal is to have a definitive list of game content types and map a workflow on how to upsert them in this system.
-These would also affect what the players have available in the game app and what the support users can work with or how they can adjust content in any existing content editing tools.
-
-As a natural follow up I would like to
- - add at least the races that appear in BG3
- - all the standard classes
- - an initial assortment of monsters (care for legal)
- - an initial assortment of various items (care for legal issues)
- - enrich the choices at character creation/appearance
+Raw exploration of what changes are required when upserting game content — what content types exist and what layers each type touches. Goal: a definitive checklist to follow when adding any new content item.
 
 ---
 
-## Issues Opened
-_Triaged 2026-06-06_
+## Decisions
 
-| # | Title | Open questions handled |
+| # | Question | Decision |
 |---|---|---|
-| [#88](../issues/088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | Definitive content type list; change surface per type; multi-style appearance slot definition |
-| [#89](../issues/089-initial-game-content-population.md) | Initial content population — races, classes, starter monsters/items | BG3 races, standard classes, starter monsters/items; character creation enrichment |
+| 1 | Content type taxonomy | 14 canonical types enumerated in `docs/game-content-taxonomy.md` — races, classes, backgrounds, spells, active effects/conditions, feats/abilities, items, tile textures, map decorations, map objects (interactive), monsters, notable individuals, visual effects, appearance components |
+| 2 | Upsert workflow | Per-type layer checklist (schema, data module, seed, appearance, UI surface, rendering, rules integration, tests) documented in `docs/game-content-taxonomy.md`; use it as the reference for every content addition |
+| 3 | Multi-style appearance slot | `appearances (style_id FK, content_type text, content_key text, data JSONB)` — unique on `(style_id, content_type, content_key)`; resolved by #99 |
+| 4 | Character portability | Portable templates via `characters` table; campaign-scoped linking via `CampaignCharacter` (#54, closed) |
+| 5 | Items schema | No standalone `items` table for now — items stored as JSONB in `entity.stats`; `Gibbering.Data.Items` module exists (#79, closed); standalone items table deferred until inventory system is designed (#80) |
+| 6 | Subclasses | Expressed as class `features` JSONB array until a subclass picker is needed; no separate `subclasses` table yet |
+| 7 | Initial content | 9 SRD-legal races, 12 classes, 12 monsters seeded (#89, closed); items population deferred (#120) |
+| 8 | BG3-exclusive content | SRD-legal content first; BG3-exclusive races/content gated on legal resolution (#16) |
+| 9 | Content editing tools | Out of scope for this brainstorm; tracked in #85 (content creation tools) |
 
-Remaining open questions (e.g. whether characters are campaign-scoped or portable, exact appearance component schema) are tracked in #88 and #89, and depend on decisions in brainstorm #14 → issue [#98](../issues/098-dst-art-direction-spec.md) (art direction spec) and [#99](../issues/099-multi-style-appearance-system.md) (multi-style appearance system).
+---
+
+## Cross-References
+
+- Brainstorm #14 (isometric scene view) — art direction spec (#98) and multi-style system (#99) define the appearance slot schema
+- Brainstorm #12 (player/DM experience) — character creation UI surfaces the content seeded here
+- Issue #16 — LPC sprite copyleft risk; legal gate for non-SRD content
+
+---
+
+## Issues
+
+_Triaged 2026-06-06, settled 2026-06-12_
+
+| # | Title | Status |
+|---|---|---|
+| [#88](../issues/088-game-content-type-taxonomy.md) | Game content type taxonomy and upsert workflow | closed |
+| [#89](../issues/089-initial-game-content-population.md) | Initial content population — races, classes, starter monsters/items | closed (items seeding deferred → #120) |
+| [#120](../issues/120-items-data-population.md) | Items data module population — ≥20 SRD-legal items with appearance records | deferred |
