@@ -33,7 +33,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
-| [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` | low |
+| [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#80](080-inventory-and-loot-container-system.md) | Inventory and loot container system | `discovery` `architecture` `gameplay` | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
@@ -97,6 +97,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#118](118-liveview-event-projection.md) | LiveView event projection from %EventBatch{} | `architecture` `ui` |
 | [#92](092-spectator-role-discovery.md) | Spectator role — campaign membership and session view | `discovery` `architecture` `gameplay` |
 | [#101](101-dm-top-down-projection-mode.md) | DM top-down projection mode | `discovery` `rendering` `architecture` |
+| [#27](027-tile-decoration-storage.md) | Tile decoration storage: GridTile field vs decoration entity | `discovery` `architecture` `rendering` |
 | [#116](116-sceneserver-coexist-typed-event-broadcast.md) | SceneServer: replace bare-tuple broadcasts with typed %EventBatch{} | `architecture` `rules` |
 | [#115](115-notification-event-structs-topic-migration.md) | Notification event structs and dedicated topic migration | `architecture` `ui` |
 | [#119](119-scene-event-struct-definitions.md) | Scene event struct definitions — Gibbering.Events.* Published Language registry | `architecture` `rules` |
