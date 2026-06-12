@@ -1,7 +1,8 @@
 # #85 · Content creation tools — design and scope
 
-**Status:** open
+**Status:** deferred
 **Opened:** 2026-06-05
+**Deferred because:** Path [F] candidate — spans admin shell, player shell, five editor component types, UGC moderation, and preview rendering. Too broad for in-issue settlement. Promote to a brainstorm when admin app foundation (#64–#69 closed) and core content pipeline are stable.
 **Priority:** low
 **Tags:** discovery, architecture, ui, admin
 

@@ -1,7 +1,8 @@
 # #33 · Templates governance model
 
-**Status:** open
+**Status:** deferred
 **Opened:** 2026-06-05
+**Deferred because:** Path [F] candidate — scope is too broad for in-issue settlement. Promote to a brainstorm when the core rules engine shape is stable enough to make governance decisions. The issue itself notes this dependency.
 **Priority:** low
 **Tags:** discovery, architecture
 
