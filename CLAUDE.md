@@ -32,7 +32,6 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 
 | File | Topic | Status |
 |---|---|---|
-| [12-player-dm-full-experience.md](docs/brainstorming/12-player-dm-full-experience.md) | Full player/DM app experience (campaigns, characters, session controls) | settled |
 | [14-isometric-scene-view.md](docs/brainstorming/14-isometric-scene-view.md) | Full-viewport isometric rendering, overlay UI, DST-inspired art direction | settled |
 
 ## Dev Setup (short form)
