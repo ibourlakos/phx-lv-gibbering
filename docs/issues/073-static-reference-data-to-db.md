@@ -17,5 +17,5 @@ The in-memory modules become the seed source — they populate the DB on first s
 - [x] `Data.Races`, `Data.Classes`, `Data.Spells` modules converted to seed sources — `mix ecto.setup` populates the tables from them
 - [x] Ecto schemas and context functions defined for each catalogue type (at minimum `list/0`, `get_by_key/1`)
 - [x] Engine and lobby code updated to read from DB context instead of in-memory module — wrapped in an ETS-backed cache to avoid hot-path `Repo` calls
-- [x] `docs/data-model.md` updated to document the new tables
+- [x] `docs/architecture/data-model.md` updated to document the new tables
 - [x] Existing tests updated; new tests cover `get_by_key/1` for each catalogue type

@@ -1,8 +1,5 @@
 # Architecture
 
-> **See also:** [Data Model](data-model.md) — DB schema, runtime State struct, static reference data.  
-> **See also:** [Context Map](context-map.md) — integration patterns at each seam (relationships, published language, violations).
-
 ## Overview
 
 The Gibbering Engine is a deliberate architectural aberration: a 2D tactical game that runs entirely server-side, streaming SVG diffs to the browser over a LiveView WebSocket. No client-side game framework. No manual WebSocket code. The server is the game.
@@ -13,6 +10,8 @@ The Gibbering Engine is a deliberate architectural aberration: a 2D tactical gam
 
 | Document | Contents |
 |---|---|
+| [Data Model](architecture/data-model.md) | DB schema, runtime State struct, static reference data |
+| [Context Map](architecture/context-map.md) | All bounded contexts, seams, integration patterns, violations |
 | [Bounded Contexts](architecture/bounded-contexts.md) | Module map per bounded context, Published Language registry |
 | [Ruleset Behaviour](architecture/ruleset-behaviour.md) | The Ruleset port: callbacks, behaviour vs protocol, stats-as-map |
 | [Multiplayer](architecture/multiplayer.md) | How PubSub + LiveView delivers multiplayer with no custom WebSocket code |
@@ -20,6 +19,7 @@ The Gibbering Engine is a deliberate architectural aberration: a 2D tactical gam
 | [Event System](architecture/event-system.md) | Compound bus (C/E) classification, Single-Writer Contract |
 | [Event Cascade](architecture/event-cascade.md) | Batch emission pattern, envelope fields, causation chain, state_snapshot |
 | [CQRS Read Model](architecture/cqrs-read-model.md) | Projections, boundary statement, migration path, Memento strategy |
+| [Predicate Vocabulary](architecture/predicate-vocabulary.md) | Closed predicate set for `RuleModifier` evaluation (8 groups, 51 predicates) |
 
 ## Feature Design Decisions
 

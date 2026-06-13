@@ -22,7 +22,7 @@ The context map is a living document, not a one-time artifact. It should be upda
 - Issue #107 (namespace alignment — must be settled before the map can name modules precisely)
 
 **Acceptance criteria**
-- [x] A `docs/context-map.md` document exists listing all bounded contexts with their canonical module namespace (from #107)
+- [x] A `docs/architecture/context-map.md` document exists listing all bounded contexts with their canonical module namespace (from #107)
 - [x] Each inter-context relationship names its integration pattern at the seam
 - [x] ACL obligations are called out: which contexts wrap incoming bus events in translation layers
 - [x] All Published Language seams (event bus subscriptions) are enumerated

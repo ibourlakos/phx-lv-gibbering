@@ -10,7 +10,7 @@ Implements the design settled in #31. No `%RuleModifier{}` struct or predicate
 evaluator exists yet. All rules are hardcoded conditionals in `Rules`. This
 issue replaces that with a data-driven modifier pipeline.
 
-Depends on #39 (Ruleset behaviour shell). See [docs/predicate-vocabulary.md](../docs/predicate-vocabulary.md)
+Depends on #39 (Ruleset behaviour shell). See [docs/architecture/predicate-vocabulary.md](../architecture/predicate-vocabulary.md)
 for the canonical predicate reference (51 predicates, 8 groups).
 
 **Acceptance criteria**

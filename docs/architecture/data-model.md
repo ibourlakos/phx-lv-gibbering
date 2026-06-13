@@ -375,7 +375,7 @@ defstruct [:id, :name, :description, :source, :trigger, :predicate, :effect,
            stacking: :additive, min_level: 1]
 # trigger:    {:on_attack, :melee | :ranged | :any} | {:passive} | {:on_damage_received, type}
 #             | {:on_saving_throw, ability} | {:on_condition_applied, cond} | {:on_being_attacked}
-# predicate:  closed-vocabulary expression — see docs/predicate-vocabulary.md
+# predicate:  closed-vocabulary expression — see docs/architecture/predicate-vocabulary.md
 # effect:     {:add_damage_dice, "1d6", :any} | {:grant_advantage, :attack_rolls}
 #             | {:set_speed, 0} | {:grant_resistance} | {:add_bonus, :ac, n}
 #             | {:override_ac_formula, formula} | {:force_critical_hit}

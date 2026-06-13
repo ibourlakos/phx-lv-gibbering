@@ -1,13 +1,13 @@
 # Bounded Context Map
 
-> **See also:** [context-map.md](../context-map.md) — integration patterns at each seam (relationships, published language, violations).
+> **See also:** [context-map.md](context-map.md) — integration patterns at each seam (relationships, published language, violations).
 
 The module structure follows the polytope bounded context decomposition from
 [docs/papers/polytope-architecture.md](../papers/polytope-architecture.md). Each bounded
 context owns its namespace. No context reaches directly into another's modules — all
 cross-context interaction is via the command bus (C) or event bus (E). See #108 for the
 EventBus port definition, #109 for the bus classification audit, and
-[docs/context-map.md](../context-map.md) for the full context map (seams, patterns, violations).
+[docs/architecture/context-map.md](context-map.md) for the full context map (seams, patterns, violations).
 
 ## Scene *(Behavioral dimension — core game authority)*
 

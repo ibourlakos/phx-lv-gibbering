@@ -17,5 +17,5 @@ Depends on: #79 (`Data.Items` module, closed), #46 (equipped item JSONB, closed)
 - [ ] `stats["inventory"]` on creature entities (`"hero"`, `"monster"`) holds the same shape; empty list `[]` initially
 - [ ] Tags `"interactable"` and `"passable"` are documented as the canonical tag names for world objects in the data model doc
 - [ ] At least one `LootSource` world object seeded in the test/dev campaign with a small item set (e.g. 20 arrows, 1 shortsword)
-- [ ] Data model doc (`docs/data-model.md`) updated: `entities.stats` known-keys table, runtime entity map shape, WorldObject section
+- [ ] Data model doc (`docs/architecture/data-model.md`) updated: `entities.stats` known-keys table, runtime entity map shape, WorldObject section
 - [ ] `mix precommit` passes

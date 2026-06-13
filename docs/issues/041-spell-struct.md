@@ -11,7 +11,7 @@ values with typed fields to drive targeting overlays, slot consumption, and
 concentration tracking. Enables #20 (castable spells).
 
 **Acceptance criteria**
-- [x] `%Gibbering.Rulesets.DnD5e.Spell{}` struct defined with fields: `[:key, :name, :level, :school, :casting_time, :range, :components, :duration, :target_area, :effect, :tags]` — shapes per `docs/data-model.md`
+- [x] `%Gibbering.Rulesets.DnD5e.Spell{}` struct defined with fields: `[:key, :name, :level, :school, :casting_time, :range, :components, :duration, :target_area, :effect, :tags]` — shapes per `docs/architecture/data-model.md`
 - [x] `Data.Spells` migrated to return `%Spell{}` structs (all existing spell keys preserved)
 - [x] `casting_time` is a tagged tuple: `{:action} | {:bonus_action} | {:reaction, trigger_pred} | {:minutes, n}`
 - [x] `duration.is_concentration` boolean present on all spells

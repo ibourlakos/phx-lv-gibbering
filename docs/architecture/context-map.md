@@ -1,7 +1,7 @@
 # Context Map
 
-> **See also:** [Architecture](architecture.md) — module listings per context.
-> [Bounded Context Graph paper](papers/bounded-context-graph.md) — integration pattern vocabulary.
+> **See also:** [Architecture](../architecture.md) — module listings per context.
+> [Bounded Context Graph paper](../papers/bounded-context-graph.md) — integration pattern vocabulary.
 
 This document is the **living context map** for the Gibbering Engine: all bounded contexts, every
 inter-context seam, the integration pattern at each seam, and the known violations that need to be

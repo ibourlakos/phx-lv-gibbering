@@ -35,4 +35,4 @@ The Gibbering Engine needs a machine-readable representation of D&D 5e rules tha
 - [x] Stacking rule for named bonuses decided
 - [x] `%RuleModifier{}` struct shape finalised (ready for implementation)
 
-See [docs/predicate-vocabulary.md](../predicate-vocabulary.md) for the complete reference.
+See [docs/architecture/predicate-vocabulary.md](../architecture/predicate-vocabulary.md) for the complete reference.

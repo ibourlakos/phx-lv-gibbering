@@ -16,5 +16,5 @@ The column should be dropped before `support_users` auth ([#65](065-support-user
 - [x] Migration drops `users.role` column
 - [x] `Gibbering.Accounts.User` schema updated — `role` field removed
 - [x] Any code that reads or pattern-matches on `user.role` is updated or removed
-- [x] `docs/data-model.md` updated to remove the `role` column from the `users` table documentation
+- [x] `docs/architecture/data-model.md` updated to remove the `role` column from the `users` table documentation
 - [x] Tests pass; no references to `user.role` remain
