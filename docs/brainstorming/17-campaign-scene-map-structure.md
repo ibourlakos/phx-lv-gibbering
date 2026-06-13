@@ -145,6 +145,62 @@ Trade-offs:
 
 ---
 
+## Tile strata
+
+All possible layers at a world coordinate `(x, y)`:
+
+| Stratum | Examples | Home | Event pipeline |
+|---|---|---|---|
+| **Terrain** | grass, stone, sand, water | `GridTile` (`texture`, `movement` JSONB) | No |
+| **Tile decoration** | bones, grass tuft, crack in floor | `GridTile.decoration` (string key into `Data.Environment`) | No |
+| **Structure** | wall, pillar, doorway, altar, ruin | entity `type: "structure"`, tags `["blocking"]` | Rarely (destructible) |
+| **Object** | chest, lever, trap, well | entity `type: "object"`, tags `["interactable"]` | Yes |
+| **Creature / NPC** | goblin, villager, quest-giver | entity `type: "monster"` | Yes |
+| **Hero** | player character | entity `type: "hero"` | Yes |
+| **Spatial effect** | fog zone, fire pool, silence field | scene `active_effects` with spatial extent (`tiles: [{x,y}]` or `radius`) | Yes |
+| **UI overlay** | valid move highlight, FOW mask, selection ring | render only — no data layer | — |
+
+**Decoration / structure boundary:** if it affects pathfinding or can be targeted by the event pipeline → entity. If purely cosmetic and single-tile → tile decoration.
+
+**Structure type gap:** current `type` enum is `"hero" | "monster" | "object"`. `"structure"` needs adding, or structures use `type: "object"` with a `["structure", "blocking"]` tag set.
+
+---
+
+## Tile movement permissions
+
+`walkable: boolean` is insufficient. A tile with a boulder is not walkable but may be climbable. Movement is a set of permitted modes, each with a cost:
+
+```elixir
+# GridTile.movement — JSONB, replaces walkable: boolean
+%{
+  "walk"  => "normal" | "difficult" | "blocked",
+  "climb" => "normal" | "difficult" | "blocked",
+  "swim"  => "normal" | "difficult" | "blocked",
+  "fly"   => "normal" | "difficult" | "blocked"
+}
+# Absent key = :blocked. Defaults: open ground = %{"walk" => "normal", "fly" => "normal"}
+```
+
+**Entity movement attributes** are the matching half. Currently `stats` only carries `"speed"` (walk). A full movement model requires:
+
+```elixir
+# In entity stats JSONB
+"speed"        => integer   # walk speed in feet
+"climb_speed"  => integer | nil
+"swim_speed"   => integer | nil
+"fly_speed"    => integer | nil
+```
+
+**Engine implications:**
+
+- `valid_moves` computation must check tile permitted modes against entity available modes, deducting from `movement_remaining` at the appropriate cost multiplier
+- `action_economy.movement_remaining` (planned in #37) needs to track remaining movement per mode, or a single pool with mode-aware cost deduction
+- `RuleModifier` entries affect both sides: Fly spell grants `fly_speed`; Restrained sets all movement to 0; Spider Climb grants `climb: :normal` on any surface regardless of tile permission
+
+This is a cross-cutting constraint: `GridTile.movement`, entity `stats` movement keys, `valid_moves` computation, and the `RuleModifier` pipeline must be designed together. Affects issues #37 (entity map extensions) and the planned `DnD5e.Stats` module (#38).
+
+---
+
 ## Environment content — design implications for BS-17
 
 The content layer must accommodate multiple categories of environmental element. Three constraints that affect the structural decisions here:
