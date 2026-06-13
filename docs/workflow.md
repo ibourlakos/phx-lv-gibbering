@@ -6,7 +6,7 @@ The sequence we follow for every change — from first idea to merged commit.
 
 ## Overview
 
-Four paths depending on how well the problem is understood and how large the fix is.
+Seven paths depending on how well the problem is understood and how large the change is.
 
 ```
 [A] Discovery:  Brainstorm → Settle → Triage ──────────────────────────────► Issues
@@ -15,6 +15,7 @@ Four paths depending on how well the problem is understood and how large the fix
 [D] Hotfix:                                                              Verify → Commit
 [E] Work Package: Triage batch ──────────────► work-packages.md → pick next issue → repeat B/C
 [F] Escalation: discovery Issue → too broad → open Brainstorm → defer Issue → enter [A]
+[G] Docs:       (fix) Verify → Commit   |   (refactor) Branch → Edit → Verify → Commit
 ```
 
 | Path | When to use |
@@ -25,6 +26,7 @@ Four paths depending on how well the problem is understood and how large the fix
 | **[D] Hotfix** | Caught at smoke test; ≤ 1 file; no behaviour change; no new test needed |
 | **[E] Work Package** | Many issues extracted from brainstorms; need ordering + dependency tracking across phases |
 | **[F] Escalation** | A `discovery` issue turns out too broad to produce ACs directly; promote it to a brainstorm |
+| **[G] Docs** | Documentation-only change: prose corrections, reorganisation, link updates — no code touched |
 
 **The gate between Bugfix and Hotfix is the regression test.** If you need a test to prove the fix holds — Bugfix. If the only proof is "the app boots and the action works" — Hotfix.
 
@@ -47,7 +49,7 @@ Use a brainstorm file when the problem is too wide or ambiguous to scope into an
 | **Commit** | Brainstorm doc + all new issue files | `chore: brainstorm #N → issues #X–Y` |
 | **Close** | Once all extracted issues are closed or deferred, delete the file, remove from CLAUDE.md | `chore: close brainstorm #N` |
 
-**Gate before Commit:** No open question without a decision or explicit deferral. No [docs](./docs) need updating.
+**Gate before Commit:** No open question without a decision or explicit deferral. No docs need updating.
 
 **Gate before Close:** All extracted issues are closed or deferred in `docs/issues/`.
 
@@ -195,7 +197,7 @@ for the full convention.
 ### Up-to-date docs gate
 
 **Trigger:** Any incoming updates that have affected the architecture, the data model, or testing policy.
-**Action:** Read `docs/{architecture,data-model,testing}.md` and update them.
+**Action:** Read `docs/architecture.md`, `docs/architecture/data-model.md`, and `docs/testing.md` and update them.
 
 ---
 
@@ -226,6 +228,60 @@ The work package defines a critical path. Always work the critical path first un
 
 ---
 
+## [F] Escalation path
+
+**Trigger:** A `discovery` issue turns out too broad to produce crisp acceptance criteria directly.
+
+1. Open a brainstorm file (path [A]).
+2. Defer the original discovery issue: `Deferred because: promoted to brainstorm #N`.
+3. Work the brainstorm to settlement; extract replacement issues.
+4. Close the original discovery issue once the brainstorm is settled and replacement issues are open.
+
+Full detail is in the [Discovery gate](#discovery-gate) section below.
+
+---
+
+## [G] Docs path
+
+Documentation-only changes: no code is touched, no tests needed, no `mix precommit` required.
+
+Two sub-tracks based on structural impact:
+
+### Docs fix (correction, clarification, minor addition)
+
+**Trigger:** All of the following must be true:
+- No file is moved or renamed
+- No cross-document links are added or changed
+- ≤ a few lines changed
+
+1. Edit in place on the current branch.
+2. Read the changed file back and confirm the edit looks right.
+3. `git commit -m "docs(scope): description"`
+
+### Docs refactor (reorganisation, moves, new sections)
+
+**Trigger:** Any of the following:
+- A file is moved or renamed
+- A cross-document link path changes
+- A new index/TOC entry is added
+
+1. **Branch:** `git checkout -b docs/<short-name>`
+2. **Edit:** Make all structural changes (copy → fix internal links → delete original, or add/restructure sections).
+3. **Verify — stale reference check:**
+   - For every old path or filename: `grep -r "<old-path>" docs/` — must return zero hits (or only correctly updated occurrences).
+   - Spot-check every TOC/index file that links to the changed content (typically `docs/architecture.md`, `CLAUDE.md`, `docs/issues/README.md`).
+   - Confirm issue files in `docs/issues/` that referenced the old path now reference the new path.
+4. **Commit:**
+   ```bash
+   git commit -m "docs(scope): description"
+   ```
+   No issue close step unless the change was specifically requested by an open issue.
+
+**Commit prefix:** `docs(scope): …`  
+**No issue required** for routine maintenance. Open one only if the work is large enough to need acceptance criteria tracked separately.
+
+---
+
 ## Quick reference
 
 | Path | Entry | Key gate | Commit prefix |
@@ -234,6 +290,8 @@ The work package defines a critical path. Always work the critical path first un
 | Feature | Issue with acceptance criteria | Legal / Architecture / Discovery | `feat(scope): …` |
 | Bugfix | Bug issue with reproduction steps | Failing regression test before fix | `fix(scope): …` |
 | Hotfix | Smoke test observation | `mix precommit` exits 0 | `fix(scope): …` |
+| Docs fix | Correction in place | Read-back confirms edit | `docs(scope): …` |
+| Docs refactor | Structural move or rename | Stale-ref grep returns zero hits | `docs(scope): …` |
 
 | Phase (Feature/Bugfix) | Done when |
 |---|---|

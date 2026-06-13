@@ -8,11 +8,10 @@ Named after the Gibbering Mouther (SRD-legal aberration). The architecture is th
 
 ## Docs
 
-- [Architecture](docs/architecture.md) — TOC; sub-docs in `docs/architecture/` (bounded contexts, event system, CQRS) and `docs/architecture/features/` (rendering, fog of war, DM overrides, etc.)
-- [Data Model](docs/data-model.md) — DB schema, runtime State struct, static reference data
+- [Architecture](docs/architecture.md) — TOC; sub-docs in `docs/architecture/` (data model, context map, bounded contexts, event system, CQRS, predicate vocabulary) and `docs/architecture/features/` (rendering, fog of war, DM overrides, etc.)
 - [Dev Setup](docs/dev-setup.md) — prerequisites, workflow, DB ops, Docker housekeeping
 - [Testing](docs/testing.md) — three-layer strategy, fixtures, TDD workflow, running tests
-- [Workflow](docs/workflow.md) — the full dev sequence: Brainstorm → Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit
+- [Workflow](docs/workflow.md) — seven paths for discovery, feature, bugfix, hotfix, work packages, escalation, and docs-only changes
 - [Legal](docs/legal.md) — content licenses, assets, data sources, privacy, LegalGuard scope
 - [Git Policy](docs/git-policy.md) — conventional commits, branch naming, LFS for binary assets
 
@@ -81,10 +80,10 @@ Description.
 
 - Be concise in responses.
 - If you feel that my feedback, ideas, or suggestions are getting out hand, keep me checked.
-- **Follow [docs/workflow.md](docs/workflow.md) for every non-trivial change.** The sequence is: Brainstorm → Explore → Issue → Branch → Red → Green → Refactor → Verify → Commit. Never skip the Legal gate or the Verify phase.
+- **Follow [docs/workflow.md](docs/workflow.md) for every non-trivial change.** Pick the correct path (A–G) for the type of work. Never skip the Legal gate or the Verify phase.
 - Dev environment is fully Docker-based. Never assume local Elixir/Node installs. All `mix` commands go through `docker compose exec app mix`.
 - Keep [docs/dev-setup.md](docs/dev-setup.md) up-to-date when tools, versions, or workflows change.
 - Maintain Docker hygiene: avoid leaving dangling images or stopped containers. Prefer `docker compose down` over `docker stop`, use named volumes, and document prune commands when adding new services.
 - Legal is a hard blocker. Before committing any asset (image, font, data file) or adding a data source/dependency, verify its license against [docs/legal.md](docs/legal.md). When in doubt, flag it rather than proceed.
 - Follow [docs/git-policy.md](docs/git-policy.md) for all commits: conventional commits format (`type(scope): subject`), one logical change per commit, never commit directly to `main`. Binary assets require Git LFS — do not commit them until LFS is configured.
-- Tests live in three layers — see [docs/testing.md](docs/testing.md). Always start at the lowest applicable layer (pure functions first). Run `mix precommit` before every commit.
+- Tests live in three layers — see [docs/testing.md](docs/testing.md). Always start at the lowest applicable layer (pure functions first). Run `mix precommit` before every code commit (not required for docs-only changes).
