@@ -1,7 +1,7 @@
 # Work Packages
 _Temporary planning doc — not an issue file. Delete when packages are actioned._
 
-Generated: 2026-06-05 · Last updated: 2026-06-13 (WP-J ✓ complete; WP-D ✓ fully complete; WP-F discoveries #25/#26/#34/#27/#101 closed; WP-K/WP-L/WP-M added from derived implementation issues; WP-N added from BS-17 Phase 1 decisions)
+Generated: 2026-06-05 · Last updated: 2026-06-14 (WP-J ✓ complete; WP-D ✓ fully complete; WP-F discoveries #25/#26/#34/#27/#101 closed; WP-K/WP-L/WP-M added from derived implementation issues; WP-N added from BS-17 Phase 1 decisions; WP-N #129 ✓ closed)
 
 ---
 
@@ -144,7 +144,7 @@ Dependency chain:
 
 | # | Title | Priority | Depends on |
 |---|---|---|---|
-| [#129](129-maps-table-phase-1-migration.md) | Phase 1: introduce `maps` table | medium | — |
+| [#129](129-maps-table-phase-1-migration.md) | Phase 1: introduce `maps` table ✓ | medium | — |
 | [#130](130-grid-tile-movement-jsonb.md) | `GridTile.movement` JSONB — replace `walkable: boolean` | medium | #129 |
 | [#131](131-entity-movement-stats-and-valid-moves.md) | Entity movement stats + `valid_moves` multi-mode deduction | medium | #130 |
 

@@ -1,6 +1,7 @@
 # #129 · Phase 1: introduce `maps` table
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-13
+**Closed:** 2026-06-14
 **Priority:** medium
 **Tags:** architecture, ops
 
