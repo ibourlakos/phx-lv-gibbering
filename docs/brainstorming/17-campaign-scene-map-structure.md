@@ -86,6 +86,31 @@ Current data model conflates these: the `entities` table holds both interactable
 
 ---
 
+## Reference model: map editors (SC2 / AoE2) — and where the analogy breaks
+
+RTS map editors (StarCraft 2, Age of Empires 2) got the map/scenario/campaign separation right:
+
+- **Map** — tile grid, terrain, static decoration (reusable, purely spatial)
+- **Scenario** — map + content layer: unit placements, item placement, environmental conditions, win conditions
+- **Campaign** — ordered sequence of scenarios with narrative connective tissue
+
+The trigger system is the relevant mechanism for the content layer: rather than baking interactable behaviour into tile types, SC2/AoE2 attach *trigger rules* to scenarios ("if unit enters region X → apply effect Y"). This is the right structural instinct for environmental conditions and interactable objects.
+
+**Where the analogy breaks — context-sensitive evaluation:**
+
+SC2/AoE2 triggers are largely context-free: "unit enters region → spawn units" is deterministic regardless of who the unit is or what happened before. D&D interactions are not. The same action on the same entity produces different outcomes depending on:
+
+- **Entity context** — the tiger's `disposition` in its `stats` JSONB (base behaviour as authored)
+- **Campaign context** — the DM may override the tiger's disposition for this specific campaign ("friendly tiger" variant), independently of the entity's base state
+- **Actor context** — the acting player's proficiencies and abilities affect the outcome (Animal Handling check changes the odds)
+- **Scene context** — active environmental conditions may modify the interaction
+
+In our event model this maps correctly: the `:pet_animal` command issues a generic event; the engine evaluates predicates against entity state, campaign overrides, actor stats, and active scene effects to determine the effect. The outcome is not authored as a static trigger rule in the scenario — it is resolved at runtime by the predicate/modifier pipeline.
+
+**Implication for the content layer:** "interactable" does not mean "carries a hardcoded trigger." It means the entity **participates in the event pipeline** — the engine dispatches events to it and the predicate system resolves outcomes using the full context stack. Campaign-level DM customisation (the friendly tiger) is a **campaign-scoped entity override** (a modifier or a stats override), not a scenario trigger. This connects to the deferred DM override issue #32.
+
+---
+
 ## Design Options
 
 ### Option A — Stay flat (single map per campaign, documented constraint)
