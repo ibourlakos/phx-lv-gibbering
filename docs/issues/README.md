@@ -42,6 +42,9 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
 | [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` | low |
 | [#124](124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | `rendering` `ui` `architecture` | low |
+| [#129](129-maps-table-phase-1-migration.md) | Phase 1: introduce `maps` table (x_extent/y_extent, grid_tiles FK, SceneServer map_id) | `architecture` `ops` | medium |
+| [#130](130-grid-tile-movement-jsonb.md) | `GridTile.movement` JSONB — replace `walkable: boolean`, entity movement overlay, valid_moves merge | `architecture` `gameplay` | medium |
+| [#131](131-entity-movement-stats-and-valid-moves.md) | Entity movement stats (climb/swim/fly speeds) + `valid_moves` multi-mode deduction | `gameplay` `rules` | medium |
 
 ---
 

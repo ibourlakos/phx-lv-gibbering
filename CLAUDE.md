@@ -29,7 +29,11 @@ Any unresolved legal issue is a blocker. See [docs/legal.md](docs/legal.md) for 
 
 Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See the [README](docs/brainstorming/README.md) for counter rules and workflow.
 
-No open brainstorms. Next brainstorm number: 17 (see `docs/brainstorming/counter`).
+| # | File | Topic | Status |
+|---|---|---|---|
+| 17 | [17-campaign-scene-map-structure.md](docs/brainstorming/17-campaign-scene-map-structure.md) | Campaign / Scene / Map structure — single-map vs. multi-map, maps table, SceneServer scope | open |
+
+Next brainstorm number: 18 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 

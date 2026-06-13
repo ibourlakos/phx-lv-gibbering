@@ -205,26 +205,61 @@ for the full convention.
 
 A work package is a temporary planning document (`docs/issues/work-packages.md`) that groups issues by concern and establishes sequencing across phases. It sits *above* the per-issue workflow — it tells you which issue to pick up next and what it depends on.
 
-### When to use a work package
+---
 
-Open or update `work-packages.md` after a brainstorm triage batch produces many issues at once, or when you need to reason about ordering across several unrelated tracks. It is not an issue file and does not go in the issue tracker.
+### Creation
 
-### Work package lifecycle
+**Trigger:** A brainstorm triage batch produces ≥ 3 new issues at once, OR you need to reason about ordering across several unrelated tracks.
 
-| Step | Action |
+**Before grouping:** audit which discovery or gating issues have closed since the last update. Each closed discovery may have derived new implementation issues — those are candidates for new or updated packages.
+
+**Grouping:** cluster open issues into named packages by theme (e.g. "Rendering & Frontend", "Inventory & Loot"). A package is a *concern*, not a sprint.
+
+**Ordering within each package — data layer before presentation:**
+
+1. DB migrations / schema changes
+2. Business logic / event handlers
+3. LiveView / SVG presentation layer
+
+**Cross-package gates:** if issue X in one package gates issue Y in another, annotate both with the dependency and note the gate in the sequencing diagram at the bottom.
+
+**Cross-cutting threads:** issues with no clear phase home (standalone bugs, deferred discoveries, independent ops items) go in a separate cross-cutting table, not in a numbered package.
+
+**Sequencing diagram:** a short ASCII tree at the bottom showing which packages unlock which and what the current active front is.
+
+---
+
+### Maintenance
+
+**Trigger:** a gating discovery closes, a batch of issues closes, or new issues are derived from a settled discovery.
+
+1. **Mark completed packages** with ✓ and a one-line close note ("all N issues closed as of YYYY-MM-DD"). Do not delete their sections — they serve as a history of what is done.
+2. **Disassemble stale assignments.** If a previously gated item carried a "gated by X — do not start" annotation and X is now closed, remove the item from its old stub and assign it to a new package or promote it as the lead item of a new package.
+3. **Add new packages for derived issues.** When a closed discovery has produced implementation issues, open a new package entry, reference the discovery it came from, and apply the data-layer-first sequencing rule.
+4. **Update the sequencing diagram** to reflect the new active front and any newly unlocked tracks.
+5. **Prune cross-cutting threads.** Remove entries whose issues are closed. Add newly deferred or unassigned issues.
+
+---
+
+### Completion
+
+**Trigger:** all issues in a package are closed or explicitly deferred.
+
+1. Mark the package ✓ complete with a close note.
+2. Check whether any issues in other packages were gated by this one — remove their gate annotations and promote them to active if applicable.
+3. When all packages across the entire file are complete or deferred: delete `work-packages.md`.
+
+---
+
+### Key invariants
+
+| Rule | Why |
 |---|---|
-| **Create / update** | After triage (path A Commit step), rewrite `work-packages.md` with all open issues grouped by phase, with sequencing notes and a critical path. |
-| **Pick next issue** | Read `work-packages.md`. Follow the critical path. Before starting a concrete task, check whether any discovery issue blocks it — if yes, resolve the discovery first (path A or B). |
-| **Discovery issue handling** | Do not resolve all discovery issues upfront. Resolve one *just before* you need to implement the thing it scopes. This avoids stale decisions. |
-| **Delete** | When all issues in all packages are closed or deferred. |
-
-### Interaction with discovery issues
-
-A discovery issue has tag `discovery` and no implementation work — its acceptance criteria are design decisions, not code. The trigger to resolve it is *"I am about to start the implementation it gates."* If no concrete issue is blocked by it right now, leave it in the backlog.
-
-### Critical path rule
-
-The work package defines a critical path. Always work the critical path first unless a parallel track is explicitly marked as unblocked and higher priority. The critical path ends when WP-D is complete (full campaign lifecycle + live DM session toolset operational).
+| Data layer before presentation within a package | Avoids half-wired features mid-branch |
+| Blocking dependencies before dependees across packages | Prevents starting work that immediately stalls |
+| Do not resolve discovery issues upfront | Decisions go stale; resolve a gate just before you need it |
+| Gated items stay in their old stub until the gate closes | Keeps the active front unambiguous |
+| Disassemble and reassign on every maintenance pass | Prevents zombie "gated by X" annotations after X is already closed |
 
 ---
 
