@@ -145,6 +145,29 @@ Trade-offs:
 
 ---
 
+## Environment content catalogue
+
+A usable scene layer requires a reasonably fat seed collection of environmental content. Categories:
+
+| Category | Examples | Likely home |
+|---|---|---|
+| **Tile textures** | grass, stone, dirt, sand, water, wood planks, snow, lava | `GridTile.texture` (string — already extensible) |
+| **Decorative elements** | dead tree, various rocks, shrubs, mushrooms, bones, torch, barrel, crate | `GridTile.decoration` or a separate decoration catalogue module |
+| **Structures / remains** | ruined wall, intact wall, doorway, pillar, altar, well, statue, chest (closed) | likely entities with `type: "object"` and decorative tag; may span multiple tiles |
+| **Atmosphere markers** | fog patch, fire, magical glow, puddle | environmental conditions on the scene, not tile data |
+
+**Design implications:**
+
+- The current `GridTile.decoration` field is typed as `atom | nil` with three hardcoded values (issue #125). A fat catalogue makes the atom-enum approach fragile — a string key pointing into a `Data.Environment` catalogue module is more extensible.
+- Structures that span multiple tiles (a building footprint, a large statue) cannot live on a single tile's decoration field. They need a separate representation — either multi-tile entities or a dedicated structures layer.
+- Atmosphere markers (fire, fog, magical silence) are not tile data; they are scene-level effects. This reinforces Q5: environmental conditions belong on the scene, not on tiles.
+
+**Relationship to #120:** Issue [#120](../issues/120-items-data-population.md) (deferred) covers the *items* data catalogue (weapons, armor, consumables). The environment content catalogue is a separate concern — tile textures, decoration types, structure definitions — and will likely need its own `Data.Environment` module and seed data. This is a new gap not yet captured in any issue.
+
+**Timing:** the environment catalogue is a prerequisite for the #85 authoring tool (you need content to place) and for meaningful seed data in dev/test campaigns. It does not need to be settled before BS-17 closes, but the data model decisions here must accommodate it.
+
+---
+
 ## Relationship to #85 — Content Creation Tools
 
 The DM campaign authoring surface (map editor, scene composition, entity placement, campaign sequencing, DM overrides) is part of the broader **content creation tools** scope already captured in issue [#85](../issues/085-content-creation-tools-design.md). That issue lists "Map module editor (tiles, room layouts, decoration placement)" explicitly under the shared editor surface.
