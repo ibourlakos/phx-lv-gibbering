@@ -145,40 +145,37 @@ Trade-offs:
 
 ---
 
-## Environment content catalogue
+## Environment content — design implications for BS-17
 
-A usable scene layer requires a reasonably fat seed collection of environmental content. Categories:
+The content layer must accommodate multiple categories of environmental element. Three constraints that affect the structural decisions here:
 
-| Category | Examples | Likely home |
-|---|---|---|
-| **Tile textures** | grass, stone, dirt, sand, water, wood planks, snow, lava | `GridTile.texture` (string — already extensible) |
-| **Decorative elements** | dead tree, various rocks, shrubs, mushrooms, bones, torch, barrel, crate | `GridTile.decoration` or a separate decoration catalogue module |
-| **Structures / remains** | ruined wall, intact wall, doorway, pillar, altar, well, statue, chest (closed) | likely entities with `type: "object"` and decorative tag; may span multiple tiles |
-| **Atmosphere markers** | fog patch, fire, magical glow, puddle | environmental conditions on the scene, not tile data |
-
-**Design implications:**
-
-- The current `GridTile.decoration` field is typed as `atom | nil` with three hardcoded values (issue #125). A fat catalogue makes the atom-enum approach fragile — a string key pointing into a `Data.Environment` catalogue module is more extensible.
-- Structures that span multiple tiles (a building footprint, a large statue) cannot live on a single tile's decoration field. They need a separate representation — either multi-tile entities or a dedicated structures layer.
-- Atmosphere markers (fire, fog, magical silence) are not tile data; they are scene-level effects. This reinforces Q5: environmental conditions belong on the scene, not on tiles.
-
-**Relationship to #120:** Issue [#120](../issues/120-items-data-population.md) (deferred) covers the *items* data catalogue (weapons, armor, consumables). The environment content catalogue is a separate concern — tile textures, decoration types, structure definitions — and will likely need its own `Data.Environment` module and seed data. This is a new gap not yet captured in any issue.
-
-**Timing:** the environment catalogue is a prerequisite for the #85 authoring tool (you need content to place) and for meaningful seed data in dev/test campaigns. It does not need to be settled before BS-17 closes, but the data model decisions here must accommodate it.
+- **Atom enum won't scale.** The current `GridTile.decoration` field is `atom | nil` with three hardcoded values (issue #125). A fat environment catalogue requires a string key into a `Data.Environment` catalogue module — this affects Q6.
+- **Multi-tile structures need a separate representation.** A building footprint or large statue cannot live on a single tile's decoration field. Either multi-tile entities or a dedicated structures layer is needed — this affects Q3 and Q6.
+- **Atmosphere markers are not tile data.** Fire, fog, magical silence are scene-level effects, not properties of individual tiles — this reinforces Q5.
 
 ---
 
 ## Relationship to #85 — Content Creation Tools
 
-The DM campaign authoring surface (map editor, scene composition, entity placement, campaign sequencing, DM overrides) is part of the broader **content creation tools** scope already captured in issue [#85](../issues/085-content-creation-tools-design.md). That issue lists "Map module editor (tiles, room layouts, decoration placement)" explicitly under the shared editor surface.
+The DM campaign authoring surface (map editor, scene composition, entity placement, campaign sequencing, DM overrides) is part of the broader **content creation tools** scope already captured in issue [#85](../issues/085-content-creation-tools-design.md).
 
-**#85 is currently deferred.** Its unpark condition was "admin app foundation stable" — that condition is now met (WP-E closed #64–#69). However, the structural decisions in *this* brainstorm (what a map is, what a scene is, how content layers are modelled) are a **prerequisite** for the map module editor. #85's brainstorm cannot be productively opened until BS-17 is settled.
+**#85 is currently deferred.** Its unpark condition ("admin app foundation stable") is now met (WP-E closed #64–#69). However, the structural decisions in this brainstorm are a **prerequisite** for the map module editor. #85's brainstorm cannot be productively opened until BS-17 is settled.
 
-**Scope boundary:** do not add authoring tool open questions here. BS-17 settles the data model structure; the authoring tool is downstream and belongs in #85's future brainstorm.
+**Scope boundary:** authoring tool questions belong in #85's brainstorm, not here.
 
-**Additions to #85's editor component list** (noted here for carry-over, not settled here):
+---
 
-- **Appearance editor** — per-element visual customisation: SVG shape parameters, colour palette, size variants for tile textures, decorative elements, and structures. Operates on the environment content catalogue entries. Uses live SVG preview rendering (already listed in #85 as a shared surface component). This is a sub-application of the content creation tools, not a standalone app.
+## Captured for later
+
+_Ideas surfaced during exploration that don't belong in BS-17's settlement. Carry these forward to the appropriate brainstorm or issue when BS-17 closes._
+
+- **Fat environment seed collection** — tile textures (grass, stone, dirt, sand, water, wood planks, snow, lava), decorative elements (rocks, shrubs, mushrooms, bones, torch, barrel, crate), structures/remains (ruined wall, doorway, pillar, altar, well, statue), atmosphere markers (fog, fire, magical glow). Will need its own `Data.Environment` catalogue module and seed data. Distinct from the items catalogue in #120. Prerequisite for the #85 authoring tool.
+
+- **DM campaign authoring sub-application** — map editor, scene composition, entity/item/condition placement, campaign sequencing, DM entity overrides. Part of the #85 content creation tools scope. Unpark #85 once BS-17 closes.
+
+- **Appearance editor** — per-element SVG visual customisation: shape parameters, colour palette, size variants for tile textures, decorative elements, and structures. Sub-application within #85's editor suite; uses live SVG preview rendering.
+
+- **Campaign-scoped entity overrides** — e.g. the "friendly tiger" — a DM sets a disposition override for a specific entity in a specific campaign, independent of the entity's base state. Connects to deferred issue #32 (DM override event schema). Needs a data model slot (campaign-scoped modifier set or stats override table).
 
 ---
 
