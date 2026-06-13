@@ -29,7 +29,7 @@ defmodule Gibbering.Engine.RulesTest do
     test "respects chebyshev distance cap" do
       # Hero speed 30 → 6 tiles. Place hero at (0,0) on a big map.
       state =
-        build_state(map_width: 15, map_height: 15)
+        build_state(x_extent: 15, y_extent: 15)
         |> with_entity(hero_id(), x: 0, y: 0)
 
       moves = Rules.valid_moves(state, hero_id())
@@ -304,7 +304,7 @@ defmodule Gibbering.Engine.RulesTest do
 
     test "monster outside fire_bolt range is excluded" do
       state =
-        build_state(map_width: 30, map_height: 30)
+        build_state(x_extent: 30, y_extent: 30)
         |> with_entity(monster_id(), x: 29, y: 29)
 
       # Hero at (2,2), monster at (29,29) — Chebyshev 27, fire_bolt range 24 tiles

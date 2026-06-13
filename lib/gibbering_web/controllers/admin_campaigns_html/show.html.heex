@@ -27,7 +27,11 @@
         </div>
         <div>
           <dt class="text-gray-400 text-xs uppercase mb-1">Map</dt>
-          <dd>{@campaign.map_width} × {@campaign.map_height}</dd>
+          <dd>
+            {if @campaign.active_map,
+              do: "#{@campaign.active_map.x_extent} × #{@campaign.active_map.y_extent}",
+              else: "—"}
+          </dd>
         </div>
         <div>
           <dt class="text-gray-400 text-xs uppercase mb-1">Created</dt>

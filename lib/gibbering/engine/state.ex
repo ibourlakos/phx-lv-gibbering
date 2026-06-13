@@ -15,8 +15,9 @@ defmodule Gibbering.Engine.State do
 
   defstruct [
     :campaign_id,
-    :map_width,
-    :map_height,
+    :map_id,
+    :x_extent,
+    :y_extent,
     :tile_size,
     # %{{x, y} => %{texture: string, walkable: bool}}
     :grid_tiles,
@@ -50,8 +51,10 @@ defmodule Gibbering.Engine.State do
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."
   def from_campaign(%Campaign{} = campaign) do
+    map = campaign.active_map
+
     tiles =
-      campaign.tiles
+      map.tiles
       |> Map.new(fn t ->
         {{t.x, t.y}, %{texture: t.texture, walkable: t.walkable, decoration: t.decoration}}
       end)
@@ -95,9 +98,10 @@ defmodule Gibbering.Engine.State do
 
     %__MODULE__{
       campaign_id: campaign.id,
-      map_width: campaign.map_width,
-      map_height: campaign.map_height,
-      tile_size: campaign.tile_size,
+      map_id: map.id,
+      x_extent: map.x_extent,
+      y_extent: map.y_extent,
+      tile_size: map.tile_size,
       grid_tiles: tiles,
       entities: entities,
       selected_id: nil,

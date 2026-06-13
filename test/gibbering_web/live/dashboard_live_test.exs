@@ -11,9 +11,6 @@ defmodule GibberingWeb.DashboardLiveTest do
     {:ok, campaign} =
       Repo.insert(%Campaign{
         name: "Campaign #{System.unique_integer([:positive])}",
-        map_width: 5,
-        map_height: 5,
-        tile_size: 32,
         dm_id: dm.id
       })
 

@@ -21,6 +21,25 @@ The `password` field is a virtual (cast-only) field; it never reaches the DB. DM
 
 ---
 
+### `maps`
+
+Managed by `Gibbering.GameMap`. One row per map (Phase 1: one map per campaign).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | serial | PK |
+| `campaign_id` | integer FK → campaigns | cascade delete |
+| `x_extent` | integer | tile columns (world-x axis, rotation-proof) |
+| `y_extent` | integer | tile rows (world-y axis, rotation-proof) |
+| `tile_size` | integer | pixels per tile (used by projection math) |
+| `inserted_at` / `updated_at` | naive_datetime | |
+
+Associations: `belongs_to :campaign, Campaign` · `has_many :tiles, GridTile, foreign_key: :map_id`
+
+`z_extent` is reserved for a future vertical axis (not yet in schema).
+
+---
+
 ### `campaigns`
 
 Managed by `Gibbering.Campaign`.
@@ -29,13 +48,12 @@ Managed by `Gibbering.Campaign`.
 |---|---|---|
 | `id` | serial | PK |
 | `name` | string | |
-| `map_width` | integer | tile columns |
-| `map_height` | integer | tile rows |
-| `tile_size` | integer | pixels per tile (used by projection math) |
+| `status` | string | `"lobby"` \| `"active"` \| `"ended"` |
+| `active_map_id` | integer FK → maps | nullable; the currently loaded map |
 | `dm_id` | integer FK → users | nullable; the campaign's Dungeon Master |
 | `inserted_at` / `updated_at` | naive_datetime | |
 
-Associations: `belongs_to :dm, User` · `has_many :tiles, GridTile` · `has_many :entities, Entity` · `has_many :campaign_members, CampaignMember`
+Associations: `belongs_to :dm, User` · `belongs_to :active_map, GameMap` · `has_many :maps, GameMap` · `has_many :entities, Entity` · `has_many :campaign_members, CampaignMember`
 
 ---
 
@@ -156,9 +174,9 @@ Managed by `Gibbering.GridTile`. One row per tile cell.
 | `texture` | string | `"grass"` \| `"stone"` |
 | `walkable` | boolean | |
 | `decoration` | string | nullable — `"dead_tree"` \| `"rock_cluster"` \| `"bones"` \| `"grass_tuft"` |
-| `campaign_id` | integer FK → campaigns | |
+| `map_id` | integer FK → maps | cascade delete |
 
-No timestamps (bulk-inserted via `Repo.insert_all`). See issue #24 for a planned migration to a single JSONB column on `campaigns`.
+No timestamps (bulk-inserted via `Repo.insert_all`). See issue #130 for the planned migration from `walkable` to a JSONB `movement` map for multi-mode movement (walk/climb/swim/fly).
 
 ---
 
@@ -216,9 +234,10 @@ Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not 
 | Field | Type | Notes |
 |---|---|---|
 | `campaign_id` | integer | DB campaign id |
-| `map_width` | integer | |
-| `map_height` | integer | |
-| `tile_size` | integer | |
+| `map_id` | integer | DB map id (active map) |
+| `x_extent` | integer | tile columns (world-x axis) |
+| `y_extent` | integer | tile rows (world-y axis) |
+| `tile_size` | integer | pixels per tile |
 | `grid_tiles` | `%{{x,y} => tile_map}` | keyed by `{x, y}` integer tuples |
 | `entities` | `%{id => entity_map}` | keyed by entity DB id |
 | `selected_id` | integer \| nil | currently selected entity |
@@ -471,17 +490,19 @@ implements the `Gibbering.Ruleset` behaviour, providing a single entry point for
 
 ```
 users
-  ├── campaign_members ──→ campaigns
-  │                            ├── grid_tiles       (one row per tile cell)
-  │                            └── entities         (heroes, monsters, objects)
+  ├── campaign_members ──→ campaigns ──→ maps ──→ grid_tiles   (one row per tile cell)
+  │                            └── entities                    (heroes, monsters, objects)
   └── (dm_id on campaigns)
+                             campaigns.active_map_id ──→ maps
 
-                campaigns
+                campaigns (preloaded with active_map: :tiles)
                     │
               State.from_campaign/1
                     │
                     ▼
           %Engine.State{}            ← held by SceneServer (one per campaign)
+          ├── campaign_id / map_id   (DB references)
+          ├── x_extent / y_extent / tile_size  (from active map)
           ├── phase                  (scene phase state machine)
           ├── grid_tiles map         (atom-keyed, {x,y} tuple keys)
           ├── entities map           (atom-keyed structural + string stats + planned extensions)

@@ -19,7 +19,7 @@ defmodule GibberingWeb.LobbyLive do
       campaign =
         Campaign
         |> Repo.get!(campaign_id)
-        |> Repo.preload(:entities)
+        |> Repo.preload([:active_map, :entities])
 
       if connected?(socket) do
         Phoenix.PubSub.subscribe(Gibbering.PubSub, lobby_topic(campaign_id))
@@ -223,7 +223,7 @@ defmodule GibberingWeb.LobbyLive do
     campaign =
       Campaign
       |> Repo.get!(socket.assigns.campaign.id)
-      |> Repo.preload(:entities)
+      |> Repo.preload([:active_map, :entities])
 
     assign(socket, :campaign, campaign)
   end

@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Check.Docs do
 
   @required_docs [
     "docs/architecture.md",
-    "docs/data-model.md",
+    "docs/architecture/data-model.md",
     "docs/dev-setup.md",
     "docs/testing.md",
     "docs/workflow.md"

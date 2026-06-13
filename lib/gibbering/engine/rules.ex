@@ -357,7 +357,7 @@ defmodule Gibbering.Engine.Rules do
   defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
 
   defp in_bounds?(x, y, state),
-    do: x >= 0 and x < state.map_width and y >= 0 and y < state.map_height
+    do: x >= 0 and x < state.x_extent and y >= 0 and y < state.y_extent
 
   defp walkable?(state, x, y) do
     case Map.get(state.grid_tiles, {x, y}) do

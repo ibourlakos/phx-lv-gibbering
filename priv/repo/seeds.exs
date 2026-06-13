@@ -1,4 +1,4 @@
-alias Gibbering.{Repo, Campaign, GridTile, Entity, CampaignMember}
+alias Gibbering.{Repo, Campaign, GameMap, GridTile, Entity, CampaignMember}
 alias Gibbering.{Character, CampaignCharacter, CampaignInvitation, CampaignInviteLink}
 alias Gibbering.Engine.GameSession
 alias Gibbering.Accounts
@@ -116,6 +116,8 @@ Repo.delete_all(CampaignMember)
 Repo.delete_all(GameSession)
 Repo.delete_all(Entity)
 Repo.delete_all(GridTile)
+Repo.update_all(Campaign, set: [active_map_id: nil])
+Repo.delete_all(GameMap)
 Repo.delete_all(Campaign)
 Repo.delete_all(Character)
 Repo.delete_all(User)
@@ -136,15 +138,15 @@ Repo.delete_all(User)
 campaign =
   Repo.insert!(%Campaign{
     name: "The Proving Grounds",
-    map_width: 10,
-    map_height: 10,
-    tile_size: 56,
     dm_id: dm.id
   })
 
 for user <- [dm, alice, bob, charlie] do
   Repo.insert!(%CampaignMember{campaign_id: campaign.id, user_id: user.id})
 end
+
+map = Repo.insert!(%GameMap{campaign_id: campaign.id, x_extent: 10, y_extent: 10, tile_size: 56})
+Repo.update!(Campaign.changeset(campaign, %{active_map_id: map.id}))
 
 # 10x10 map — grass floor with stone border and a few interior walls
 stone_positions =
@@ -178,7 +180,7 @@ tiles =
       texture: texture,
       walkable: texture == "grass",
       decoration: decoration,
-      campaign_id: campaign.id
+      map_id: map.id
     }
   end
 

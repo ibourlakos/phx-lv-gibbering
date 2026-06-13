@@ -9,12 +9,12 @@ defmodule Gibbering.GridTile do
     field :walkable, :boolean, default: true
     field :decoration, :string
 
-    belongs_to :campaign, Gibbering.Campaign
+    belongs_to :map, Gibbering.GameMap
   end
 
   def changeset(tile, attrs) do
     tile
-    |> cast(attrs, [:x, :y, :texture, :walkable, :decoration, :campaign_id])
-    |> validate_required([:x, :y, :texture, :walkable, :campaign_id])
+    |> cast(attrs, [:x, :y, :texture, :walkable, :decoration, :map_id])
+    |> validate_required([:x, :y, :texture, :walkable, :map_id])
   end
 end

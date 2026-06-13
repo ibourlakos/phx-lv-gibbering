@@ -81,8 +81,8 @@ defmodule Gibbering.Engine.StateTest do
   describe "from_campaign/1" do
     test "builds state from campaign struct" do
       tiles = [
-        %Gibbering.GridTile{x: 0, y: 0, texture: "grass", walkable: true, campaign_id: 1},
-        %Gibbering.GridTile{x: 1, y: 0, texture: "stone", walkable: false, campaign_id: 1}
+        %Gibbering.GridTile{x: 0, y: 0, texture: "grass", walkable: true, map_id: 1},
+        %Gibbering.GridTile{x: 1, y: 0, texture: "stone", walkable: false, map_id: 1}
       ]
 
       entities = [
@@ -104,17 +104,21 @@ defmodule Gibbering.Engine.StateTest do
       campaign = %Gibbering.Campaign{
         id: 1,
         name: "Test",
-        map_width: 2,
-        map_height: 1,
-        tile_size: 32,
-        tiles: tiles,
+        active_map: %Gibbering.GameMap{
+          id: 1,
+          x_extent: 2,
+          y_extent: 1,
+          tile_size: 32,
+          tiles: tiles
+        },
         entities: entities
       }
 
       state = State.from_campaign(campaign)
 
-      assert state.map_width == 2
-      assert state.map_height == 1
+      assert state.map_id == 1
+      assert state.x_extent == 2
+      assert state.y_extent == 1
       assert state.grid_tiles[{0, 0}] == %{texture: "grass", walkable: true, decoration: nil}
       assert state.grid_tiles[{1, 0}] == %{texture: "stone", walkable: false, decoration: nil}
       assert state.entities[10].name == "Warrior"
@@ -155,10 +159,7 @@ defmodule Gibbering.Engine.StateTest do
       campaign = %Gibbering.Campaign{
         id: 1,
         name: "T",
-        map_width: 2,
-        map_height: 1,
-        tile_size: 32,
-        tiles: [],
+        active_map: %Gibbering.GameMap{id: 1, x_extent: 2, y_extent: 1, tile_size: 32, tiles: []},
         entities: entities
       }
 
@@ -190,10 +191,7 @@ defmodule Gibbering.Engine.StateTest do
       campaign = %Gibbering.Campaign{
         id: 1,
         name: "T",
-        map_width: 1,
-        map_height: 1,
-        tile_size: 32,
-        tiles: [],
+        active_map: %Gibbering.GameMap{id: 1, x_extent: 1, y_extent: 1, tile_size: 32, tiles: []},
         entities: entities
       }
 
@@ -234,10 +232,7 @@ defmodule Gibbering.Engine.StateTest do
       campaign = %Gibbering.Campaign{
         id: 1,
         name: "T",
-        map_width: 1,
-        map_height: 1,
-        tile_size: 32,
-        tiles: [],
+        active_map: %Gibbering.GameMap{id: 1, x_extent: 1, y_extent: 1, tile_size: 32, tiles: []},
         entities: entities
       }
 

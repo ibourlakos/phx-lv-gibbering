@@ -6,13 +6,11 @@ defmodule Gibbering.Campaign do
 
   schema "campaigns" do
     field :name, :string
-    field :map_width, :integer, default: 10
-    field :map_height, :integer, default: 10
-    field :tile_size, :integer, default: 32
     field :status, :string, default: "lobby"
 
     belongs_to :dm, Gibbering.Accounts.User
-    has_many :tiles, Gibbering.GridTile
+    belongs_to :active_map, Gibbering.GameMap
+    has_many :maps, Gibbering.GameMap
     has_many :entities, Gibbering.Entity
     has_many :campaign_members, Gibbering.CampaignMember
 
@@ -21,8 +19,8 @@ defmodule Gibbering.Campaign do
 
   def changeset(campaign, attrs) do
     campaign
-    |> cast(attrs, [:name, :map_width, :map_height, :tile_size, :status, :dm_id])
-    |> validate_required([:name, :map_width, :map_height, :tile_size])
+    |> cast(attrs, [:name, :status, :dm_id, :active_map_id])
+    |> validate_required([:name])
     |> validate_inclusion(:status, @valid_statuses)
   end
 end

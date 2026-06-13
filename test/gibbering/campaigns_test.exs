@@ -9,9 +9,6 @@ defmodule Gibbering.CampaignsTest do
     {:ok, campaign} =
       Repo.insert(%Campaign{
         name: Map.get(attrs, :name, "Campaign #{System.unique_integer([:positive])}"),
-        map_width: 5,
-        map_height: 5,
-        tile_size: 32,
         dm_id: dm.id
       })
 

@@ -19,7 +19,8 @@
             <div>
               <div class="font-bold text-white text-lg">{campaign.name}</div>
               <div class="text-sm text-gray-400 mt-0.5">
-                {campaign.map_width}×{campaign.map_height} map · ID {campaign.id}
+                {campaign.active_map &&
+                  "#{campaign.active_map.x_extent}×#{campaign.active_map.y_extent} map ·"} ID {campaign.id}
               </div>
             </div>
             <div class="flex gap-3">

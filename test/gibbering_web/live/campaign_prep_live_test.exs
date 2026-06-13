@@ -17,10 +17,7 @@ defmodule GibberingWeb.CampaignPrepLiveTest do
 
     {:ok, campaign} =
       Repo.insert(%Campaign{
-        name: "Prep Test Campaign",
-        map_width: 5,
-        map_height: 5,
-        tile_size: 32
+        name: "Prep Test Campaign"
       })
 
     {:ok, _} = Campaigns.set_dm(campaign, dm.id)

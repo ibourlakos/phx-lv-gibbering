@@ -172,7 +172,7 @@ defmodule Gibbering.Engine.SceneServer do
           campaign =
             Campaign
             |> Repo.get!(game_id)
-            |> Repo.preload([:tiles, :entities])
+            |> Repo.preload([:entities, active_map: :tiles])
 
           State.from_campaign(campaign)
       end

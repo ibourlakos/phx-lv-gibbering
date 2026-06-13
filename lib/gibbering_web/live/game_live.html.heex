@@ -1,6 +1,6 @@
 <% state = @game_state
-map_h = state.map_height
-map_w = state.map_width
+map_h = state.y_extent
+map_w = state.x_extent
 active_id = Gibbering.Engine.State.active_hero_id(state)
 active_entity = active_id && state.entities[active_id]
 

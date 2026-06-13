@@ -143,7 +143,7 @@ defmodule Gibbering.Admin do
   @doc "Returns campaign with dm and campaign_members (with user) preloaded, or nil."
   def get_campaign_with_members(id) do
     Campaign
-    |> preload([:dm, campaign_members: :user])
+    |> preload([:dm, :active_map, campaign_members: :user])
     |> Repo.get(id)
   end
 

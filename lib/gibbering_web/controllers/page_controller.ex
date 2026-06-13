@@ -5,7 +5,11 @@ defmodule GibberingWeb.PageController do
   import Ecto.Query, only: [order_by: 2]
 
   def home(conn, _params) do
-    all_campaigns = Repo.all(order_by(Campaign, asc: :id))
+    all_campaigns =
+      Campaign
+      |> order_by(asc: :id)
+      |> Repo.all()
+      |> Repo.preload(:active_map)
 
     member_ids =
       case conn.assigns[:current_user] do

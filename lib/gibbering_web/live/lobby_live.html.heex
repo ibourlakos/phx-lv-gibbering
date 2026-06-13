@@ -12,7 +12,7 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id en
         <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Campaign</div>
         <h1 class="text-3xl font-bold text-yellow-400">{campaign.name}</h1>
         <p class="text-gray-400 text-sm mt-1">
-          {length(heroes)} adventurer{if length(heroes) != 1, do: "s"} · {campaign.map_width}×{campaign.map_height} map
+          {length(heroes)} adventurer{if length(heroes) != 1, do: "s"} · {campaign.active_map.x_extent}×{campaign.active_map.y_extent} map
         </p>
       </div>
 

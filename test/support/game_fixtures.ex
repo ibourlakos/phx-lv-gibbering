@@ -11,7 +11,7 @@ defmodule Gibbering.GameFixtures do
 
   alias Gibbering.Engine.State
   alias Gibbering.Rulesets.{DnD5e, DnD5e.Stats}
-  alias Gibbering.{Repo, Campaign, GridTile, Entity}
+  alias Gibbering.{Repo, Campaign, GameMap, GridTile, Entity}
 
   # ---------------------------------------------------------------------------
   # In-memory state builders
@@ -33,8 +33,8 @@ defmodule Gibbering.GameFixtures do
     build_state(entities: %{...}, grid_tiles: %{...})
   """
   def build_state(opts \\ []) do
-    width = Keyword.get(opts, :map_width, 5)
-    height = Keyword.get(opts, :map_height, 5)
+    width = Keyword.get(opts, :x_extent, 5)
+    height = Keyword.get(opts, :y_extent, 5)
 
     tiles =
       for x <- 0..(width - 1), y <- 0..(height - 1), into: %{} do
@@ -113,8 +113,9 @@ defmodule Gibbering.GameFixtures do
 
     base = %State{
       campaign_id: 0,
-      map_width: width,
-      map_height: height,
+      map_id: 0,
+      x_extent: width,
+      y_extent: height,
       tile_size: 32,
       grid_tiles: tiles,
       entities: entities,
@@ -125,8 +126,8 @@ defmodule Gibbering.GameFixtures do
     }
 
     Enum.reduce(opts, base, fn
-      {:map_width, _}, s -> s
-      {:map_height, _}, s -> s
+      {:x_extent, _}, s -> s
+      {:y_extent, _}, s -> s
       {key, val}, s -> Map.put(s, key, val)
     end)
   end
@@ -175,22 +176,25 @@ defmodule Gibbering.GameFixtures do
   """
   def insert_campaign(attrs \\ %{}) do
     name = Map.get(attrs, :name, "Test Campaign #{System.unique_integer([:positive])}")
-    width = Map.get(attrs, :map_width, 5)
-    height = Map.get(attrs, :map_height, 5)
+    width = Map.get(attrs, :x_extent, 5)
+    height = Map.get(attrs, :y_extent, 5)
     dm_id = Map.get(attrs, :dm_id, nil)
 
-    {:ok, campaign} =
-      Repo.insert(%Campaign{
-        name: name,
-        map_width: width,
-        map_height: height,
-        tile_size: 32,
-        dm_id: dm_id
+    {:ok, campaign} = Repo.insert(%Campaign{name: name, dm_id: dm_id})
+
+    map =
+      Repo.insert!(%GameMap{
+        campaign_id: campaign.id,
+        x_extent: width,
+        y_extent: height,
+        tile_size: 32
       })
+
+    Repo.update!(Campaign.changeset(campaign, %{active_map_id: map.id}))
 
     tile_rows =
       for x <- 0..(width - 1), y <- 0..(height - 1) do
-        %{x: x, y: y, texture: "grass", walkable: true, campaign_id: campaign.id}
+        %{x: x, y: y, texture: "grass", walkable: true, map_id: map.id}
       end
 
     Repo.insert_all(GridTile, tile_rows)
