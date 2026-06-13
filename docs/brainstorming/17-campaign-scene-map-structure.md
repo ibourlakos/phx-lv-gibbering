@@ -176,6 +176,10 @@ The DM campaign authoring surface (map editor, scene composition, entity placeme
 
 **Scope boundary:** do not add authoring tool open questions here. BS-17 settles the data model structure; the authoring tool is downstream and belongs in #85's future brainstorm.
 
+**Additions to #85's editor component list** (noted here for carry-over, not settled here):
+
+- **Appearance editor** — per-element visual customisation: SVG shape parameters, colour palette, size variants for tile textures, decorative elements, and structures. Operates on the environment content catalogue entries. Uses live SVG preview rendering (already listed in #85 as a shared surface component). This is a sub-application of the content creation tools, not a standalone app.
+
 ---
 
 ## Issues to Open
