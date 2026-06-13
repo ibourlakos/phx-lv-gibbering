@@ -178,7 +178,7 @@ tiles =
       x: x,
       y: y,
       texture: texture,
-      walkable: texture == "grass",
+      movement: if(texture == "grass", do: %{"walk" => 100, "fly" => 100}, else: %{}),
       decoration: decoration,
       map_id: map.id
     }

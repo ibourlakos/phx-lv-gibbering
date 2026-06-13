@@ -42,8 +42,8 @@ defmodule Gibbering.Engine.RulesTest do
       assert {6, 6} in moves
     end
 
-    test "excludes unwalkable tiles" do
-      state = build_state() |> with_tile({2, 1}, walkable: false)
+    test "excludes tiles with no walk permission" do
+      state = build_state() |> with_tile({2, 1}, movement: %{})
       moves = Rules.valid_moves(state, hero_id())
       refute {2, 1} in moves
     end
@@ -273,7 +273,7 @@ defmodule Gibbering.Engine.RulesTest do
       monster_pos = {state.entities[monster_id()].x, state.entities[monster_id()].y}
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
       assert new_state.grid_tiles[monster_pos].texture == "rubble"
-      assert new_state.grid_tiles[monster_pos].walkable == true
+      assert new_state.grid_tiles[monster_pos].movement["walk"] == 100
     end
 
     test "does not turn tile to rubble for non-destructible entity" do

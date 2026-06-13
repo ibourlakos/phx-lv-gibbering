@@ -19,7 +19,7 @@ defmodule Gibbering.Engine.State do
     :x_extent,
     :y_extent,
     :tile_size,
-    # %{{x, y} => %{texture: string, walkable: bool}}
+    # %{{x, y} => %{texture: string, movement: map, decoration: string | nil}}
     :grid_tiles,
     # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
     :entities,
@@ -56,7 +56,7 @@ defmodule Gibbering.Engine.State do
     tiles =
       map.tiles
       |> Map.new(fn t ->
-        {{t.x, t.y}, %{texture: t.texture, walkable: t.walkable, decoration: t.decoration}}
+        {{t.x, t.y}, %{texture: t.texture, movement: t.movement, decoration: t.decoration}}
       end)
 
     entities =

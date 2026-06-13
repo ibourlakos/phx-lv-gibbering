@@ -6,7 +6,7 @@ defmodule Gibbering.GridTile do
     field :x, :integer
     field :y, :integer
     field :texture, :string, default: "grass"
-    field :walkable, :boolean, default: true
+    field :movement, :map, default: %{}
     field :decoration, :string
 
     belongs_to :map, Gibbering.GameMap
@@ -14,7 +14,7 @@ defmodule Gibbering.GridTile do
 
   def changeset(tile, attrs) do
     tile
-    |> cast(attrs, [:x, :y, :texture, :walkable, :decoration, :map_id])
-    |> validate_required([:x, :y, :texture, :walkable, :map_id])
+    |> cast(attrs, [:x, :y, :texture, :movement, :decoration, :map_id])
+    |> validate_required([:x, :y, :texture, :map_id])
   end
 end

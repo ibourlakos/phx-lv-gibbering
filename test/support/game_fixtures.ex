@@ -38,7 +38,7 @@ defmodule Gibbering.GameFixtures do
 
     tiles =
       for x <- 0..(width - 1), y <- 0..(height - 1), into: %{} do
-        {{x, y}, %{texture: "grass", walkable: true, decoration: nil}}
+        {{x, y}, %{texture: "grass", movement: %{"walk" => 100, "fly" => 100}, decoration: nil}}
       end
 
     hero_base = %{
@@ -159,7 +159,13 @@ defmodule Gibbering.GameFixtures do
       state = with_tile(state, {2, 1}, walkable: false, texture: "stone")
   """
   def with_tile(state, pos, attrs) do
-    existing = Map.get(state.grid_tiles, pos, %{texture: "grass", walkable: true})
+    existing =
+      Map.get(state.grid_tiles, pos, %{
+        texture: "grass",
+        movement: %{"walk" => 100, "fly" => 100},
+        decoration: nil
+      })
+
     tile = Map.merge(existing, Map.new(attrs))
     %{state | grid_tiles: Map.put(state.grid_tiles, pos, tile)}
   end
@@ -194,7 +200,7 @@ defmodule Gibbering.GameFixtures do
 
     tile_rows =
       for x <- 0..(width - 1), y <- 0..(height - 1) do
-        %{x: x, y: y, texture: "grass", walkable: true, map_id: map.id}
+        %{x: x, y: y, texture: "grass", movement: %{"walk" => 100, "fly" => 100}, map_id: map.id}
       end
 
     Repo.insert_all(GridTile, tile_rows)

@@ -5,6 +5,42 @@ defmodule Gibbering.Engine.Rules do
   alias Gibbering.Rulesets.DnD5e.Stats
   alias Gibbering.Data.{Classes, Spells}
 
+  @doc """
+  Returns the effective movement permission (0–100) for `mode` at `{x, y}`.
+
+  Permission is the minimum of `tile.movement[mode]` and each entity at that
+  coordinate's `stats["movement"][mode]`. An entity with no `stats["movement"]`
+  key does not constrain movement. Absent mode key anywhere = 0 (blocked).
+  """
+  def tile_movement_permission(%State{} = state, x, y, mode) do
+    case Map.get(state.grid_tiles, {x, y}) do
+      nil ->
+        0
+
+      tile ->
+        tile_val = Map.get(tile.movement || %{}, mode, 0)
+
+        if tile_val == 0 do
+          0
+        else
+          entities_at =
+            Enum.filter(state.entities, fn {_, e} -> e.x == x and e.y == y end)
+
+          entity_min =
+            entities_at
+            |> Enum.map(fn {_, e} ->
+              case get_in(e, [:stats, "movement"]) do
+                nil -> 100
+                movement_map -> Map.get(movement_map, mode, 0)
+              end
+            end)
+            |> Enum.min(fn -> 100 end)
+
+          min(tile_val, entity_min)
+        end
+    end
+  end
+
   @doc "Returns [{x,y}] the entity can move to this turn based on remaining movement."
   def valid_moves(%State{} = state, entity_id) do
     entity = state.entities[entity_id]
@@ -17,7 +53,7 @@ defmodule Gibbering.Engine.Rules do
         {x, y} != {entity.x, entity.y},
         in_bounds?(x, y, state),
         chebyshev(entity.x, entity.y, x, y) <= max_tiles,
-        walkable?(state, x, y),
+        tile_movement_permission(state, x, y, "walk") > 0,
         not occupied_by_hero?(state, x, y),
         do: {x, y}
   end
@@ -344,7 +380,10 @@ defmodule Gibbering.Engine.Rules do
 
     new_tiles =
       if "destructible" in entity.tags do
-        Map.put(state.grid_tiles, {entity.x, entity.y}, %{texture: "rubble", walkable: true})
+        Map.put(state.grid_tiles, {entity.x, entity.y}, %{
+          texture: "rubble",
+          movement: %{"walk" => 100, "fly" => 100}
+        })
       else
         state.grid_tiles
       end
@@ -358,13 +397,6 @@ defmodule Gibbering.Engine.Rules do
 
   defp in_bounds?(x, y, state),
     do: x >= 0 and x < state.x_extent and y >= 0 and y < state.y_extent
-
-  defp walkable?(state, x, y) do
-    case Map.get(state.grid_tiles, {x, y}) do
-      nil -> false
-      tile -> tile.walkable
-    end
-  end
 
   defp occupied_by_hero?(state, x, y) do
     Enum.any?(state.entities, fn {_, e} -> e.type == "hero" and e.x == x and e.y == y end)

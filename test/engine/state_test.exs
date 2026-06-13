@@ -81,8 +81,14 @@ defmodule Gibbering.Engine.StateTest do
   describe "from_campaign/1" do
     test "builds state from campaign struct" do
       tiles = [
-        %Gibbering.GridTile{x: 0, y: 0, texture: "grass", walkable: true, map_id: 1},
-        %Gibbering.GridTile{x: 1, y: 0, texture: "stone", walkable: false, map_id: 1}
+        %Gibbering.GridTile{
+          x: 0,
+          y: 0,
+          texture: "grass",
+          movement: %{"walk" => 100, "fly" => 100},
+          map_id: 1
+        },
+        %Gibbering.GridTile{x: 1, y: 0, texture: "stone", movement: %{}, map_id: 1}
       ]
 
       entities = [
@@ -119,8 +125,14 @@ defmodule Gibbering.Engine.StateTest do
       assert state.map_id == 1
       assert state.x_extent == 2
       assert state.y_extent == 1
-      assert state.grid_tiles[{0, 0}] == %{texture: "grass", walkable: true, decoration: nil}
-      assert state.grid_tiles[{1, 0}] == %{texture: "stone", walkable: false, decoration: nil}
+
+      assert state.grid_tiles[{0, 0}] == %{
+               texture: "grass",
+               movement: %{"walk" => 100, "fly" => 100},
+               decoration: nil
+             }
+
+      assert state.grid_tiles[{1, 0}] == %{texture: "stone", movement: %{}, decoration: nil}
       assert state.entities[10].name == "Warrior"
       assert state.turn_order == [10]
       assert state.active_index == 0
