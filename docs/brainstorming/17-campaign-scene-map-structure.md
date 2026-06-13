@@ -233,6 +233,8 @@ _Ideas surfaced during exploration that don't belong in BS-17's settlement. Carr
 
 - **Campaign-scoped entity overrides** — e.g. the "friendly tiger" — a DM sets a disposition override for a specific entity in a specific campaign, independent of the entity's base state. Connects to deferred issue #32 (DM override event schema). Needs a data model slot (campaign-scoped modifier set or stats override table).
 
+- **Issues #37 and #38 need updating for multi-mode movement** — both were written when `walkable: boolean` was the model. #37 (entity map extensions) plans `action_economy.movement_remaining` as a single integer; it needs to accommodate per-mode movement or a mode-aware cost deduction. #38 (`DnD5e.Stats`) needs to compute from `climb_speed`, `swim_speed`, `fly_speed` entity stats. Revisit both when BS-17 triages.
+
 ---
 
 ## Issues to Open
