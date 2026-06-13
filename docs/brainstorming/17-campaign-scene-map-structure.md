@@ -17,14 +17,72 @@ A real D&D campaign runs multiple encounters across multiple maps (dungeon room,
 
 ---
 
+## Conceptual framing
+
+### Narrative model (from *Formalization and Visualization of the Narrative for Museum Guides*, Bourlakos et al. 2017)
+
+The paper proposes a three-level hierarchy with a clean separation of concerns that maps well onto a D&D campaign:
+
+| Paper concept | D&D analogue |
+|---|---|
+| **Narrative** | Campaign (goals, constraints, DM, player roster) |
+| **Segment** | Scene / Encounter (atomic unit of play) |
+| **Exhibit** (location) | Map (the spatial substrate a scene takes place on) |
+| **Movement segment** | Transition (travel between maps, no encounter content) |
+
+The critical insight: a **map is an attribute of a scene**, not its parent container. Multiple scenes can reference the same map (e.g. the same dungeon room revisited later in the campaign). A campaign does not "contain" maps — it contains scenes, and scenes reference maps. This inverts the current schema's containment (`campaigns → grid_tiles`) and points toward a `scenes` table with a `map_id` FK.
+
+### Community TTRPG hierarchy
+
+The TTRPG community converges on three levels across multiple sources (D&D Beyond, The Angry GM, Campaign Mastery):
+
+| Level | Theatrical analogue | Scope |
+|---|---|---|
+| **Encounter** | Scene | Single location, single conflict, < 1 session |
+| **Adventure** | Act / episode | Sequence of encounters, shared story arc |
+| **Campaign** | Series / franchise | Full arc, multiple adventures |
+
+The Angry GM's framing: acts aren't containers — they're the *spaces between plot points* (turning points). Scenes are where plot points occur. This means scene sequencing (what unlocks what) is a runtime/narrative concern, not a schema hierarchy concern.
+
+### Scene content layer
+
+A scene is not just a map reference — it carries a **content layer** that populates the map for that specific encounter. Content elements fall into two orthogonal axes:
+
+**By kind:**
+- **Environmental conditions** — scene-level effects that apply to the whole map (silence, fire, darkness, difficult terrain zone)
+- **Items** — physical objects placed on the map
+- **Creatures** — monsters and NPCs
+- **Player characters** — heroes present in this scene
+
+**By interactability:**
+- **Decorative** — purely visual; no gameplay consequence (a wall torch, a crumbled pillar, bones on the floor)
+- **Interactable** — has gameplay consequence when a player acts on it (loot container, lever, trap, NPC, monster)
+
+This axis is orthogonal to kind: a creature can be decorative (ambient villager) or interactable (quest-giver, combatant). An item can be decorative (scattered coins as flavor) or interactable (a chest with loot).
+
+Current data model conflates these: the `entities` table holds both interactable objects and monsters and heroes, using `type` and `tags` to distinguish them. Tile `decoration` (issue #125) is purely decorative but lives on the tile, not in a content layer. There is no concept of environmental conditions as a scene-level property.
+
+---
+
 ## Open Questions
 
+**Campaign / map / scene structure:**
+
 - **Q1** — Does a campaign hold multiple maps? If yes, are maps sequential (one active at a time) or can multiple be simultaneously running (parallel encounters)?
-- **Q2** — What is a "scene" vs. a "map"? Is a scene an instance of running a map (ephemeral, in-memory only), or is it a persistent concept?
-- **Q3** — If a maps layer is introduced, what moves to a `maps` table and what stays on `campaigns`? (`map_width`, `map_height`, `tile_size`, `grid_tiles`, `entities` — all candidates)
-- **Q4** — Does `SceneServer` become one server per map, or one server per campaign holding multiple map states?
-- **Q5** — Which in-flight issues (#121–#128, #125) are blocked by this restructure, and which survive it unchanged? (Tile `decoration` field, for example, lives on the tile row — it may not care which table owns the FK.)
-- **Q6** — Is this restructure in scope for the current project stage, or should we defer multi-map support and explicitly document the single-map limitation as an intentional constraint?
+- **Q2** — Is a scene a persistent DB concept (authored ahead of time, reusable across campaigns) or ephemeral (runtime only, born when the DM activates a map)?
+- **Q3** — If a `maps` and/or `scenes` layer is introduced, what moves out of `campaigns`? (`map_width`, `map_height`, `tile_size`, `grid_tiles`, `entities` — all candidates)
+- **Q4** — Does `SceneServer` become one server per scene, or one server per campaign holding one active scene at a time?
+
+**Scene content layer:**
+
+- **Q5** — Should environmental conditions (silence, fire, darkness) be a property of the scene record, or modelled as `ActiveEffect` entries in `Engine.State` (the existing planned field)?
+- **Q6** — Is the decorative/interactable distinction a flag on the entity (`interactable: boolean`), or should purely decorative elements be tile-layer data (like the existing `decoration` field on `GridTile`) and interactable elements always be entities?
+- **Q7** — How does the content layer relate to map authoring? Is content authored per-scene (a scene template with a monster set and item placement), or per-campaign-session (the DM places content live at the table)?
+
+**Scope:**
+
+- **Q8** — Which in-flight issues (#121–#128, #125) are blocked by this restructure, and which survive it unchanged?
+- **Q9** — Is introducing a full `maps`/`scenes` layer in scope now, or do we document the single-map constraint, defer, and proceed with in-flight work?
 
 ---
 
