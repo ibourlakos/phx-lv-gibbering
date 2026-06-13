@@ -145,6 +145,16 @@ Trade-offs:
 
 ---
 
+## Relationship to #85 — Content Creation Tools
+
+The DM campaign authoring surface (map editor, scene composition, entity placement, campaign sequencing, DM overrides) is part of the broader **content creation tools** scope already captured in issue [#85](../issues/085-content-creation-tools-design.md). That issue lists "Map module editor (tiles, room layouts, decoration placement)" explicitly under the shared editor surface.
+
+**#85 is currently deferred.** Its unpark condition was "admin app foundation stable" — that condition is now met (WP-E closed #64–#69). However, the structural decisions in *this* brainstorm (what a map is, what a scene is, how content layers are modelled) are a **prerequisite** for the map module editor. #85's brainstorm cannot be productively opened until BS-17 is settled.
+
+**Scope boundary:** do not add authoring tool open questions here. BS-17 settles the data model structure; the authoring tool is downstream and belongs in #85's future brainstorm.
+
+---
+
 ## Issues to Open
 
 *(populated after settlement)*
