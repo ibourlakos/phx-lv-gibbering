@@ -34,7 +34,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` | low |
-| [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#126](126-inventory-and-container-data-model.md) | Inventory and container data model | `architecture` `gameplay` | low |
 | [#127](127-item-pickup-event-loop.md) | Item pickup event loop | `gameplay` `architecture` `ui` | low |
 | [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration | `rules` `architecture` | low |
