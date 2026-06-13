@@ -235,8 +235,67 @@ _Ideas surfaced during exploration that don't belong in BS-17's settlement. Carr
 
 - **Issues #37 and #38 need updating for multi-mode movement** — both were written when `walkable: boolean` was the model. #37 (entity map extensions) plans `action_economy.movement_remaining` as a single integer; it needs to accommodate per-mode movement or a mode-aware cost deduction. #38 (`DnD5e.Stats`) needs to compute from `climb_speed`, `swim_speed`, `fly_speed` entity stats. Revisit both when BS-17 triages.
 
+- **Trap mechanism model** — a trap entity has three distinct concerns: sensor (trigger zone + condition: on_enter, on_interact, on_weight), mechanism (effect payload), and target(s) (`linked_entities` — may be remote, e.g. closing a door elsewhere on the map). Armed/visible state on the entity. Tile is unchanged by trap presence. A triggered trap that reveals a hole replaces itself with a pit object entity rather than mutating the tile. Design of the mechanism payload and `linked_entities` schema belongs in the #85 authoring tool brainstorm.
+
+- **Traversable holes and vertical transitions** — a pit, trapdoor, rope bridge, or ladder is a door-like object entity whose `stats["movement"]` defines how it is traversable (climb, walk, fly) and whose mechanism payload can dispatch a `:scene_transition` event to a destination map coordinate. This is the natural vertical analogue of a door and previews the multi-map transition model from Q1.
+
+---
+
+## Decisions
+
+| Q | Decision | Deferred? |
+|---|---|---|
+| **Q1** | Sequential multi-map campaigns; one active map per campaign at a time. Parallel encounters (split party) left as a future extension — handled narratively in D&D as separate turns, not requiring simultaneous server instances now. | No |
+| **Q2** | Scene is a persistent DB concept (scene template). A template is reusable across campaigns; campaign-specific PC actors are not part of the template. Runtime instance is `Engine.State` only. Schema: `scene_templates` (map_id, placements JSONB, starting_conditions JSONB, owner_user_id, visibility) + `campaign_scenes` (campaign_id, scene_template_id, sequence_order, overrides JSONB). | Phase 2 |
+| **Q3** | `x_extent` / `y_extent` (world-axis coordinates, rotation-proof). `z_extent` reserved for future vertical axis. These fields, plus `tile_size`, move from `campaigns` to a new `maps` table. `map_width` / `map_height` / `map_depth` are rejected as viewer-relative. | No |
+| **Q4** | `SceneServer` keyed by `campaign_id`, holding one active map at a time (Option C). Switching maps = loading new map into the same server. Players do not reconnect on map switch. | No |
+| **Q5** | Environmental conditions are `active_effects` entries in `Engine.State` with spatial extent — not a column on the scene record. Scene template's `starting_conditions` JSONB seeds them at scene start. | No |
+| **Q6** | Purely cosmetic single-tile elements → tile decoration field. Anything with state, lifecycle, or event participation → entity. Strata table (8 layers) confirmed as the complete enumeration. Structures and objects carry `stats["movement"]` JSONB — these overlay the tile's movement at runtime; the tile itself does not change. The tile/entity separation rule: if it has state, lifecycle, or event participation → entity; if it is the ground itself → tile. | No |
+| **Q7** | Content is authored offline as a scene template (persistent DB). Runtime mutations (DM places a crate mid-session) are stored under the campaign run as overrides, not baked into the template. | No |
+| **Q8** | All WP-F/K/L/M in-flight issues (#121–#128, #125) survive the restructure unchanged. Phase 1 (maps table migration) is a prerequisite only for new scene/map features, not for any currently active work package. | No |
+| **Q9** | Phase 1 now: `maps` table + `x_extent`/`y_extent` + `grid_tiles` FK change + `GridTile.movement` JSONB replacing `walkable: boolean`. Phase 2 deferred until after #85: `scenes`/`scene_templates` tables, scene-scoped entities, `starting_conditions`. | Phase 2 deferred |
+
+**Movement model supplement (settled during this session):**
+
+- `valid_moves` merges movement at two layers: `effective_permission(x,y,mode) = min(tile.movement[mode], min(entity.stats["movement"][mode] for each entity at (x,y)))`. Absent key = blocked. Applies uniformly to structures, objects, traps — any entity that physically occupies a tile.
+- Traps: all trap-specific attributes (armed, visible, trigger_condition, mechanism, linked_entities) live on the entity. The tile underneath is unchanged. A trap that reveals a hole on trigger replaces itself with a "pit" object entity rather than mutating the tile's terrain.
+- Traversable holes, trapdoors, rope bridges: modelled as door-like object entities with `stats["movement"]` defining traversal modes. Their mechanism payload can dispatch a `:scene_transition` event (future multi-map use).
+
 ---
 
 ## Issues to Open
 
-*(populated after settlement)*
+Three issues extracted from Phase 1 decisions. Phase 2 issues (scenes/scene_templates tables) are deferred until #85 brainstorm.
+
+### [#129](../issues/129-maps-table-phase-1-migration.md) — Phase 1: introduce `maps` table
+**Tags:** architecture, ops  
+**Priority:** medium
+
+- New `maps` table: `id`, `campaign_id` FK, `x_extent` integer, `y_extent` integer, `tile_size` integer, timestamps
+- Migrate geometry columns out of `campaigns` (`map_width`, `map_height`, `tile_size` → `maps`)
+- Change `grid_tiles.campaign_id` FK → `grid_tiles.map_id`
+- Add `active_map_id` FK on `campaigns` (the currently loaded map)
+- Update `Engine.State` to carry `map_id`
+- Update `SceneServer` to load/switch maps via `map_id`
+- Update seeds, fixtures, and data model doc
+
+### [#130](../issues/130-grid-tile-movement-jsonb.md) — Phase 1: `GridTile.movement` JSONB (replaces `walkable: boolean`)
+**Tags:** architecture, gameplay  
+**Priority:** medium  
+**Depends on:** #129 (shares migration batch or follow-on)
+
+- Migration: add `movement` JSONB column to `grid_tiles`, drop `walkable` boolean, backfill defaults (`%{"walk" => "normal", "fly" => "normal"}` for previously walkable tiles; `%{}` for previously non-walkable)
+- Update `%GridTile{}` struct and `Engine.State` tile map shape
+- Update seeds with explicit movement maps per terrain type
+- Update `valid_moves` computation: merge tile movement + all entity `stats["movement"]` at coordinate, per mode
+- Entity `stats["movement"]` absent key = blocked; no tile mutation when an entity is placed or removed
+
+### [#131](../issues/131-entity-movement-stats-and-valid-moves.md) — Entity movement stats + `valid_moves` multi-mode deduction
+**Tags:** gameplay, rules  
+**Priority:** medium  
+**Depends on:** #130
+
+- Add `climb_speed`, `swim_speed`, `fly_speed` to entity stats JSONB (integer | nil) in seeds and fixtures
+- Update `DnD5e.Stats` (#38) to derive from all four speed keys
+- Update `action_economy.movement_remaining` (#37) to support mode-aware cost deduction (difficult = ×2 cost)
+- `RuleModifier` entries that grant or remove movement modes (Fly spell, Restrained, Spider Climb) must target the correct stats keys
