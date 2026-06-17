@@ -56,6 +56,9 @@ defmodule Gibbering.GameFixtures do
       tags: [],
       stats: %{
         "speed" => 30,
+        "climb_speed" => nil,
+        "swim_speed" => nil,
+        "fly_speed" => nil,
         "strength" => 16,
         "dexterity" => 12,
         "constitution" => 14,
@@ -88,6 +91,9 @@ defmodule Gibbering.GameFixtures do
       tags: [],
       stats: %{
         "speed" => 30,
+        "climb_speed" => nil,
+        "swim_speed" => nil,
+        "fly_speed" => nil,
         "strength" => 8,
         "dexterity" => 14,
         "constitution" => 10,

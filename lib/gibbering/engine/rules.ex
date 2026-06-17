@@ -6,6 +6,16 @@ defmodule Gibbering.Engine.Rules do
   alias Gibbering.Data.{Classes, Spells}
 
   @doc """
+  Returns the foot cost to move one tile with the given movement permission (0–100).
+
+  permission 100 = 5 ft (normal terrain); permission 50 = 10 ft (difficult terrain ×2).
+  `tile_size` defaults to 5 ft per tile.
+  """
+  def movement_cost_ft(permission, tile_size \\ 5) when permission > 0 do
+    ceil(tile_size * 100 / permission)
+  end
+
+  @doc """
   Returns the effective movement permission (0–100) for `mode` at `{x, y}`.
 
   Permission is the minimum of `tile.movement[mode]` and each entity at that
@@ -41,21 +51,40 @@ defmodule Gibbering.Engine.Rules do
     end
   end
 
-  @doc "Returns [{x,y}] the entity can move to this turn based on remaining movement."
-  def valid_moves(%State{} = state, entity_id) do
-    entity = state.entities[entity_id]
-    movement_remaining = get_in(entity, [:action_economy, :movement_remaining])
-    speed_ft = movement_remaining || Map.get(entity.stats || %{}, "speed", 30)
-    max_tiles = div(speed_ft, 5)
+  @doc """
+  Returns [{x,y}] the entity can reach this turn using `mode` ("walk", "climb", "swim", "fly").
 
-    for x <- (entity.x - max_tiles)..(entity.x + max_tiles),
-        y <- (entity.y - max_tiles)..(entity.y + max_tiles),
-        {x, y} != {entity.x, entity.y},
-        in_bounds?(x, y, state),
-        chebyshev(entity.x, entity.y, x, y) <= max_tiles,
-        tile_movement_permission(state, x, y, "walk") > 0,
-        not occupied_by_hero?(state, x, y),
-        do: {x, y}
+  Walk mode uses `movement_remaining` from action economy (falls back to `stats["speed"]`).
+  Non-walk modes use the entity's mode-specific speed from stats; returns `[]` if the entity
+  has no speed for that mode (nil or 0).
+  """
+  def valid_moves(%State{} = state, entity_id, mode \\ "walk") do
+    entity = state.entities[entity_id]
+
+    speed_ft =
+      case mode do
+        "walk" ->
+          get_in(entity, [:action_economy, :movement_remaining]) ||
+            Stats.speed_for_mode(entity, "walk")
+
+        other ->
+          Stats.speed_for_mode(entity, other)
+      end
+
+    if is_nil(speed_ft) or speed_ft == 0 do
+      []
+    else
+      max_tiles = div(speed_ft, 5)
+
+      for x <- (entity.x - max_tiles)..(entity.x + max_tiles),
+          y <- (entity.y - max_tiles)..(entity.y + max_tiles),
+          {x, y} != {entity.x, entity.y},
+          in_bounds?(x, y, state),
+          chebyshev(entity.x, entity.y, x, y) <= max_tiles,
+          tile_movement_permission(state, x, y, mode) > 0,
+          not occupied_by_hero?(state, x, y),
+          do: {x, y}
+    end
   end
 
   @doc """

@@ -28,7 +28,7 @@ defmodule Gibbering.Rulesets.DnD5e.Condition do
           modifiers: [RuleModifier.t()]
         }
 
-  @doc "Returns all 14 condition definitions keyed by id."
+  @doc "Returns all SRD conditions plus movement-granting conditions keyed by id."
   @spec all() :: %{atom() => t()}
   def all do
     %{
@@ -104,7 +104,7 @@ defmodule Gibbering.Rulesets.DnD5e.Condition do
             name: "Grappled: speed 0",
             trigger: :passive,
             predicate: {:entity_has_condition, :grappled},
-            effect: {:set_speed, 0},
+            effect: {:set_all_speeds, 0},
             stacking: :binary_flag
           }
         ]
@@ -256,7 +256,7 @@ defmodule Gibbering.Rulesets.DnD5e.Condition do
             name: "Restrained: speed 0",
             trigger: :passive,
             predicate: {:entity_has_condition, :restrained},
-            effect: {:set_speed, 0},
+            effect: {:set_all_speeds, 0},
             stacking: :binary_flag
           },
           %RuleModifier{
@@ -300,6 +300,39 @@ defmodule Gibbering.Rulesets.DnD5e.Condition do
             predicate: {:target_has_condition, :stunned},
             effect: {:grant_advantage, :attack_rolls},
             stacking: :binary_flag
+          }
+        ]
+      },
+
+      # Movement-granting conditions (Fly spell, Spider Climb spell)
+      flying: %__MODULE__{
+        id: :flying,
+        name: "Flying",
+        description: "Magical flight (e.g. Fly spell). Grants a fly speed of 60 ft.",
+        modifiers: [
+          %RuleModifier{
+            id: :flying_grant_fly_speed,
+            name: "Flying: grant fly speed 60",
+            trigger: :passive,
+            predicate: {:entity_has_condition, :flying},
+            effect: {:grant_speed, "fly", 60},
+            stacking: :named_bonus
+          }
+        ]
+      },
+      spider_climb: %__MODULE__{
+        id: :spider_climb,
+        name: "Spider Climb",
+        description:
+          "Entity can climb difficult surfaces and ceilings. Grants climb speed equal to walk speed.",
+        modifiers: [
+          %RuleModifier{
+            id: :spider_climb_grant_climb_speed,
+            name: "Spider Climb: grant climb speed equal to walk",
+            trigger: :passive,
+            predicate: {:entity_has_condition, :spider_climb},
+            effect: {:grant_speed, "climb", :equal_walk},
+            stacking: :named_bonus
           }
         ]
       }

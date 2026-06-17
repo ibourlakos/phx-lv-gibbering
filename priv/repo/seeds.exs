@@ -201,6 +201,9 @@ Repo.insert!(%Entity{
   tags: ["player_controlled"],
   stats: %{
     "speed" => 30,
+    "climb_speed" => nil,
+    "swim_speed" => nil,
+    "fly_speed" => nil,
     "strength" => 17,
     "dexterity" => 13,
     "constitution" => 15,
@@ -239,6 +242,9 @@ Repo.insert!(%Entity{
   tags: ["player_controlled"],
   stats: %{
     "speed" => 30,
+    "climb_speed" => nil,
+    "swim_speed" => nil,
+    "fly_speed" => nil,
     "strength" => 8,
     "dexterity" => 14,
     "constitution" => 13,
@@ -278,6 +284,9 @@ Repo.insert!(%Entity{
   tags: ["player_controlled"],
   stats: %{
     "speed" => 25,
+    "climb_speed" => nil,
+    "swim_speed" => nil,
+    "fly_speed" => nil,
     "strength" => 10,
     "dexterity" => 18,
     "constitution" => 13,
@@ -316,6 +325,9 @@ Repo.insert!(%Entity{
   tags: [],
   stats: %{
     "speed" => 30,
+    "climb_speed" => nil,
+    "swim_speed" => nil,
+    "fly_speed" => nil,
     "strength" => 8,
     "dexterity" => 14,
     "constitution" => 10,

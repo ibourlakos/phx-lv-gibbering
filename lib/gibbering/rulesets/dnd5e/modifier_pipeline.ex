@@ -161,6 +161,8 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
       %RuleModifier{effect: {:add_to_roll, _}} -> true
       %RuleModifier{effect: {:force_critical_hit}} -> true
       %RuleModifier{effect: {:set_speed, _}} -> true
+      %RuleModifier{effect: {:set_all_speeds, _}} -> true
+      %RuleModifier{effect: {:grant_speed, _, _}} -> true
       _ -> false
     end)
     |> Enum.reduce(ctx, fn %RuleModifier{effect: effect}, acc ->
@@ -175,8 +177,17 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
           Map.put(acc, :is_critical, true)
 
         {:set_speed, n} ->
-          # Multiple set_speed effects take the lowest (most restrictive).
           Map.update(acc, :speed_override, n, &min(&1, n))
+
+        {:set_all_speeds, n} ->
+          acc
+          |> Map.update(:speed_override, n, &min(&1, n))
+          |> Map.update(:fly_speed_override, n, &min(&1, n))
+          |> Map.update(:climb_speed_override, n, &min(&1, n))
+          |> Map.update(:swim_speed_override, n, &min(&1, n))
+
+        {:grant_speed, mode, value} ->
+          Map.put(acc, {:speed_grant, mode}, value)
       end
     end)
   end

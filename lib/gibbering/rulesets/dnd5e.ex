@@ -8,7 +8,7 @@ defmodule Gibbering.Rulesets.DnD5e do
 
   @behaviour Gibbering.Ruleset
 
-  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, Stats}
+  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, RuleModifier, Stats}
 
   # SRD spell slot table for full casters (Wizard, Cleric, Sorcerer, Bard, Druid).
   # Keys are character level; values are slot counts per spell level.
@@ -98,24 +98,26 @@ defmodule Gibbering.Rulesets.DnD5e do
   @impl Gibbering.Ruleset
   def initial_action_economy(entity) do
     speed = Stats.speed(entity)
+    movement_remaining = apply_passive_speed(entity, speed)
 
     %{
       action: :available,
       bonus_action: :available,
       reaction: :available,
-      movement_remaining: speed
+      movement_remaining: movement_remaining
     }
   end
 
   @impl Gibbering.Ruleset
   def advance_turn(entity) do
     speed = Stats.speed(entity)
+    movement_remaining = apply_passive_speed(entity, speed)
 
     Map.put(entity, :action_economy, %{
       action: :available,
       bonus_action: :available,
       reaction: :available,
-      movement_remaining: speed
+      movement_remaining: movement_remaining
     })
   end
 
@@ -213,4 +215,15 @@ defmodule Gibbering.Rulesets.DnD5e do
   end
 
   defp action_surge_charges(level), do: if(level >= 17, do: 2, else: 1)
+
+  defp apply_passive_speed(entity, base_speed) do
+    eval_ctx = %{entity: entity, target: nil, scene: %{active_effects: []}, resolution: nil}
+
+    ModifierPipeline.collect_modifiers(entity, :passive, eval_ctx)
+    |> Enum.reduce(base_speed, fn
+      %RuleModifier{effect: {:set_speed, n}}, acc -> min(acc, n)
+      %RuleModifier{effect: {:set_all_speeds, n}}, acc -> min(acc, n)
+      _, acc -> acc
+    end)
+  end
 end

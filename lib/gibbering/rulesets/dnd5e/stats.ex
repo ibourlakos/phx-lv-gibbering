@@ -16,6 +16,18 @@ defmodule Gibbering.Rulesets.DnD5e.Stats do
 
   def speed(entity), do: Map.get(entity, :speed, entity[:speed] || 30)
 
+  @doc """
+  Returns the entity's speed in feet for `mode`, or nil if the entity cannot use that mode.
+
+  Walk always has a default of 30 ft. Climb, swim, and fly return nil when the
+  corresponding stat key is absent (entity has no native ability for that mode).
+  """
+  def speed_for_mode(entity, "walk"), do: get_in(entity, [:stats, "speed"]) || 30
+  def speed_for_mode(entity, "climb"), do: get_in(entity, [:stats, "climb_speed"])
+  def speed_for_mode(entity, "swim"), do: get_in(entity, [:stats, "swim_speed"])
+  def speed_for_mode(entity, "fly"), do: get_in(entity, [:stats, "fly_speed"])
+  def speed_for_mode(_entity, _mode), do: nil
+
   def proficiency_bonus(level), do: div(level - 1, 4) + 2
 
   def armor_class(entity) do

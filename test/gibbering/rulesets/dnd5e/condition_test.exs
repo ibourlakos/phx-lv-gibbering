@@ -21,8 +21,8 @@ defmodule Gibbering.Rulesets.DnD5e.ConditionTest do
   ]
 
   describe "all/0" do
-    test "returns all 14 SRD conditions" do
-      assert map_size(Condition.all()) == 14
+    test "returns all 14 SRD conditions plus movement-granting conditions" do
+      assert map_size(Condition.all()) >= 14
     end
 
     test "contains every expected condition id" do
@@ -82,9 +82,9 @@ defmodule Gibbering.Rulesets.DnD5e.ConditionTest do
   end
 
   describe "grappled" do
-    test "has set_speed 0 modifier" do
+    test "has set_all_speeds 0 modifier" do
       [mod] = Condition.get(:grappled).modifiers
-      assert mod.effect == {:set_speed, 0}
+      assert mod.effect == {:set_all_speeds, 0}
       assert mod.predicate == {:entity_has_condition, :grappled}
     end
   end
