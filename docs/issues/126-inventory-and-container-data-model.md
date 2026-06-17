@@ -1,7 +1,8 @@
 # #126 · Inventory and container data model
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-12
+**Closed:** 2026-06-17
 **Priority:** low
 **Tags:** architecture, gameplay
 
@@ -12,10 +13,10 @@ Adds the `stats["object_subtype"]` field to world object entities, the `stats["i
 Depends on: #79 (`Data.Items` module, closed), #46 (equipped item JSONB, closed).
 
 **Acceptance criteria**
-- [ ] `Gibbering.Entity` schema and `Data.Entities` seed support `stats["object_subtype"]` = `"loot_source" | "static_decor"` for `type: "object"` entities
-- [ ] `stats["items"]` on a loot-source entity holds `[%{"instance_id" => uuid_string, "item_key" => string, "quantity" => integer}]`; empty list `[]` for an empty container
-- [ ] `stats["inventory"]` on creature entities (`"hero"`, `"monster"`) holds the same shape; empty list `[]` initially
-- [ ] Tags `"interactable"` and `"passable"` are documented as the canonical tag names for world objects in the data model doc
-- [ ] At least one `LootSource` world object seeded in the test/dev campaign with a small item set (e.g. 20 arrows, 1 shortsword)
-- [ ] Data model doc (`docs/architecture/data-model.md`) updated: `entities.stats` known-keys table, runtime entity map shape, WorldObject section
-- [ ] `mix precommit` passes
+- [x] `stats["object_subtype"]` = `"loot_source" | "static_decor"` supported for `type: "object"` entities (freeform `stats` JSONB; no changeset validation, consistent with existing stats-key handling). "The Rock" seeded as `static_decor`.
+- [x] `stats["items"]` on a loot-source entity holds `[%{"instance_id" => uuid_string, "item_key" => string, "quantity" => integer}]`; `[]` for an empty container. Shape + constructor in `Gibbering.Rulesets.DnD5e.Inventory.item_instance/2`.
+- [x] `stats["inventory"]` on creature entities (`"hero"`, `"monster"`) holds the same shape; seeded as `[]` initially on all four creatures.
+- [x] Tags `"interactable"` and `"passable"` documented as the canonical world-object tag names in the data model doc.
+- [x] `LootSource` world object seeded: "Battered Chest" holds 1 shortsword + 2 healing potions (arrows have no `Data.Items` key, so a valid SRD item set was substituted for the example).
+- [x] Data model doc updated: `entities.stats` known-keys table (added object_subtype/items/inventory/equipped_*), new "WorldObject & inventory model" section. Runtime entity map shape already covers `stats` keys via "same keys as DB stats JSONB".
+- [x] `mix precommit` passes (771 tests, 0 failures).

@@ -125,7 +125,7 @@ Dependency chain:
 
 | # | Title | Priority | Depends on |
 |---|---|---|---|
-| [#126](126-inventory-and-container-data-model.md) | Inventory and container data model | low | — |
+| [#126](126-inventory-and-container-data-model.md) | Inventory and container data model ✓ | low | — |
 | [#127](127-item-pickup-event-loop.md) | Item pickup event loop | low | #126 |
 | [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration | low | #126 |
 
