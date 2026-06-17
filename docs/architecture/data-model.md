@@ -217,6 +217,10 @@ The `stats` map is intentionally schemaless so any ruleset can store what it nee
 | `"spells"` | `string[]` | lobby save_slot (wizards only) — spell key list |
 | `"claimed_by"` | integer (user id) | lobby claim_slot |
 | `"claimed_by_name"` | string | lobby claim_slot |
+| `"equipped_weapon"` / `"equipped_armor"` | JSONB map | lobby save_slot (see tactical item model below) |
+| `"inventory"` | JSONB array of item instances | creature carried items (`"hero"`, `"monster"`) — see WorldObject & inventory below |
+| `"object_subtype"` | string | `"object"` entities only: `"loot_source"` \| `"static_decor"` |
+| `"items"` | JSONB array of item instances | loot-source containers — items available to take |
 
 ---
 
@@ -469,6 +473,46 @@ Full inventory is deferred. Equipped weapon and armor live in the `stats` JSONB 
 
 `DnD5e.Stats.armor_class/1` reads these keys. Forward-compatible: replace with a proper
 Ecto schema when full inventory is needed.
+
+---
+
+### WorldObject & inventory model (issues #80, #126)
+
+Items exist in two contexts, both stored as **item-instance lists** inside `stats` JSONB —
+no separate items table. Helpers and read accessors live in `Gibbering.Rulesets.DnD5e.Inventory`.
+
+**Item instance shape** (uniform for both contexts):
+
+```elixir
+%{
+  "instance_id" => "9f1c…",   # UUID — distinguishes otherwise-identical stacks/uniques
+  "item_key"    => "shortsword", # key into Gibbering.Data.Items
+  "quantity"    => 1
+}
+```
+
+**Possession (creatures).** `"hero"` and `"monster"` entities carry `stats["inventory"]`
+(empty list `[]` initially). Equipped items still live in `stats["equipped_weapon"]` /
+`stats["equipped_armor"]` and inject mechanics via the rules pipeline (#128).
+
+**Spatial (world objects).** `type: "object"` entities are the on-grid object variant — no
+separate spatial layer. The sub-type lives in `stats["object_subtype"]`:
+
+| `object_subtype` | Meaning | Inventory |
+|---|---|---|
+| `"loot_source"` | A container a player can open and ransack | `stats["items"]` holds takeable instances (`[]` when empty) |
+| `"static_decor"` | Purely visual / obstacle | none |
+
+**Canonical world-object tags.** Spatial flags live in `tags`, following the existing
+`["blocking"]` / `["destructible"]` convention:
+
+| Tag | Meaning |
+|---|---|
+| `"interactable"` | Players can target the object with an interact action (open, search) |
+| `"passable"` | The object does not block movement (entities may enter its tile) |
+
+Stack-merge on pickup and equipped-item stat injection are handled by the pickup event
+loop (#127) and the `:equipped_items` modifier source (#128) respectively.
 
 ---
 

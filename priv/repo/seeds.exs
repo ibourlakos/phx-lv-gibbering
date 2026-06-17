@@ -6,6 +6,7 @@ alias Gibbering.Accounts.User
 alias Gibbering.Admin
 alias Gibbering.Catalogue.{Race, Class, Spell, Monster, Style, Appearance}
 alias Gibbering.Data.{Races, Classes, Spells, Monsters}
+alias Gibbering.Rulesets.DnD5e.Inventory
 
 # ---------------------------------------------------------------------------
 # Catalogue tables (idempotent — skip if already present)
@@ -210,6 +211,7 @@ Repo.insert!(%Entity{
     "intelligence" => 9,
     "wisdom" => 11,
     "charisma" => 9,
+    "inventory" => [],
     "equipped_weapon" => %{
       "key" => "longsword",
       "damage_dice" => "1d8",
@@ -252,6 +254,7 @@ Repo.insert!(%Entity{
     "wisdom" => 15,
     "charisma" => 10,
     "spells" => ["fire_bolt", "mage_hand", "magic_missile", "sleep"],
+    "inventory" => [],
     "equipped_weapon" => %{
       "key" => "quarterstaff",
       "damage_dice" => "1d6",
@@ -293,6 +296,7 @@ Repo.insert!(%Entity{
     "intelligence" => 16,
     "wisdom" => 12,
     "charisma" => 12,
+    "inventory" => [],
     "equipped_weapon" => %{
       "key" => "shortsword",
       "damage_dice" => "1d6",
@@ -334,6 +338,7 @@ Repo.insert!(%Entity{
     "intelligence" => 10,
     "wisdom" => 8,
     "charisma" => 8,
+    "inventory" => [],
     "equipped_weapon" => %{
       "key" => "scimitar",
       "damage_dice" => "1d6",
@@ -351,7 +356,7 @@ Repo.insert!(%Entity{
   campaign_id: campaign.id
 })
 
-# The Rock — object, no CR
+# The Rock — static-decor world object (blocks movement, no inventory)
 Repo.insert!(%Entity{
   name: "The Rock",
   type: "object",
@@ -361,7 +366,27 @@ Repo.insert!(%Entity{
   hp: 8,
   max_hp: 8,
   tags: ["destructible", "blocking"],
-  stats: %{},
+  stats: %{"object_subtype" => "static_decor"},
+  campaign_id: campaign.id
+})
+
+# Battered Chest — loot-source world object (interactable container)
+Repo.insert!(%Entity{
+  name: "Battered Chest",
+  type: "object",
+  sprite: "chest",
+  x: 6,
+  y: 6,
+  hp: 5,
+  max_hp: 5,
+  tags: ["interactable", "blocking"],
+  stats: %{
+    "object_subtype" => "loot_source",
+    "items" => [
+      Inventory.item_instance("shortsword", 1),
+      Inventory.item_instance("healing_potion", 2)
+    ]
+  },
   campaign_id: campaign.id
 })
 
