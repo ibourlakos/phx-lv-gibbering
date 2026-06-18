@@ -1,0 +1,16 @@
+{
+  "_note": "Disabled hook(s). Not loaded by Claude Code. To re-enable, move an entry into hooks.PreToolUse in settings.json. The test-on-commit hook runs the full Docker suite before every commit; it exits non-zero on failure but does NOT hard-block (append '|| exit 2' to the command to make it a gate).",
+  "PreToolUse": [
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "if": "Bash(git commit*)",
+          "command": "docker compose run --rm app mix test",
+          "statusMessage": "Running test suite before commit..."
+        }
+      ]
+    }
+  ]
+}
