@@ -46,7 +46,9 @@ defmodule Gibbering.Engine.State do
     # MapSet of entity_ids hidden from player view (DM-only visibility)
     hidden_entities: %MapSet{},
     # [{timestamp, text}] — chronological intervention log, newest first
-    session_log: []
+    session_log: [],
+    # entity_id of the container currently open for the active hero, or nil
+    open_container_id: nil
   ]
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."

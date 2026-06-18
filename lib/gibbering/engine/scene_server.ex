@@ -20,15 +20,19 @@ defmodule Gibbering.Engine.SceneServer do
   alias Gibbering.Events.Scene.{
     AttackResolved,
     ConditionApplied,
+    ContainerOpened,
     DamageDealt,
     EntityMoved,
     HPAdjusted,
+    ItemEquipped,
+    ItemTaken,
     PhaseTransitioned,
     SessionEnded,
     SpellCast,
     TurnAdvanced
   }
 
+  alias Gibbering.Engine.Inventory
   alias Gibbering.Rulesets.DnD5e.Stats
 
   @topic_prefix "game:"
@@ -120,6 +124,26 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "Toggles `entity_id` in the DM-hidden set."
   def dm_toggle_visibility(game_id, entity_id),
     do: GenServer.call(via(game_id), {:dm_toggle_visibility, entity_id})
+
+  @doc "Opens an adjacent loot container for the active hero. Returns `{:ok, state}` or `{:error, reason}`."
+  def open_container(game_id, container_id),
+    do: GenServer.call(via(game_id), {:open_container, container_id})
+
+  @doc "Moves `quantity` units of `instance_id` from `container_id` to the active hero's inventory."
+  def take_item(game_id, container_id, instance_id, quantity),
+    do: GenServer.call(via(game_id), {:take_item, container_id, instance_id, quantity})
+
+  @doc "Takes all items from `container_id` into the active hero's inventory."
+  def take_all_items(game_id, container_id),
+    do: GenServer.call(via(game_id), {:take_all_items, container_id})
+
+  @doc "Equips the inventory item `instance_id` on the active hero."
+  def equip_item(game_id, instance_id),
+    do: GenServer.call(via(game_id), {:equip_item, instance_id})
+
+  @doc "Closes the currently open container panel."
+  def close_container(game_id),
+    do: GenServer.call(via(game_id), :close_container)
 
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
@@ -619,6 +643,143 @@ defmodule Gibbering.Engine.SceneServer do
     new_state = State.toggle_visibility(state, entity_id)
     persist(new_state)
     broadcast_batch(new_state, [], :dm_toggle_visibility)
+    {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call({:open_container, container_id}, _from, state) do
+    actor_id = state.selected_id || State.active_hero_id(state)
+    actor = state.entities[actor_id]
+    container = state.entities[container_id]
+
+    case Inventory.can_open_container?(actor, container) do
+      :ok ->
+        new_state = %{state | open_container_id: container_id}
+        persist(new_state)
+
+        event = %ContainerOpened{actor_id: actor_id, container_id: container_id}
+        broadcast_batch(new_state, [event], :open_container)
+        {:reply, {:ok, new_state}, new_state}
+
+      {:error, _} = err ->
+        {:reply, err, state}
+    end
+  end
+
+  @impl true
+  def handle_call({:take_item, container_id, instance_id, quantity}, _from, state) do
+    actor_id = state.selected_id || State.active_hero_id(state)
+    actor = state.entities[actor_id]
+    container = state.entities[container_id]
+
+    case Inventory.take_item(actor, container, instance_id, quantity) do
+      {:error, _} = err ->
+        {:reply, err, state}
+
+      {:ok, new_actor, new_container} ->
+        new_entities =
+          state.entities
+          |> Map.put(actor_id, new_actor)
+          |> Map.put(container_id, new_container)
+
+        open_id = if new_container.stats["items"] == [], do: nil, else: state.open_container_id
+
+        new_state = %{state | entities: new_entities, open_container_id: open_id}
+        persist(new_state)
+
+        event = %ItemTaken{
+          actor_id: actor_id,
+          container_id: container_id,
+          instance_id: instance_id,
+          item_key: List.first(new_actor.stats["inventory"] || [])["item_key"],
+          quantity: quantity
+        }
+
+        broadcast_batch(new_state, [event], :take_item)
+        {:reply, {:ok, new_state}, new_state}
+    end
+  end
+
+  @impl true
+  def handle_call({:take_all_items, container_id}, _from, state) do
+    actor_id = state.selected_id || State.active_hero_id(state)
+    actor = state.entities[actor_id]
+    container = state.entities[container_id]
+    items = get_in(container, [:stats, "items"]) || []
+
+    {new_actor, events} =
+      Enum.reduce(items, {actor, []}, fn inst, {acc_actor, acc_events} ->
+        case Inventory.take_item(
+               acc_actor,
+               %{container | stats: Map.put(container.stats, "items", [inst])},
+               inst["instance_id"],
+               inst["quantity"]
+             ) do
+          {:ok, updated_actor, _} ->
+            event = %ItemTaken{
+              actor_id: actor_id,
+              container_id: container_id,
+              instance_id: inst["instance_id"],
+              item_key: inst["item_key"],
+              quantity: inst["quantity"]
+            }
+
+            {updated_actor, acc_events ++ [event]}
+
+          {:error, _} ->
+            {acc_actor, acc_events}
+        end
+      end)
+
+    empty_container = put_in(container, [:stats, "items"], [])
+
+    new_entities =
+      state.entities
+      |> Map.put(actor_id, new_actor)
+      |> Map.put(container_id, empty_container)
+
+    new_state = %{state | entities: new_entities, open_container_id: nil}
+    persist(new_state)
+    broadcast_batch(new_state, events, :take_all_items)
+    {:reply, {:ok, new_state}, new_state}
+  end
+
+  @impl true
+  def handle_call({:equip_item, instance_id}, _from, state) do
+    actor_id = state.selected_id || State.active_hero_id(state)
+    actor = state.entities[actor_id]
+
+    case Inventory.equip_item(actor, instance_id) do
+      {:error, _} = err ->
+        {:reply, err, state}
+
+      {:ok, new_actor} ->
+        inventory = get_in(actor, [:stats, "inventory"]) || []
+        item_key = (Enum.find(inventory, &(&1["instance_id"] == instance_id)) || %{})["item_key"]
+        item = Gibbering.Data.Items.get(item_key)
+        slot = if item && item.item_type == :weapon, do: "equipped_weapon", else: "equipped_armor"
+
+        new_entities = Map.put(state.entities, actor_id, new_actor)
+        new_state = %{state | entities: new_entities}
+        persist(new_state)
+
+        event = %ItemEquipped{
+          actor_id: actor_id,
+          instance_id: instance_id,
+          item_key: item_key,
+          slot: slot
+        }
+
+        broadcast_batch(new_state, [event], :equip_item)
+        {:reply, {:ok, new_state}, new_state}
+    end
+  end
+
+  @impl true
+  def handle_call(:close_container, _from, state) do
+    new_state = %{state | open_container_id: nil}
+    persist(new_state)
+    broadcast_batch(new_state, [], :close_container)
     {:reply, :ok, new_state}
   end
 

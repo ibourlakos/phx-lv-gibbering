@@ -491,4 +491,80 @@ defmodule GibberingWeb.GameLiveTest do
       assert render(view) =~ "Secret only for you"
     end
   end
+
+  describe "container panel (issue #127)" do
+    defp insert_adjacent_chest(game_id, items \\ []) do
+      chest =
+        Repo.insert!(%Entity{
+          name: "Treasure Chest",
+          type: "object",
+          sprite: "chest",
+          x: 3,
+          y: 2,
+          hp: 1,
+          max_hp: 1,
+          tags: [],
+          stats: %{"object_subtype" => "loot_source", "items" => items},
+          campaign_id: game_id
+        })
+
+      SceneServer.reload_entities(game_id)
+      chest
+    end
+
+    test "container panel is hidden when no container is open", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      refute render(view) =~ "container-panel"
+    end
+
+    test "container panel appears after open_container succeeds", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      chest = insert_adjacent_chest(game_id, [])
+
+      SceneServer.open_container(game_id, chest.id)
+
+      html = render(view)
+      assert html =~ "container-panel"
+      assert html =~ "Treasure Chest"
+    end
+
+    test "item names appear in the panel", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+
+      items = [
+        %{"instance_id" => "x1", "item_key" => "dagger", "quantity" => 2, "is_magical" => false}
+      ]
+
+      chest = insert_adjacent_chest(game_id, items)
+      SceneServer.open_container(game_id, chest.id)
+
+      html = render(view)
+      assert html =~ "Dagger"
+    end
+
+    test "take_all event removes all items and closes the panel", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+
+      items = [
+        %{"instance_id" => "x1", "item_key" => "dagger", "quantity" => 1, "is_magical" => false}
+      ]
+
+      chest = insert_adjacent_chest(game_id, items)
+      SceneServer.open_container(game_id, chest.id)
+
+      view |> element("[phx-click='take_all']") |> render_click()
+
+      refute render(view) =~ "container-panel"
+    end
+
+    test "close_container event hides the panel", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      chest = insert_adjacent_chest(game_id, [])
+      SceneServer.open_container(game_id, chest.id)
+
+      view |> element("[phx-click='close_container']") |> render_click()
+
+      refute render(view) =~ "container-panel"
+    end
+  end
 end

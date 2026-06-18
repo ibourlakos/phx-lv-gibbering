@@ -583,4 +583,144 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
+
+  # ---------------------------------------------------------------------------
+  # Inventory event loop (issue #127)
+  # ---------------------------------------------------------------------------
+
+  # Insert a chest entity adjacent to the hero (hero spawns at 2,2) and reload.
+  defp insert_chest(game_id, items \\ []) do
+    chest =
+      Repo.insert!(%Entity{
+        name: "Chest",
+        type: "object",
+        sprite: "chest",
+        x: 3,
+        y: 2,
+        hp: 1,
+        max_hp: 1,
+        tags: [],
+        stats: %{"object_subtype" => "loot_source", "items" => items},
+        campaign_id: game_id
+      })
+
+    SceneServer.reload_entities(game_id)
+    chest
+  end
+
+  describe "open_container/2" do
+    test "sets open_container_id when active hero is adjacent to a loot_source" do
+      game_id = start_server()
+      chest = insert_chest(game_id, [])
+
+      {:ok, new_state} = SceneServer.open_container(game_id, chest.id)
+      assert new_state.open_container_id == chest.id
+    end
+
+    test "returns error when active hero is not adjacent to container" do
+      game_id = start_server()
+
+      far_chest =
+        Repo.insert!(%Entity{
+          name: "Far Chest",
+          type: "object",
+          sprite: "chest",
+          x: 0,
+          y: 0,
+          hp: 1,
+          max_hp: 1,
+          tags: [],
+          stats: %{"object_subtype" => "loot_source", "items" => []},
+          campaign_id: game_id
+        })
+
+      SceneServer.reload_entities(game_id)
+
+      assert {:error, :not_adjacent} = SceneServer.open_container(game_id, far_chest.id)
+    end
+
+    test "broadcasts an EventBatch after opening" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      chest = insert_chest(game_id, [])
+
+      # Drain the reload_entities broadcast.
+      assert_receive %EventBatch{}, 500
+
+      {:ok, _} = SceneServer.open_container(game_id, chest.id)
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
+    end
+  end
+
+  describe "take_item/4" do
+    test "moves item from container to hero inventory and updates carry_weight" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      item = %{
+        "instance_id" => "i1",
+        "item_key" => "dagger",
+        "quantity" => 1,
+        "is_magical" => false
+      }
+
+      chest = insert_chest(game_id, [item])
+
+      SceneServer.open_container(game_id, chest.id)
+      {:ok, new_state} = SceneServer.take_item(game_id, chest.id, "i1", 1)
+
+      hero = new_state.entities[hero_id]
+      assert Enum.any?(hero.stats["inventory"] || [], &(&1["item_key"] == "dagger"))
+      assert new_state.entities[chest.id].stats["items"] == []
+    end
+
+    test "broadcasts an EventBatch after take_item" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      item = %{
+        "instance_id" => "i1",
+        "item_key" => "dagger",
+        "quantity" => 1,
+        "is_magical" => false
+      }
+
+      chest = insert_chest(game_id, [item])
+
+      SceneServer.open_container(game_id, chest.id)
+      # Drain open_container + reload broadcasts.
+      assert_receive %EventBatch{}, 500
+      assert_receive %EventBatch{}, 500
+
+      {:ok, _} = SceneServer.take_item(game_id, chest.id, "i1", 1)
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
+    end
+  end
+
+  describe "equip_item/2" do
+    test "moves item from hero inventory to equipped_weapon slot" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      # Put a rapier in inventory via take_item flow.
+      item = %{
+        "instance_id" => "r1",
+        "item_key" => "rapier",
+        "quantity" => 1,
+        "is_magical" => false
+      }
+
+      chest = insert_chest(game_id, [item])
+      SceneServer.open_container(game_id, chest.id)
+      SceneServer.take_item(game_id, chest.id, "r1", 1)
+
+      {:ok, equipped_state} = SceneServer.equip_item(game_id, "r1")
+
+      hero = equipped_state.entities[hero_id]
+      assert hero.stats["equipped_weapon"]["key"] == "rapier"
+      refute Enum.any?(hero.stats["inventory"] || [], &(&1["instance_id"] == "r1"))
+    end
+  end
 end

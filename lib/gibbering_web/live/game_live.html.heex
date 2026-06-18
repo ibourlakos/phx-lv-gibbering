@@ -600,4 +600,66 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       </div>
     </div>
   <% end %>
+
+  <%!-- Container loot panel — shown when the active hero has a container open --%>
+  <%= if container_id = @game_state.open_container_id do %>
+    <% container = @game_state.entities[container_id] %>
+    <% items = get_in(container, [:stats, "items"]) || [] %>
+    <div
+      id="container-panel"
+      style="position:fixed; top:50%; right:16px; transform:translateY(-50%); z-index:80; width:280px;"
+    >
+      <div class="bg-gray-900 border border-yellow-700 rounded-lg p-4 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-yellow-400 font-bold text-sm">
+            {(container && container.name) || "Container"}
+          </div>
+          <button
+            phx-click="close_container"
+            class="text-gray-400 hover:text-white text-xs"
+          >
+            Done
+          </button>
+        </div>
+
+        <%= if items == [] do %>
+          <div class="text-gray-500 text-xs italic">Empty.</div>
+        <% else %>
+          <div class="space-y-2 mb-3">
+            <%= for item_inst <- items do %>
+              <% item_data = Gibbering.Data.Items.get(item_inst["item_key"]) %>
+              <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
+                <div>
+                  <div class="text-white text-xs font-medium">
+                    {(item_data && item_data.name) || item_inst["item_key"]}
+                    {if item_inst["quantity"] > 1, do: "×#{item_inst["quantity"]}"}
+                  </div>
+                  <div class="text-gray-400 text-xs">
+                    {item_data && "#{item_data.weight_pounds} lb"}
+                  </div>
+                </div>
+                <button
+                  phx-click="take_item"
+                  phx-value-container_id={container_id}
+                  phx-value-instance_id={item_inst["instance_id"]}
+                  phx-value-quantity={item_inst["quantity"]}
+                  class="bg-green-700 hover:bg-green-600 text-white text-xs rounded px-2 py-1"
+                >
+                  Take
+                </button>
+              </div>
+            <% end %>
+          </div>
+
+          <button
+            phx-click="take_all"
+            phx-value-container_id={container_id}
+            class="w-full bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold rounded px-3 py-2"
+          >
+            Take All
+          </button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 </div>

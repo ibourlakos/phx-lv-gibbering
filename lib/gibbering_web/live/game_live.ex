@@ -343,6 +343,50 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("open_container", %{"id" => id}, socket) do
+    container_id = String.to_integer(id)
+
+    case SceneServer.open_container(socket.assigns.game_id, container_id) do
+      {:ok, _state} -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "take_item",
+        %{"container_id" => cid, "instance_id" => iid, "quantity" => q},
+        socket
+      ) do
+    quantity = if is_binary(q), do: String.to_integer(q), else: q
+
+    case SceneServer.take_item(socket.assigns.game_id, String.to_integer(cid), iid, quantity) do
+      {:ok, _state} -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("take_all", %{"container_id" => cid}, socket) do
+    SceneServer.take_all_items(socket.assigns.game_id, String.to_integer(cid))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("equip_item", %{"instance_id" => iid}, socket) do
+    case SceneServer.equip_item(socket.assigns.game_id, iid) do
+      {:ok, _state} -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("close_container", _, socket) do
+    SceneServer.close_container(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event(event, _, socket)
       when event in [
              "dm_start",
