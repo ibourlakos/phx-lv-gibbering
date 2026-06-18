@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git add*)",
+            "command": "payload=$(cat); if printf '%s' \"$payload\" | grep -Eq '\"command\"[[:space:]]*:[[:space:]]*\"[^\"]*git[[:space:]]+add[[:space:]]+(-A|--all|\\.)([[:space:]]|\")'; then printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"git add -A/--all/. is banned by CLAUDE.md - stage specific files explicitly.\"}}'; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit*)",
+            "command": "b=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); if [ \"$b\" = \"main\" ]; then printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Direct commits to main are blocked by git-policy.md - create a feature branch first.\"}}'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
