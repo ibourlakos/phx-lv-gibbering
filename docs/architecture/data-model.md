@@ -406,8 +406,12 @@ defstruct [:id, :name, :description, :source, :trigger, :predicate, :effect,
 ```
 
 Pipeline: `collect_modifiers(entity, trigger, context)` → `[%RuleModifier{}]` from race traits +
-class features + active conditions. `apply_modifiers(roll_context, modifiers)` folds each
-effect in layering order. No `if entity.class == "rogue"` branches in the rules engine.
+class features + active conditions + equipped items (issue #128: `Data.Items` modifiers for the
+entity's `stats["equipped_weapon"]`/`stats["equipped_armor"]` keys). `apply_modifiers(roll_context,
+modifiers)` folds each effect in layering order. No `if entity.class == "rogue"` branches in the
+rules engine. Note: the `:choose_attack_ability` and `:override_ac_formula` effects are collected
+but not yet folded by `apply_modifiers` — AC/attack math still flows through `DnD5e.Stats`
+(transitional coexistence).
 
 ---
 

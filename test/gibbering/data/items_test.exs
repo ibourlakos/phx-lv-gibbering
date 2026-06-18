@@ -132,6 +132,70 @@ defmodule Gibbering.Data.ItemsTest do
     end
   end
 
+  describe "all/0 — modifiers (issue #128)" do
+    alias Gibbering.Rulesets.DnD5e.RuleModifier
+
+    test "every item carries a modifiers list" do
+      for {key, item} <- Items.all() do
+        assert is_list(item.modifiers), "#{key} missing modifiers list"
+
+        assert Enum.all?(item.modifiers, &match?(%RuleModifier{}, &1)),
+               "#{key} modifiers must be %RuleModifier{} structs"
+      end
+    end
+
+    test "finesse weapons grant a DEX-or-STR attack ability choice" do
+      for key <- ~w(dagger rapier scimitar shortsword) do
+        mods = Items.get(key).modifiers
+
+        assert Enum.any?(mods, fn m ->
+                 m.effect == {:choose_attack_ability, [:dexterity, :strength]} and
+                   match?({:on_attack, _}, m.trigger)
+               end),
+               "#{key} should carry a finesse attack-ability-choice modifier"
+      end
+    end
+
+    test "non-finesse weapons have no modifiers" do
+      for key <- ~w(handaxe javelin quarterstaff light_crossbow battleaxe greatsword longsword) do
+        assert Items.get(key).modifiers == [], "#{key} should have no modifiers"
+      end
+    end
+
+    test "shield grants an additive +2 AC bonus" do
+      mods = Items.get("shield").modifiers
+
+      assert Enum.any?(mods, fn m ->
+               m.effect == {:add_bonus, :ac, 2} and m.trigger == :passive and
+                 m.stacking == :additive
+             end)
+    end
+
+    test "body armor carries an override_ac_formula modifier matching its category and base AC" do
+      for {key, category, base_ac} <- [
+            {"padded_armor", :light, 11},
+            {"leather_armor", :light, 11},
+            {"chain_shirt", :medium, 13},
+            {"scale_mail", :medium, 14},
+            {"chain_mail", :heavy, 16},
+            {"plate_armor", :heavy, 18}
+          ] do
+        mods = Items.get(key).modifiers
+
+        assert Enum.any?(mods, fn m ->
+                 m.effect == {:override_ac_formula, {:armor, category, base_ac}} and
+                   m.trigger == :passive
+               end),
+               "#{key} should carry an override_ac_formula modifier"
+      end
+    end
+
+    test "consumables have no modifiers" do
+      assert Items.get("healing_potion").modifiers == []
+      assert Items.get("greater_healing_potion").modifiers == []
+    end
+  end
+
   describe "get/1" do
     test "returns item for a known key" do
       item = Items.get("longsword")

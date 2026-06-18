@@ -103,6 +103,57 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipelineTest do
     end
   end
 
+  describe "collect_modifiers/3 — equipped items (issue #128)" do
+    test "fighter in chain mail surfaces the armor AC formula modifier (passive)" do
+      e =
+        entity(
+          class: "fighter",
+          stats: %{"equipped_armor" => %{"key" => "chain_mail"}}
+        )
+
+      result = ModifierPipeline.collect_modifiers(e, :passive, eval_ctx(e))
+
+      assert Enum.any?(result, &(&1.effect == {:override_ac_formula, {:armor, :heavy, 16}}))
+    end
+
+    test "rogue with a finesse weapon surfaces the DEX-choice modifier on melee attack" do
+      e =
+        entity(
+          class: "rogue",
+          stats: %{"equipped_weapon" => %{"key" => "rapier"}}
+        )
+
+      result = ModifierPipeline.collect_modifiers(e, {:on_attack, :melee}, eval_ctx(e))
+
+      assert Enum.any?(
+               result,
+               &(&1.effect == {:choose_attack_ability, [:dexterity, :strength]})
+             )
+    end
+
+    test "equipped shield contributes its additive AC bonus" do
+      e = entity(stats: %{"equipped_armor" => %{"key" => "shield"}})
+      result = ModifierPipeline.collect_modifiers(e, :passive, eval_ctx(e))
+      assert Enum.any?(result, &(&1.effect == {:add_bonus, :ac, 2}))
+    end
+
+    test "non-finesse weapon contributes no equipped-item modifiers" do
+      e = entity(stats: %{"equipped_weapon" => %{"key" => "greatsword"}})
+      result = ModifierPipeline.collect_modifiers(e, {:on_attack, :melee}, eval_ctx(e))
+      refute Enum.any?(result, &(&1.effect == {:choose_attack_ability, [:dexterity, :strength]}))
+    end
+
+    test "unknown equipped key (e.g. \"no_armor\") is ignored without crashing" do
+      e = entity(stats: %{"equipped_armor" => %{"key" => "no_armor"}})
+      assert is_list(ModifierPipeline.collect_modifiers(e, :passive, eval_ctx(e)))
+    end
+
+    test "entity with no stats does not crash" do
+      e = entity([])
+      assert is_list(ModifierPipeline.collect_modifiers(e, :passive, eval_ctx(e)))
+    end
+  end
+
   describe "collect_modifiers/3 — class features" do
     test "fighter gets :fighter_second_wind modifier on :on_second_wind trigger" do
       e = entity(class: "fighter", resources: %{second_wind: 1})
