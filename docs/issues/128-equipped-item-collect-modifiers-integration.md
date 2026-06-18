@@ -1,7 +1,8 @@
 # #128 · Equipped item `collect_modifiers` integration
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-12
+**Closed:** 2026-06-19
 **Priority:** low
 **Tags:** rules, architecture
 
@@ -12,8 +13,8 @@ Currently `collect_modifiers/3` gathers from `[:race_traits, :class_features, :a
 Depends on: #126 (inventory data model), #40 (`RuleModifier` pipeline, closed).
 
 **Acceptance criteria**
-- [ ] `Data.Items` item maps include a `modifiers: [%RuleModifier{}]` field for each entry; weapons with the `:finesse` property include a modifier granting DEX-or-STR attack ability choice; armor entries include an `{:override_ac_formula, formula}` or `{:add_bonus, :ac, n}` modifier as appropriate; items with no mechanical modifiers have `modifiers: []`
-- [ ] `Gibbering.Rulesets.DnD5e.collect_modifiers/3` accepts a new `:equipped_items` source; when `trigger` is `:passive` or `:on_attack`, it reads `stats["equipped_weapon"]` and `stats["equipped_armor"]` from the entity, fetches each key from `Data.Items`, and appends their `modifiers`
-- [ ] `DnD5e.Stats.armor_class/1` and `DnD5e.Stats.attack_bonus/2` still pass all existing tests unchanged (transitional coexistence)
-- [ ] Unit tests: `collect_modifiers/3` with a fighter equipped with chain mail returns the AC modifier; with a rogue and a finesse weapon returns the DEX-choice modifier
-- [ ] `mix precommit` passes
+- [x] `Data.Items` item maps include a `modifiers: [%RuleModifier{}]` field (derived at read time in `all/0` and `get/1`); finesse weapons grant `{:choose_attack_ability, [:dexterity, :strength]}`; body armour grants `{:override_ac_formula, {:armor, category, base_ac}}`; shields grant additive `{:add_bonus, :ac, 2}`; everything else has `modifiers: []`
+- [x] `collect_modifiers/3` gains an `:equipped_items` source: `modifiers_for_context/2` reads the embedded `stats["equipped_weapon"]`/`stats["equipped_armor"]` maps, extracts each `"key"`, fetches it from `Data.Items`, and appends its `modifiers`. Unknown keys (e.g. `"no_armor"`) and empty slots contribute nothing. Trigger relevance is left to the existing trigger filter (consistent with the other passive sources), rather than special-casing the source by trigger.
+- [x] `DnD5e.Stats.armor_class/1` and `DnD5e.Stats.attack_bonus/2` pass unchanged — the new `:choose_attack_ability`/`:override_ac_formula` effects are collected but not yet folded by `apply_modifiers` (transitional coexistence).
+- [x] Unit tests added: fighter in chain mail surfaces the override-AC-formula modifier; rogue with a rapier surfaces the DEX-choice modifier on melee attack; plus shield, non-finesse, unknown-key, and no-stats cases. `Data.Items` modifier shape covered in `items_test.exs`.
+- [x] `mix precommit` passes (783 tests, 0 failures).

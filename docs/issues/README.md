@@ -35,7 +35,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` | low |
 | [#127](127-item-pickup-event-loop.md) | Item pickup event loop | `gameplay` `architecture` `ui` | low |
-| [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration | `rules` `architecture` | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#121](121-spectator-membership-model.md) | Campaign membership: spectator role and invite flow | `architecture` `gameplay` | low |
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
@@ -84,6 +83,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration — `Data.Items` modifiers + `:equipped_items` pipeline source | `rules` `architecture` |
 | [#126](126-inventory-and-container-data-model.md) | Inventory and container data model — `object_subtype`/`items`/`inventory` stats keys, `Inventory` helper, LootSource seed | `architecture` `gameplay` |
 | [#131](131-entity-movement-stats-and-valid-moves.md) | Entity movement stats (climb/swim/fly speeds) + `valid_moves` multi-mode deduction | `gameplay` `rules` |
 | [#130](130-grid-tile-movement-jsonb.md) | `GridTile.movement` JSONB — replace `walkable: boolean`, entity movement overlay, valid_moves merge | `architecture` `gameplay` |

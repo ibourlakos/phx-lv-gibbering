@@ -127,7 +127,7 @@ Dependency chain:
 |---|---|---|---|
 | [#126](126-inventory-and-container-data-model.md) | Inventory and container data model ✓ | low | — |
 | [#127](127-item-pickup-event-loop.md) | Item pickup event loop | low | #126 |
-| [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration | low | #126 |
+| [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration ✓ | low | #126 |
 
 **Sequencing:** #126 first — adds `stats["object_subtype"]`, `stats["items"]`, and `stats["inventory"]` JSONB fields; seeds one loot container; updates the data model doc. #127 and #128 both depend on #126 and are independent of each other — do either order, or parallelise across sessions. #127 is the broader gameplay feature (event loop + LiveView panel); #128 is a focused rules-pipeline extension.
 
