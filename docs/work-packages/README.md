@@ -17,7 +17,6 @@ A work package groups related issues by concern and establishes sequencing withi
 | [WP-F](wp-f.md) | Rendering & Frontend | #125, #21, #84 |
 | [WP-K](wp-k.md) | Spectator Implementation | #121 → #122 |
 | [WP-L](wp-l.md) | DM Projection & Top-Down Viewport | #123 → #124 |
-| [WP-M](wp-m.md) | Inventory & Loot System | #127 |
 
 ---
 
@@ -33,6 +32,7 @@ A work package groups related issues by concern and establishes sequencing withi
 
 | WP | Title | Completed |
 |---|---|---|
+| [WP-M](wp-m.md) | Inventory & Loot System | 2026-06-19 |
 | [WP-N](wp-n.md) | Campaign / Map Restructure Phase 1 | 2026-06-17 |
 | [WP-J](wp-j.md) | Architecture Operationalization | 2026-06-13 |
 | [WP-H](wp-h.md) | Game Content | 2026-06-07 |
@@ -66,7 +66,6 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 WP-F:  #125 → (#21, #84)     — tile decoration first, then polish items
 WP-K:  #121 → #122           — spectator membership model first, then session view
 WP-L:  #123 → #124           — Projection behaviour first, then DM top-down viewport
-WP-M:  #127                  — last remaining issue (event loop + LiveView panel)
 ```
 
 No inter-package dependencies. All active WPs can run in any order, or interleaved issue by issue. Within each package the internal chain must be respected (data layer before presentation).

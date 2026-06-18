@@ -1,6 +1,7 @@
 # WP-M · Inventory & Loot System
-**Status:** active
+**Status:** complete
 **Added:** 2026-06-14
+**Completed:** 2026-06-19
 
 Derived from closed discovery #80. Sequence: data model → event engine + modifier integration.
 
