@@ -54,11 +54,10 @@ behind, `#144` can be stubbed without decoration colours and polished later.
 ## Active Front
 
 ```
-#139  (prerequisite — unblock DM solo-play)
-#142  ──→  #143
-#144  (parallel — after WP-F #125)
-#145  ──→  #146  ──→  #147
+#144  (blocked — waiting on WP-F #125 and #159)
 ```
+
+All other issues closed. WP-P is feature-complete pending #144.
 
 ---
 

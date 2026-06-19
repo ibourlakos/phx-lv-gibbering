@@ -14,7 +14,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Open Issues |
 |---|---|---|
-| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #19, #139, #142, #143, #144, #145, #146, #147 |
+| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #144 (blocked on WP-F #125, #159) |
 | [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | #136, #137, #132, #154 |
 | [WP-F](wp-f.md) | Rendering & Frontend | #125, #159, #138, #140, #155, #21, #84 |
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
