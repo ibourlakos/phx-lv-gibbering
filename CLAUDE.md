@@ -34,8 +34,9 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 17 | [17-campaign-scene-map-structure.md](docs/brainstorming/17-campaign-scene-map-structure.md) | Campaign / Scene / Map structure — single-map vs. multi-map, maps table, SceneServer scope | open |
 | 18 | [18-inspection-panel.md](docs/brainstorming/18-inspection-panel.md) | Inspection / Detail Panel — click-to-inspect map elements, selection model, role gating | open |
 | 19 | [19-unified-action-model.md](docs/brainstorming/19-unified-action-model.md) | Unified Action Model — general Action struct covering spells, attacks, improvised, social | open |
+| 20 | [20-display-testing.md](docs/brainstorming/20-display-testing.md) | Display Testing — verifying role-gated and state-dependent SVG output | open |
 
-Next brainstorm number: 20 (see `docs/brainstorming/counter`).
+Next brainstorm number: 21 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
