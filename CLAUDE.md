@@ -31,19 +31,18 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 
 | # | File | Topic | Status |
 |---|---|---|---|
-| 17 | [17-campaign-scene-map-structure.md](docs/brainstorming/17-campaign-scene-map-structure.md) | Campaign / Scene / Map structure — single-map vs. multi-map, maps table, SceneServer scope | open |
 | 18 | [18-inspection-panel.md](docs/brainstorming/18-inspection-panel.md) | Inspection / Detail Panel — click-to-inspect map elements, selection model, role gating | open |
 | 19 | [19-unified-action-model.md](docs/brainstorming/19-unified-action-model.md) | Unified Action Model — general Action struct covering spells, attacks, improvised, social | open |
 | 20 | [20-display-testing.md](docs/brainstorming/20-display-testing.md) | Display Testing — verifying role-gated and state-dependent SVG output | open |
 | 21 | [21-movement-action-gate-and-cost-overlay.md](docs/brainstorming/21-movement-action-gate-and-cost-overlay.md) | Movement action gate + cost-coloured overlay — on-demand overlay, terrain cost feedback | open |
 | 22 | [22-dm-entity-panel-redesign.md](docs/brainstorming/22-dm-entity-panel-redesign.md) | DM entity panel redesign — right panel as catalog, adjustments in left panel DM tab | open |
 | 23 | [23-composable-entity-appearances.md](docs/brainstorming/23-composable-entity-appearances.md) | Composable entity appearances — skeleton archetypes, socket model, 4-way facing, proportions | open |
-| 24 | [24-isometric-layout-type.md](docs/brainstorming/24-isometric-layout-type.md) | Isometric layout type — rhombus vs. chessboard, implications for pan/scroll and HUD | open |
 | 25 | [25-elevation.md](docs/brainstorming/25-elevation.md) | Elevation — logical Z, SVG render sort, structure interiors, line of sight | open |
 | 26 | [26-tile-occupancy-and-traversability.md](docs/brainstorming/26-tile-occupancy-and-traversability.md) | Tile occupancy and traversability — 5-category taxonomy, effects layer, computed traversability, ice slip test case | open |
 | 27 | [27-coordinate-model-and-spatial-addressing.md](docs/brainstorming/27-coordinate-model-and-spatial-addressing.md) | Coordinate model and spatial addressing — tile grain, elevated surfaces, interior spaces, teleportation destinations | open |
+| 28 | [28-player-dice-roll-prompt-and-auto-roll.md](docs/brainstorming/28-player-dice-roll-prompt-and-auto-roll.md) | Player dice roll prompt + auto-roll preference — pending-roll state, prompt UI, per-player toggle | open |
 
-Next brainstorm number: 28 (see `docs/brainstorming/counter`).
+Next brainstorm number: 29 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 

@@ -14,31 +14,21 @@ to move. This has two problems:
    higher movement cost (e.g. a climbable rock, difficult ground) is
    indistinguishable from free movement.
 
-## Open questions
+## Decisions
 
-- Should movement require an explicit "Move" action button press before
-  the overlay appears? Or should there be a toggle (always-on vs. on-demand)?
+| Question | Decision |
+|---|---|
+| Explicit Move button or toggle? | Explicit button required. Overlay does not appear on entity select. |
+| Cost representation? | Colour tint by terrain tier: green (×1), yellow (×2 difficult). No numerical labels on tiles. |
+| Unreachable tiles when movement hits zero? | Overlay hides entirely; unreachable tiles are not shown (not greyed out). |
+| Economy slot? | No action slot consumed. Movement deducts from `movement_remaining` only on tile click. |
+| Live hover or static range? | Static range; hover tooltip shows cost to that tile in feet. No animated path trace. |
+| Non-walk modes in scope? | Walk only for v1. Climb/swim/fly deferred. |
 
-- How do we represent movement cost visually? Options:
-  - Colour gradient (green → yellow → red by remaining movement after step)
-  - Percentage label on each tile
-  - Tile tint keyed to cost tier (×1, ×2, impassable)
+## Issues Opened
 
-- When remaining movement hits zero mid-overlay, should unreachable tiles
-  grey out in place or disappear?
+| Issue | Title | Status |
+|---|---|---|
+| [#144](../issues/144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | open (WP-P) |
 
-- Does the "Move" action consume from action economy (bonus action / action /
-  free), or does it gate the overlay without consuming economy until the
-  player commits by clicking a tile?
-
-- Should the overlay update live as the player hovers over tiles (showing
-  the path cost to that tile), or only show static reachable range?
-
-- Scope: does this brainstorm also cover non-walk movement modes
-  (climb, swim, fly) that have different cost multipliers, or is that
-  deferred until those modes are needed?
-
-## Cross-references
-
-- Related: issue #132 (appearance catalogue — tile textures for terrain types)
-- Related: future difficult-terrain / elevation work (no issue yet)
+This brainstorm will be deleted when #144 is closed.

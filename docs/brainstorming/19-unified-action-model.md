@@ -262,14 +262,24 @@ render time, producing an `Action` with `source: :weapon`.
 
 ---
 
-## Open questions
+## Decisions
 
-- [ ] Q1: Where does the Action catalogue live? Hardcoded per entity type, or a DB table? For spells the catalogue is already in the DB; class features and weapon attacks are currently implicit.
-- [ ] Q2: How does the action bar discover which actions are available for the current entity on its turn? (Evaluate `prerequisites` against current state, filter by remaining economy?)
-- [ ] Q3: Do we model `:contest` resolution now, or stub and defer until Grapple/Shove are explicitly in scope?
-- [ ] Q4: What is v1 scope? Weapon attacks + spells unified under the new struct; everything else deferred?
-- [ ] Q5: How does the DM create a freeform improvised action in the scene UI?
-- [ ] Q6: Should Ready and reactions be designed in the action model now — even as stubs — to avoid structural blockers when they become in-scope?
-- [ ] Q7: Social/exploration actions (Talk, Read, Inspect) — do these go through the same `Action` pipeline in combat, or are they a separate non-combat interaction layer?
-- [ ] Q8: Which interrupt points are defined in the pipeline for v1? (post-movement for OA; pre-resolution for Counterspell; post-damage for Hellish Rebuke?) And who gets the reaction offer — just the DM, or player-controlled entities too?
-- [ ] Q9: For trap-triggered chaining (no player input), does the engine resolve the chain synchronously in one turn or queues events for the next available processing slot?
+| Q | Decision | Deferred? |
+|---|---|---|
+| **Q1** | v1 keeps existing storage: spells in DB, weapons derived from `entity.stats["equipped_weapon"]`, class features implicit. Unified Action catalogue (DB table or module per entity type) is Phase 2. | Phase 2 |
+| **Q2** | v1: action bar renders available actions from entity state at render time (existing approach). Predicate-based discovery (`prerequisites` evaluation) is Phase 2. | Phase 2 |
+| **Q3** | `:contest` included in v1. Grapple (Athletics vs. Athletics/Acrobatics) is the proof-of-concept. Shove is the obvious follow-on. | No |
+| **Q4** | v1 scope: unify existing weapon attack and spell under `%Action{}`, fix `effect.attack_type` `:aoe` misplacement, add `:contest` resolution, implement Grapple. | No |
+| **Q5** | DM freeform improvised actions deferred with #85 (content creation tools). | Deferred (#85) |
+| **Q6** | `economy_slot: :reaction` in the struct already accommodates reactions. No interrupt pipeline designed in v1 — reactions remain a stub. | Phase 2 |
+| **Q7** | Social/exploration actions are a separate non-combat interaction layer, not part of the `%Action{}` combat pipeline in v1. | Deferred |
+| **Q8** | No interrupt points in v1. Opportunity attacks, Counterspell, and reaction triggers are all deferred. | Phase 2 |
+| **Q9** | Trap-triggered event chaining deferred with trap mechanism design (#85). | Deferred (#85) |
+
+## Issues Opened
+
+| Issue | Title | Status |
+|---|---|---|
+| [#152](../issues/152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | open |
+
+This brainstorm will be deleted when #152 is closed. Phase 2 questions (catalogue, predicate discovery, reactions, interrupt pipeline) should be addressed in a follow-on brainstorm at that time.

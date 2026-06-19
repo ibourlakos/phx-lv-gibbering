@@ -59,22 +59,20 @@ See brainstorm #27 for the coordinate model.
 - Elevation differences affect ranged attack modifiers (high ground advantage
   is a common homebrew rule, not RAW 5e but worth supporting)
 
-## Open questions
+## Decisions
 
-- Integer elevation levels or continuous height in feet? Integer levels are
-  simpler and sufficient for most D&D scenarios (climbed a rock = +1 level).
-- How does falling work? An entity pushed off elevation 1 takes fall damage
-  and lands at elevation 0. Is landing tile determined by engine or player?
-- How are stairs/ramps represented? As objects that connect elevation levels,
-  or as tiles with a special `connects_elevation` flag?
-- Interior spaces: sub-elevation layer, or a fully separate scene (separate
-  LiveView mount)?
-- Does elevation affect the movement overlay (brainstorm #21)? Tiles at a
-  higher elevation reachable only by climbing should show a distinct cost colour.
+| Question | Decision |
+|---|---|
+| Integer or continuous elevation? | Integers only (settled in #27). Half-step platforms use visual render offsets only. |
+| Falling? | Deferred for v1 — no falling mechanic in minimum playable loop. File a follow-on issue when combat elevation becomes in-scope. |
+| Stairs/ramps? | Objects with `connects_elevation: {from_level, to_level}` field. Movement through them deducts climb cost (2× per foot). |
+| Interior spaces? | Deferred. Neither sub-elevation layer nor sub-scene chosen yet. Decision deferred to structure design. |
+| Elevation in movement overlay? | Yes — tiles at elevation != mover's elevation show distinct cost colour (climb cost). Deferred to elevation render implementation in #158. |
 
-## Cross-references
+## Issues Opened
 
-- Related: brainstorm #21 (movement overlay — elevation changes cost)
-- Related: brainstorm #23 (structure archetype — roof/interior layer)
-- Related: brainstorm #26 (tile occupancy — elevated objects affect traversability)
-- Related: brainstorm #27 (coordinate model — elevated surfaces as addressable destinations)
+| Issue | Title | Status |
+|---|---|---|
+| [#158](../issues/158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | open |
+
+This brainstorm will be deleted when #158 is closed.

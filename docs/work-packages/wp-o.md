@@ -19,6 +19,7 @@ gates narrative vs. mechanical content by role.
 | [#136](../issues/136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden structs | — |
 | [#137](../issues/137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | #136 |
 | [#132](../issues/132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue, entity states vocabulary, dev seed coverage | — |
+| [#154](../issues/154-dm-panel-redesign.md) | DM panel redesign — right panel entity catalog + left panel DM section | #137 |
 
 ---
 
@@ -31,6 +32,7 @@ gates narrative vs. mechanical content by role.
 
 #136 (visibility taxonomy)
   └─→ #137 (right panel + feed)
+          └─→ #154 (DM panel redesign — right panel DM tab + left panel DM section)
 
 #132 (appearance catalogue + entity states vocabulary)
   ├─→ #135 (flavour descriptions, entity state conditions in panel)
@@ -39,7 +41,7 @@ gates narrative vs. mechanical content by role.
 
 `#134` and `#136` have no dependencies and can start in parallel. `#132` is
 independent and can run alongside both chains. `#135` should land before `#137`
-so active links in the feed have a left panel to open into.
+so active links in the feed have a left panel to open into. `#154` follows `#137`.
 
 ---
 
@@ -47,7 +49,7 @@ so active links in the feed have a left panel to open into.
 
 ```
 #134  ──→  #135
-#136  ──→  #137
+#136  ──→  #137  ──→  #154
 #132  (parallel, feeds both)
 ```
 

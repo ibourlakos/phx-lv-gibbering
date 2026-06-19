@@ -97,25 +97,20 @@ addressed as `{tile_coord, direction}`:
 Edge queries must be normalised so `{2,3,:north}` and `{2,2,:south}` resolve
 to the same edge. Walls and doors are stored once per edge, not duplicated.
 
-## Open questions
+## Decisions
 
-- Should elevation be integers only, or rational numbers (e.g., `0.5` for
-  a half-step platform)? Integer levels are simpler; half-steps may be needed
-  for certain terrain types.
-- How are surface addresses stored? As a derived property of the Object record,
-  or as explicit rows in a `surfaces` table?
-- Interior spaces: elevated layer or sub-scene? This is probably the biggest
-  unresolved question in the spatial model.
-- How does the projection function `iso_project/4` handle elevation? A raised
-  platform should shift `screen_y` upward; the exact formula determines how
-  high one elevation level appears on screen.
-- Is there a maximum map size? Large maps with many entities may stress
-  the SVG render; this may inform whether we need spatial partitioning for
-  rendering (only render tiles in or near the viewport).
+| Question | Decision |
+|---|---|
+| Elevation — integers or rationals? | Integers only. Half-step platforms use visual render offsets; game logic always uses integer elevation. |
+| Surface addresses stored how? | Derived from the Object record at query time. `{object_id, :top}` resolves to `{x, y, elevation + 1}`. No separate `surfaces` table. |
+| Interior spaces? | Deferred. Not in scope until structure interiors are designed. Both models (elevated sub-layer vs. sub-scene) remain valid; decision deferred to #158 and structure work. |
+| `iso_project` elevation formula? | `screen_y -= elevation * (tile_height / 2)`. One elevation level = half tile height upward in screen space. |
+| Maximum map size / partitioning? | Deferred. Full-map SVG rendering for v1; add an issue if performance becomes a problem. |
 
-## Cross-references
+## Issues Opened
 
-- Related: brainstorm #25 (elevation — logical Z is part of the game grid)
-- Related: brainstorm #26 (tile occupancy — traversability queries use game grid coords)
-- Related: brainstorm #24 (isometric layout — determines the iso_project formula)
-- Related: brainstorm #23 (entity appearances — rendering uses SVG render space)
+| Issue | Title | Status |
+|---|---|---|
+| [#156](../issues/156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | open |
+
+This brainstorm will be deleted when #156 is closed.

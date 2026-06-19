@@ -266,3 +266,17 @@ The `panel_subject` assign should live **entirely in the socket** (`assign(socke
 - [x] Q8: Where does the player event feed sit in the viewport layout? → **Right panel, tabbed: Events (all roles) + Catalogue (DM only). Tab strip is role-gated — players see only their tabs.**
 - [x] Q9: For tombstone entity links (dead/gone entity), how much of the last-known stat block is shown? → **Full panel, same role-gating as when alive. Death is just a condition (`:dead`, `:destroyed`) — the panel renders current entity state with the condition surfaced as a "Fallen" / "Destroyed" label. No special tombstone mode. Appearance change at 0 HP is handled by the appearance system (issue #132). For entities removed from the scene entirely (fled, teleported), the death/removal event must carry a state snapshot; this is a constraint on the event schema (issue #119).**
 - [x] Q10: Should passive rule modifiers that applied to a cast be recorded in the event's resolution context? → **Yes — generalised beyond spells: all action types carry a `modifiers` list in their resolution context (environmental, passive feature, condition-driven). The "as resolved" overlay in the panel renders this list. Constraint forwarded to issue #119 (event schema). Panel rendering requires no additional design here.**
+
+---
+
+## Issues Opened
+
+| Issue | Title | Status |
+|---|---|---|
+| [#134](../issues/134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` | closed |
+| [#135](../issues/135-left-inspection-panel.md) | Left inspection panel — click-to-inspect map elements | closed |
+| [#132](../issues/132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue and dev seed coverage | open (WP-O) |
+| [#136](../issues/136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden event structs | open (WP-O) |
+| [#137](../issues/137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | open (WP-O) |
+
+This brainstorm is fully settled and triaged. It will be deleted when #132, #136, and #137 are closed (WP-O completion).

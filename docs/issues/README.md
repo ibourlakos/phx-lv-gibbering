@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 141 (see `counter`)
+**Next issue number:** 160 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -29,6 +29,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | # | Title | Tags | Priority |
 |---|---|---|---|
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
+| [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
@@ -46,6 +47,22 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` | medium |
 | [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
+| [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` | high |
+| [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` | high |
+| [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` | medium |
+| [#145](145-player-auto-roll-preference.md) | Player auto-roll preference | `architecture` `gameplay` `rules` | medium |
+| [#146](146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | `ui` `gameplay` `architecture` `rules` | medium |
+| [#147](147-initiative-roll-prompt.md) | Initiative roll prompt | `gameplay` `rules` `architecture` | medium |
+| [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
+| [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
+| [#152](152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | `architecture` `rules` `gameplay` | medium |
+| [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` | medium |
+| [#154](154-dm-panel-redesign.md) | DM panel redesign — right panel entity catalog + left panel DM section | `ui` `gameplay` `architecture` | medium |
+| [#155](155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | `rendering` `architecture` | low |
+| [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` | medium |
+| [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
+| [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
+| [#159](159-condition-badge-overlay.md) | Condition badge overlay on entity tokens | `rendering` `gameplay` `ui` | medium |
 
 ---
 
@@ -53,6 +70,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#150](150-campaign-narrative-shell.md) | Campaign narrative shell (intro/outro text, encounter title) | `gameplay` `ui` | low |
+| [#151](151-campaign-scene-phase-2-scene-templates.md) | Campaign / Scene Phase 2 — scene_templates and campaign_scenes schema | `architecture` `gameplay` | medium |
 | [#86](086-simplify-check-docs-to-git-diff-scope.md) | Simplify `mix check.docs` to git-diff scope | `ops` `architecture` | low |
 | [#58](058-point-buy-ability-scores.md) | Point buy ability score method | `gameplay` `rules` | low |
 | [#59](059-character-export-import.md) | Character export/import with versioned serialization | `architecture` `gameplay` | low |
@@ -64,8 +83,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
 | [#120](120-items-data-population.md) | Items data module population — ≥20 SRD-legal items with appearance records | `gameplay` `rules` `architecture` | low |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
-| [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` | low |
-| [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
 
@@ -82,6 +99,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` |
 
 ---
 
