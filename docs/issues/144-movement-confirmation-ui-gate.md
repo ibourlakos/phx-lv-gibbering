@@ -29,12 +29,14 @@ committing.
 5. If all movement is spent, the overlay hides and the Move button is disabled for
    the rest of the turn.
 
-## Notes
+## Settled decisions from BS-21
 
-- This is the minimum viable version from brainstorm #21 — single-step commit,
-  no path-planning drag. Multi-step path preview is explicitly deferred.
-- Reachable tile computation is already implemented in `Rules.valid_moves/3`; this
-  issue is UI-only.
+- **Overlay trigger:** explicit Move button required. Overlay does not appear on entity select.
+- **Cost representation:** colour tint by terrain tier — green (×1 normal), yellow (×2 difficult), no tile shown for impassable. No numerical labels on tiles; cost shown only in hover tooltip.
+- **Zero-movement state:** when `movement_remaining == 0`, overlay hides entirely and Move button is disabled. Unreachable tiles are not shown (not greyed out).
+- **Economy:** movement costs `movement_remaining` only — no action/bonus action slot consumed. Move button gates the UI; actual deduction on tile click.
+- **Hover behaviour:** static reachable range; hover tooltip shows path cost to that tile in feet. No animated path trace on hover (v1).
+- **Movement modes:** walk mode only. Climb/swim/fly deferred.
 
 **Acceptance criteria**
 - [ ] Activating move action shows coloured reachable tile overlay
