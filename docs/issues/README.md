@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 138 (see `counter`)
+**Next issue number:** 141 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -42,6 +42,9 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
 | [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` | low |
 | [#124](124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | `rendering` `ui` `architecture` | low |
+| [#138](138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | `rendering` `bug` | low |
+| [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` | medium |
+| [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 
 ---
 

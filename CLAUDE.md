@@ -35,8 +35,10 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 18 | [18-inspection-panel.md](docs/brainstorming/18-inspection-panel.md) | Inspection / Detail Panel — click-to-inspect map elements, selection model, role gating | open |
 | 19 | [19-unified-action-model.md](docs/brainstorming/19-unified-action-model.md) | Unified Action Model — general Action struct covering spells, attacks, improvised, social | open |
 | 20 | [20-display-testing.md](docs/brainstorming/20-display-testing.md) | Display Testing — verifying role-gated and state-dependent SVG output | open |
+| 21 | [21-movement-action-gate-and-cost-overlay.md](docs/brainstorming/21-movement-action-gate-and-cost-overlay.md) | Movement action gate + cost-coloured overlay — on-demand overlay, terrain cost feedback | open |
+| 22 | [22-dm-entity-panel-redesign.md](docs/brainstorming/22-dm-entity-panel-redesign.md) | DM entity panel redesign — right panel as catalog, adjustments in left panel DM tab | open |
 
-Next brainstorm number: 21 (see `docs/brainstorming/counter`).
+Next brainstorm number: 23 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
