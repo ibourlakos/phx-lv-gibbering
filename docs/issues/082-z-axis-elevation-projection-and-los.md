@@ -1,8 +1,9 @@
 # #82 · Z axis elevation — projection, depth sorting, and LOS
 
-**Status:** deferred
+**Status:** cancelled
 **Opened:** 2026-06-05
-**Deferred because:** Path [F] candidate — touches projection math, depth sort, tile data model, 3D movement, and 3D LOS simultaneously. Too broad for in-issue settlement. Promote to a brainstorm after zoom/pan (#81 closed) and the composable sprite system stabilise.
+**Cancelled:** 2026-06-19
+**Cancelled because:** Superseded by BS-25/BS-27 (now settled) and issues #156 (coordinate model), #158 (elevation model). All actionable scope is captured in those issues.
 **Priority:** low
 **Tags:** discovery, rendering, architecture
 

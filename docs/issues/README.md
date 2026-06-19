@@ -82,7 +82,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#96](096-promex-prometheus-grafana-stack.md) | PromEx + Prometheus + Grafana monitoring stack | `ops` `architecture` | low |
 | [#120](120-items-data-population.md) | Items data module population — ≥20 SRD-legal items with appearance records | `gameplay` `rules` `architecture` | low |
 | [#33](033-templates-governance-model.md) | Templates governance model | `discovery` `architecture` | low |
-| [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` | low |
 | [#28](028-multi-tile-entities.md) | Multi-tile entity footprints in isometric rendering | `discovery` `architecture` `rendering` | low |
 | [#83](083-volumetric-spell-effect-rendering.md) | Volumetric spell effect rendering | `discovery` `rendering` | low |
 
@@ -99,6 +98,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#82](082-z-axis-elevation-projection-and-los.md) | Z axis elevation — projection, depth sorting, and LOS | `discovery` `rendering` `architecture` |
 
 ---
 

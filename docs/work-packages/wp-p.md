@@ -17,6 +17,7 @@ outcome state, movement confirmation UX, and interactive dice rolling.
 
 | # | Title | Depends on |
 |---|---|---|
+| [#19](../issues/019-lobby-edits-stale-gameserver.md) | Lobby character edits don't propagate to a running GameServer | — |
 | [#139](../issues/139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | — |
 | [#142](../issues/142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | — |
 | [#143](../issues/143-campaign-outcome-screen.md) | Campaign outcome screen | #142 |

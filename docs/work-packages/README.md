@@ -4,21 +4,25 @@ One file per work package: `docs/work-packages/wp-<letter>.md`. This file is the
 
 A work package groups related issues by concern and establishes sequencing within that concern. See [docs/workflow.md](../workflow.md) ([E] subflow) for creation, maintenance, and completion rules.
 
-**Next letter:** Q
+**Next letter:** S
 
 ---
 
 ## Active
 
+Ordered by priority — work at the top before starting work below it.
+
 | WP | Title | Open Issues |
 |---|---|---|
-| [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | #134, #135, #136, #137, #132 |
-| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #139, #142, #143, #144, #145, #146, #147 |
-| [WP-A](wp-a.md) | Infrastructure & Data Plumbing | #24 |
-| [WP-B](wp-b.md) | Core Engine Architecture | #15 |
-| [WP-F](wp-f.md) | Rendering & Frontend | #125, #21, #84 |
+| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #19, #139, #142, #143, #144, #145, #146, #147 |
+| [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | #136, #137, #132, #154 |
+| [WP-F](wp-f.md) | Rendering & Frontend | #125, #138, #140, #155, #21, #84 |
+| [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
+| [WP-R](wp-r.md) | Display Testing & Testability | #153 |
+| [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
 | [WP-K](wp-k.md) | Spectator Implementation | #121 → #122 |
 | [WP-L](wp-l.md) | DM Projection & Top-Down Viewport | #123 → #124 |
+| [WP-A](wp-a.md) | Infrastructure & Data Plumbing | #24 |
 
 ---
 
@@ -53,28 +57,39 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 |---|---|---|
 | [#16](../issues/016-lpc-sprite-license-risk.md) | LPC sprite copyleft risk | Legal — blocks #6 |
 | [#6](../issues/006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | Blocked on #16 |
-| [#19](../issues/019-lobby-edits-stale-gameserver.md) | Lobby edits don't propagate to running GameServer | Bug — no WP home yet |
-| [#32](../issues/032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | Discovery — deferred; revisit when DM intervention scope expands |
-| [#33](../issues/033-templates-governance-model.md) | Templates governance model | Discovery — deferred |
-| [#63](../issues/063-playwright-smoke-tests.md) | Playwright smoke tests + smoke Docker env | Ops — deferred |
 | [#85](../issues/085-content-creation-tools-design.md) | Content creation tools — design and scope | Discovery — open; promote to brainstorm before implementation |
-| [#120](../issues/120-items-data-population.md) | Items data module population | Deferred — blocked on content pipeline decisions |
+| [#141](../issues/141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | Ops — independent; pick up any time |
+| [#148](../issues/148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | Post-WP-P; depends on #146 |
+| [#149](../issues/149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | Post-WP-O; depends on #136 |
 
 ---
 
 ## Active Front
 
 ```
-WP-F:  #125 → (#21, #84)                   — tile decoration first, then polish items
-WP-K:  #121 → #122                         — spectator membership model first, then session view
-WP-L:  #123 → #124                         — Projection behaviour first, then DM top-down viewport
-WP-O:  #134 → #135                         — rename first, then left panel
-       #136 → #137                         — visibility taxonomy first, then right panel
-       #132 (parallel, feeds both panels)
-WP-P:  #139                                — DM orphaned PC fix (prerequisite for solo-play)
+WP-P:  #19 (lobby stale GameServer bug)
+       #139 (DM orphaned PC — prerequisite for solo-play)
        #142 → #143                         — outcome phases then outcome screen
        #144 (after WP-F #125)              — movement confirmation UI
-       #145 → #146 → #147                  — auto-roll preference, dice prompt, then initiative prompt
+       #145 → #146 → #147                  — auto-roll, dice prompt, initiative prompt
+
+WP-O:  #136 → #137 → #154                 — visibility taxonomy, right panel, DM panel redesign
+       #134 → #135                         — rename first, then left panel
+       #132 (parallel, feeds both panels)
+
+WP-F:  #125 → (#21, #84)                   — tile decoration first, then polish
+       #138, #140 (quick bug fixes, parallel)
+       #155 (composable appearances, parallel)
+
+WP-Q:  #156 → (#157, #158)                — coordinate model first, then occupancy + elevation
+
+WP-R:  #153                               — SVG testability (no dependencies)
+
+WP-B:  #152 (Action struct refactor, no dependencies)
+
+WP-K:  #121 → #122
+WP-L:  #123 → #124
 ```
 
-WP-P has one cross-package dependency: `#144` should follow WP-F `#125`. All other WP-P chains are independent.
+WP-P has one cross-package dependency: `#144` should follow WP-F `#125`.
+WP-Q can start as soon as WP-P's most urgent issues (#139, #142–#143) are shipped.
