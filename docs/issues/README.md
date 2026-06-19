@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 134 (see `counter`)
+**Next issue number:** 138 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -34,6 +34,10 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` | low |
+| [#134](134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` socket assign | `architecture` `ui` | medium |
+| [#135](135-left-inspection-panel.md) | Left inspection panel — click-to-inspect map elements | `ui` `gameplay` `rendering` | medium |
+| [#136](136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + DmRevealed / DmHidden event structs | `architecture` `gameplay` `ui` | medium |
+| [#137](137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | `ui` `gameplay` `architecture` | medium |
 | [#132](132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue and dev seed coverage | `gameplay` `rendering` `architecture` | medium |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#121](121-spectator-membership-model.md) | Campaign membership: spectator role and invite flow | `architecture` `gameplay` | low |

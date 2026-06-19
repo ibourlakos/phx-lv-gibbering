@@ -4,7 +4,7 @@ One file per work package: `docs/work-packages/wp-<letter>.md`. This file is the
 
 A work package groups related issues by concern and establishes sequencing within that concern. See [docs/workflow.md](../workflow.md) ([E] subflow) for creation, maintenance, and completion rules.
 
-**Next letter:** O
+**Next letter:** P
 
 ---
 
@@ -12,6 +12,7 @@ A work package groups related issues by concern and establishes sequencing withi
 
 | WP | Title | Open Issues |
 |---|---|---|
+| [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | #134, #135, #136, #137, #132 |
 | [WP-A](wp-a.md) | Infrastructure & Data Plumbing | #24 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15 |
 | [WP-F](wp-f.md) | Rendering & Frontend | #125, #21, #84 |
@@ -63,9 +64,12 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 ## Active Front
 
 ```
-WP-F:  #125 → (#21, #84)     — tile decoration first, then polish items
-WP-K:  #121 → #122           — spectator membership model first, then session view
-WP-L:  #123 → #124           — Projection behaviour first, then DM top-down viewport
+WP-F:  #125 → (#21, #84)                   — tile decoration first, then polish items
+WP-K:  #121 → #122                         — spectator membership model first, then session view
+WP-L:  #123 → #124                         — Projection behaviour first, then DM top-down viewport
+WP-O:  #134 → #135                         — rename first, then left panel
+       #136 → #137                         — visibility taxonomy first, then right panel
+       #132 (parallel, feeds both panels)
 ```
 
 No inter-package dependencies. All active WPs can run in any order, or interleaved issue by issue. Within each package the internal chain must be respected (data layer before presentation).

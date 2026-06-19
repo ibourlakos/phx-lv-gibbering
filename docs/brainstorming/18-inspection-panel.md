@@ -166,13 +166,13 @@ The DM can promote any `:dm_only` event to `:revealed`, pushing it to the player
 **Implementation note:** Reveal and hide are modeled as their own events in the Published Language (issue #119) — the event log stays append-only throughout:
 
 ```
-%Events.DmRevealed{ original_event_id: event_id, revealed_at: DateTime.t() }
-%Events.DmHidden{   original_event_id: event_id, hidden_at:   DateTime.t() }
+%Events.LogEntryRevealed{ original_event_id: event_id, revealed_at: DateTime.t() }
+%Events.LogEntryHidden{   original_event_id: event_id, hidden_at:   DateTime.t() }
 ```
 
-The player feed projection folds the log in order: `DmRevealed` makes the referenced event visible; `DmHidden` removes it; a subsequent `DmRevealed` restores it. The DM can toggle freely. No mutation of past events — visibility is a derived property of the projection, not a stored attribute on the original event struct.
+The player feed projection folds the log in order: `LogEntryRevealed` makes the referenced event visible; `LogEntryHidden` removes it; a subsequent `LogEntryRevealed` restores it. The DM can toggle freely. No mutation of past events — visibility is a derived property of the projection, not a stored attribute on the original event struct.
 
-`%Events.DmHidden{}` can only retract a previously revealed event — it does not suppress events that are `:public` by default. Hiding a naturally public event (e.g. suppressing a hero's roll retroactively) is out of scope.
+`%Events.LogEntryHidden{}` can only retract a previously revealed event — it does not suppress events that are `:public` by default. Hiding a naturally public event (e.g. suppressing a hero's roll retroactively) is out of scope.
 
 #### Active links in event feed entries
 
