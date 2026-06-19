@@ -16,7 +16,7 @@ This issue covers:
 **Depends on:** #80 (inventory and loot container system) for schema context — do not precede with a standalone `items` table design without that issue.
 
 **References**
-- `docs/game-content-taxonomy.md` — Item upsert checklist
+- `docs/reference/game-content-taxonomy.md` — Item upsert checklist
 - Issue #79 (closed) — existing `Data.Items` structure
 - Issue #80 — inventory system (deferred); shape of a future `items` table
 - Issue #89 (closed) — initial content population; items AC deferred here

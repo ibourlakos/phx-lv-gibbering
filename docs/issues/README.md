@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 133 (see `counter`)
+**Next issue number:** 134 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -83,6 +83,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#133](133-introduce-docs-reference-folder.md) | Introduce `docs/reference/` for vocabulary and reference documents | `architecture` |
 | [#127](127-item-pickup-event-loop.md) | Item pickup event loop — SceneServer handlers, Inventory pure module, container panel LiveView | `gameplay` `architecture` `ui` |
 | [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration — `Data.Items` modifiers + `:equipped_items` pipeline source | `rules` `architecture` |
 | [#126](126-inventory-and-container-data-model.md) | Inventory and container data model — `object_subtype`/`items`/`inventory` stats keys, `Inventory` helper, LootSource seed | `architecture` `gameplay` |
