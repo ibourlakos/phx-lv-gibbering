@@ -93,23 +93,23 @@ in a pre-session menu.
 
 ---
 
-## Open questions
+## Decisions
 
-1. **Granularity** — Should auto-roll be a single toggle or per roll type (auto attack
-   rolls but prompt for damage)? Recommend single toggle for minimum; can split later.
-2. **AoE saving throw side** — Multiple entities can be caught in an AoE. Each owner
-   should be prompted for their own saving throw if auto-roll is off. This adds
-   concurrency complexity; defer multi-owner saving throw prompts until after the minimum
-   loop is shipped.
-3. **Physical dice honour system** — Manual entry trusts the player completely. No
-   validation beyond range 1–20 (or die-type face count). This is intentional.
-4. **DM rolls** — Should DM rolls for NPC saving throws also be promptable (for dramatic
-   effect)? Separate concern; always auto-roll for now.
+| Q | Decision |
+|---|---|
+| **Q1 — Granularity** | Single `auto_roll` toggle for v1. Per-roll-type granularity deferred. |
+| **Q2 — AoE concurrency** | Deferred — filed as #148 (multi-owner concurrent saving throw prompts). |
+| **Q3 — Physical dice honour system** | Manual entry trusts the player. Validated only against range 1–die_face_count. Intentional design — no server-side enforcement. |
+| **Q4 — DM roll prompts** | Always auto-roll for DM/NPC. Future reveal feature filed as #149 (NPC/DM roll visibility). |
 
----
+## Issues Opened
 
-## Issues to derive
+| Issue | Title | Status |
+|---|---|---|
+| [#145](../issues/145-player-auto-roll-preference.md) | Player auto-roll preference | open (WP-P) |
+| [#146](../issues/146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | open (WP-P) |
+| [#147](../issues/147-initiative-roll-prompt.md) | Initiative roll prompt | open (WP-P) |
+| [#148](../issues/148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | open |
+| [#149](../issues/149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | open |
 
-1. `auto_roll` boolean field on `campaign_characters` — schema + migration + toggle UI
-2. `%Events.RollRequired{}` event struct + SceneServer `:awaiting_roll` sub-state + timeout
-3. Dice roll prompt LiveView component (modal overlay, Roll button, manual entry, countdown)
+This brainstorm will be deleted when #145–#149 are all closed or deferred.
