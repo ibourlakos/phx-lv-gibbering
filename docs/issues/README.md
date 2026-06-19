@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 158 (see `counter`)
+**Next issue number:** 159 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -61,6 +61,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#155](155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | `rendering` `architecture` | low |
 | [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` | medium |
 | [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
+| [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
 
 ---
 
