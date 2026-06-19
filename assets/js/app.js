@@ -187,11 +187,13 @@ const Hooks = {
       this._move  = e => this.onPointerMove(e)
       this._up    = e => this.onPointerUp(e)
       this._key   = e => this.onKeyDown(e)
+      this._ctx   = e => this.onContextMenu(e)
 
       this.el.addEventListener("wheel", this._wheel, {passive: false})
       this.el.addEventListener("pointerdown", this._down)
       this.el.addEventListener("pointermove", this._move)
       this.el.addEventListener("pointerup", this._up)
+      this.el.addEventListener("contextmenu", this._ctx)
       window.addEventListener("keydown", this._key)
     },
 
@@ -200,6 +202,7 @@ const Hooks = {
       this.el.removeEventListener("pointerdown", this._down)
       this.el.removeEventListener("pointermove", this._move)
       this.el.removeEventListener("pointerup", this._up)
+      this.el.removeEventListener("contextmenu", this._ctx)
       window.removeEventListener("keydown", this._key)
     },
 
@@ -253,16 +256,17 @@ const Hooks = {
     onPointerDown(e) {
       if (e.button !== 0) return
       this.dragging = false
+      this.ptrId = e.pointerId
       this.ptrStartX = e.clientX
       this.ptrStartY = e.clientY
-      this.el.setPointerCapture(e.pointerId)
     },
 
     onPointerMove(e) {
-      if (!this.el.hasPointerCapture(e.pointerId)) return
+      if (this.ptrId !== e.pointerId) return
       if (!this.dragging) {
         if (Math.abs(e.clientX - this.ptrStartX) + Math.abs(e.clientY - this.ptrStartY) < 5) return
         this.dragging = true
+        this.el.setPointerCapture(e.pointerId)
         this.ptrLastX = this.ptrStartX
         this.ptrLastY = this.ptrStartY
         this.el.style.cursor = "grabbing"
@@ -276,9 +280,16 @@ const Hooks = {
       this.apply()
     },
 
-    onPointerUp(_e) {
+    onPointerUp(e) {
+      if (e.pointerId !== this.ptrId) return
       this.dragging = false
+      this.ptrId = null
       this.el.style.cursor = ""
+    },
+
+    onContextMenu(e) {
+      e.preventDefault()
+      this.pushEvent("deselect_spell", {})
     },
 
     onKeyDown(e) {

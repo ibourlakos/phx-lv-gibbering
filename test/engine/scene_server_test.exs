@@ -30,14 +30,14 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "select_entity/2" do
-    test "sets selected_id and populates valid_moves for the active hero" do
+    test "sets actor_id and populates valid_moves for the active hero" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
       new_state = SceneServer.select_entity(game_id, hero_id)
 
-      assert new_state.selected_id == hero_id
+      assert new_state.actor_id == hero_id
       assert new_state.valid_moves != []
     end
 
@@ -50,7 +50,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.select_entity(game_id, non_active)
 
-      assert new_state.selected_id == nil
+      assert new_state.actor_id == nil
       assert new_state.valid_moves == []
     end
   end
@@ -134,7 +134,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       new_state = SceneServer.attack_entity(game_id, monster_id)
 
       # With a single hero, turn wraps back to index 0 and selection is cleared.
-      assert new_state.selected_id == nil
+      assert new_state.actor_id == nil
       assert new_state.valid_moves == []
     end
   end
@@ -148,7 +148,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.end_turn(game_id)
 
-      assert new_state.selected_id == nil
+      assert new_state.actor_id == nil
       assert new_state.valid_moves == []
     end
   end
@@ -335,7 +335,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       returned = SceneServer.select_entity(game_id, hero_id)
 
-      assert returned.selected_id == nil
+      assert returned.actor_id == nil
       assert returned.valid_moves == []
     end
 

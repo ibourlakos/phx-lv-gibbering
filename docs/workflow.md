@@ -174,6 +174,8 @@ Apply to paths A, B, C only.
 **Trigger:** Modifies a shared interface, spans more than two modules, or affects the SVG pipeline end-to-end.  
 **Action:** Discuss and update [docs/architecture.md](architecture.md) before writing any code.
 
+**Seed sub-gate:** Any migration in this branch must leave `mix ecto.reset` (drop → create → migrate → seed) exiting 0 before the Verify phase begins. Also review `priv/repo/seeds.exs`: any new table or column that should carry representative dev data must be populated — a silent omission won't crash reset but will leave the dev DB semantically stale. This includes structured values: if a JSONB column or Ecto embed changes internal shape, update the seed data to match even when no migration is involved.
+
 **Event schema sub-gate:** Adding or changing any `Gibbering.Events.*` struct is a Published
 Language change — a system-wide API contract, not a local code change. Before implementing:
 1. Run the mini-cycle: Event Storming (brainstorm) → envelope spec → versioning policy review

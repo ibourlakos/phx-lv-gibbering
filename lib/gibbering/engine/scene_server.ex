@@ -145,6 +145,10 @@ defmodule Gibbering.Engine.SceneServer do
   def close_container(game_id),
     do: GenServer.call(via(game_id), :close_container)
 
+  @doc "Clears actor_id, valid_moves, and valid_targets — display-only, no gameplay effect."
+  def deselect_entity(game_id),
+    do: GenServer.call(via(game_id), :deselect_entity)
+
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
     Registry.lookup(Gibbering.GameRegistry, game_id) != []
@@ -306,7 +310,7 @@ defmodule Gibbering.Engine.SceneServer do
       if entity_id == active do
         moves = Rules.valid_moves(state, entity_id)
         targets = Rules.valid_targets(state, entity_id)
-        %{state | selected_id: entity_id, valid_moves: moves, valid_targets: targets}
+        %{state | actor_id: entity_id, valid_moves: moves, valid_targets: targets}
       else
         state
       end
@@ -318,7 +322,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call({:move_entity, x, y}, _from, state) do
-    selected = state.selected_id
+    selected = state.actor_id
 
     {new_state, events} =
       if selected && {x, y} in state.valid_moves do
@@ -337,7 +341,7 @@ defmodule Gibbering.Engine.SceneServer do
           end
 
         targets = Rules.valid_targets(after_move, selected)
-        result = %{after_move | valid_moves: [], selected_id: selected} |> put_targets(targets)
+        result = %{after_move | valid_moves: [], actor_id: selected} |> put_targets(targets)
 
         event = %EntityMoved{
           entity_id: selected,
@@ -360,8 +364,8 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call({:attack, target_id}, _from, state) do
     {new_state, events} =
-      if state.selected_id do
-        attacker_id = state.selected_id
+      if state.actor_id do
+        attacker_id = state.actor_id
         attacker = state.entities[attacker_id]
         target = state.entities[target_id]
 
@@ -416,8 +420,8 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call({:cast_spell, spell_key, target_id}, _from, state) do
     {new_state, events} =
-      if state.selected_id do
-        caster_id = state.selected_id
+      if state.actor_id do
+        caster_id = state.actor_id
         caster = state.entities[caster_id]
         target = state.entities[target_id]
 
@@ -648,7 +652,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call({:open_container, container_id}, _from, state) do
-    actor_id = state.selected_id || State.active_hero_id(state)
+    actor_id = state.actor_id || State.active_hero_id(state)
     actor = state.entities[actor_id]
     container = state.entities[container_id]
 
@@ -668,7 +672,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call({:take_item, container_id, instance_id, quantity}, _from, state) do
-    actor_id = state.selected_id || State.active_hero_id(state)
+    actor_id = state.actor_id || State.active_hero_id(state)
     actor = state.entities[actor_id]
     container = state.entities[container_id]
 
@@ -702,7 +706,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call({:take_all_items, container_id}, _from, state) do
-    actor_id = state.selected_id || State.active_hero_id(state)
+    actor_id = state.actor_id || State.active_hero_id(state)
     actor = state.entities[actor_id]
     container = state.entities[container_id]
     items = get_in(container, [:stats, "items"]) || []
@@ -746,7 +750,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call({:equip_item, instance_id}, _from, state) do
-    actor_id = state.selected_id || State.active_hero_id(state)
+    actor_id = state.actor_id || State.active_hero_id(state)
     actor = state.entities[actor_id]
 
     case Inventory.equip_item(actor, instance_id) do
@@ -781,6 +785,14 @@ defmodule Gibbering.Engine.SceneServer do
     persist(new_state)
     broadcast_batch(new_state, [], :close_container)
     {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call(:deselect_entity, _from, state) do
+    new_state = %{state | actor_id: nil, valid_moves: [], valid_targets: []}
+    persist(new_state)
+    broadcast_batch(new_state, [], :deselect_entity)
+    {:reply, new_state, new_state}
   end
 
   # --- Helpers ---

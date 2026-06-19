@@ -34,6 +34,17 @@ Feature-specific design decisions with bounded-context implications.
 | [Party Setup Flow](architecture/features/party-setup.md) | Lobby → game flow, PubSub claim/release |
 | [JS Hooks](architecture/features/js-hooks.md) | DiceRoll hook, animation push events |
 
+## Reference Documents
+
+Canonical domain definitions — what things are called and what states they can be in.
+Architecture docs and issues link to these rather than re-defining terms inline.
+
+| Document | Contents |
+|---|---|
+| [Game Content Taxonomy](reference/game-content-taxonomy.md) | Content type checklist, appearance slot registry, upsert checklist per type |
+
+`predicate-vocabulary.md` stays in `docs/architecture/` — it is a code contract (evaluator signature + closed predicate set), not a domain glossary.
+
 ---
 
 ## Open Questions

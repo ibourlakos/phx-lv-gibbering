@@ -24,8 +24,207 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 <div
   id="game-board"
   phx-hook="DiceRoll"
+  phx-window-keydown="deselect_spell"
+  phx-key="Escape"
   style="position:relative; width:100vw; height:100vh; overflow:hidden;"
 >
+  <%!--
+    z-35: Left inspection panel — fixed, full height, collapsed when nothing is inspected.
+  --%>
+  <% panel_content = inspect_content(@panel_subject, @game_state, @is_dm) %>
+  <%= if panel_content do %>
+    <div
+      id="left-panel"
+      style="position:fixed; top:0; left:0; bottom:0; width:220px; z-index:35; overflow-y:auto; pointer-events:auto;"
+      class="bg-gray-900/95 border-r border-gray-700 flex flex-col"
+    >
+      <div class="flex items-center justify-between px-3 py-2 border-b border-gray-700 sticky top-0 bg-gray-900/95 z-10">
+        <span class="text-xs text-gray-500 uppercase tracking-widest">Inspect</span>
+        <button phx-click="dismiss_panel" class="text-gray-500 hover:text-white leading-none">
+          ✕
+        </button>
+      </div>
+      <div class="p-3 flex flex-col gap-3 text-xs">
+        <%= case panel_content do %>
+          <% {:entity, entity, is_dm} -> %>
+            <div class="font-bold text-gray-100 text-sm">{entity.name}</div>
+            <%= if entity.type == "hero" do %>
+              <div class="text-gray-400">
+                {String.capitalize(entity.class || "?")} · {String.capitalize(entity.race || "?")} · Lv {entity.level ||
+                  1}
+              </div>
+              <div>
+                <div class="flex justify-between text-gray-400 mb-1">
+                  <span>HP</span>
+                  <span>{entity.hp}/{entity.max_hp}</span>
+                </div>
+                <div class="h-2 bg-gray-700 rounded overflow-hidden">
+                  <div
+                    class="h-full rounded"
+                    style={"width:#{hp_percent(entity.hp, entity.max_hp)}%; background:#{hp_bar_color(entity.hp, entity.max_hp)};"}
+                  />
+                </div>
+                <%= if entity.temp_hp > 0 do %>
+                  <div class="text-sky-400 mt-0.5">+{entity.temp_hp} temp HP</div>
+                <% end %>
+              </div>
+              <div class="flex gap-3">
+                <div>
+                  <div class="text-gray-500">AC</div>
+                  <div class="text-gray-100 font-mono">{entity[:armor_class] || "?"}</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Speed</div>
+                  <div class="text-gray-100 font-mono">{entity.speed || 30}ft</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Prof</div>
+                  <div class="text-gray-100 font-mono">+{prof_bonus(entity.level)}</div>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <%= for {abbr, key} <- [
+                      {"STR", "strength"}, {"DEX", "dexterity"}, {"CON", "constitution"},
+                      {"INT", "intelligence"}, {"WIS", "wisdom"}, {"CHA", "charisma"}
+                    ] do %>
+                  <% score = (entity.stats || %{})[key] || 10 %>
+                  <div class="bg-gray-800 rounded p-1 text-center">
+                    <div class="text-gray-500 text-[10px]">{abbr}</div>
+                    <div class="text-gray-100 font-bold">{score}</div>
+                    <div class="text-gray-400">{format_modifier(ability_modifier(score))}</div>
+                  </div>
+                <% end %>
+              </div>
+              <%= if (entity.conditions || []) != [] do %>
+                <div>
+                  <div class="text-gray-500 mb-1">Conditions</div>
+                  <div class="flex flex-wrap gap-1">
+                    <%= for cond_id <- entity.conditions do %>
+                      <span class="bg-orange-900/60 border border-orange-700 rounded px-1.5 py-0.5 text-orange-300">
+                        {cond_id}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              <% weapon = (entity.stats || %{})["equipped_weapon"] %>
+              <%= if weapon do %>
+                <div>
+                  <div class="text-gray-500 mb-0.5">Equipped</div>
+                  <div class="text-gray-200">{weapon["key"] || "—"}</div>
+                  <%= if weapon["damage_dice"] do %>
+                    <div class="text-gray-400 font-mono">
+                      {weapon["damage_dice"]} {weapon["damage_type"]}
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            <% else %>
+              <%!-- Creature --%>
+              <div class="text-gray-400">{monster_type_label(entity)}</div>
+              <div>
+                <%= if is_dm do %>
+                  <div class="flex justify-between text-gray-400 mb-1">
+                    <span>HP</span>
+                    <span class="flex items-center gap-1">
+                      {entity.hp}/{entity.max_hp} <.dm_badge />
+                    </span>
+                  </div>
+                <% else %>
+                  <div class="text-gray-400 mb-1">HP</div>
+                <% end %>
+                <div class="h-2 bg-gray-700 rounded overflow-hidden">
+                  <div
+                    class="h-full rounded"
+                    style={"width:#{hp_percent(entity.hp, entity.max_hp)}%; background:#{hp_bar_color(entity.hp, entity.max_hp)};"}
+                  />
+                </div>
+                <%= if entity.temp_hp > 0 do %>
+                  <div class="text-sky-400 mt-0.5">+{entity.temp_hp} temp HP</div>
+                <% end %>
+              </div>
+              <%= if is_dm do %>
+                <div class="flex gap-3">
+                  <div>
+                    <div class="text-gray-500 flex items-center gap-1">AC <.dm_badge /></div>
+                    <div class="text-gray-100 font-mono">{entity[:armor_class] || "?"}</div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500 flex items-center gap-1">Speed <.dm_badge /></div>
+                    <div class="text-gray-100 font-mono">{entity.speed || 30}ft</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 mb-1 flex items-center gap-1">
+                    Ability Scores <.dm_badge />
+                  </div>
+                  <div class="grid grid-cols-3 gap-1">
+                    <%= for {abbr, key} <- [
+                          {"STR", "strength"}, {"DEX", "dexterity"}, {"CON", "constitution"},
+                          {"INT", "intelligence"}, {"WIS", "wisdom"}, {"CHA", "charisma"}
+                        ] do %>
+                      <% score = (entity.stats || %{})[key] || 10 %>
+                      <div class="bg-gray-800 rounded p-1 text-center">
+                        <div class="text-gray-500 text-[10px]">{abbr}</div>
+                        <div class="text-gray-100 font-bold">{score}</div>
+                        <div class="text-gray-400">
+                          {format_modifier(ability_modifier(score))}
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              <%= if (entity.conditions || []) != [] do %>
+                <div>
+                  <div class="text-gray-500 mb-1">Conditions</div>
+                  <div class="flex flex-wrap gap-1">
+                    <%= for cond_id <- entity.conditions do %>
+                      <span class="bg-orange-900/60 border border-orange-700 rounded px-1.5 py-0.5 text-orange-300">
+                        {cond_id}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          <% {:tile, x, y, tile} -> %>
+            <div class="font-bold text-gray-100 text-sm">Tile ({x}, {y})</div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Texture</span>
+                <span class="text-gray-200">{tile.texture}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Walkable</span>
+                <span class={
+                  if (tile.movement || %{})["walk"] && (tile.movement || %{})["walk"] > 0,
+                    do: "text-green-400",
+                    else: "text-red-400"
+                }>
+                  {if (tile.movement || %{})["walk"] && (tile.movement || %{})["walk"] > 0,
+                    do: "Yes",
+                    else: "No"}
+                </span>
+              </div>
+              <%= if cost = (tile.movement || %{})["walk"] do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Move cost</span>
+                  <span class="text-gray-200 font-mono">{cost}%</span>
+                </div>
+              <% end %>
+              <%= if tile.decoration do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Decoration</span>
+                  <span class="text-gray-200">{tile.decoration}</span>
+                </div>
+              <% end %>
+            </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <%!--
     z-0: SVG game scene — fixed, full viewport.
     viewBox defines the coordinate space; PanZoom hook preserves it across LV patches.
@@ -33,6 +232,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
   <svg
     id="game-svg"
     phx-hook="PanZoom"
+    phx-click="deselect"
     viewBox={"0 0 #{svg_w} #{svg_h}"}
     preserveAspectRatio="xMidYMid meet"
     data-svg-w={svg_w}
@@ -42,7 +242,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     data-follow="true"
     style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; cursor:grab;"
   >
-    <%!-- Layer 1: Ground tiles --%>
+    <%!-- Layer 1: Ground tiles — clickable to inspect when no entity/overlay is on top --%>
     <%= for {{x, y}, tile} <- state.grid_tiles do %>
       <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
       <polygon
@@ -50,6 +250,10 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         fill={tile_fill(@appearances, tile.texture)}
         stroke={tile_stroke(@appearances, tile.texture)}
         stroke-width="1"
+        phx-click="inspect_tile"
+        phx-value-x={x}
+        phx-value-y={y}
+        style="cursor: crosshair;"
       />
     <% end %>
 
@@ -72,7 +276,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           end) %>
     <%= for {id, entity} <- visible_entities do %>
       <% is_active = id == active_id %>
-      <% is_selected = id == state.selected_id %>
+      <% is_selected = id == state.actor_id %>
       <% is_target = id in @valid_targets %>
       <% is_spell_target = id in @spell_targets %>
       <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
@@ -239,10 +443,14 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <div class="bg-gray-900/90 border border-gray-700 rounded p-2">
         <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Entities</div>
         <%= for {id, entity} <- state.entities do %>
-          <div class={[
-            "flex items-center gap-2 mb-0.5",
-            (id == state.selected_id && "opacity-100") || "opacity-60"
-          ]}>
+          <div
+            class={[
+              "flex items-center gap-2 mb-0.5 cursor-pointer hover:opacity-100 transition-opacity",
+              (id == state.actor_id && "opacity-100") || "opacity-60"
+            ]}
+            phx-click="select_entity"
+            phx-value-id={id}
+          >
             <div
               class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
               style={"background:#{entity_body_color(@appearances, entity.sprite)}"}
