@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 156 (see `counter`)
+**Next issue number:** 157 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -59,6 +59,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` | medium |
 | [#154](154-dm-panel-redesign.md) | DM panel redesign — right panel entity catalog + left panel DM section | `ui` `gameplay` `architecture` | medium |
 | [#155](155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | `rendering` `architecture` | low |
+| [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` | medium |
 
 ---
 
