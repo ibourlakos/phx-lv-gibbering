@@ -179,4 +179,108 @@ defmodule Gibbering.CampaignCharactersTest do
       assert is_nil(updated.override_level)
     end
   end
+
+  describe "get_active_for_player/2 (issue #145)" do
+    test "returns nil when player has no active character in the campaign", %{
+      owner: owner,
+      campaign_id: campaign_id,
+      character: character
+    } do
+      {:ok, _cc} =
+        CampaignCharacters.create(campaign_id, %{
+          campaign_id: campaign_id,
+          character_id: character.id,
+          owner_id: owner.id
+        })
+
+      assert is_nil(CampaignCharacters.get_active_for_player(campaign_id, owner.id))
+    end
+
+    test "returns the active character owned by the player", %{
+      owner: owner,
+      campaign_id: campaign_id,
+      character: character
+    } do
+      {:ok, cc} =
+        CampaignCharacters.create(campaign_id, %{
+          campaign_id: campaign_id,
+          character_id: character.id,
+          owner_id: owner.id
+        })
+
+      {:ok, active_cc} = CampaignCharacters.update(cc, %{active: true})
+
+      result = CampaignCharacters.get_active_for_player(campaign_id, owner.id)
+      assert result.id == active_cc.id
+    end
+
+    test "does not return character from another player", %{
+      campaign_id: campaign_id,
+      character: character
+    } do
+      other_owner = AccountsFixtures.register_user()
+
+      {:ok, cc} =
+        CampaignCharacters.create(campaign_id, %{
+          campaign_id: campaign_id,
+          character_id: character.id,
+          owner_id: other_owner.id
+        })
+
+      {:ok, _} = CampaignCharacters.update(cc, %{active: true})
+
+      querying_user = AccountsFixtures.register_user()
+      assert is_nil(CampaignCharacters.get_active_for_player(campaign_id, querying_user.id))
+    end
+  end
+
+  describe "set_auto_roll/2 (issue #145)" do
+    test "defaults to true on create", %{
+      owner: owner,
+      campaign_id: campaign_id,
+      character: character
+    } do
+      {:ok, cc} =
+        CampaignCharacters.create(campaign_id, %{
+          campaign_id: campaign_id,
+          character_id: character.id,
+          owner_id: owner.id
+        })
+
+      assert cc.auto_roll == true
+    end
+
+    test "persists false when toggled off", %{
+      owner: owner,
+      campaign_id: campaign_id,
+      character: character
+    } do
+      {:ok, cc} =
+        CampaignCharacters.create(campaign_id, %{
+          campaign_id: campaign_id,
+          character_id: character.id,
+          owner_id: owner.id
+        })
+
+      assert {:ok, updated} = CampaignCharacters.set_auto_roll(cc, false)
+      assert updated.auto_roll == false
+    end
+
+    test "persists true when toggled back on", %{
+      owner: owner,
+      campaign_id: campaign_id,
+      character: character
+    } do
+      {:ok, cc} =
+        CampaignCharacters.create(campaign_id, %{
+          campaign_id: campaign_id,
+          character_id: character.id,
+          owner_id: owner.id
+        })
+
+      {:ok, cc} = CampaignCharacters.set_auto_roll(cc, false)
+      assert {:ok, updated} = CampaignCharacters.set_auto_roll(cc, true)
+      assert updated.auto_roll == true
+    end
+  end
 end

@@ -12,7 +12,15 @@ defmodule Gibbering.Data.Items do
   - Consumable — charges, effect_description
 
   All items share: name, item_type, weight_pounds, cost_gp, is_magical, requires_attunement.
+
+  Each item also exposes a `:modifiers` list of `%RuleModifier{}` structs derived
+  from its properties (issue #128) — finesse weapons grant a DEX-or-STR attack
+  ability choice, armour contributes an AC formula override (or an additive bonus
+  for shields). These are surfaced into the `collect_modifiers/3` pipeline when the
+  item is equipped. Items with no mechanical effect carry `modifiers: []`.
   """
+
+  alias Gibbering.Rulesets.DnD5e.RuleModifier
 
   @items %{
     # -------------------------------------------------------------------------
@@ -265,11 +273,68 @@ defmodule Gibbering.Data.Items do
     }
   }
 
-  @doc "Returns all item definitions as a map keyed by string key."
+  @doc "Returns all item definitions as a map keyed by string key, each with a `:modifiers` list."
   @spec all() :: %{String.t() => map()}
-  def all, do: @items
+  def all, do: Map.new(@items, fn {key, item} -> {key, with_modifiers(item)} end)
 
-  @doc "Returns the item definition for the given key, or nil."
+  @doc "Returns the item definition (with its `:modifiers` list) for the given key, or nil."
   @spec get(String.t()) :: map() | nil
-  def get(key) when is_binary(key), do: Map.get(@items, key)
+  def get(key) when is_binary(key) do
+    case Map.get(@items, key) do
+      nil -> nil
+      item -> with_modifiers(item)
+    end
+  end
+
+  defp with_modifiers(item), do: Map.put(item, :modifiers, modifiers_for(item))
+
+  # Finesse weapons let the wielder choose DEX or STR for attack/damage ability.
+  defp modifiers_for(%{item_type: :weapon, weapon_properties: props}) do
+    if "finesse" in props do
+      [
+        %RuleModifier{
+          id: :finesse_attack_choice,
+          name: "Finesse",
+          source: :equipped_weapon,
+          trigger: {:on_attack, :melee},
+          predicate: {:always},
+          effect: {:choose_attack_ability, [:dexterity, :strength]},
+          stacking: :binary_flag
+        }
+      ]
+    else
+      []
+    end
+  end
+
+  # Shields add a flat AC bonus; body armour overrides the base AC formula.
+  defp modifiers_for(%{item_type: :armor, armor_category: :shield, base_ac: bonus}) do
+    [
+      %RuleModifier{
+        id: :shield_ac_bonus,
+        name: "Shield",
+        source: :equipped_armor,
+        trigger: :passive,
+        predicate: {:always},
+        effect: {:add_bonus, :ac, bonus},
+        stacking: :additive
+      }
+    ]
+  end
+
+  defp modifiers_for(%{item_type: :armor, armor_category: category, base_ac: base_ac}) do
+    [
+      %RuleModifier{
+        id: :armor_class_formula,
+        name: "Armor Class",
+        source: :equipped_armor,
+        trigger: :passive,
+        predicate: {:always},
+        effect: {:override_ac_formula, {:armor, category, base_ac}},
+        stacking: :binary_flag
+      }
+    ]
+  end
+
+  defp modifiers_for(_item), do: []
 end

@@ -83,7 +83,9 @@ defstruct [
 | Effect | Meaning |
 |---|---|
 | `{:add_damage_dice, dice_string, name_key}` | roll additional dice and add to damage; e.g. `{:add_damage_dice, "1d6", :sneak_attack}` |
-| `{:add_bonus, :damage \| :attack \| :save, integer}` | flat integer bonus to damage, attack roll, or saving throw |
+| `{:add_bonus, :damage \| :attack \| :save \| :ac, integer}` | flat integer bonus to damage, attack roll, saving throw, or armour class (`:ac` from shields) |
+| `{:choose_attack_ability, [ability]}` | wielder may pick the best of the listed abilities for attack/damage (finesse weapons) — collected by the pipeline; AC math still flows through `DnD5e.Stats` (issue #128, transitional) |
+| `{:override_ac_formula, {:armor, category, base_ac}}` | equipped body armour replaces the base AC formula — collected by the pipeline; AC math still flows through `DnD5e.Stats` (issue #128, transitional) |
 | `{:add_to_roll, dice_string}` | roll additional dice and add to the triggering d20 roll (Bless) |
 | `{:grant_advantage, :attack_rolls \| :saving_throws \| :ability_checks}` | entity has advantage on rolls of this type |
 | `{:impose_disadvantage, :attack_rolls \| :saving_throws \| :ability_checks}` | entity has disadvantage |

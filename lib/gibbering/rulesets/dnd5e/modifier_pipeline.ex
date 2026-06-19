@@ -3,14 +3,15 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   Collects and applies `%RuleModifier{}` structs.
 
   `collect_modifiers/3` — gathers all modifiers relevant to an entity's
-  action from class features, race traits, and active condition effects.
+  action from class features, race traits, active condition effects, and
+  equipped items (weapon/armour properties).
 
   `apply_modifiers/2` — folds collected effects onto a roll context in the
   canonical layering order: immunity → resistance → named bonuses (highest
   wins) → additive flat bonuses → dice modifiers → advantage/disadvantage.
   """
 
-  alias Gibbering.Data.{Classes, Races}
+  alias Gibbering.Data.{Classes, Items, Races}
   alias Gibbering.Rulesets.DnD5e.{Condition, Predicate, RuleModifier}
 
   # ---------------------------------------------------------------------------
@@ -72,6 +73,23 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
     |> Enum.concat(race_modifiers(Map.get(entity, :race, "")))
     |> Enum.concat(condition_modifiers(Map.get(entity, :conditions, [])))
     |> Enum.concat(condition_modifiers(target_conds))
+    |> Enum.concat(equipped_item_modifiers(entity))
+  end
+
+  # Reads the entity's equipped weapon/armour slots, looks each key up in
+  # Data.Items, and returns the item's derived modifiers. Unknown keys (e.g.
+  # "no_armor") and empty slots contribute nothing. Trigger relevance is left to
+  # the trigger filter in collect_modifiers/3.
+  defp equipped_item_modifiers(entity) do
+    ["equipped_weapon", "equipped_armor"]
+    |> Enum.flat_map(fn slot ->
+      with %{"key" => key} <- get_in(entity, [:stats, slot]),
+           %{modifiers: mods} <- Items.get(key) do
+        mods
+      else
+        _ -> []
+      end
+    end)
   end
 
   defp class_modifiers(class), do: Classes.modifiers(class)

@@ -18,4 +18,4 @@ The output of this issue is a reference document (or structured discovery notes)
 - [x] For each type: checklist of layers touched during upsert (schema, seed, appearance, UI, rendering, tests)
 - [x] Multi-style appearance slot defined: which types need per-style appearance records, and what fields each appearance record must carry
 - [x] Open questions from brainstorm #11 answered or explicitly deferred with rationale
-- [x] Document committed to `docs/game-content-taxonomy.md`
+- [x] Document committed to `docs/reference/game-content-taxonomy.md`

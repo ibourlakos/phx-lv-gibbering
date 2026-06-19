@@ -6,8 +6,9 @@ defmodule GibberingWeb.GameLiveTest do
   import Phoenix.LiveViewTest
   import Gibbering.GameFixtures
   import Gibbering.AccountsFixtures
+  import Gibbering.CharactersFixtures
 
-  alias Gibbering.{Campaigns, Repo, Entity}
+  alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
 
   defp mount_game(conn) do
@@ -124,7 +125,7 @@ defmodule GibberingWeb.GameLiveTest do
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
 
       html = render(view)
       # Move overlay tiles carry phx-click="move" — their presence means moves were rendered.
@@ -139,7 +140,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero to show move tiles, then click a specific reachable tile.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='move'][phx-value-x='0'][phx-value-y='0']") |> render_click()
 
       html = render(view)
@@ -154,7 +155,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero → valid_targets will include the adjacent goblin.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
 
       # The goblin entity element now renders phx-click="attack" because it is in valid_targets.
       view |> element("[phx-click='attack']") |> render_click()
@@ -185,7 +186,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero, then select a spell; the goblin entity becomes a spell target.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='select_spell'][phx-value-key='fire_bolt']") |> render_click()
       view |> element("[phx-click='cast_spell']") |> render_click()
 
@@ -201,7 +202,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero to show moves, then end turn.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='end_turn']") |> render_click()
 
       html = render(view)
@@ -489,6 +490,273 @@ defmodule GibberingWeb.GameLiveTest do
       )
 
       assert render(view) =~ "Secret only for you"
+    end
+  end
+
+  # Mounts as a player with an active CampaignCharacter (for #145 auto-roll tests).
+  defp mount_player_game(conn) do
+    player = register_user()
+    conn = log_in_user(conn, player)
+    game_id = insert_campaign()
+    Campaigns.join_campaign(game_id, player.id)
+    start_supervised!({SceneServer, game_id})
+    character = create_character(player)
+
+    {:ok, cc} =
+      CampaignCharacters.create(game_id, %{
+        campaign_id: game_id,
+        character_id: character.id,
+        owner_id: player.id
+      })
+
+    {:ok, _active_cc} = CampaignCharacters.update(cc, %{active: true})
+    {:ok, view, _html} = live(conn, "/game/#{game_id}")
+    {view, game_id, player}
+  end
+
+  describe "auto-roll toggle (issue #145)" do
+    test "toggle is visible to a player with an active campaign character", %{conn: conn} do
+      {view, _game_id, _player} = mount_player_game(conn)
+      assert render(view) =~ "Auto-roll dice"
+    end
+
+    test "toggle is not visible to DM", %{conn: conn} do
+      {view, _game_id} = mount_dm_game(conn)
+      refute render(view) =~ "Auto-roll dice"
+    end
+
+    test "toggle is not visible to player without an active campaign character", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      refute render(view) =~ "Auto-roll dice"
+    end
+
+    test "toggle_auto_roll flips preference to false and persists", %{conn: conn} do
+      {view, game_id, player} = mount_player_game(conn)
+      view |> element("[phx-click='toggle_auto_roll']") |> render_click()
+      cc = CampaignCharacters.get_active_for_player(game_id, player.id)
+      assert cc.auto_roll == false
+    end
+
+    test "toggle_auto_roll can toggle back to true", %{conn: conn} do
+      {view, game_id, player} = mount_player_game(conn)
+      view |> element("[phx-click='toggle_auto_roll']") |> render_click()
+      view |> element("[phx-click='toggle_auto_roll']") |> render_click()
+      cc = CampaignCharacters.get_active_for_player(game_id, player.id)
+      assert cc.auto_roll == true
+    end
+
+    test "auto_roll is true after fresh mount (default)", %{conn: conn} do
+      {view, _game_id, _player} = mount_player_game(conn)
+      html = render(view)
+      assert html =~ "translate-x-3.5"
+    end
+  end
+
+  describe "outcome overlay (issue #143)" do
+    defp broadcast_phase(game_id, phase) do
+      state = SceneServer.get_state(game_id)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{state_snapshot: %{state | phase: phase}}
+      )
+    end
+
+    test "victory overlay renders for all clients when phase is :victory", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      broadcast_phase(game_id, :victory)
+      assert render(view) =~ "Victory!"
+    end
+
+    test "defeat overlay renders for all clients when phase is :defeat", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      broadcast_phase(game_id, :defeat)
+      assert render(view) =~ "Defeat"
+    end
+
+    test "DM sees Return to Lobby button in the outcome overlay", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      broadcast_phase(game_id, :victory)
+      assert render(view) =~ "dm_return_to_lobby"
+    end
+
+    test "non-DM does not see Return to Lobby button", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      broadcast_phase(game_id, :victory)
+      refute render(view) =~ "dm_return_to_lobby"
+    end
+
+    test "dm_return_to_lobby transitions phase back to :lobby", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.force_transition_phase(game_id, :victory)
+      broadcast_phase(game_id, :victory)
+      view |> element("[phx-click='dm_return_to_lobby']") |> render_click()
+      assert SceneServer.get_state(game_id).phase == :lobby
+    end
+
+    test "outcome overlay is absent in lobby phase", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      html = render(view)
+      refute html =~ "Victory!"
+      refute html =~ "Defeat"
+    end
+  end
+
+  describe "container panel (issue #127)" do
+    defp insert_adjacent_chest(game_id, items \\ []) do
+      chest =
+        Repo.insert!(%Entity{
+          name: "Treasure Chest",
+          type: "object",
+          sprite: "chest",
+          x: 3,
+          y: 2,
+          hp: 1,
+          max_hp: 1,
+          tags: [],
+          stats: %{"object_subtype" => "loot_source", "items" => items},
+          campaign_id: game_id
+        })
+
+      SceneServer.reload_entities(game_id)
+      chest
+    end
+
+    test "container panel is hidden when no container is open", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      refute render(view) =~ "container-panel"
+    end
+
+    test "container panel appears after open_container succeeds", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      chest = insert_adjacent_chest(game_id, [])
+
+      SceneServer.open_container(game_id, chest.id)
+
+      html = render(view)
+      assert html =~ "container-panel"
+      assert html =~ "Treasure Chest"
+    end
+
+    test "item names appear in the panel", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+
+      items = [
+        %{"instance_id" => "x1", "item_key" => "dagger", "quantity" => 2, "is_magical" => false}
+      ]
+
+      chest = insert_adjacent_chest(game_id, items)
+      SceneServer.open_container(game_id, chest.id)
+
+      html = render(view)
+      assert html =~ "Dagger"
+    end
+
+    test "take_all event removes all items and closes the panel", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+
+      items = [
+        %{"instance_id" => "x1", "item_key" => "dagger", "quantity" => 1, "is_magical" => false}
+      ]
+
+      chest = insert_adjacent_chest(game_id, items)
+      SceneServer.open_container(game_id, chest.id)
+
+      view |> element("[phx-click='take_all']") |> render_click()
+
+      refute render(view) =~ "container-panel"
+    end
+
+    test "close_container event hides the panel", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      chest = insert_adjacent_chest(game_id, [])
+      SceneServer.open_container(game_id, chest.id)
+
+      view |> element("[phx-click='close_container']") |> render_click()
+
+      refute render(view) =~ "container-panel"
+    end
+  end
+
+  describe "roll prompt overlay (issue #146)" do
+    defp broadcast_roll_required(game_id, entity_id) do
+      state = SceneServer.get_state(game_id)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{
+          state_snapshot: %{state | awaiting_roll: true},
+          events: [
+            %Gibbering.Events.Scene.RollRequired{
+              entity_id: entity_id,
+              roll_type: :attack,
+              dice_expression: "1d20",
+              context_label: "Attack vs Goblin"
+            }
+          ]
+        }
+      )
+    end
+
+    defp broadcast_roll_resolved(game_id) do
+      state = SceneServer.get_state(game_id)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{
+          state_snapshot: %{state | awaiting_roll: false}
+        }
+      )
+    end
+
+    test "roll prompt overlay renders when RollRequired is broadcast", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      broadcast_roll_required(game_id, hero_id)
+      html = render(view)
+      assert html =~ "Attack vs Goblin"
+      assert html =~ "1d20"
+      assert html =~ "roll_submit"
+    end
+
+    test "roll prompt overlay is absent when awaiting_roll is false", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      broadcast_roll_required(game_id, hero_id)
+      broadcast_roll_resolved(game_id)
+      refute render(view) =~ "roll_submit"
+    end
+
+    test "roll prompt shows roll type label", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      broadcast_roll_required(game_id, hero_id)
+      assert render(view) =~ "attack"
+    end
+
+    test "roll_submit event calls submit_roll on SceneServer", %{conn: conn} do
+      {view, game_id} = mount_combat_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      # Put server into awaiting_roll state via direct API
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+      assert SceneServer.get_state(game_id).awaiting_roll == true
+
+      # Simulate the PubSub message reaching the LiveView
+      broadcast_roll_required(game_id, hero_id)
+      view |> element("[phx-click='roll_submit']") |> render_click()
+
+      # After submit_roll, awaiting_roll should clear
+      assert SceneServer.get_state(game_id).awaiting_roll == false
     end
   end
 end

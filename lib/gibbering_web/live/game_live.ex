@@ -2,10 +2,10 @@ defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
-  alias Gibbering.{Campaigns, EventBus}
+  alias Gibbering.{Campaigns, CampaignCharacters, EventBus}
   alias Gibbering.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
-  alias Gibbering.Events.Scene.SessionEnded
+  alias Gibbering.Events.Scene.{RollRequired, SessionEnded, TurnAdvanced}
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
@@ -35,6 +35,9 @@ defmodule GibberingWeb.GameLive do
           appearances =
             Catalogue.appearances_for_style(Catalogue.default_style_slug())
 
+          campaign_character =
+            if is_dm, do: nil, else: CampaignCharacters.get_active_for_player(game_id, user.id)
+
           {:ok,
            socket
            |> assign(:game_id, game_id)
@@ -48,7 +51,15 @@ defmodule GibberingWeb.GameLive do
            |> assign(:log, [])
            |> assign(:dm_broadcasts, [])
            |> assign(:dm_whispers, [])
-           |> assign(:dm_panel, nil)}
+           |> assign(:dm_panel, nil)
+           |> assign(:panel_subject, nil)
+           |> assign(:round, 0)
+           |> assign(:campaign_character, campaign_character)
+           |> assign(
+             :auto_roll,
+             if(campaign_character, do: campaign_character.auto_roll, else: true)
+           )
+           |> assign(:roll_prompt, nil)}
 
         {:error, reason} ->
           {:ok,
@@ -63,7 +74,34 @@ defmodule GibberingWeb.GameLive do
   def handle_event("select_entity", %{"id" => id}, socket) do
     id = String.to_integer(id)
     new_state = SceneServer.select_entity(socket.assigns.game_id, id)
-    {:noreply, assign(socket, game_state: new_state, valid_targets: new_state.valid_targets)}
+
+    {:noreply,
+     assign(socket,
+       game_state: new_state,
+       valid_targets: new_state.valid_targets,
+       panel_subject: {:entity, id}
+     )}
+  end
+
+  @impl true
+  def handle_event("inspect_tile", %{"x" => x, "y" => y}, socket) do
+    {:noreply, assign(socket, panel_subject: {:tile, String.to_integer(x), String.to_integer(y)})}
+  end
+
+  @impl true
+  def handle_event("deselect", _, socket) do
+    new_state = SceneServer.deselect_entity(socket.assigns.game_id)
+    {:noreply, assign(socket, game_state: new_state, valid_targets: [])}
+  end
+
+  @impl true
+  def handle_event("dismiss_panel", _, socket) do
+    {:noreply, assign(socket, panel_subject: nil)}
+  end
+
+  @impl true
+  def handle_event("deselect_spell", _, socket) do
+    {:noreply, assign(socket, selected_spell: nil, spell_targets: [])}
   end
 
   @impl true
@@ -80,39 +118,46 @@ defmodule GibberingWeb.GameLive do
     state = socket.assigns.game_state
     target_name = state.entities[target_id].name
 
-    attacker_id = state.selected_id
+    attacker_id = state.actor_id
     attacker_name = if attacker_id, do: state.entities[attacker_id].name, else: "?"
 
-    new_state = SceneServer.attack_entity(socket.assigns.game_id, target_id)
+    new_state =
+      SceneServer.attack_entity(socket.assigns.game_id, target_id,
+        auto_roll: socket.assigns.auto_roll
+      )
 
-    damage =
-      if Map.has_key?(new_state.entities, target_id) do
-        state.entities[target_id].hp - new_state.entities[target_id].hp
-      else
-        state.entities[target_id].hp
-      end
+    if new_state.awaiting_roll do
+      {:noreply, assign(socket, game_state: new_state)}
+    else
+      damage =
+        if Map.has_key?(new_state.entities, target_id) do
+          state.entities[target_id].hp - new_state.entities[target_id].hp
+        else
+          state.entities[target_id].hp
+        end
 
-    dice_result = max(min(damage, 6), 1)
+      dice_result = max(min(damage, 6), 1)
 
-    log_entry =
-      if Map.has_key?(new_state.entities, target_id) do
-        hp = new_state.entities[target_id].hp
-        "#{attacker_name} hits #{target_name} for #{damage}! (#{hp} HP left)"
-      else
-        "#{target_name} destroyed!"
-      end
+      log_entry =
+        if Map.has_key?(new_state.entities, target_id) do
+          hp = new_state.entities[target_id].hp
+          "#{attacker_name} hits #{target_name} for #{damage}! (#{hp} HP left)"
+        else
+          "#{target_name} destroyed!"
+        end
 
-    {:noreply,
-     socket
-     |> assign(game_state: new_state, valid_targets: [])
-     |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
-     |> push_event("roll_dice", %{result: dice_result, label: "#{attacker_name} attacks!"})}
+      {:noreply,
+       socket
+       |> assign(game_state: new_state, valid_targets: [])
+       |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
+       |> push_event("roll_dice", %{result: dice_result, label: "#{attacker_name} attacks!"})}
+    end
   end
 
   @impl true
   def handle_event("select_spell", %{"key" => spell_key}, socket) do
     state = socket.assigns.game_state
-    caster_id = state.selected_id || State.active_hero_id(state)
+    caster_id = state.actor_id || State.active_hero_id(state)
 
     spell_targets =
       if caster_id,
@@ -129,41 +174,48 @@ defmodule GibberingWeb.GameLive do
     state = socket.assigns.game_state
     spell_key = socket.assigns.selected_spell
 
-    caster_id = state.selected_id
+    caster_id = state.actor_id
     caster_name = if caster_id, do: state.entities[caster_id].name, else: "?"
     target_name = state.entities[target_id].name
     spell = Spells.get(spell_key)
     spell_name = if spell, do: spell.name, else: spell_key
 
-    new_state = SceneServer.cast_spell(socket.assigns.game_id, spell_key, target_id)
+    new_state =
+      SceneServer.cast_spell(socket.assigns.game_id, spell_key, target_id,
+        auto_roll: socket.assigns.auto_roll
+      )
 
-    {damage, log_entry} =
-      if Map.has_key?(new_state.entities, target_id) do
-        dmg = state.entities[target_id].hp - new_state.entities[target_id].hp
-        hp = new_state.entities[target_id].hp
+    if new_state.awaiting_roll do
+      {:noreply, assign(socket, game_state: new_state)}
+    else
+      {damage, log_entry} =
+        if Map.has_key?(new_state.entities, target_id) do
+          dmg = state.entities[target_id].hp - new_state.entities[target_id].hp
+          hp = new_state.entities[target_id].hp
 
-        {max(dmg, 0),
-         "#{caster_name} casts #{spell_name} → #{target_name} for #{dmg}! (#{hp} HP left)"}
-      else
-        {state.entities[target_id].hp,
-         "#{caster_name} casts #{spell_name} → #{target_name} destroyed!"}
-      end
+          {max(dmg, 0),
+           "#{caster_name} casts #{spell_name} → #{target_name} for #{dmg}! (#{hp} HP left)"}
+        else
+          {state.entities[target_id].hp,
+           "#{caster_name} casts #{spell_name} → #{target_name} destroyed!"}
+        end
 
-    dice_result = max(min(damage, 6), 1)
+      dice_result = max(min(damage, 6), 1)
 
-    {:noreply,
-     socket
-     |> assign(
-       game_state: new_state,
-       valid_targets: [],
-       selected_spell: nil,
-       spell_targets: []
-     )
-     |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
-     |> push_event("roll_dice", %{
-       result: dice_result,
-       label: "#{caster_name} casts #{spell_name}!"
-     })}
+      {:noreply,
+       socket
+       |> assign(
+         game_state: new_state,
+         valid_targets: [],
+         selected_spell: nil,
+         spell_targets: []
+       )
+       |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
+       |> push_event("roll_dice", %{
+         result: dice_result,
+         label: "#{caster_name} casts #{spell_name}!"
+       })}
+    end
   end
 
   @impl true
@@ -210,6 +262,12 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("dm_end", _, %{assigns: %{is_dm: true}} = socket) do
     SceneServer.end_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_return_to_lobby", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.force_transition_phase(socket.assigns.game_id, :lobby)
     {:noreply, socket}
   end
 
@@ -261,6 +319,12 @@ defmodule GibberingWeb.GameLive do
       SceneServer.reorder_turn_order(socket.assigns.game_id, new_order)
     end
 
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_end_initiative_rolling", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.end_initiative_rolling(socket.assigns.game_id)
     {:noreply, socket}
   end
 
@@ -343,6 +407,93 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("open_container", %{"id" => id}, socket) do
+    container_id = String.to_integer(id)
+
+    case SceneServer.open_container(socket.assigns.game_id, container_id) do
+      {:ok, _state} -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "take_item",
+        %{"container_id" => cid, "instance_id" => iid, "quantity" => q},
+        socket
+      ) do
+    quantity = if is_binary(q), do: String.to_integer(q), else: q
+
+    case SceneServer.take_item(socket.assigns.game_id, String.to_integer(cid), iid, quantity) do
+      {:ok, _state} -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("take_all", %{"container_id" => cid}, socket) do
+    SceneServer.take_all_items(socket.assigns.game_id, String.to_integer(cid))
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("equip_item", %{"instance_id" => iid}, socket) do
+    case SceneServer.equip_item(socket.assigns.game_id, iid) do
+      {:ok, _state} -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("close_container", _, socket) do
+    SceneServer.close_container(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("roll_submit", _, %{assigns: %{roll_prompt: prompt}} = socket)
+      when not is_nil(prompt) do
+    value = Enum.random(1..20)
+    entity_id = prompt.entity_id
+    SceneServer.submit_roll(socket.assigns.game_id, entity_id, value)
+
+    {:noreply,
+     socket
+     |> push_event("roll_dice", %{result: rem(value - 1, 6) + 1, label: prompt.context_label})}
+  end
+
+  @impl true
+  def handle_event(
+        "roll_manual_submit",
+        %{"value" => raw},
+        %{assigns: %{roll_prompt: prompt}} = socket
+      )
+      when not is_nil(prompt) do
+    case Integer.parse(raw) do
+      {value, ""} when value >= 1 and value <= 20 ->
+        SceneServer.submit_roll(socket.assigns.game_id, prompt.entity_id, value)
+        {:noreply, socket}
+
+      _ ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("toggle_auto_roll", _, %{assigns: %{campaign_character: cc}} = socket)
+      when not is_nil(cc) do
+    new_value = !socket.assigns.auto_roll
+
+    case CampaignCharacters.set_auto_roll(cc, new_value) do
+      {:ok, updated_cc} ->
+        {:noreply, assign(socket, campaign_character: updated_cc, auto_roll: new_value)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
   def handle_event(event, _, socket)
       when event in [
              "dm_start",
@@ -355,6 +506,7 @@ defmodule GibberingWeb.GameLive do
              "dm_remove_from_order",
              "dm_move_up",
              "dm_move_down",
+             "dm_end_initiative_rolling",
              "dm_force_end_turn",
              "dm_open_broadcast",
              "dm_open_whisper",
@@ -365,7 +517,8 @@ defmodule GibberingWeb.GameLive do
              "dm_adjust_hp",
              "dm_toggle_visibility",
              "dm_dismiss_broadcast",
-             "dm_dismiss_whisper"
+             "dm_dismiss_whisper",
+             "dm_return_to_lobby"
            ] do
     {:noreply, socket}
   end
@@ -380,7 +533,45 @@ defmodule GibberingWeb.GameLive do
           do: assign(socket, game_state: batch.state_snapshot),
           else: socket
 
-      {:noreply, new_socket}
+      round =
+        Enum.reduce(events, socket.assigns.round, fn
+          %TurnAdvanced{round_number: n}, acc -> max(acc, n)
+          _, acc -> acc
+        end)
+
+      {roll_prompt, auto_submit_initiatives} =
+        Enum.reduce(events, {socket.assigns.roll_prompt, []}, fn
+          %RollRequired{roll_type: :initiative} = e, {prompt, inits} ->
+            if socket.assigns.auto_roll do
+              {prompt, [e.entity_id | inits]}
+            else
+              {e, inits}
+            end
+
+          %RollRequired{} = e, {_prompt, inits} ->
+            {e, inits}
+
+          _, acc ->
+            acc
+        end)
+
+      # Clear prompt when state_snapshot shows awaiting_roll is now false
+      roll_prompt =
+        if batch.state_snapshot && !batch.state_snapshot.awaiting_roll &&
+             (roll_prompt == nil or roll_prompt.roll_type != :initiative),
+           do: nil,
+           else: roll_prompt
+
+      socket_after_events = assign(new_socket, round: round, roll_prompt: roll_prompt)
+
+      final_socket =
+        Enum.reduce(auto_submit_initiatives, socket_after_events, fn entity_id, s ->
+          value = Enum.random(1..20)
+          SceneServer.submit_roll(s.assigns.game_id, entity_id, value)
+          s
+        end)
+
+      {:noreply, final_socket}
     end
   end
 
@@ -415,6 +606,79 @@ defmodule GibberingWeb.GameLive do
   defp ruleset_action_buttons(entity, state), do: state.ruleset.action_buttons(entity, state)
 
   defp ruleset_conditions(state), do: state.ruleset.available_conditions()
+
+  # ---------------------------------------------------------------------------
+  # Inspection panel helpers
+  # ---------------------------------------------------------------------------
+
+  defp inspect_content(nil, _state, _is_dm), do: nil
+
+  defp inspect_content({:entity, entity_id}, state, is_dm) do
+    case Map.get(state.entities, entity_id) do
+      nil -> nil
+      entity -> {:entity, entity, is_dm}
+    end
+  end
+
+  defp inspect_content({:tile, x, y}, state, _is_dm) do
+    case Map.get(state.grid_tiles, {x, y}) do
+      nil -> nil
+      tile -> {:tile, x, y, tile}
+    end
+  end
+
+  defp hp_percent(hp, max_hp) when is_integer(max_hp) and max_hp > 0,
+    do: round(hp / max_hp * 100)
+
+  defp hp_percent(_, _), do: 0
+
+  defp hp_bar_color(hp, max_hp) do
+    case hp_percent(hp, max_hp) do
+      n when n > 50 -> "#22c55e"
+      n when n > 25 -> "#eab308"
+      _ -> "#ef4444"
+    end
+  end
+
+  defp ability_modifier(score) when is_integer(score), do: div(score - 10, 2)
+  defp ability_modifier(_), do: 0
+
+  defp format_modifier(n) when n >= 0, do: "+#{n}"
+  defp format_modifier(n), do: "#{n}"
+
+  defp prof_bonus(level) when is_integer(level) do
+    cond do
+      level >= 17 -> 6
+      level >= 13 -> 5
+      level >= 9 -> 4
+      level >= 5 -> 3
+      true -> 2
+    end
+  end
+
+  defp prof_bonus(_), do: 2
+
+  defp monster_type_label(entity) do
+    (entity.stats || %{})["monster_type"] ||
+      (entity.race && String.capitalize(entity.race)) ||
+      "Creature"
+  end
+
+  def dm_badge(assigns) do
+    ~H"""
+    <span class="inline-flex items-center gap-0.5 text-[10px] text-amber-400 bg-amber-900/40 border border-amber-700/60 rounded px-1 py-0 leading-4">
+      <svg class="w-2.5 h-2.5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+        <path
+          fill-rule="evenodd"
+          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      DM
+    </span>
+    """
+  end
 
   # ---------------------------------------------------------------------------
   # Appearance helpers — delegate to the active style's DB records.

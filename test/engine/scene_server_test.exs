@@ -7,7 +7,14 @@ defmodule Gibbering.Engine.SceneServerTest do
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Scene.{EntityMoved, SessionEnded}
+
+  alias Gibbering.Events.Scene.{
+    EntityMoved,
+    PhaseTransitioned,
+    RollRequired,
+    SessionEnded,
+    TurnAdvanced
+  }
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.
   # Returns the game_id. The server is supervised by the test process
@@ -30,14 +37,14 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "select_entity/2" do
-    test "sets selected_id and populates valid_moves for the active hero" do
+    test "sets actor_id and populates valid_moves for the active hero" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
       new_state = SceneServer.select_entity(game_id, hero_id)
 
-      assert new_state.selected_id == hero_id
+      assert new_state.actor_id == hero_id
       assert new_state.valid_moves != []
     end
 
@@ -50,7 +57,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.select_entity(game_id, non_active)
 
-      assert new_state.selected_id == nil
+      assert new_state.actor_id == nil
       assert new_state.valid_moves == []
     end
   end
@@ -134,7 +141,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       new_state = SceneServer.attack_entity(game_id, monster_id)
 
       # With a single hero, turn wraps back to index 0 and selection is cleared.
-      assert new_state.selected_id == nil
+      assert new_state.actor_id == nil
       assert new_state.valid_moves == []
     end
   end
@@ -148,7 +155,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       new_state = SceneServer.end_turn(game_id)
 
-      assert new_state.selected_id == nil
+      assert new_state.actor_id == nil
       assert new_state.valid_moves == []
     end
   end
@@ -335,7 +342,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       returned = SceneServer.select_entity(game_id, hero_id)
 
-      assert returned.selected_id == nil
+      assert returned.actor_id == nil
       assert returned.valid_moves == []
     end
 
@@ -581,6 +588,352 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
 
       assert_receive %EventBatch{state_snapshot: %State{}}, 500
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Inventory event loop (issue #127)
+  # ---------------------------------------------------------------------------
+
+  # Insert a chest entity adjacent to the hero (hero spawns at 2,2) and reload.
+  defp insert_chest(game_id, items \\ []) do
+    chest =
+      Repo.insert!(%Entity{
+        name: "Chest",
+        type: "object",
+        sprite: "chest",
+        x: 3,
+        y: 2,
+        hp: 1,
+        max_hp: 1,
+        tags: [],
+        stats: %{"object_subtype" => "loot_source", "items" => items},
+        campaign_id: game_id
+      })
+
+    SceneServer.reload_entities(game_id)
+    chest
+  end
+
+  describe "open_container/2" do
+    test "sets open_container_id when active hero is adjacent to a loot_source" do
+      game_id = start_server()
+      chest = insert_chest(game_id, [])
+
+      {:ok, new_state} = SceneServer.open_container(game_id, chest.id)
+      assert new_state.open_container_id == chest.id
+    end
+
+    test "returns error when active hero is not adjacent to container" do
+      game_id = start_server()
+
+      far_chest =
+        Repo.insert!(%Entity{
+          name: "Far Chest",
+          type: "object",
+          sprite: "chest",
+          x: 0,
+          y: 0,
+          hp: 1,
+          max_hp: 1,
+          tags: [],
+          stats: %{"object_subtype" => "loot_source", "items" => []},
+          campaign_id: game_id
+        })
+
+      SceneServer.reload_entities(game_id)
+
+      assert {:error, :not_adjacent} = SceneServer.open_container(game_id, far_chest.id)
+    end
+
+    test "broadcasts an EventBatch after opening" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      chest = insert_chest(game_id, [])
+
+      # Drain the reload_entities broadcast.
+      assert_receive %EventBatch{}, 500
+
+      {:ok, _} = SceneServer.open_container(game_id, chest.id)
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
+    end
+  end
+
+  describe "take_item/4" do
+    test "moves item from container to hero inventory and updates carry_weight" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      item = %{
+        "instance_id" => "i1",
+        "item_key" => "dagger",
+        "quantity" => 1,
+        "is_magical" => false
+      }
+
+      chest = insert_chest(game_id, [item])
+
+      SceneServer.open_container(game_id, chest.id)
+      {:ok, new_state} = SceneServer.take_item(game_id, chest.id, "i1", 1)
+
+      hero = new_state.entities[hero_id]
+      assert Enum.any?(hero.stats["inventory"] || [], &(&1["item_key"] == "dagger"))
+      assert new_state.entities[chest.id].stats["items"] == []
+    end
+
+    test "broadcasts an EventBatch after take_item" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      item = %{
+        "instance_id" => "i1",
+        "item_key" => "dagger",
+        "quantity" => 1,
+        "is_magical" => false
+      }
+
+      chest = insert_chest(game_id, [item])
+
+      SceneServer.open_container(game_id, chest.id)
+      # Drain open_container + reload broadcasts.
+      assert_receive %EventBatch{}, 500
+      assert_receive %EventBatch{}, 500
+
+      {:ok, _} = SceneServer.take_item(game_id, chest.id, "i1", 1)
+      assert_receive %EventBatch{state_snapshot: %State{}}, 500
+    end
+  end
+
+  describe "equip_item/2" do
+    test "moves item from hero inventory to equipped_weapon slot" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      # Put a rapier in inventory via take_item flow.
+      item = %{
+        "instance_id" => "r1",
+        "item_key" => "rapier",
+        "quantity" => 1,
+        "is_magical" => false
+      }
+
+      chest = insert_chest(game_id, [item])
+      SceneServer.open_container(game_id, chest.id)
+      SceneServer.take_item(game_id, chest.id, "r1", 1)
+
+      {:ok, equipped_state} = SceneServer.equip_item(game_id, "r1")
+
+      hero = equipped_state.entities[hero_id]
+      assert hero.stats["equipped_weapon"]["key"] == "rapier"
+      refute Enum.any?(hero.stats["inventory"] || [], &(&1["instance_id"] == "r1"))
+    end
+  end
+
+  describe "victory/defeat auto-trigger" do
+    test "dm_adjust_hp killing the last monster transitions to :victory" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.start_session(game_id)
+      SceneServer.transition_phase(game_id, :in_combat)
+
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
+
+      final_state = SceneServer.get_state(game_id)
+      assert final_state.phase == :victory
+
+      assert_receive %EventBatch{events: events}, 500
+      assert Enum.any?(events, fn e -> match?(%PhaseTransitioned{to_phase: :victory}, e) end)
+    end
+
+    test "dm_adjust_hp killing the last hero transitions to :defeat" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      SceneServer.start_session(game_id)
+      SceneServer.transition_phase(game_id, :in_combat)
+
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      SceneServer.dm_adjust_hp(game_id, hero_id, -9999)
+
+      final_state = SceneServer.get_state(game_id)
+      assert final_state.phase == :defeat
+
+      assert_receive %EventBatch{events: events}, 500
+      assert Enum.any?(events, fn e -> match?(%PhaseTransitioned{to_phase: :defeat}, e) end)
+    end
+
+    test "auto-trigger does not fire outside :in_combat phase" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
+
+      final_state = SceneServer.get_state(game_id)
+      assert final_state.phase == :lobby
+    end
+  end
+
+  describe "roll prompt / pending-roll state (issue #146)" do
+    test "attack_entity with auto_roll: false sets awaiting_roll and emits RollRequired" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      # Drain the select_entity broadcast before asserting on the attack batch.
+      assert_receive %EventBatch{}, 500
+      returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+
+      assert returned.awaiting_roll == true
+      assert returned.pending_roll == {:attack, monster_id}
+
+      assert_receive %EventBatch{events: events}, 500
+      assert Enum.any?(events, fn e -> match?(%RollRequired{roll_type: :attack}, e) end)
+    end
+
+    test "attack_entity with auto_roll: true does not set awaiting_roll" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: true)
+
+      assert returned.awaiting_roll == false
+    end
+
+    test "actions are blocked while awaiting_roll is true" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+
+      before_index = SceneServer.get_state(game_id).active_index
+      SceneServer.end_turn(game_id)
+      assert SceneServer.get_state(game_id).active_index == before_index
+    end
+
+    test "submit_roll resumes the attack and clears awaiting_roll" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      original_hp = state.entities[monster_id].hp
+
+      SceneServer.select_entity(game_id, hero_id)
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+      assert SceneServer.get_state(game_id).awaiting_roll == true
+
+      result = SceneServer.submit_roll(game_id, hero_id, 20)
+      assert result.awaiting_roll == false
+      assert result.pending_roll == nil
+      surviving_hp = get_in(result.entities, [monster_id, :hp])
+      # A 20 is a critical hit — damage must have been dealt.
+      assert surviving_hp == nil or surviving_hp < original_hp
+    end
+
+    test "submit_roll clears awaiting_roll even with boundary value 0" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+
+      # Value 0 is out of 1..20 range — Rules.attack will clamp or reject it; the
+      # key thing is SceneServer does not crash and still clears the pending state.
+      result = SceneServer.submit_roll(game_id, hero_id, 0)
+      assert result.awaiting_roll == false
+    end
+  end
+
+  describe "initiative roll prompt (issue #147)" do
+    test "transitioning to :initiative_rolling emits RollRequired for all heroes" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      :ok = SceneServer.start_session(game_id)
+      assert_receive %EventBatch{}, 500
+
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+      assert_receive %EventBatch{events: events}, 500
+
+      assert Enum.any?(events, fn e ->
+               match?(%PhaseTransitioned{to_phase: :initiative_rolling}, e)
+             end)
+
+      roll_events =
+        Enum.filter(events, fn e -> match?(%RollRequired{roll_type: :initiative}, e) end)
+
+      assert length(roll_events) >= 1
+    end
+
+    test "pending_initiative_rolls is populated after transition" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+      assert MapSet.size(state.pending_initiative_rolls) >= 1
+    end
+
+    test "submit_roll with hero in pending_initiative_rolls clears the entity" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+      [hero_id | _] = MapSet.to_list(state.pending_initiative_rolls)
+
+      result = SceneServer.submit_roll(game_id, hero_id, 15)
+      assert not MapSet.member?(result.pending_initiative_rolls, hero_id)
+      assert Map.get(result.initiative_values, hero_id) == 15
+    end
+
+    test "end_initiative_rolling returns error when rolls are still pending" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+      assert MapSet.size(state.pending_initiative_rolls) > 0
+
+      assert {:error, :pending_rolls} = SceneServer.end_initiative_rolling(game_id)
+    end
+
+    test "end_initiative_rolling succeeds when no rolls are pending" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+
+      Enum.each(MapSet.to_list(state.pending_initiative_rolls), fn hero_id ->
+        SceneServer.submit_roll(game_id, hero_id, 10)
+      end)
+
+      assert :ok = SceneServer.end_initiative_rolling(game_id)
+      assert SceneServer.get_state(game_id).phase == :in_combat
+    end
+
+    test "end_initiative_rolling returns error in wrong phase" do
+      game_id = start_server()
+      assert {:error, :wrong_phase} = SceneServer.end_initiative_rolling(game_id)
     end
   end
 end

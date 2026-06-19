@@ -24,8 +24,207 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 <div
   id="game-board"
   phx-hook="DiceRoll"
+  phx-window-keydown="deselect_spell"
+  phx-key="Escape"
   style="position:relative; width:100vw; height:100vh; overflow:hidden;"
 >
+  <%!--
+    z-35: Left inspection panel — fixed, full height, collapsed when nothing is inspected.
+  --%>
+  <% panel_content = inspect_content(@panel_subject, @game_state, @is_dm) %>
+  <%= if panel_content do %>
+    <div
+      id="left-panel"
+      style="position:fixed; top:0; left:0; bottom:0; width:220px; z-index:35; overflow-y:auto; pointer-events:auto;"
+      class="bg-gray-900/95 border-r border-gray-700 flex flex-col"
+    >
+      <div class="flex items-center justify-between px-3 py-2 border-b border-gray-700 sticky top-0 bg-gray-900/95 z-10">
+        <span class="text-xs text-gray-500 uppercase tracking-widest">Inspect</span>
+        <button phx-click="dismiss_panel" class="text-gray-500 hover:text-white leading-none">
+          ✕
+        </button>
+      </div>
+      <div class="p-3 flex flex-col gap-3 text-xs">
+        <%= case panel_content do %>
+          <% {:entity, entity, is_dm} -> %>
+            <div class="font-bold text-gray-100 text-sm">{entity.name}</div>
+            <%= if entity.type == "hero" do %>
+              <div class="text-gray-400">
+                {String.capitalize(entity.class || "?")} · {String.capitalize(entity.race || "?")} · Lv {entity.level ||
+                  1}
+              </div>
+              <div>
+                <div class="flex justify-between text-gray-400 mb-1">
+                  <span>HP</span>
+                  <span>{entity.hp}/{entity.max_hp}</span>
+                </div>
+                <div class="h-2 bg-gray-700 rounded overflow-hidden">
+                  <div
+                    class="h-full rounded"
+                    style={"width:#{hp_percent(entity.hp, entity.max_hp)}%; background:#{hp_bar_color(entity.hp, entity.max_hp)};"}
+                  />
+                </div>
+                <%= if entity.temp_hp > 0 do %>
+                  <div class="text-sky-400 mt-0.5">+{entity.temp_hp} temp HP</div>
+                <% end %>
+              </div>
+              <div class="flex gap-3">
+                <div>
+                  <div class="text-gray-500">AC</div>
+                  <div class="text-gray-100 font-mono">{entity[:armor_class] || "?"}</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Speed</div>
+                  <div class="text-gray-100 font-mono">{entity.speed || 30}ft</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Prof</div>
+                  <div class="text-gray-100 font-mono">+{prof_bonus(entity.level)}</div>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <%= for {abbr, key} <- [
+                      {"STR", "strength"}, {"DEX", "dexterity"}, {"CON", "constitution"},
+                      {"INT", "intelligence"}, {"WIS", "wisdom"}, {"CHA", "charisma"}
+                    ] do %>
+                  <% score = (entity.stats || %{})[key] || 10 %>
+                  <div class="bg-gray-800 rounded p-1 text-center">
+                    <div class="text-gray-500 text-[10px]">{abbr}</div>
+                    <div class="text-gray-100 font-bold">{score}</div>
+                    <div class="text-gray-400">{format_modifier(ability_modifier(score))}</div>
+                  </div>
+                <% end %>
+              </div>
+              <%= if (entity.conditions || []) != [] do %>
+                <div>
+                  <div class="text-gray-500 mb-1">Conditions</div>
+                  <div class="flex flex-wrap gap-1">
+                    <%= for cond_id <- entity.conditions do %>
+                      <span class="bg-orange-900/60 border border-orange-700 rounded px-1.5 py-0.5 text-orange-300">
+                        {cond_id}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              <% weapon = (entity.stats || %{})["equipped_weapon"] %>
+              <%= if weapon do %>
+                <div>
+                  <div class="text-gray-500 mb-0.5">Equipped</div>
+                  <div class="text-gray-200">{weapon["key"] || "—"}</div>
+                  <%= if weapon["damage_dice"] do %>
+                    <div class="text-gray-400 font-mono">
+                      {weapon["damage_dice"]} {weapon["damage_type"]}
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            <% else %>
+              <%!-- Creature --%>
+              <div class="text-gray-400">{monster_type_label(entity)}</div>
+              <div>
+                <%= if is_dm do %>
+                  <div class="flex justify-between text-gray-400 mb-1">
+                    <span>HP</span>
+                    <span class="flex items-center gap-1">
+                      {entity.hp}/{entity.max_hp} <.dm_badge />
+                    </span>
+                  </div>
+                <% else %>
+                  <div class="text-gray-400 mb-1">HP</div>
+                <% end %>
+                <div class="h-2 bg-gray-700 rounded overflow-hidden">
+                  <div
+                    class="h-full rounded"
+                    style={"width:#{hp_percent(entity.hp, entity.max_hp)}%; background:#{hp_bar_color(entity.hp, entity.max_hp)};"}
+                  />
+                </div>
+                <%= if entity.temp_hp > 0 do %>
+                  <div class="text-sky-400 mt-0.5">+{entity.temp_hp} temp HP</div>
+                <% end %>
+              </div>
+              <%= if is_dm do %>
+                <div class="flex gap-3">
+                  <div>
+                    <div class="text-gray-500 flex items-center gap-1">AC <.dm_badge /></div>
+                    <div class="text-gray-100 font-mono">{entity[:armor_class] || "?"}</div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500 flex items-center gap-1">Speed <.dm_badge /></div>
+                    <div class="text-gray-100 font-mono">{entity.speed || 30}ft</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 mb-1 flex items-center gap-1">
+                    Ability Scores <.dm_badge />
+                  </div>
+                  <div class="grid grid-cols-3 gap-1">
+                    <%= for {abbr, key} <- [
+                          {"STR", "strength"}, {"DEX", "dexterity"}, {"CON", "constitution"},
+                          {"INT", "intelligence"}, {"WIS", "wisdom"}, {"CHA", "charisma"}
+                        ] do %>
+                      <% score = (entity.stats || %{})[key] || 10 %>
+                      <div class="bg-gray-800 rounded p-1 text-center">
+                        <div class="text-gray-500 text-[10px]">{abbr}</div>
+                        <div class="text-gray-100 font-bold">{score}</div>
+                        <div class="text-gray-400">
+                          {format_modifier(ability_modifier(score))}
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              <%= if (entity.conditions || []) != [] do %>
+                <div>
+                  <div class="text-gray-500 mb-1">Conditions</div>
+                  <div class="flex flex-wrap gap-1">
+                    <%= for cond_id <- entity.conditions do %>
+                      <span class="bg-orange-900/60 border border-orange-700 rounded px-1.5 py-0.5 text-orange-300">
+                        {cond_id}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          <% {:tile, x, y, tile} -> %>
+            <div class="font-bold text-gray-100 text-sm">Tile ({x}, {y})</div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Texture</span>
+                <span class="text-gray-200">{tile.texture}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Walkable</span>
+                <span class={
+                  if (tile.movement || %{})["walk"] && (tile.movement || %{})["walk"] > 0,
+                    do: "text-green-400",
+                    else: "text-red-400"
+                }>
+                  {if (tile.movement || %{})["walk"] && (tile.movement || %{})["walk"] > 0,
+                    do: "Yes",
+                    else: "No"}
+                </span>
+              </div>
+              <%= if cost = (tile.movement || %{})["walk"] do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Move cost</span>
+                  <span class="text-gray-200 font-mono">{cost}%</span>
+                </div>
+              <% end %>
+              <%= if tile.decoration do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Decoration</span>
+                  <span class="text-gray-200">{tile.decoration}</span>
+                </div>
+              <% end %>
+            </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <%!--
     z-0: SVG game scene — fixed, full viewport.
     viewBox defines the coordinate space; PanZoom hook preserves it across LV patches.
@@ -33,6 +232,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
   <svg
     id="game-svg"
     phx-hook="PanZoom"
+    phx-click="deselect"
     viewBox={"0 0 #{svg_w} #{svg_h}"}
     preserveAspectRatio="xMidYMid meet"
     data-svg-w={svg_w}
@@ -42,7 +242,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     data-follow="true"
     style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; cursor:grab;"
   >
-    <%!-- Layer 1: Ground tiles --%>
+    <%!-- Layer 1: Ground tiles — clickable to inspect when no entity/overlay is on top --%>
     <%= for {{x, y}, tile} <- state.grid_tiles do %>
       <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
       <polygon
@@ -50,6 +250,10 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         fill={tile_fill(@appearances, tile.texture)}
         stroke={tile_stroke(@appearances, tile.texture)}
         stroke-width="1"
+        phx-click="inspect_tile"
+        phx-value-x={x}
+        phx-value-y={y}
+        style="cursor: crosshair;"
       />
     <% end %>
 
@@ -72,7 +276,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           end) %>
     <%= for {id, entity} <- visible_entities do %>
       <% is_active = id == active_id %>
-      <% is_selected = id == state.selected_id %>
+      <% is_selected = id == state.actor_id %>
       <% is_target = id in @valid_targets %>
       <% is_spell_target = id in @spell_targets %>
       <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
@@ -239,10 +443,14 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <div class="bg-gray-900/90 border border-gray-700 rounded p-2">
         <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Entities</div>
         <%= for {id, entity} <- state.entities do %>
-          <div class={[
-            "flex items-center gap-2 mb-0.5",
-            (id == state.selected_id && "opacity-100") || "opacity-60"
-          ]}>
+          <div
+            class={[
+              "flex items-center gap-2 mb-0.5 cursor-pointer hover:opacity-100 transition-opacity",
+              (id == state.actor_id && "opacity-100") || "opacity-60"
+            ]}
+            phx-click="select_entity"
+            phx-value-id={id}
+          >
             <div
               class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
               style={"background:#{entity_body_color(@appearances, entity.sprite)}"}
@@ -260,6 +468,27 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           <div class="text-xs text-gray-300 mb-0.5">{entry}</div>
         <% end %>
       </div>
+
+      <%= if not @is_dm and not is_nil(@campaign_character) do %>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2">
+          <button
+            phx-click="toggle_auto_roll"
+            class="flex items-center gap-2 w-full text-left"
+          >
+            <div class={[
+              "w-7 h-4 rounded-full flex-shrink-0 transition-colors relative",
+              (@auto_roll && "bg-indigo-600") || "bg-gray-600"
+            ]}>
+              <div class={[
+                "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform",
+                (@auto_roll && "translate-x-3.5") || "translate-x-0.5"
+              ]}>
+              </div>
+            </div>
+            <span class="text-xs text-gray-300">Auto-roll dice</span>
+          </button>
+        </div>
+      <% end %>
     </div>
   </div>
 
@@ -447,6 +676,24 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               </button>
             <% end %>
 
+            <%= if state.phase == :initiative_rolling do %>
+              <button
+                phx-click="dm_end_initiative_rolling"
+                class={[
+                  "text-white text-xs rounded px-2 py-0.5 mt-0.5",
+                  (MapSet.size(state.pending_initiative_rolls) > 0 &&
+                     "bg-gray-500 cursor-not-allowed opacity-60") ||
+                    "bg-green-700 hover:bg-green-600"
+                ]}
+                title={
+                  if MapSet.size(state.pending_initiative_rolls) > 0,
+                    do: "Waiting for #{MapSet.size(state.pending_initiative_rolls)} player(s)",
+                    else: "Start combat"
+                }
+              >
+                Start Combat
+              </button>
+            <% end %>
             <button
               phx-click="dm_force_end_turn"
               class="bg-gray-700 hover:bg-gray-600 text-white text-xs rounded px-2 py-0.5 mt-0.5"
@@ -497,6 +744,68 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <div class="text-center">
         <div class="text-5xl font-bold text-yellow-400 mb-3">SESSION PAUSED</div>
         <div class="text-xl text-gray-300">Waiting for the DM to resume&hellip;</div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Roll prompt overlay — shown when the active player has auto_roll disabled (issue #146) --%>
+  <%= if @roll_prompt do %>
+    <div style="position:fixed; inset:0; z-index:110; background:rgba(0,0,0,0.82); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-xl p-6 max-w-xs w-full mx-4 text-center">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">
+          {String.replace(Atom.to_string(@roll_prompt.roll_type), "_", " ")}
+        </div>
+        <div class="text-2xl font-bold text-white mb-1">{@roll_prompt.context_label}</div>
+        <div class="text-indigo-400 font-mono text-lg mb-6">{@roll_prompt.dice_expression}</div>
+        <button
+          phx-click="roll_submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg py-3 mb-4 text-sm"
+        >
+          Roll
+        </button>
+        <form phx-submit="roll_manual_submit" class="flex gap-2 items-center">
+          <input
+            type="number"
+            name="value"
+            min="1"
+            max="20"
+            placeholder="1–20"
+            class="flex-1 bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white text-sm text-center"
+          />
+          <button
+            type="submit"
+            class="bg-gray-600 hover:bg-gray-500 text-white text-sm rounded-lg px-3 py-2"
+          >
+            Use
+          </button>
+        </form>
+        <div class="text-xs text-gray-600 mt-4">Auto-rolls in 60 s if no response</div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Outcome overlay — full-viewport, blocks all interaction. DM sees Return to Lobby. --%>
+  <%= if state.phase in [:victory, :defeat] do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center;">
+      <div class="text-center max-w-md mx-auto px-6">
+        <%= if state.phase == :victory do %>
+          <div class="text-6xl font-bold text-yellow-400 mb-4">Victory!</div>
+          <div class="text-xl text-gray-300 mb-6">The enemies have been vanquished.</div>
+        <% else %>
+          <div class="text-6xl font-bold text-red-500 mb-4">Defeat&hellip;</div>
+          <div class="text-xl text-gray-300 mb-6">The party has fallen.</div>
+        <% end %>
+        <%= if @round > 0 do %>
+          <div class="text-sm text-gray-500 mb-8">Round {@round}</div>
+        <% end %>
+        <%= if @is_dm do %>
+          <button
+            phx-click="dm_return_to_lobby"
+            class="bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg px-8 py-3 text-sm"
+          >
+            Return to Lobby
+          </button>
+        <% end %>
       </div>
     </div>
   <% end %>
@@ -597,6 +906,68 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Container loot panel — shown when the active hero has a container open --%>
+  <%= if container_id = @game_state.open_container_id do %>
+    <% container = @game_state.entities[container_id] %>
+    <% items = get_in(container, [:stats, "items"]) || [] %>
+    <div
+      id="container-panel"
+      style="position:fixed; top:50%; right:16px; transform:translateY(-50%); z-index:80; width:280px;"
+    >
+      <div class="bg-gray-900 border border-yellow-700 rounded-lg p-4 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-yellow-400 font-bold text-sm">
+            {(container && container.name) || "Container"}
+          </div>
+          <button
+            phx-click="close_container"
+            class="text-gray-400 hover:text-white text-xs"
+          >
+            Done
+          </button>
+        </div>
+
+        <%= if items == [] do %>
+          <div class="text-gray-500 text-xs italic">Empty.</div>
+        <% else %>
+          <div class="space-y-2 mb-3">
+            <%= for item_inst <- items do %>
+              <% item_data = Gibbering.Data.Items.get(item_inst["item_key"]) %>
+              <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
+                <div>
+                  <div class="text-white text-xs font-medium">
+                    {(item_data && item_data.name) || item_inst["item_key"]}
+                    {if item_inst["quantity"] > 1, do: "×#{item_inst["quantity"]}"}
+                  </div>
+                  <div class="text-gray-400 text-xs">
+                    {item_data && "#{item_data.weight_pounds} lb"}
+                  </div>
+                </div>
+                <button
+                  phx-click="take_item"
+                  phx-value-container_id={container_id}
+                  phx-value-instance_id={item_inst["instance_id"]}
+                  phx-value-quantity={item_inst["quantity"]}
+                  class="bg-green-700 hover:bg-green-600 text-white text-xs rounded px-2 py-1"
+                >
+                  Take
+                </button>
+              </div>
+            <% end %>
+          </div>
+
+          <button
+            phx-click="take_all"
+            phx-value-container_id={container_id}
+            class="w-full bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold rounded px-3 py-2"
+          >
+            Take All
+          </button>
+        <% end %>
       </div>
     </div>
   <% end %>

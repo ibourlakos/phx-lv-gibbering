@@ -13,7 +13,7 @@ Seven paths depending on how well the problem is understood and how large the ch
 [B] Feature:    Issue ──────────────────────► Branch → Red → Green → Refactor → Verify → Commit
 [C] Bugfix:     Issue (bug) ────────────────► Branch → Red (reproduce) → Green → Verify → Commit
 [D] Hotfix:                                                              Verify → Commit
-[E] Work Package: Triage batch ──────────────► work-packages.md → pick next issue → repeat B/C
+[E] Work Package: Triage batch ──────────────► docs/work-packages/ → pick next issue → repeat B/C
 [F] Escalation: discovery Issue → too broad → open Brainstorm → defer Issue → enter [A]
 [G] Docs:       (fix) Verify → Commit   |   (refactor) Branch → Edit → Verify → Commit
 ```
@@ -174,6 +174,8 @@ Apply to paths A, B, C only.
 **Trigger:** Modifies a shared interface, spans more than two modules, or affects the SVG pipeline end-to-end.  
 **Action:** Discuss and update [docs/architecture.md](architecture.md) before writing any code.
 
+**Seed sub-gate:** Any migration in this branch must leave `mix ecto.reset` (drop → create → migrate → seed) exiting 0 before the Verify phase begins. Also review `priv/repo/seeds.exs`: any new table or column that should carry representative dev data must be populated — a silent omission won't crash reset but will leave the dev DB semantically stale. This includes structured values: if a JSONB column or Ecto embed changes internal shape, update the seed data to match even when no migration is involved.
+
 **Event schema sub-gate:** Adding or changing any `Gibbering.Events.*` struct is a Published
 Language change — a system-wide API contract, not a local code change. Before implementing:
 1. Run the mini-cycle: Event Storming (brainstorm) → envelope spec → versioning policy review
@@ -203,7 +205,7 @@ for the full convention.
 
 ## [E] Work Package subflow
 
-A work package is a temporary planning document (`docs/issues/work-packages.md`) that groups issues by concern and establishes sequencing across phases. It sits *above* the per-issue workflow — it tells you which issue to pick up next and what it depends on.
+A work package is a file in `docs/work-packages/` (one per package, e.g. `wp-a.md`) that groups issues by concern and establishes sequencing across phases. The index is `docs/work-packages/README.md`. Work packages sit *above* the per-issue workflow — they tell you which issue to pick up next and what it depends on.
 
 ---
 
@@ -233,11 +235,11 @@ A work package is a temporary planning document (`docs/issues/work-packages.md`)
 
 **Trigger:** a gating discovery closes, a batch of issues closes, or new issues are derived from a settled discovery.
 
-1. **Mark completed packages** with ✓ and a one-line close note ("all N issues closed as of YYYY-MM-DD"). Do not delete their sections — they serve as a history of what is done.
-2. **Disassemble stale assignments.** If a previously gated item carried a "gated by X — do not start" annotation and X is now closed, remove the item from its old stub and assign it to a new package or promote it as the lead item of a new package.
-3. **Add new packages for derived issues.** When a closed discovery has produced implementation issues, open a new package entry, reference the discovery it came from, and apply the data-layer-first sequencing rule.
-4. **Update the sequencing diagram** to reflect the new active front and any newly unlocked tracks.
-5. **Prune cross-cutting threads.** Remove entries whose issues are closed. Add newly deferred or unassigned issues.
+1. **Mark completed packages.** Set `**Status:** complete` + `**Completed:** YYYY-MM-DD` in the WP file; move the row in `README.md` from Active to Complete.
+2. **Disassemble stale assignments.** If a previously gated item carried a "gated by X — do not start" annotation and X is now closed, remove the annotation and promote the item to active in its WP file and the README.
+3. **Add new packages for derived issues.** Create a new `wp-<letter>.md`, reference the discovery it came from, apply the data-layer-first sequencing rule, and add a row to the Active table in `README.md`.
+4. **Update the Active Front** block in `README.md` to reflect the new active state.
+5. **Prune cross-cutting threads** in `README.md`. Remove entries whose issues are closed; add newly deferred or unassigned issues.
 
 ---
 
@@ -245,9 +247,9 @@ A work package is a temporary planning document (`docs/issues/work-packages.md`)
 
 **Trigger:** all issues in a package are closed or explicitly deferred.
 
-1. Mark the package ✓ complete with a close note.
+1. Set `**Status:** complete` and add `**Completed:** YYYY-MM-DD` in the WP file; update the README index (move row from Active to Complete).
 2. Check whether any issues in other packages were gated by this one — remove their gate annotations and promote them to active if applicable.
-3. When all packages across the entire file are complete or deferred: delete `work-packages.md`.
+3. WP files are kept permanently (like closed issues). The directory is never deleted.
 
 ---
 

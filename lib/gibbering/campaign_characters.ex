@@ -45,4 +45,25 @@ defmodule Gibbering.CampaignCharacters do
     |> CampaignCharacter.update_changeset(attrs)
     |> Repo.update()
   end
+
+  @doc """
+  Returns the active `CampaignCharacter` owned by `user_id` in `campaign_id`, or `nil`.
+  Used to load the player's auto-roll preference in `GameLive`.
+  """
+  def get_active_for_player(campaign_id, user_id) do
+    CampaignCharacter
+    |> where(
+      [cc],
+      cc.campaign_id == ^campaign_id and cc.owner_id == ^user_id and cc.active == true
+    )
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  @doc "Sets the auto-roll preference on the given `CampaignCharacter`."
+  def set_auto_roll(%CampaignCharacter{} = cc, value) when is_boolean(value) do
+    cc
+    |> CampaignCharacter.auto_roll_changeset(%{auto_roll: value})
+    |> Repo.update()
+  end
 end

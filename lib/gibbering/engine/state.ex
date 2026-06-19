@@ -4,13 +4,14 @@ defmodule Gibbering.Engine.State do
   alias Gibbering.Campaign
   alias Gibbering.Rulesets.DnD5e.Stats
 
-  @type scene_phase :: :lobby | :exploration | :initiative_rolling | :in_combat | :paused
+  @type scene_phase ::
+          :lobby | :exploration | :initiative_rolling | :in_combat | :paused | :victory | :defeat
 
   @valid_transitions %{
     lobby: [:exploration, :paused],
     exploration: [:initiative_rolling, :in_combat, :paused],
     initiative_rolling: [:in_combat, :paused],
-    in_combat: [:exploration, :paused]
+    in_combat: [:exploration, :paused, :victory, :defeat]
   }
 
   defstruct [
@@ -24,7 +25,7 @@ defmodule Gibbering.Engine.State do
     # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
     :entities,
     # integer | nil
-    :selected_id,
+    :actor_id,
     # [{x, y}]
     :valid_moves,
     # [entity_id] — entities the selected entity can attack or target this turn
@@ -46,7 +47,15 @@ defmodule Gibbering.Engine.State do
     # MapSet of entity_ids hidden from player view (DM-only visibility)
     hidden_entities: %MapSet{},
     # [{timestamp, text}] — chronological intervention log, newest first
-    session_log: []
+    session_log: [],
+    # entity_id of the container currently open for the active hero, or nil
+    open_container_id: nil,
+    # true while waiting for a player to submit a manual roll value
+    awaiting_roll: false,
+    # {:attack, target_id} | {:cast_spell, spell_key, target_id} | nil — the suspended action
+    pending_roll: nil,
+    # MapSet of entity_ids whose initiative rolls are still pending player input
+    pending_initiative_rolls: %MapSet{}
   ]
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."
@@ -104,7 +113,7 @@ defmodule Gibbering.Engine.State do
       tile_size: map.tile_size,
       grid_tiles: tiles,
       entities: entities,
-      selected_id: nil,
+      actor_id: nil,
       valid_moves: [],
       valid_targets: [],
       turn_order: hero_ids,
@@ -223,6 +232,22 @@ defmodule Gibbering.Engine.State do
   @doc "Returns the entity id of the hero whose turn it currently is, or `nil` when there is no turn order."
   def active_hero_id(%__MODULE__{turn_order: []}), do: nil
   def active_hero_id(%__MODULE__{turn_order: order, active_index: idx}), do: Enum.at(order, idx)
+
+  @doc """
+  Returns `:victory` if all monsters are at 0 HP, `:defeat` if all heroes are at 0 HP,
+  or `nil` if neither condition is met. Requires at least one entity of each relevant
+  type to be present before triggering. Intended to be called only during `:in_combat`.
+  """
+  def check_combat_outcome(%__MODULE__{entities: entities}) do
+    {heroes, monsters} =
+      Enum.split_with(Map.values(entities), fn e -> e.type == "hero" end)
+
+    cond do
+      monsters != [] and Enum.all?(monsters, &(&1.hp == 0)) -> :victory
+      heroes != [] and Enum.all?(heroes, &(&1.hp == 0)) -> :defeat
+      true -> nil
+    end
+  end
 
   @doc """
   Marks an action economy slot as `:spent`.
@@ -378,7 +403,7 @@ defmodule Gibbering.Engine.State do
     %{
       state
       | active_index: next,
-        selected_id: nil,
+        actor_id: nil,
         valid_moves: [],
         valid_targets: [],
         entities: entities

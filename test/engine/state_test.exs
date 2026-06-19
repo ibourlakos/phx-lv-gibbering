@@ -49,10 +49,10 @@ defmodule Gibbering.Engine.StateTest do
       assert State.active_hero_id(advanced) == 99
     end
 
-    test "clears selected_id and valid_moves on advance" do
-      state = %{build_state() | selected_id: hero_id(), valid_moves: [{1, 1}, {2, 1}]}
+    test "clears actor_id and valid_moves on advance" do
+      state = %{build_state() | actor_id: hero_id(), valid_moves: [{1, 1}, {2, 1}]}
       advanced = State.advance_turn(state)
-      assert advanced.selected_id == nil
+      assert advanced.actor_id == nil
       assert advanced.valid_moves == []
     end
 
@@ -564,6 +564,71 @@ defmodule Gibbering.Engine.StateTest do
     test "no-op for unknown entity_id" do
       state = build_state()
       assert State.adjust_hp(state, 99_999, 5) == state
+    end
+  end
+
+  describe "transition_phase/2 — victory and defeat phases" do
+    test "in_combat → victory is a valid transition" do
+      state = %{build_state() | phase: :in_combat}
+      assert {:ok, new_state} = State.transition_phase(state, :victory)
+      assert new_state.phase == :victory
+    end
+
+    test "in_combat → defeat is a valid transition" do
+      state = %{build_state() | phase: :in_combat}
+      assert {:ok, new_state} = State.transition_phase(state, :defeat)
+      assert new_state.phase == :defeat
+    end
+
+    test "victory and defeat are terminal — no further validated transitions" do
+      victory_state = %{build_state() | phase: :victory}
+      assert {:error, _} = State.transition_phase(victory_state, :in_combat)
+      assert {:error, _} = State.transition_phase(victory_state, :lobby)
+
+      defeat_state = %{build_state() | phase: :defeat}
+      assert {:error, _} = State.transition_phase(defeat_state, :in_combat)
+    end
+
+    test "force_transition_phase can leave victory back to lobby" do
+      state = %{build_state() | phase: :victory}
+      assert {:ok, new_state} = State.force_transition_phase(state, :lobby)
+      assert new_state.phase == :lobby
+    end
+  end
+
+  describe "check_combat_outcome/1" do
+    test "returns nil when no entities are at zero HP" do
+      state = build_state()
+      assert State.check_combat_outcome(state) == nil
+    end
+
+    test "returns :victory when all monsters are at zero HP" do
+      state = with_entity(build_state(), monster_id(), hp: 0)
+      assert State.check_combat_outcome(state) == :victory
+    end
+
+    test "returns :defeat when all heroes are at zero HP" do
+      state = with_entity(build_state(), hero_id(), hp: 0)
+      assert State.check_combat_outcome(state) == :defeat
+    end
+
+    test "returns :victory when both sides are at 0 HP (monsters-dead check fires first)" do
+      state =
+        build_state()
+        |> with_entity(hero_id(), hp: 0)
+        |> with_entity(monster_id(), hp: 0)
+
+      assert State.check_combat_outcome(state) == :victory
+    end
+
+    test "returns nil when there are no monsters (e.g. exploration-only scene)" do
+      state = %{build_state() | entities: %{hero_id() => build_state().entities[hero_id()]}}
+      assert State.check_combat_outcome(state) == nil
+    end
+
+    test "returns nil when there are no heroes" do
+      state = %{build_state() | entities: %{monster_id() => build_state().entities[monster_id()]}}
+      assert State.check_combat_outcome(state) == nil
     end
   end
 
