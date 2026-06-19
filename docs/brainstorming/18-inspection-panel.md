@@ -40,7 +40,12 @@ B. **Add a socket-level `inspected` assign** (`:entity | :tile | :decoration | n
 
 C. **Split `selected_id` into two**: `action_target_id` (combat) and `selected_id` (inspection, panel-driven). Cleanest semantically, but touching all existing combat logic is a large blast radius.
 
-**Lean toward B.** It layers cleanly on top of the existing model with no engine changes. The socket holds ephemeral UI state; the server holds game state. That boundary already exists.
+**Decision: B.** It layers cleanly on top of the existing model with no engine changes. The socket holds ephemeral UI state; the server holds game state. That boundary already exists.
+
+**Naming (resolved):**
+- `selected_id` (game server) → **`actor_id`** — the entity currently taking or about to take a combat action
+- `inspected` (socket assign) → **`panel_subject`** (type: `:entity | :tile | nil`) — display-only, never enters game server state
+- Inventory is a separate concern with its own modal/lightbox, independent of the inspection panel
 
 ---
 
@@ -55,7 +60,7 @@ C. **Split `selected_id` into two**: `action_target_id` (combat) and `selected_i
 | Tile (no entity) | new `inspect_tile` on ground polygon | Texture name · Walkable / Blocked · Movement cost · Decoration name if present |
 | Decoration (on tile) | same `inspect_tile` (tile knows its decoration) | Decoration type · Flavour line |
 
-Open question: Should clicking the entity list (bottom-right panel) also drive inspection? BG3 does this.
+**Resolved (Q1):** Yes — roster clicks drive the inspection panel, same behaviour as BG3.
 
 ---
 
@@ -68,7 +73,7 @@ This is actually fine for inspection:
 - If a tile has no overlay (not a valid move, or no entity selected), we can add `phx-click="inspect_tile" phx-value-x phx-value-y` to the ground polygon.
 - Entity polygons sit above ground tiles, so entity clicks still take precedence.
 
-Open question: Does clicking a move-overlay tile clear the inspection panel or leave the previous subject?
+**Resolved (Q3):** Retain the previous `panel_subject` — moving does not imply loss of interest in what was being inspected.
 
 ---
 
@@ -81,13 +86,17 @@ The same entity looks different to a player vs. the DM.
 
 **Non-hero creature** (information should be gated):
 - **DM**: Full stat block — exact HP, AC, ability scores.
-- **Player**: Name + HP bar (granular: Uninjured / Bloodied / Critical / Near Death buckets, not exact numbers) + visible conditions only. No AC, no scores.
+- **Player**: Name + HP bar (no numbers) + temp HP line when > 0 + visible conditions only. No AC, no scores. The entity schema already carries `hp`, `max_hp`, and `temp_hp` — all three are available. "Shield points" are not a RAW 5e mechanic (Shield and Shield of Faith spells grant AC bonuses, not a separate HP pool); temp HP is the only analogous concept.
 
 **Object / Tile**: Same for all roles — no sensitive info.
 
 This gating needs a helper in the template, or a separate `inspect_content/2` function that takes `(subject, role)` and returns a data map.
 
 **UI terminology note:** The word "monster" is an internal engine/data concept (`entity.type: "monster"` in the DB). It must not surface to players. In the panel, display the creature's `monster_type` from the catalogue (e.g. "Humanoid", "Beast", "Undead", "Fiend") as the type label. "Monster" may appear in DM-only tooling (entity editor, catalogue management) where it is the correct technical term.
+
+**Resolved (Q5):** Flavour description lives in the entity catalogue (issue #132), not on entity instances. Instances inherit the catalogue description; a per-instance override is optional. `object_subtype` is also promoted from a `stats` map key to a validated catalogue field — see issue #132 for acceptance criteria.
+
+**Resolved (Q7):** DM sees the full stat block with a consistent visual "DM-only" indicator (e.g. eye icon or subtle badge). This indicator applies consistently across the entire UI wherever DM-gated information appears — panel, event log, entity editor.
 
 ---
 
@@ -234,13 +243,13 @@ The `inspected` subject should live **entirely in the socket** (`assign(socket, 
 
 ## Open questions
 
-- [ ] Q1: Does clicking the entity roster (bottom-right) also drive the inspection panel?
-- [ ] Q2: When a player clicks a monster, what HP granularity do they see? (buckets vs. bar with hidden number)
-- [ ] Q3: Does clicking a move-overlay tile clear the panel or retain the previous subject?
-- [ ] Q4: Does "deselect" (click empty map) clear both `selected_id` and `inspected`, or only `selected_id`?
-- [ ] Q5: For object entities (`static_decor`), do they get a flavour description field in the seed / entity data, or do we derive flavour from the entity name?
-- [ ] Q6: Should the inventory summary on a hero's panel be read-only, or support drag/equip actions within the panel? (Scope gate — lean toward read-only for v1.)
-- [ ] Q7: What does the panel show for the DM when `selected_id` is a hidden entity (one the players can't see)?
-- [ ] Q8: Where does the player event feed sit in the viewport layout? (bottom-left, collapsible overlay, or integrated into the detail panel as a tab?)
-- [ ] Q9: For tombstone entity links (dead/gone entity), how much of the last-known stat block is shown? Full panel or abbreviated?
-- [ ] Q10: Should passive rule modifiers that applied to a cast be recorded in the event's resolution context so the "as cast" overlay is complete? (Constraint on issue #119 event schema.)
+- [x] Q1: Does clicking the entity roster (bottom-right) also drive the inspection panel? → **Yes.**
+- [x] Q2: When a player clicks a monster, what HP granularity do they see? → **HP bar (no number); temp HP as a separate line when > 0. No buckets, no exact numbers.**
+- [x] Q3: Does clicking a move-overlay tile clear the panel or retain the previous subject? → **Retain.**
+- [x] Q4: Does "deselect" (click empty map) clear both `actor_id` and `panel_subject`, or only `actor_id`? → **`actor_id` only; `panel_subject` persists.**
+- [x] Q5: Flavour description for `static_decor` — stored or derived? → **Stored on the catalogue entry (issue #132); instances inherit. `object_subtype` promoted from `stats` map to validated catalogue field.**
+- [x] Q6: Should the inventory summary be read-only or interactive? → **Read-only for v1; inventory has its own modal/lightbox.**
+- [x] Q7: What does the DM panel show for a hidden entity? → **Full stat block with a consistent DM-only visual indicator (eye icon / badge), applied uniformly across the UI.**
+- [ ] Q8: Where does the player event feed sit in the viewport layout?
+- [ ] Q9: For tombstone entity links (dead/gone entity), how much of the last-known stat block is shown?
+- [ ] Q10: Should passive rule modifiers that applied to a cast be recorded in the event's resolution context? (Constraint on issue #119 — defer there.)
