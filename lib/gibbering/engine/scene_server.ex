@@ -145,6 +145,10 @@ defmodule Gibbering.Engine.SceneServer do
   def close_container(game_id),
     do: GenServer.call(via(game_id), :close_container)
 
+  @doc "Clears actor_id, valid_moves, and valid_targets — display-only, no gameplay effect."
+  def deselect_entity(game_id),
+    do: GenServer.call(via(game_id), :deselect_entity)
+
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
     Registry.lookup(Gibbering.GameRegistry, game_id) != []
@@ -781,6 +785,14 @@ defmodule Gibbering.Engine.SceneServer do
     persist(new_state)
     broadcast_batch(new_state, [], :close_container)
     {:reply, :ok, new_state}
+  end
+
+  @impl true
+  def handle_call(:deselect_entity, _from, state) do
+    new_state = %{state | actor_id: nil, valid_moves: [], valid_targets: []}
+    persist(new_state)
+    broadcast_batch(new_state, [], :deselect_entity)
+    {:reply, new_state, new_state}
   end
 
   # --- Helpers ---

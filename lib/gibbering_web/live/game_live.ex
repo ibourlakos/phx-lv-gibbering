@@ -48,7 +48,8 @@ defmodule GibberingWeb.GameLive do
            |> assign(:log, [])
            |> assign(:dm_broadcasts, [])
            |> assign(:dm_whispers, [])
-           |> assign(:dm_panel, nil)}
+           |> assign(:dm_panel, nil)
+           |> assign(:panel_subject, nil)}
 
         {:error, reason} ->
           {:ok,
@@ -63,7 +64,29 @@ defmodule GibberingWeb.GameLive do
   def handle_event("select_entity", %{"id" => id}, socket) do
     id = String.to_integer(id)
     new_state = SceneServer.select_entity(socket.assigns.game_id, id)
-    {:noreply, assign(socket, game_state: new_state, valid_targets: new_state.valid_targets)}
+
+    {:noreply,
+     assign(socket,
+       game_state: new_state,
+       valid_targets: new_state.valid_targets,
+       panel_subject: {:entity, id}
+     )}
+  end
+
+  @impl true
+  def handle_event("inspect_tile", %{"x" => x, "y" => y}, socket) do
+    {:noreply, assign(socket, panel_subject: {:tile, String.to_integer(x), String.to_integer(y)})}
+  end
+
+  @impl true
+  def handle_event("deselect", _, socket) do
+    new_state = SceneServer.deselect_entity(socket.assigns.game_id)
+    {:noreply, assign(socket, game_state: new_state, valid_targets: [])}
+  end
+
+  @impl true
+  def handle_event("dismiss_panel", _, socket) do
+    {:noreply, assign(socket, panel_subject: nil)}
   end
 
   @impl true
@@ -459,6 +482,79 @@ defmodule GibberingWeb.GameLive do
   defp ruleset_action_buttons(entity, state), do: state.ruleset.action_buttons(entity, state)
 
   defp ruleset_conditions(state), do: state.ruleset.available_conditions()
+
+  # ---------------------------------------------------------------------------
+  # Inspection panel helpers
+  # ---------------------------------------------------------------------------
+
+  defp inspect_content(nil, _state, _is_dm), do: nil
+
+  defp inspect_content({:entity, entity_id}, state, is_dm) do
+    case Map.get(state.entities, entity_id) do
+      nil -> nil
+      entity -> {:entity, entity, is_dm}
+    end
+  end
+
+  defp inspect_content({:tile, x, y}, state, _is_dm) do
+    case Map.get(state.grid_tiles, {x, y}) do
+      nil -> nil
+      tile -> {:tile, x, y, tile}
+    end
+  end
+
+  defp hp_percent(hp, max_hp) when is_integer(max_hp) and max_hp > 0,
+    do: round(hp / max_hp * 100)
+
+  defp hp_percent(_, _), do: 0
+
+  defp hp_bar_color(hp, max_hp) do
+    case hp_percent(hp, max_hp) do
+      n when n > 50 -> "#22c55e"
+      n when n > 25 -> "#eab308"
+      _ -> "#ef4444"
+    end
+  end
+
+  defp ability_modifier(score) when is_integer(score), do: div(score - 10, 2)
+  defp ability_modifier(_), do: 0
+
+  defp format_modifier(n) when n >= 0, do: "+#{n}"
+  defp format_modifier(n), do: "#{n}"
+
+  defp prof_bonus(level) when is_integer(level) do
+    cond do
+      level >= 17 -> 6
+      level >= 13 -> 5
+      level >= 9 -> 4
+      level >= 5 -> 3
+      true -> 2
+    end
+  end
+
+  defp prof_bonus(_), do: 2
+
+  defp monster_type_label(entity) do
+    (entity.stats || %{})["monster_type"] ||
+      (entity.race && String.capitalize(entity.race)) ||
+      "Creature"
+  end
+
+  def dm_badge(assigns) do
+    ~H"""
+    <span class="inline-flex items-center gap-0.5 text-[10px] text-amber-400 bg-amber-900/40 border border-amber-700/60 rounded px-1 py-0 leading-4">
+      <svg class="w-2.5 h-2.5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+        <path
+          fill-rule="evenodd"
+          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      DM
+    </span>
+    """
+  end
 
   # ---------------------------------------------------------------------------
   # Appearance helpers — delegate to the active style's DB records.

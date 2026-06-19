@@ -124,7 +124,7 @@ defmodule GibberingWeb.GameLiveTest do
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
 
       html = render(view)
       # Move overlay tiles carry phx-click="move" — their presence means moves were rendered.
@@ -139,7 +139,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero to show move tiles, then click a specific reachable tile.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='move'][phx-value-x='0'][phx-value-y='0']") |> render_click()
 
       html = render(view)
@@ -154,7 +154,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero → valid_targets will include the adjacent goblin.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
 
       # The goblin entity element now renders phx-click="attack" because it is in valid_targets.
       view |> element("[phx-click='attack']") |> render_click()
@@ -185,7 +185,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero, then select a spell; the goblin entity becomes a spell target.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='select_spell'][phx-value-key='fire_bolt']") |> render_click()
       view |> element("[phx-click='cast_spell']") |> render_click()
 
@@ -201,7 +201,7 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Select hero to show moves, then end turn.
-      view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
+      view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='end_turn']") |> render_click()
 
       html = render(view)
