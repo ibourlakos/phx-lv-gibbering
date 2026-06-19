@@ -369,6 +369,7 @@ Repo.insert!(%Entity{
   name: "Morra",
   type: "monster",
   sprite: "bandit",
+  race: "human",
   x: 10,
   y: 6,
   hp: 11,
@@ -378,6 +379,7 @@ Repo.insert!(%Entity{
   xp_reward: 25,
   tags: [],
   stats: %{
+    "monster_type" => "Humanoid",
     "speed" => 30,
     "climb_speed" => nil,
     "swim_speed" => nil,
@@ -411,6 +413,7 @@ Repo.insert!(%Entity{
   name: "Keld",
   type: "monster",
   sprite: "bandit",
+  race: "human",
   x: 10,
   y: 9,
   hp: 11,
@@ -420,6 +423,7 @@ Repo.insert!(%Entity{
   xp_reward: 25,
   tags: [],
   stats: %{
+    "monster_type" => "Humanoid",
     "speed" => 30,
     "climb_speed" => nil,
     "swim_speed" => nil,
@@ -453,6 +457,7 @@ Repo.insert!(%Entity{
   name: "Fang",
   type: "monster",
   sprite: "wolf",
+  race: "beast",
   x: 12,
   y: 8,
   hp: 11,
@@ -462,6 +467,7 @@ Repo.insert!(%Entity{
   xp_reward: 50,
   tags: [],
   stats: %{
+    "monster_type" => "Beast",
     "speed" => 40,
     "climb_speed" => nil,
     "swim_speed" => nil,
@@ -495,15 +501,18 @@ Repo.insert!(%Entity{
   name: "Grak",
   type: "monster",
   sprite: "bugbear",
+  race: "goblinoid",
   x: 13,
   y: 7,
   hp: 27,
   max_hp: 27,
+  temp_hp: 5,
   level: 1,
   challenge_rating: Decimal.new("1"),
   xp_reward: 200,
   tags: [],
   stats: %{
+    "monster_type" => "Humanoid",
     "speed" => 30,
     "climb_speed" => nil,
     "swim_speed" => nil,
@@ -601,11 +610,11 @@ divider2 = for(y <- 1..4, do: {5, y}) ++ for(y <- 8..10, do: {5, y})
 
 stone2 =
   MapSet.new(
+    # Pillars in west chamber
+    # Pillars in east chamber
     border2 ++
       divider2 ++
-      # Pillars in west chamber
       [{2, 2}, {2, 8}] ++
-      # Pillars in east chamber
       [{8, 2}, {8, 8}]
   )
 
@@ -772,6 +781,7 @@ Repo.insert!(%Entity{
   name: "Bonewalker",
   type: "monster",
   sprite: "skeleton",
+  race: "undead",
   x: 7,
   y: 4,
   hp: 13,
@@ -781,6 +791,7 @@ Repo.insert!(%Entity{
   xp_reward: 50,
   tags: [],
   stats: %{
+    "monster_type" => "Undead",
     "speed" => 30,
     "climb_speed" => nil,
     "swim_speed" => nil,
@@ -814,6 +825,7 @@ Repo.insert!(%Entity{
   name: "Dustbone",
   type: "monster",
   sprite: "skeleton",
+  race: "undead",
   x: 7,
   y: 7,
   hp: 13,
@@ -823,6 +835,7 @@ Repo.insert!(%Entity{
   xp_reward: 50,
   tags: [],
   stats: %{
+    "monster_type" => "Undead",
     "speed" => 30,
     "climb_speed" => nil,
     "swim_speed" => nil,
@@ -856,6 +869,7 @@ Repo.insert!(%Entity{
   name: "Groaner",
   type: "monster",
   sprite: "zombie",
+  race: "undead",
   x: 8,
   y: 5,
   hp: 22,
@@ -865,6 +879,7 @@ Repo.insert!(%Entity{
   xp_reward: 50,
   tags: [],
   stats: %{
+    "monster_type" => "Undead",
     "speed" => 20,
     "climb_speed" => nil,
     "swim_speed" => nil,
