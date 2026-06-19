@@ -27,6 +27,7 @@ defmodule Gibbering.Engine.SceneServer do
     ItemEquipped,
     ItemTaken,
     PhaseTransitioned,
+    RollRequired,
     SessionEnded,
     SpellCast,
     TurnAdvanced
@@ -56,13 +57,31 @@ defmodule Gibbering.Engine.SceneServer do
   def move_entity(game_id, x, y),
     do: GenServer.call(via(game_id), {:move_entity, x, y})
 
-  @doc "Resolves a melee attack from the selected entity against `target_id`."
-  def attack_entity(game_id, target_id),
-    do: GenServer.call(via(game_id), {:attack, target_id})
+  @doc """
+  Resolves a melee attack from the selected entity against `target_id`.
+  Pass `auto_roll: false` to pause for a player-submitted roll value instead of
+  generating one server-side.
+  """
+  def attack_entity(game_id, target_id, opts \\ []),
+    do: GenServer.call(via(game_id), {:attack, target_id, Keyword.get(opts, :auto_roll, true)})
 
-  @doc "Resolves a spell cast from the selected entity using `spell_key` against `target_id`."
-  def cast_spell(game_id, spell_key, target_id),
-    do: GenServer.call(via(game_id), {:cast_spell, spell_key, target_id})
+  @doc """
+  Resolves a spell cast from the selected entity using `spell_key` against `target_id`.
+  Pass `auto_roll: false` to pause for a player-submitted roll value.
+  """
+  def cast_spell(game_id, spell_key, target_id, opts \\ []),
+    do:
+      GenServer.call(
+        via(game_id),
+        {:cast_spell, spell_key, target_id, Keyword.get(opts, :auto_roll, true)}
+      )
+
+  @doc """
+  Submits a player-rolled value to resume the suspended action.
+  `value` must be an integer in the valid range for the pending dice expression.
+  """
+  def submit_roll(game_id, entity_id, value),
+    do: GenServer.call(via(game_id), {:submit_roll, entity_id, value})
 
   @doc "Ends the current hero's turn and advances to the next in the turn order."
   def end_turn(game_id), do: GenServer.call(via(game_id), :end_turn)
@@ -218,15 +237,27 @@ defmodule Gibbering.Engine.SceneServer do
     do: {:reply, state, state}
 
   @impl true
-  def handle_call({:attack, _}, _from, %{phase: :paused} = state),
+  def handle_call({:attack, _, _}, _from, %{phase: :paused} = state),
     do: {:reply, state, state}
 
   @impl true
-  def handle_call({:cast_spell, _, _}, _from, %{phase: :paused} = state),
+  def handle_call({:attack, _, _}, _from, %{awaiting_roll: true} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:cast_spell, _, _, _}, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call({:cast_spell, _, _, _}, _from, %{awaiting_roll: true} = state),
     do: {:reply, state, state}
 
   @impl true
   def handle_call(:end_turn, _from, %{phase: :paused} = state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_call(:end_turn, _from, %{awaiting_roll: true} = state),
     do: {:reply, state, state}
 
   @impl true
@@ -362,57 +393,32 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   @impl true
-  def handle_call({:attack, target_id}, _from, state) do
+  def handle_call({:attack, target_id, auto_roll}, _from, state) do
     {new_state, events} =
       if state.actor_id do
         attacker_id = state.actor_id
         attacker = state.entities[attacker_id]
         target = state.entities[target_id]
 
-        case Rules.attack(state, attacker_id, target_id) do
-          {:error, _reason} ->
-            {state, []}
+        if not auto_roll do
+          paused = %{
+            state
+            | awaiting_roll: true,
+              pending_roll: {:attack, target_id}
+          }
 
-          {_result, after_attack, details} ->
-            advanced = State.advance_turn(after_attack)
+          Process.send_after(self(), {:auto_roll_timeout, attacker_id}, 60_000)
 
-            attack_event = %AttackResolved{
-              attacker_id: attacker_id,
-              attacker_name: attacker.name,
-              target_id: target_id,
-              target_name: target.name,
-              roll: details.roll,
-              hit?: details.hit
-            }
+          roll_event = %RollRequired{
+            entity_id: attacker_id,
+            roll_type: :attack,
+            dice_expression: "1d20",
+            context_label: "Attack vs #{target.name}"
+          }
 
-            damage_events =
-              if details.hit do
-                new_hp =
-                  case Map.get(after_attack.entities, target_id) do
-                    nil -> 0
-                    e -> e.hp
-                  end
-
-                [
-                  %DamageDealt{
-                    target_id: target_id,
-                    target_name: target.name,
-                    amount: details.damage,
-                    damage_type: nil,
-                    new_hp: new_hp
-                  }
-                ]
-              else
-                []
-              end
-
-            {outcome_state, outcome_events} = maybe_trigger_outcome(advanced)
-
-            {outcome_state,
-             [attack_event] ++
-               damage_events ++
-               [build_turn_advanced(state, advanced)] ++
-               outcome_events}
+          {paused, [roll_event]}
+        else
+          do_attack(state, attacker_id, attacker, target_id, target, [])
         end
       else
         {state, []}
@@ -424,57 +430,37 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   @impl true
-  def handle_call({:cast_spell, spell_key, target_id}, _from, state) do
+  def handle_call({:cast_spell, spell_key, target_id, auto_roll}, _from, state) do
     {new_state, events} =
       if state.actor_id do
         caster_id = state.actor_id
         caster = state.entities[caster_id]
         target = state.entities[target_id]
 
-        case Rules.cast_spell(state, caster_id, spell_key, target_id) do
-          {:error, _reason} ->
-            {state, []}
+        spell = Gibbering.Data.Spells.get(spell_key)
+        needs_roll = spell && spell.effect.attack_type in [:melee_attack, :ranged_attack]
 
-          {result, after_cast, details} ->
-            advanced = State.advance_turn(after_cast)
+        if not auto_roll and needs_roll do
+          paused = %{
+            state
+            | awaiting_roll: true,
+              pending_roll: {:cast_spell, spell_key, target_id}
+          }
 
-            spell_event = %SpellCast{
-              caster_id: caster_id,
-              caster_name: caster.name,
-              spell_key: spell_key,
-              target_id: target_id,
-              target_name: target.name,
-              outcome: result
-            }
+          Process.send_after(self(), {:auto_roll_timeout, caster_id}, 60_000)
 
-            damage_events =
-              if details[:hit] && details[:damage] do
-                new_hp =
-                  case Map.get(after_cast.entities, target_id) do
-                    nil -> 0
-                    e -> e.hp
-                  end
+          spell_name = (spell && spell.name) || spell_key
 
-                [
-                  %DamageDealt{
-                    target_id: target_id,
-                    target_name: target.name,
-                    amount: details[:damage],
-                    damage_type: nil,
-                    new_hp: new_hp
-                  }
-                ]
-              else
-                []
-              end
+          roll_event = %RollRequired{
+            entity_id: caster_id,
+            roll_type: :attack,
+            dice_expression: "1d20",
+            context_label: "#{spell_name} vs #{target.name}"
+          }
 
-            {outcome_state, outcome_events} = maybe_trigger_outcome(advanced)
-
-            {outcome_state,
-             [spell_event] ++
-               damage_events ++
-               [build_turn_advanced(state, advanced)] ++
-               outcome_events}
+          {paused, [roll_event]}
+        else
+          do_cast_spell(state, caster_id, caster, spell_key, target_id, target, [])
         end
       else
         {state, []}
@@ -809,9 +795,184 @@ defmodule Gibbering.Engine.SceneServer do
     {:reply, new_state, new_state}
   end
 
+  @impl true
+  def handle_call({:submit_roll, entity_id, value}, _from, %{awaiting_roll: true} = state) do
+    {new_state, events} =
+      case state.pending_roll do
+        {:attack, target_id} ->
+          attacker = state.entities[entity_id]
+          target = state.entities[target_id]
+
+          cleared = %{state | awaiting_roll: false, pending_roll: nil}
+
+          if attacker && target do
+            do_attack(cleared, entity_id, attacker, target_id, target, roll: value)
+          else
+            {cleared, []}
+          end
+
+        {:cast_spell, spell_key, target_id} ->
+          caster = state.entities[entity_id]
+          target = state.entities[target_id]
+
+          cleared = %{state | awaiting_roll: false, pending_roll: nil}
+
+          if caster && target do
+            do_cast_spell(cleared, entity_id, caster, spell_key, target_id, target, roll: value)
+          else
+            {cleared, []}
+          end
+
+        _ ->
+          {%{state | awaiting_roll: false, pending_roll: nil}, []}
+      end
+
+    persist(new_state)
+    broadcast_batch(new_state, events, :submit_roll)
+    {:reply, new_state, new_state}
+  end
+
+  @impl true
+  def handle_call({:submit_roll, _entity_id, _value}, _from, state),
+    do: {:reply, state, state}
+
+  @impl true
+  def handle_info({:auto_roll_timeout, entity_id}, %{awaiting_roll: true} = state) do
+    {new_state, events} =
+      case state.pending_roll do
+        {:attack, target_id} ->
+          attacker = state.entities[entity_id]
+          target = state.entities[target_id]
+          cleared = %{state | awaiting_roll: false, pending_roll: nil}
+
+          if attacker && target do
+            do_attack(cleared, entity_id, attacker, target_id, target, [])
+          else
+            {cleared, []}
+          end
+
+        {:cast_spell, spell_key, target_id} ->
+          caster = state.entities[entity_id]
+          target = state.entities[target_id]
+          cleared = %{state | awaiting_roll: false, pending_roll: nil}
+
+          if caster && target do
+            do_cast_spell(cleared, entity_id, caster, spell_key, target_id, target, [])
+          else
+            {cleared, []}
+          end
+
+        _ ->
+          {%{state | awaiting_roll: false, pending_roll: nil}, []}
+      end
+
+    persist(new_state)
+    broadcast_batch(new_state, events, :auto_roll_timeout)
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_info({:auto_roll_timeout, _entity_id}, state), do: {:noreply, state}
+
   # --- Helpers ---
 
   defp put_targets(state, targets), do: %{state | valid_targets: targets}
+
+  defp do_attack(state, attacker_id, attacker, target_id, target, opts) do
+    case Rules.attack(state, attacker_id, target_id, opts) do
+      {:error, _reason} ->
+        {state, []}
+
+      {_result, after_attack, details} ->
+        advanced = State.advance_turn(after_attack)
+
+        attack_event = %AttackResolved{
+          attacker_id: attacker_id,
+          attacker_name: attacker.name,
+          target_id: target_id,
+          target_name: target.name,
+          roll: details.roll,
+          hit?: details.hit
+        }
+
+        damage_events =
+          if details.hit do
+            new_hp =
+              case Map.get(after_attack.entities, target_id) do
+                nil -> 0
+                e -> e.hp
+              end
+
+            [
+              %DamageDealt{
+                target_id: target_id,
+                target_name: target.name,
+                amount: details.damage,
+                damage_type: nil,
+                new_hp: new_hp
+              }
+            ]
+          else
+            []
+          end
+
+        {outcome_state, outcome_events} = maybe_trigger_outcome(advanced)
+
+        {outcome_state,
+         [attack_event] ++
+           damage_events ++
+           [build_turn_advanced(state, advanced)] ++
+           outcome_events}
+    end
+  end
+
+  defp do_cast_spell(state, caster_id, caster, spell_key, target_id, target, opts) do
+    case Rules.cast_spell(state, caster_id, spell_key, target_id, opts) do
+      {:error, _reason} ->
+        {state, []}
+
+      {result, after_cast, details} ->
+        advanced = State.advance_turn(after_cast)
+
+        spell_event = %SpellCast{
+          caster_id: caster_id,
+          caster_name: caster.name,
+          spell_key: spell_key,
+          target_id: target_id,
+          target_name: target.name,
+          outcome: result
+        }
+
+        damage_events =
+          if details[:hit] && details[:damage] do
+            new_hp =
+              case Map.get(after_cast.entities, target_id) do
+                nil -> 0
+                e -> e.hp
+              end
+
+            [
+              %DamageDealt{
+                target_id: target_id,
+                target_name: target.name,
+                amount: details[:damage],
+                damage_type: nil,
+                new_hp: new_hp
+              }
+            ]
+          else
+            []
+          end
+
+        {outcome_state, outcome_events} = maybe_trigger_outcome(advanced)
+
+        {outcome_state,
+         [spell_event] ++
+           damage_events ++
+           [build_turn_advanced(state, advanced)] ++
+           outcome_events}
+    end
+  end
 
   defp maybe_trigger_outcome(%{phase: :in_combat} = state) do
     case State.check_combat_outcome(state) do

@@ -1,7 +1,8 @@
 # #146 · Dice roll prompt component + SceneServer pending-roll state
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** medium
 **Tags:** ui, gameplay, architecture, rules
 
@@ -52,12 +53,20 @@ client-side prompt component.
 - DM roll prompts for NPC saving throws (always auto-roll).
 
 **Acceptance criteria**
-- [ ] `%Events.RollRequired{}` struct defined in `Gibbering.Events`
-- [ ] SceneServer sets `:awaiting_roll` and emits the event when active player has `auto_roll: false`
-- [ ] SceneServer rejects non-`submit_roll` action events while `:awaiting_roll`
-- [ ] 60 s timeout auto-rolls and resumes if player does not respond
-- [ ] Roll prompt overlay renders in `GameLive` with correct dice expression and type label
-- [ ] Roll button plays die animation and submits result
-- [ ] Manual entry field validates range and submits on confirm
-- [ ] Overlay hidden after submission; game continues
-- [ ] `mix precommit` passes
+- [x] `%Events.RollRequired{}` struct defined in `Gibbering.Events`
+- [x] SceneServer sets `:awaiting_roll` and emits the event when active player has `auto_roll: false`
+- [x] SceneServer rejects non-`submit_roll` action events while `:awaiting_roll`
+- [x] 60 s timeout auto-rolls and resumes if player does not respond
+- [x] Roll prompt overlay renders in `GameLive` with correct dice expression and type label
+- [x] Roll button plays die animation and submits result
+- [x] Manual entry field validates range and submits on confirm
+- [x] Overlay hidden after submission; game continues
+- [x] `mix precommit` passes
+
+**Implementation notes:**
+- `auto_roll` flag passed as opt to `attack_entity/3` and `cast_spell/4` from `GameLive`.
+- `pending_roll: {:attack, target_id} | {:cast_spell, spell_key, target_id} | nil` stored in `State`.
+- 60s timeout via `Process.send_after/3`; `handle_info({:auto_roll_timeout, entity_id})` resumes with auto-roll.
+- Attack/cast_spell logic extracted into `do_attack/6` and `do_cast_spell/7` private helpers used by both the direct path and `submit_roll`.
+- Roll prompt overlay uses `z-index:110` (above outcome overlay at 100).
+- Manual roll uses `phx-submit` form to capture the input value.

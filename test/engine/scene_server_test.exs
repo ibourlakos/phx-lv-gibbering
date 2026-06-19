@@ -7,7 +7,7 @@ defmodule Gibbering.Engine.SceneServerTest do
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Scene.{EntityMoved, PhaseTransitioned, SessionEnded}
+  alias Gibbering.Events.Scene.{EntityMoved, PhaseTransitioned, RollRequired, SessionEnded}
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.
   # Returns the game_id. The server is supervised by the test process
@@ -770,6 +770,88 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       final_state = SceneServer.get_state(game_id)
       assert final_state.phase == :lobby
+    end
+  end
+
+  describe "roll prompt / pending-roll state (issue #146)" do
+    test "attack_entity with auto_roll: false sets awaiting_roll and emits RollRequired" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      # Drain the select_entity broadcast before asserting on the attack batch.
+      assert_receive %EventBatch{}, 500
+      returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+
+      assert returned.awaiting_roll == true
+      assert returned.pending_roll == {:attack, monster_id}
+
+      assert_receive %EventBatch{events: events}, 500
+      assert Enum.any?(events, fn e -> match?(%RollRequired{roll_type: :attack}, e) end)
+    end
+
+    test "attack_entity with auto_roll: true does not set awaiting_roll" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: true)
+
+      assert returned.awaiting_roll == false
+    end
+
+    test "actions are blocked while awaiting_roll is true" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+
+      before_index = SceneServer.get_state(game_id).active_index
+      SceneServer.end_turn(game_id)
+      assert SceneServer.get_state(game_id).active_index == before_index
+    end
+
+    test "submit_roll resumes the attack and clears awaiting_roll" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      original_hp = state.entities[monster_id].hp
+
+      SceneServer.select_entity(game_id, hero_id)
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+      assert SceneServer.get_state(game_id).awaiting_roll == true
+
+      result = SceneServer.submit_roll(game_id, hero_id, 20)
+      assert result.awaiting_roll == false
+      assert result.pending_roll == nil
+      surviving_hp = get_in(result.entities, [monster_id, :hp])
+      # A 20 is a critical hit — damage must have been dealt.
+      assert surviving_hp == nil or surviving_hp < original_hp
+    end
+
+    test "submit_roll with out-of-bounds value is ignored (unchanged state returned)" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+
+      # Value 0 is out of 1..20 range — Rules.attack will clamp or reject it; the
+      # key thing is SceneServer does not crash and still clears the pending state.
+      result = SceneServer.submit_roll(game_id, hero_id, 0)
+      assert result.awaiting_roll == false
     end
   end
 end

@@ -49,7 +49,11 @@ defmodule Gibbering.Engine.State do
     # [{timestamp, text}] — chronological intervention log, newest first
     session_log: [],
     # entity_id of the container currently open for the active hero, or nil
-    open_container_id: nil
+    open_container_id: nil,
+    # true while waiting for a player to submit a manual roll value
+    awaiting_roll: false,
+    # {:attack, target_id} | {:cast_spell, spell_key, target_id} | nil — the suspended action
+    pending_roll: nil
   ]
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."

@@ -47,7 +47,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
 | [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` | medium |
-| [#146](146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | `ui` `gameplay` `architecture` `rules` | medium |
 | [#147](147-initiative-roll-prompt.md) | Initiative roll prompt | `gameplay` `rules` `architecture` | medium |
 | [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
 | [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
@@ -103,6 +102,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#146](146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | `ui` `gameplay` `architecture` `rules` |
 | [#145](145-player-auto-roll-preference.md) | Player auto-roll preference | `architecture` `gameplay` `rules` |
 | [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` |
 | [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` |

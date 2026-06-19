@@ -678,4 +678,85 @@ defmodule GibberingWeb.GameLiveTest do
       refute render(view) =~ "container-panel"
     end
   end
+
+  describe "roll prompt overlay (issue #146)" do
+    defp broadcast_roll_required(game_id, entity_id) do
+      state = SceneServer.get_state(game_id)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{
+          state_snapshot: %{state | awaiting_roll: true},
+          events: [
+            %Gibbering.Events.Scene.RollRequired{
+              entity_id: entity_id,
+              roll_type: :attack,
+              dice_expression: "1d20",
+              context_label: "Attack vs Goblin"
+            }
+          ]
+        }
+      )
+    end
+
+    defp broadcast_roll_resolved(game_id) do
+      state = SceneServer.get_state(game_id)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{
+          state_snapshot: %{state | awaiting_roll: false}
+        }
+      )
+    end
+
+    test "roll prompt overlay renders when RollRequired is broadcast", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      broadcast_roll_required(game_id, hero_id)
+      html = render(view)
+      assert html =~ "Attack vs Goblin"
+      assert html =~ "1d20"
+      assert html =~ "roll_submit"
+    end
+
+    test "roll prompt overlay is absent when awaiting_roll is false", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      broadcast_roll_required(game_id, hero_id)
+      broadcast_roll_resolved(game_id)
+      refute render(view) =~ "roll_submit"
+    end
+
+    test "roll prompt shows roll type label", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      broadcast_roll_required(game_id, hero_id)
+      assert render(view) =~ "attack"
+    end
+
+    test "roll_submit event calls submit_roll on SceneServer", %{conn: conn} do
+      {view, game_id} = mount_combat_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.select_entity(game_id, hero_id)
+      # Put server into awaiting_roll state via direct API
+      SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
+      assert SceneServer.get_state(game_id).awaiting_roll == true
+
+      # Simulate the PubSub message reaching the LiveView
+      broadcast_roll_required(game_id, hero_id)
+      view |> element("[phx-click='roll_submit']") |> render_click()
+
+      # After submit_roll, awaiting_roll should clear
+      assert SceneServer.get_state(game_id).awaiting_roll == false
+    end
+  end
 end
