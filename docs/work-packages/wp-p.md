@@ -21,7 +21,7 @@ outcome state, movement confirmation UX, and interactive dice rolling.
 | [#139](../issues/139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | — |
 | [#142](../issues/142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | — |
 | [#143](../issues/143-campaign-outcome-screen.md) | Campaign outcome screen | #142 |
-| [#144](../issues/144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | WP-F #125 (tile decoration — provides the full overlay rendering pipeline) |
+| [#144](../issues/144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | WP-F #125 (overlay pipeline), WP-F #159 (condition badge — movement-exhausted indicator) |
 | [#145](../issues/145-player-auto-roll-preference.md) | Player auto-roll preference | — |
 | [#146](../issues/146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | #145 |
 | [#147](../issues/147-initiative-roll-prompt.md) | Initiative roll prompt | #146 |

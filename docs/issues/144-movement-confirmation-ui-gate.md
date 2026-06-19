@@ -4,6 +4,7 @@
 **Opened:** 2026-06-19
 **Priority:** medium
 **Tags:** ui, gameplay, rendering
+**Depends on:** #159 (condition badge overlay — required for the movement-exhausted token indicator)
 
 ## Context
 

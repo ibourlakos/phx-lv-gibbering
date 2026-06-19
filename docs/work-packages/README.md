@@ -16,7 +16,7 @@ Ordered by priority — work at the top before starting work below it.
 |---|---|---|
 | [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #19, #139, #142, #143, #144, #145, #146, #147 |
 | [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | #136, #137, #132, #154 |
-| [WP-F](wp-f.md) | Rendering & Frontend | #125, #138, #140, #155, #21, #84 |
+| [WP-F](wp-f.md) | Rendering & Frontend | #125, #159, #138, #140, #155, #21, #84 |
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
 | [WP-R](wp-r.md) | Display Testing & Testability | #153 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
@@ -91,5 +91,6 @@ WP-K:  #121 → #122
 WP-L:  #123 → #124
 ```
 
-WP-P has one cross-package dependency: `#144` should follow WP-F `#125`.
+WP-P has two cross-package dependencies: `#144` requires WP-F `#125` (overlay pipeline)
+and WP-F `#159` (condition badge — movement-exhausted indicator).
 WP-Q can start as soon as WP-P's most urgent issues (#139, #142–#143) are shipped.
