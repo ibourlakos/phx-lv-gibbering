@@ -11,6 +11,7 @@ defmodule Gibbering.CampaignCharacter do
     belongs_to :controller, Gibbering.Accounts.User
 
     field :active, :boolean, default: false
+    field :auto_roll, :boolean, default: true
 
     field :override_level, :integer
     field :override_ability_scores, :map
@@ -34,6 +35,13 @@ defmodule Gibbering.CampaignCharacter do
     |> foreign_key_constraint(:character_id)
     |> foreign_key_constraint(:owner_id)
     |> foreign_key_constraint(:controller_id)
+  end
+
+  @doc "Changeset for updating auto-roll preference."
+  def auto_roll_changeset(campaign_character, attrs) do
+    campaign_character
+    |> cast(attrs, [:auto_roll])
+    |> validate_required([:auto_roll])
   end
 
   @doc "Changeset for DM updates: active flag, controller reassignment, and override fields."

@@ -2,7 +2,7 @@ defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
-  alias Gibbering.{Campaigns, EventBus}
+  alias Gibbering.{Campaigns, CampaignCharacters, EventBus}
   alias Gibbering.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias Gibbering.Events.Scene.{SessionEnded, TurnAdvanced}
@@ -35,6 +35,9 @@ defmodule GibberingWeb.GameLive do
           appearances =
             Catalogue.appearances_for_style(Catalogue.default_style_slug())
 
+          campaign_character =
+            if is_dm, do: nil, else: CampaignCharacters.get_active_for_player(game_id, user.id)
+
           {:ok,
            socket
            |> assign(:game_id, game_id)
@@ -50,7 +53,12 @@ defmodule GibberingWeb.GameLive do
            |> assign(:dm_whispers, [])
            |> assign(:dm_panel, nil)
            |> assign(:panel_subject, nil)
-           |> assign(:round, 0)}
+           |> assign(:round, 0)
+           |> assign(:campaign_character, campaign_character)
+           |> assign(
+             :auto_roll,
+             if(campaign_character, do: campaign_character.auto_roll, else: true)
+           )}
 
         {:error, reason} ->
           {:ok,
@@ -419,6 +427,20 @@ defmodule GibberingWeb.GameLive do
   def handle_event("close_container", _, socket) do
     SceneServer.close_container(socket.assigns.game_id)
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("toggle_auto_roll", _, %{assigns: %{campaign_character: cc}} = socket)
+      when not is_nil(cc) do
+    new_value = !socket.assigns.auto_roll
+
+    case CampaignCharacters.set_auto_roll(cc, new_value) do
+      {:ok, updated_cc} ->
+        {:noreply, assign(socket, campaign_character: updated_cc, auto_roll: new_value)}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
   end
 
   @impl true

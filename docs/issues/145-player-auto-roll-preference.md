@@ -1,7 +1,8 @@
 # #145 · Player auto-roll preference
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** medium
 **Tags:** architecture, gameplay, rules
 
@@ -32,9 +33,15 @@ should be stored per player per campaign so it persists across sessions.
   brainstorm #28 open question 1).
 
 **Acceptance criteria**
-- [ ] Migration adds `auto_roll boolean not null default true` to `campaign_characters`
-- [ ] Schema and changeset updated
-- [ ] Toggle visible in-session for the active player (not DM, not spectators)
-- [ ] Toggle persists across page reload
-- [ ] `auto_roll` value available in `GameLive` socket assigns for the current player's character
-- [ ] `mix precommit` passes
+- [x] Migration adds `auto_roll boolean not null default true` to `campaign_characters`
+- [x] Schema and changeset updated
+- [x] Toggle visible in-session for the active player (not DM, not spectators)
+- [x] Toggle persists across page reload
+- [x] `auto_roll` value available in `GameLive` socket assigns for the current player's character
+- [x] `mix precommit` passes
+
+**Implementation notes:**
+- `CampaignCharacters.get_active_for_player/2` queries by `owner_id + active == true`.
+- Toggle renders only when `not @is_dm and not is_nil(@campaign_character)`.
+- `CampaignCharacters.set_auto_roll/2` uses a dedicated `auto_roll_changeset` on the schema.
+- `@auto_roll` and `@campaign_character` added to `GameLive` socket assigns at mount.

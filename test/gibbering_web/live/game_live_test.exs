@@ -6,8 +6,9 @@ defmodule GibberingWeb.GameLiveTest do
   import Phoenix.LiveViewTest
   import Gibbering.GameFixtures
   import Gibbering.AccountsFixtures
+  import Gibbering.CharactersFixtures
 
-  alias Gibbering.{Campaigns, Repo, Entity}
+  alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
 
   defp mount_game(conn) do
@@ -489,6 +490,65 @@ defmodule GibberingWeb.GameLiveTest do
       )
 
       assert render(view) =~ "Secret only for you"
+    end
+  end
+
+  # Mounts as a player with an active CampaignCharacter (for #145 auto-roll tests).
+  defp mount_player_game(conn) do
+    player = register_user()
+    conn = log_in_user(conn, player)
+    game_id = insert_campaign()
+    Campaigns.join_campaign(game_id, player.id)
+    start_supervised!({SceneServer, game_id})
+    character = create_character(player)
+
+    {:ok, cc} =
+      CampaignCharacters.create(game_id, %{
+        campaign_id: game_id,
+        character_id: character.id,
+        owner_id: player.id
+      })
+
+    {:ok, _active_cc} = CampaignCharacters.update(cc, %{active: true})
+    {:ok, view, _html} = live(conn, "/game/#{game_id}")
+    {view, game_id, player}
+  end
+
+  describe "auto-roll toggle (issue #145)" do
+    test "toggle is visible to a player with an active campaign character", %{conn: conn} do
+      {view, _game_id, _player} = mount_player_game(conn)
+      assert render(view) =~ "Auto-roll dice"
+    end
+
+    test "toggle is not visible to DM", %{conn: conn} do
+      {view, _game_id} = mount_dm_game(conn)
+      refute render(view) =~ "Auto-roll dice"
+    end
+
+    test "toggle is not visible to player without an active campaign character", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      refute render(view) =~ "Auto-roll dice"
+    end
+
+    test "toggle_auto_roll flips preference to false and persists", %{conn: conn} do
+      {view, game_id, player} = mount_player_game(conn)
+      view |> element("[phx-click='toggle_auto_roll']") |> render_click()
+      cc = CampaignCharacters.get_active_for_player(game_id, player.id)
+      assert cc.auto_roll == false
+    end
+
+    test "toggle_auto_roll can toggle back to true", %{conn: conn} do
+      {view, game_id, player} = mount_player_game(conn)
+      view |> element("[phx-click='toggle_auto_roll']") |> render_click()
+      view |> element("[phx-click='toggle_auto_roll']") |> render_click()
+      cc = CampaignCharacters.get_active_for_player(game_id, player.id)
+      assert cc.auto_roll == true
+    end
+
+    test "auto_roll is true after fresh mount (default)", %{conn: conn} do
+      {view, _game_id, _player} = mount_player_game(conn)
+      html = render(view)
+      assert html =~ "translate-x-3.5"
     end
   end
 

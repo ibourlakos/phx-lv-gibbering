@@ -468,6 +468,27 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           <div class="text-xs text-gray-300 mb-0.5">{entry}</div>
         <% end %>
       </div>
+
+      <%= if not @is_dm and not is_nil(@campaign_character) do %>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2">
+          <button
+            phx-click="toggle_auto_roll"
+            class="flex items-center gap-2 w-full text-left"
+          >
+            <div class={[
+              "w-7 h-4 rounded-full flex-shrink-0 transition-colors relative",
+              (@auto_roll && "bg-indigo-600") || "bg-gray-600"
+            ]}>
+              <div class={[
+                "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform",
+                (@auto_roll && "translate-x-3.5") || "translate-x-0.5"
+              ]}>
+              </div>
+            </div>
+            <span class="text-xs text-gray-300">Auto-roll dice</span>
+          </button>
+        </div>
+      <% end %>
     </div>
   </div>
 
