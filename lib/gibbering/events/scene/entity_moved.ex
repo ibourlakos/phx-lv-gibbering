@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.EntityMoved do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           entity_id: String.t(),
           entity_name: String.t(),
           from: {non_neg_integer(), non_neg_integer()},
@@ -30,7 +31,8 @@ defmodule Gibbering.Events.Scene.EntityMoved do
     :to,
     :cost_ft,
     event_type: :entity_moved,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

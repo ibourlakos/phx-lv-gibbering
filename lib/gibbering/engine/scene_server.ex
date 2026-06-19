@@ -26,6 +26,8 @@ defmodule Gibbering.Engine.SceneServer do
     HPAdjusted,
     ItemEquipped,
     ItemTaken,
+    LogEntryHidden,
+    LogEntryRevealed,
     PhaseTransitioned,
     RollRequired,
     SessionEnded,
@@ -174,6 +176,14 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "Clears actor_id, valid_moves, and valid_targets — display-only, no gameplay effect."
   def deselect_entity(game_id),
     do: GenServer.call(via(game_id), :deselect_entity)
+
+  @doc "Promotes a `:dm_only` log entry to `:revealed`, pushing it to the player feed."
+  def reveal_log_entry(game_id, event_id),
+    do: GenServer.call(via(game_id), {:reveal_log_entry, event_id})
+
+  @doc "Retracts a previously revealed log entry, removing it from the player feed."
+  def hide_log_entry(game_id, event_id),
+    do: GenServer.call(via(game_id), {:hide_log_entry, event_id})
 
   @doc "Returns true if a SceneServer for `game_id` is currently registered."
   def running?(game_id) do
@@ -921,6 +931,32 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   @impl true
+  def handle_call({:reveal_log_entry, event_id}, _from, state) do
+    now = DateTime.utc_now()
+
+    event = %LogEntryRevealed{
+      original_event_id: event_id,
+      revealed_at: now
+    }
+
+    broadcast_batch(state, [event], :reveal_log_entry)
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:hide_log_entry, event_id}, _from, state) do
+    now = DateTime.utc_now()
+
+    event = %LogEntryHidden{
+      original_event_id: event_id,
+      hidden_at: now
+    }
+
+    broadcast_batch(state, [event], :hide_log_entry)
+    {:reply, :ok, state}
+  end
+
+  @impl true
   def handle_info({:auto_roll_timeout, entity_id}, %{awaiting_roll: true} = state) do
     {new_state, events} =
       case state.pending_roll do
@@ -1002,7 +1038,8 @@ defmodule Gibbering.Engine.SceneServer do
           target_id: target_id,
           target_name: target.name,
           roll: details.roll,
-          hit?: details.hit
+          hit?: details.hit,
+          visibility: if(attacker.type == "hero", do: :public, else: :dm_only)
         }
 
         damage_events =

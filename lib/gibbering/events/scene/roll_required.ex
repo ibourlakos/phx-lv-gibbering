@@ -13,6 +13,7 @@ defmodule Gibbering.Events.Scene.RollRequired do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           entity_id: integer(),
           roll_type: roll_type(),
           dice_expression: String.t(),
@@ -30,7 +31,8 @@ defmodule Gibbering.Events.Scene.RollRequired do
     :dice_expression,
     :context_label,
     event_type: :roll_required,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

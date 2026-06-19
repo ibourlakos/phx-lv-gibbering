@@ -49,6 +49,7 @@ defmodule GibberingWeb.GameLive do
            |> assign(:selected_spell, nil)
            |> assign(:spell_targets, [])
            |> assign(:log, [])
+           |> assign(:event_log, [])
            |> assign(:dm_broadcasts, [])
            |> assign(:dm_whispers, [])
            |> assign(:dm_panel, nil)
@@ -397,6 +398,26 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event(
+        "reveal_log_entry",
+        %{"event_id" => event_id},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    SceneServer.reveal_log_entry(socket.assigns.game_id, event_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event(
+        "hide_log_entry",
+        %{"event_id" => event_id},
+        %{assigns: %{is_dm: true}} = socket
+      ) do
+    SceneServer.hide_log_entry(socket.assigns.game_id, event_id)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("dm_dismiss_broadcast", _, socket) do
     {:noreply, update(socket, :dm_broadcasts, fn [_ | rest] -> rest end)}
   end
@@ -529,9 +550,11 @@ defmodule GibberingWeb.GameLive do
       {:noreply, redirect(socket, to: "/dashboard")}
     else
       new_socket =
-        if batch.state_snapshot,
-          do: assign(socket, game_state: batch.state_snapshot),
-          else: socket
+        socket
+        |> then(fn s ->
+          if batch.state_snapshot, do: assign(s, game_state: batch.state_snapshot), else: s
+        end)
+        |> update(:event_log, fn log -> log ++ events end)
 
       round =
         Enum.reduce(events, socket.assigns.round, fn
@@ -696,6 +719,68 @@ defmodule GibberingWeb.GameLive do
   defp entity_body_color(appearances, sprite) do
     (appearances[{"entity", sprite}] || %{})["body_color"] || "#7f8c8d"
   end
+
+  # ---------------------------------------------------------------------------
+  # Event log helpers
+  # ---------------------------------------------------------------------------
+
+  defp event_label(%Gibbering.Events.Scene.AttackResolved{} = e) do
+    if e.hit?,
+      do: "#{e.attacker_name} hits #{e.target_name} (roll #{e.roll})",
+      else: "#{e.attacker_name} misses #{e.target_name} (roll #{e.roll})"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.DamageDealt{} = e) do
+    "#{e.target_name} takes #{e.amount} damage (#{e.new_hp} HP left)"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.SpellCast{} = e) do
+    "#{e.caster_name} casts #{e.spell_key} → #{e.target_name}: #{e.outcome}"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.EntityMoved{} = e) do
+    {fx, fy} = e.from
+    {tx, ty} = e.to
+    "#{e.entity_name} moves (#{fx},#{fy})→(#{tx},#{ty})"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.ConditionApplied{} = e) do
+    "#{e.entity_name}: #{e.condition_id} applied"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.ConditionRemoved{} = e) do
+    "#{e.entity_name}: #{e.condition_id} removed"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.TurnAdvanced{} = e) do
+    "Turn → #{e.to_entity_name || "end of round"}"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.PhaseTransitioned{} = e) do
+    "Phase: #{e.from_phase} → #{e.to_phase}"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.ItemTaken{} = e) do
+    "Item taken: #{e.item_key} (×#{e.quantity})"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.ItemEquipped{} = e) do
+    "Item equipped: #{e.item_key} in #{e.slot}"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.HPAdjusted{} = e) do
+    "#{e.entity_name} HP: #{e.old_hp} → #{e.new_hp}"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.ContainerOpened{}), do: "Container opened"
+
+  defp event_label(%Gibbering.Events.Scene.ResourceConsumed{} = e) do
+    "#{e.entity_name}: #{e.resource_key} −#{e.amount_used} (#{e.remaining} left)"
+  end
+
+  defp event_label(%Gibbering.Events.Scene.LogEntryRevealed{}), do: nil
+  defp event_label(%Gibbering.Events.Scene.LogEntryHidden{}), do: nil
+  defp event_label(_), do: nil
 
   # ---------------------------------------------------------------------------
   # Entity sprite components — inline SVG, DST-style ink aesthetic.

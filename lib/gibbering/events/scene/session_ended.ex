@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.SessionEnded do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           campaign_id: String.t()
         }
 
@@ -22,7 +23,8 @@ defmodule Gibbering.Events.Scene.SessionEnded do
     :sequence_number,
     :campaign_id,
     event_type: :session_ended,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

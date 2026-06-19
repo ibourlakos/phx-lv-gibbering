@@ -462,10 +462,19 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         <% end %>
       </div>
 
-      <div class="bg-gray-900/90 border border-gray-700 rounded p-2 max-h-28 overflow-y-auto">
-        <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Log</div>
-        <%= for entry <- @log do %>
-          <div class="text-xs text-gray-300 mb-0.5">{entry}</div>
+      <%!-- Player event feed — public + revealed events, newest at bottom --%>
+      <div class="bg-gray-900/90 border border-gray-700 rounded p-2 max-h-36 overflow-y-auto">
+        <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Events</div>
+        <%= for {event, vis} <- Gibbering.Events.EventFeedProjection.player_visible(@event_log) do %>
+          <% label = event_label(event) %>
+          <%= if label do %>
+            <div class="text-xs text-gray-300 mb-0.5 flex items-start gap-1">
+              <%= if vis == :revealed do %>
+                <span class="text-purple-400 flex-shrink-0" title="DM revealed">👁</span>
+              <% end %>
+              <span>{label}</span>
+            </div>
+          <% end %>
         <% end %>
       </div>
 
@@ -701,6 +710,46 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               Force End Turn
             </button>
           </div>
+        <% end %>
+      </div>
+
+      <%!-- DM event log — all events; eye icon reveals :dm_only entries to players --%>
+      <div class="bg-gray-900/90 border border-gray-700 rounded p-2 max-h-48 overflow-y-auto">
+        <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">DM Log</div>
+        <% overrides = Gibbering.Events.EventFeedProjection.fold(@event_log) %>
+        <%= for event <- @event_log do %>
+          <% label = event_label(event) %>
+          <%= if label do %>
+            <% eff_vis =
+              Gibbering.Events.EventFeedProjection.effective_visibility(event, overrides) %>
+            <div class={[
+              "text-xs mb-0.5 flex items-start justify-between gap-1",
+              (eff_vis == :dm_only && "text-gray-500") || "text-gray-300"
+            ]}>
+              <span class="flex-1">{label}</span>
+              <%= if event.visibility == :dm_only do %>
+                <%= if eff_vis == :revealed do %>
+                  <button
+                    phx-click="hide_log_entry"
+                    phx-value-event_id={event.event_id}
+                    class="text-purple-400 hover:text-purple-300 flex-shrink-0"
+                    title="Hide from players"
+                  >
+                    👁
+                  </button>
+                <% else %>
+                  <button
+                    phx-click="reveal_log_entry"
+                    phx-value-event_id={event.event_id}
+                    class="text-gray-600 hover:text-purple-400 flex-shrink-0"
+                    title="Reveal to players"
+                  >
+                    👁
+                  </button>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
         <% end %>
       </div>
     </div>

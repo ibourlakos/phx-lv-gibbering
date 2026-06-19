@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.ConditionApplied do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           entity_id: String.t(),
           entity_name: String.t(),
           condition_id: atom(),
@@ -30,7 +31,8 @@ defmodule Gibbering.Events.Scene.ConditionApplied do
     :source_id,
     :duration,
     event_type: :condition_applied,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

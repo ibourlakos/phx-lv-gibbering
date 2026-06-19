@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.TurnAdvanced do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           from_entity_id: String.t(),
           from_entity_name: String.t(),
           to_entity_id: String.t(),
@@ -30,7 +31,8 @@ defmodule Gibbering.Events.Scene.TurnAdvanced do
     :to_entity_name,
     :round_number,
     event_type: :turn_advanced,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

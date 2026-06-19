@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.AttackResolved do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           attacker_id: String.t(),
           attacker_name: String.t(),
           target_id: String.t(),
@@ -32,7 +33,8 @@ defmodule Gibbering.Events.Scene.AttackResolved do
     :roll,
     :hit?,
     event_type: :attack_resolved,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster
