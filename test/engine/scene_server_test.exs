@@ -7,7 +7,7 @@ defmodule Gibbering.Engine.SceneServerTest do
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Scene.{EntityMoved, SessionEnded}
+  alias Gibbering.Events.Scene.{EntityMoved, PhaseTransitioned, SessionEnded}
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.
   # Returns the game_id. The server is supervised by the test process
@@ -721,6 +721,55 @@ defmodule Gibbering.Engine.SceneServerTest do
       hero = equipped_state.entities[hero_id]
       assert hero.stats["equipped_weapon"]["key"] == "rapier"
       refute Enum.any?(hero.stats["inventory"] || [], &(&1["instance_id"] == "r1"))
+    end
+  end
+
+  describe "victory/defeat auto-trigger" do
+    test "dm_adjust_hp killing the last monster transitions to :victory" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.start_session(game_id)
+      SceneServer.transition_phase(game_id, :in_combat)
+
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
+
+      final_state = SceneServer.get_state(game_id)
+      assert final_state.phase == :victory
+
+      assert_receive %EventBatch{events: events}, 500
+      assert Enum.any?(events, fn e -> match?(%PhaseTransitioned{to_phase: :victory}, e) end)
+    end
+
+    test "dm_adjust_hp killing the last hero transitions to :defeat" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      SceneServer.start_session(game_id)
+      SceneServer.transition_phase(game_id, :in_combat)
+
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+      SceneServer.dm_adjust_hp(game_id, hero_id, -9999)
+
+      final_state = SceneServer.get_state(game_id)
+      assert final_state.phase == :defeat
+
+      assert_receive %EventBatch{events: events}, 500
+      assert Enum.any?(events, fn e -> match?(%PhaseTransitioned{to_phase: :defeat}, e) end)
+    end
+
+    test "auto-trigger does not fire outside :in_combat phase" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+
+      SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
+
+      final_state = SceneServer.get_state(game_id)
+      assert final_state.phase == :lobby
     end
   end
 end

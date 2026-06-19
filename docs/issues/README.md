@@ -47,7 +47,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` | medium |
 | [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
-| [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` | high |
 | [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` | high |
 | [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` | medium |
 | [#145](145-player-auto-roll-preference.md) | Player auto-roll preference | `architecture` `gameplay` `rules` | medium |
@@ -107,6 +106,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` |
 | [#135](135-left-inspection-panel.md) | Left inspection panel — click-to-inspect map elements | `ui` `gameplay` `rendering` |
 | [#134](134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` socket assign | `architecture` `ui` |
 | [#133](133-introduce-docs-reference-folder.md) | Introduce `docs/reference/` for vocabulary and reference documents | `architecture` |

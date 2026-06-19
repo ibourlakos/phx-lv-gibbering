@@ -4,13 +4,14 @@ defmodule Gibbering.Engine.State do
   alias Gibbering.Campaign
   alias Gibbering.Rulesets.DnD5e.Stats
 
-  @type scene_phase :: :lobby | :exploration | :initiative_rolling | :in_combat | :paused
+  @type scene_phase ::
+          :lobby | :exploration | :initiative_rolling | :in_combat | :paused | :victory | :defeat
 
   @valid_transitions %{
     lobby: [:exploration, :paused],
     exploration: [:initiative_rolling, :in_combat, :paused],
     initiative_rolling: [:in_combat, :paused],
-    in_combat: [:exploration, :paused]
+    in_combat: [:exploration, :paused, :victory, :defeat]
   }
 
   defstruct [
@@ -225,6 +226,22 @@ defmodule Gibbering.Engine.State do
   @doc "Returns the entity id of the hero whose turn it currently is, or `nil` when there is no turn order."
   def active_hero_id(%__MODULE__{turn_order: []}), do: nil
   def active_hero_id(%__MODULE__{turn_order: order, active_index: idx}), do: Enum.at(order, idx)
+
+  @doc """
+  Returns `:victory` if all monsters are at 0 HP, `:defeat` if all heroes are at 0 HP,
+  or `nil` if neither condition is met. Requires at least one entity of each relevant
+  type to be present before triggering. Intended to be called only during `:in_combat`.
+  """
+  def check_combat_outcome(%__MODULE__{entities: entities}) do
+    {heroes, monsters} =
+      Enum.split_with(Map.values(entities), fn e -> e.type == "hero" end)
+
+    cond do
+      monsters != [] and Enum.all?(monsters, &(&1.hp == 0)) -> :victory
+      heroes != [] and Enum.all?(heroes, &(&1.hp == 0)) -> :defeat
+      true -> nil
+    end
+  end
 
   @doc """
   Marks an action economy slot as `:spent`.

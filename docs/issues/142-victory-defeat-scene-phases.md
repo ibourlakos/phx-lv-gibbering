@@ -1,7 +1,8 @@
 # #142 · Victory and defeat scene phases + auto-trigger
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** high
 **Tags:** architecture, gameplay, rules
 
@@ -37,9 +38,9 @@ A minimum playable campaign requires the engine to transition into `:victory` or
   file a follow-on issue when needed).
 
 **Acceptance criteria**
-- [ ] `:victory` and `:defeat` are valid `scene_phase()` values
-- [ ] Transitions `:in_combat → :victory` and `:in_combat → :defeat` are accepted by `transition_phase/2`; all other targets from these phases are rejected
-- [ ] Auto-trigger fires correctly after entity death: all enemies dead → `:victory`; all PCs dead → `:defeat`
-- [ ] DM can force either transition from `:in_combat` phase
-- [ ] `%Events.PhaseChanged{}` event emitted and broadcast on each transition
-- [ ] `mix precommit` passes
+- [x] `:victory` and `:defeat` are valid `scene_phase()` values
+- [x] Transitions `:in_combat → :victory` and `:in_combat → :defeat` are accepted by `transition_phase/2`; all other targets from these phases are rejected
+- [x] Auto-trigger fires correctly after entity death: all enemies dead → `:victory`; all PCs dead → `:defeat`
+- [x] DM can force either transition from `:in_combat` phase
+- [x] `%Events.Scene.PhaseTransitioned{}` event emitted and broadcast on each transition
+- [x] `mix precommit` passes

@@ -406,7 +406,13 @@ defmodule Gibbering.Engine.SceneServer do
                 []
               end
 
-            {advanced, [attack_event] ++ damage_events ++ [build_turn_advanced(state, advanced)]}
+            {outcome_state, outcome_events} = maybe_trigger_outcome(advanced)
+
+            {outcome_state,
+             [attack_event] ++
+               damage_events ++
+               [build_turn_advanced(state, advanced)] ++
+               outcome_events}
         end
       else
         {state, []}
@@ -462,7 +468,13 @@ defmodule Gibbering.Engine.SceneServer do
                 []
               end
 
-            {advanced, [spell_event] ++ damage_events ++ [build_turn_advanced(state, advanced)]}
+            {outcome_state, outcome_events} = maybe_trigger_outcome(advanced)
+
+            {outcome_state,
+             [spell_event] ++
+               damage_events ++
+               [build_turn_advanced(state, advanced)] ++
+               outcome_events}
         end
       else
         {state, []}
@@ -620,16 +632,16 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call({:dm_adjust_hp, entity_id, delta}, _from, state) do
-    new_state = State.adjust_hp(state, entity_id, delta)
+    after_hp = State.adjust_hp(state, entity_id, delta)
     entry = "HP adjusted: entity #{entity_id} by #{delta}"
-    new_state = State.add_log_entry(new_state, entry)
+    after_hp = State.add_log_entry(after_hp, entry)
     entity = state.entities[entity_id]
     old_hp = if entity, do: entity.hp, else: nil
 
     new_hp =
-      if entity, do: new_state.entities[entity_id] && new_state.entities[entity_id].hp, else: nil
+      if entity, do: after_hp.entities[entity_id] && after_hp.entities[entity_id].hp, else: nil
 
-    event = %HPAdjusted{
+    hp_event = %HPAdjusted{
       entity_id: entity_id,
       entity_name: entity && entity.name,
       old_hp: old_hp,
@@ -637,8 +649,10 @@ defmodule Gibbering.Engine.SceneServer do
       reason: :dm_adjust
     }
 
+    {new_state, outcome_events} = maybe_trigger_outcome(after_hp)
+
     persist(new_state)
-    broadcast_batch(new_state, [event], :dm_adjust_hp)
+    broadcast_batch(new_state, [hp_event] ++ outcome_events, :dm_adjust_hp)
     {:reply, :ok, new_state}
   end
 
@@ -798,6 +812,20 @@ defmodule Gibbering.Engine.SceneServer do
   # --- Helpers ---
 
   defp put_targets(state, targets), do: %{state | valid_targets: targets}
+
+  defp maybe_trigger_outcome(%{phase: :in_combat} = state) do
+    case State.check_combat_outcome(state) do
+      nil ->
+        {state, []}
+
+      outcome ->
+        {:ok, new_state} = State.transition_phase(state, outcome)
+        event = %PhaseTransitioned{from_phase: :in_combat, to_phase: outcome}
+        {new_state, [event]}
+    end
+  end
+
+  defp maybe_trigger_outcome(state), do: {state, []}
 
   defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
 
