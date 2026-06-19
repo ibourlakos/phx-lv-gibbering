@@ -16,7 +16,7 @@ gates narrative vs. mechanical content by role.
 |---|---|---|
 | [#134](../issues/134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` | — |
 | [#135](../issues/135-left-inspection-panel.md) | Left inspection panel | #134 |
-| [#136](../issues/136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + DmRevealed / DmHidden structs | — |
+| [#136](../issues/136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden structs | — |
 | [#137](../issues/137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | #136 |
 | [#132](../issues/132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue, entity states vocabulary, dev seed coverage | — |
 

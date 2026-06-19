@@ -49,10 +49,10 @@ defmodule Gibbering.Engine.StateTest do
       assert State.active_hero_id(advanced) == 99
     end
 
-    test "clears selected_id and valid_moves on advance" do
-      state = %{build_state() | selected_id: hero_id(), valid_moves: [{1, 1}, {2, 1}]}
+    test "clears actor_id and valid_moves on advance" do
+      state = %{build_state() | actor_id: hero_id(), valid_moves: [{1, 1}, {2, 1}]}
       advanced = State.advance_turn(state)
-      assert advanced.selected_id == nil
+      assert advanced.actor_id == nil
       assert advanced.valid_moves == []
     end
 

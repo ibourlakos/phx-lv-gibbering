@@ -125,7 +125,7 @@ defmodule Gibbering.GameFixtures do
       tile_size: 32,
       grid_tiles: tiles,
       entities: entities,
-      selected_id: nil,
+      actor_id: nil,
       valid_moves: [],
       turn_order: [@hero_id],
       active_index: 0

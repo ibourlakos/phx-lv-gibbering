@@ -80,7 +80,7 @@ defmodule GibberingWeb.GameLive do
     state = socket.assigns.game_state
     target_name = state.entities[target_id].name
 
-    attacker_id = state.selected_id
+    attacker_id = state.actor_id
     attacker_name = if attacker_id, do: state.entities[attacker_id].name, else: "?"
 
     new_state = SceneServer.attack_entity(socket.assigns.game_id, target_id)
@@ -112,7 +112,7 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("select_spell", %{"key" => spell_key}, socket) do
     state = socket.assigns.game_state
-    caster_id = state.selected_id || State.active_hero_id(state)
+    caster_id = state.actor_id || State.active_hero_id(state)
 
     spell_targets =
       if caster_id,
@@ -129,7 +129,7 @@ defmodule GibberingWeb.GameLive do
     state = socket.assigns.game_state
     spell_key = socket.assigns.selected_spell
 
-    caster_id = state.selected_id
+    caster_id = state.actor_id
     caster_name = if caster_id, do: state.entities[caster_id].name, else: "?"
     target_name = state.entities[target_id].name
     spell = Spells.get(spell_key)

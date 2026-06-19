@@ -24,7 +24,7 @@ defmodule Gibbering.Engine.State do
     # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
     :entities,
     # integer | nil
-    :selected_id,
+    :actor_id,
     # [{x, y}]
     :valid_moves,
     # [entity_id] — entities the selected entity can attack or target this turn
@@ -106,7 +106,7 @@ defmodule Gibbering.Engine.State do
       tile_size: map.tile_size,
       grid_tiles: tiles,
       entities: entities,
-      selected_id: nil,
+      actor_id: nil,
       valid_moves: [],
       valid_targets: [],
       turn_order: hero_ids,
@@ -380,7 +380,7 @@ defmodule Gibbering.Engine.State do
     %{
       state
       | active_index: next,
-        selected_id: nil,
+        actor_id: nil,
         valid_moves: [],
         valid_targets: [],
         entities: entities

@@ -72,7 +72,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           end) %>
     <%= for {id, entity} <- visible_entities do %>
       <% is_active = id == active_id %>
-      <% is_selected = id == state.selected_id %>
+      <% is_selected = id == state.actor_id %>
       <% is_target = id in @valid_targets %>
       <% is_spell_target = id in @spell_targets %>
       <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
@@ -241,7 +241,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         <%= for {id, entity} <- state.entities do %>
           <div class={[
             "flex items-center gap-2 mb-0.5",
-            (id == state.selected_id && "opacity-100") || "opacity-60"
+            (id == state.actor_id && "opacity-100") || "opacity-60"
           ]}>
             <div
               class="w-2.5 h-2.5 rounded-sm flex-shrink-0"
