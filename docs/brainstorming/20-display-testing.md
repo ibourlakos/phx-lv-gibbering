@@ -188,10 +188,20 @@ The two-session pattern is supported by `Phoenix.LiveViewTest` — you open two 
 
 ---
 
-## Open questions
+## Decisions
 
-- [ ] Q1: Are the SVG render helpers currently pure functions that can be extracted and tested at Layer 1, or are they inlined in HEEx templates?
-- [ ] Q2: Do SVG elements already carry `data-*` attributes for test targeting, or would those need to be added?
-- [ ] Q3: Should snapshot baselines live in `test/snapshots/` and be committed to version control, or generated in a tmp dir and excluded?
-- [ ] Q4: Is the two-session role-gating test pattern (open DM view + player view in one test) already used anywhere in the test suite?
-- [ ] Q5: Should a `data-testid` convention be adopted (separate from semantic `data-x`, `data-walkable` etc.) to decouple test selectors from rendering semantics?
+| Q | Decision |
+|---|---|
+| **Q1** | SVG render helpers are inlined in HEEx templates — not yet pure functions. Issue #153 includes extracting key render helpers (entity, tile, overlay) as testable pure functions as a prerequisite to Approach #1 unit tests. |
+| **Q2** | SVG elements do not have systematic `data-*` attributes yet. Issue #153 adds them as part of the Floki layer work. |
+| **Q3** | Snapshot baselines in `test/snapshots/` committed to version control. `--update-snapshots` mix flag regenerates them. Snapshot testing is a follow-on after #153 ships. |
+| **Q4** | Two-session role-gating pattern not yet used. Issue #153 establishes it as the canonical pattern for role-gated render tests. |
+| **Q5** | Use semantic `data-*` attributes only (`data-entity-id`, `data-x`, `data-y`, `data-walkable`) — no separate `data-testid` namespace. Semantic attributes serve both test targeting and debugging. |
+
+## Issues Opened
+
+| Issue | Title | Status |
+|---|---|---|
+| [#153](../issues/153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | open |
+
+This brainstorm will be deleted when #153 is closed.

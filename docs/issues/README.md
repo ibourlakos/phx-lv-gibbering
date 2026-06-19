@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 153 (see `counter`)
+**Next issue number:** 154 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -56,6 +56,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
 | [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
 | [#152](152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | `architecture` `rules` `gameplay` | medium |
+| [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` | medium |
 
 ---
 
