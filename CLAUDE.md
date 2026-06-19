@@ -37,8 +37,13 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 20 | [20-display-testing.md](docs/brainstorming/20-display-testing.md) | Display Testing — verifying role-gated and state-dependent SVG output | open |
 | 21 | [21-movement-action-gate-and-cost-overlay.md](docs/brainstorming/21-movement-action-gate-and-cost-overlay.md) | Movement action gate + cost-coloured overlay — on-demand overlay, terrain cost feedback | open |
 | 22 | [22-dm-entity-panel-redesign.md](docs/brainstorming/22-dm-entity-panel-redesign.md) | DM entity panel redesign — right panel as catalog, adjustments in left panel DM tab | open |
+| 23 | [23-composable-entity-appearances.md](docs/brainstorming/23-composable-entity-appearances.md) | Composable entity appearances — skeleton archetypes, socket model, 4-way facing, proportions | open |
+| 24 | [24-isometric-layout-type.md](docs/brainstorming/24-isometric-layout-type.md) | Isometric layout type — rhombus vs. chessboard, implications for pan/scroll and HUD | open |
+| 25 | [25-elevation.md](docs/brainstorming/25-elevation.md) | Elevation — logical Z, SVG render sort, structure interiors, line of sight | open |
+| 26 | [26-tile-occupancy-and-traversability.md](docs/brainstorming/26-tile-occupancy-and-traversability.md) | Tile occupancy and traversability — 5-category taxonomy, effects layer, computed traversability, ice slip test case | open |
+| 27 | [27-coordinate-model-and-spatial-addressing.md](docs/brainstorming/27-coordinate-model-and-spatial-addressing.md) | Coordinate model and spatial addressing — tile grain, elevated surfaces, interior spaces, teleportation destinations | open |
 
-Next brainstorm number: 23 (see `docs/brainstorming/counter`).
+Next brainstorm number: 28 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
