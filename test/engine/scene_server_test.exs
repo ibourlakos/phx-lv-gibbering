@@ -7,7 +7,14 @@ defmodule Gibbering.Engine.SceneServerTest do
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Scene.{EntityMoved, PhaseTransitioned, RollRequired, SessionEnded}
+
+  alias Gibbering.Events.Scene.{
+    EntityMoved,
+    PhaseTransitioned,
+    RollRequired,
+    SessionEnded,
+    TurnAdvanced
+  }
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.
   # Returns the game_id. The server is supervised by the test process
@@ -839,7 +846,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert surviving_hp == nil or surviving_hp < original_hp
     end
 
-    test "submit_roll with out-of-bounds value is ignored (unchanged state returned)" do
+    test "submit_roll clears awaiting_roll even with boundary value 0" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
@@ -852,6 +859,81 @@ defmodule Gibbering.Engine.SceneServerTest do
       # key thing is SceneServer does not crash and still clears the pending state.
       result = SceneServer.submit_roll(game_id, hero_id, 0)
       assert result.awaiting_roll == false
+    end
+  end
+
+  describe "initiative roll prompt (issue #147)" do
+    test "transitioning to :initiative_rolling emits RollRequired for all heroes" do
+      game_id = start_server()
+      Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
+
+      :ok = SceneServer.start_session(game_id)
+      assert_receive %EventBatch{}, 500
+
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+      assert_receive %EventBatch{events: events}, 500
+
+      assert Enum.any?(events, fn e ->
+               match?(%PhaseTransitioned{to_phase: :initiative_rolling}, e)
+             end)
+
+      roll_events =
+        Enum.filter(events, fn e -> match?(%RollRequired{roll_type: :initiative}, e) end)
+
+      assert length(roll_events) >= 1
+    end
+
+    test "pending_initiative_rolls is populated after transition" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+      assert MapSet.size(state.pending_initiative_rolls) >= 1
+    end
+
+    test "submit_roll with hero in pending_initiative_rolls clears the entity" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+      [hero_id | _] = MapSet.to_list(state.pending_initiative_rolls)
+
+      result = SceneServer.submit_roll(game_id, hero_id, 15)
+      assert not MapSet.member?(result.pending_initiative_rolls, hero_id)
+      assert Map.get(result.initiative_values, hero_id) == 15
+    end
+
+    test "end_initiative_rolling returns error when rolls are still pending" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+      assert MapSet.size(state.pending_initiative_rolls) > 0
+
+      assert {:error, :pending_rolls} = SceneServer.end_initiative_rolling(game_id)
+    end
+
+    test "end_initiative_rolling succeeds when no rolls are pending" do
+      game_id = start_server()
+      :ok = SceneServer.start_session(game_id)
+      :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
+
+      state = SceneServer.get_state(game_id)
+
+      Enum.each(MapSet.to_list(state.pending_initiative_rolls), fn hero_id ->
+        SceneServer.submit_roll(game_id, hero_id, 10)
+      end)
+
+      assert :ok = SceneServer.end_initiative_rolling(game_id)
+      assert SceneServer.get_state(game_id).phase == :in_combat
+    end
+
+    test "end_initiative_rolling returns error in wrong phase" do
+      game_id = start_server()
+      assert {:error, :wrong_phase} = SceneServer.end_initiative_rolling(game_id)
     end
   end
 end

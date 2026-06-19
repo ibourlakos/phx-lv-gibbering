@@ -53,7 +53,9 @@ defmodule Gibbering.Engine.State do
     # true while waiting for a player to submit a manual roll value
     awaiting_roll: false,
     # {:attack, target_id} | {:cast_spell, spell_key, target_id} | nil — the suspended action
-    pending_roll: nil
+    pending_roll: nil,
+    # MapSet of entity_ids whose initiative rolls are still pending player input
+    pending_initiative_rolls: %MapSet{}
   ]
 
   @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."

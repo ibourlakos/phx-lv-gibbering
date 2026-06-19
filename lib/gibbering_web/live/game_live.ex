@@ -323,6 +323,12 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("dm_end_initiative_rolling", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.end_initiative_rolling(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_event("dm_force_end_turn", _, %{assigns: %{is_dm: true}} = socket) do
     SceneServer.force_end_turn(socket.assigns.game_id)
     {:noreply, socket}
@@ -500,6 +506,7 @@ defmodule GibberingWeb.GameLive do
              "dm_remove_from_order",
              "dm_move_up",
              "dm_move_down",
+             "dm_end_initiative_rolling",
              "dm_force_end_turn",
              "dm_open_broadcast",
              "dm_open_whisper",
@@ -532,19 +539,39 @@ defmodule GibberingWeb.GameLive do
           _, acc -> acc
         end)
 
-      roll_prompt =
-        Enum.find_value(events, socket.assigns.roll_prompt, fn
-          %RollRequired{} = e -> e
-          _ -> nil
+      {roll_prompt, auto_submit_initiatives} =
+        Enum.reduce(events, {socket.assigns.roll_prompt, []}, fn
+          %RollRequired{roll_type: :initiative} = e, {prompt, inits} ->
+            if socket.assigns.auto_roll do
+              {prompt, [e.entity_id | inits]}
+            else
+              {e, inits}
+            end
+
+          %RollRequired{} = e, {_prompt, inits} ->
+            {e, inits}
+
+          _, acc ->
+            acc
         end)
 
       # Clear prompt when state_snapshot shows awaiting_roll is now false
       roll_prompt =
-        if batch.state_snapshot && !batch.state_snapshot.awaiting_roll,
-          do: nil,
-          else: roll_prompt
+        if batch.state_snapshot && !batch.state_snapshot.awaiting_roll &&
+             (roll_prompt == nil or roll_prompt.roll_type != :initiative),
+           do: nil,
+           else: roll_prompt
 
-      {:noreply, assign(new_socket, round: round, roll_prompt: roll_prompt)}
+      socket_after_events = assign(new_socket, round: round, roll_prompt: roll_prompt)
+
+      final_socket =
+        Enum.reduce(auto_submit_initiatives, socket_after_events, fn entity_id, s ->
+          value = Enum.random(1..20)
+          SceneServer.submit_roll(s.assigns.game_id, entity_id, value)
+          s
+        end)
+
+      {:noreply, final_socket}
     end
   end
 

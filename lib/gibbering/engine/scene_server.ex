@@ -125,6 +125,13 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "DM-driven turn advance — bypasses the paused guard."
   def force_end_turn(game_id), do: GenServer.call(via(game_id), :force_end_turn)
 
+  @doc """
+  Ends the initiative rolling phase and transitions to `:in_combat`.
+  Returns `{:error, :pending_rolls}` if any player initiative rolls are still outstanding.
+  """
+  def end_initiative_rolling(game_id),
+    do: GenServer.call(via(game_id), :end_initiative_rolling)
+
   @doc "Broadcasts a narrative text to all players in this session."
   def dm_broadcast(game_id, text), do: GenServer.call(via(game_id), {:dm_broadcast, text})
 
@@ -547,6 +554,67 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   @impl true
+  def handle_call({:transition_phase, :initiative_rolling, false}, _from, state) do
+    case State.transition_phase(state, :initiative_rolling) do
+      {:ok, transitioned} ->
+        hero_ids =
+          state.entities
+          |> Enum.filter(fn {_, e} -> e.type == "hero" end)
+          |> Enum.map(fn {id, _} -> id end)
+
+        manual_hero_ids = manual_roll_heroes(state.campaign_id, hero_ids)
+
+        {new_state, roll_events} =
+          Enum.reduce(manual_hero_ids, {transitioned, []}, fn entity_id,
+                                                              {acc_state, acc_events} ->
+            entity = acc_state.entities[entity_id]
+            pending = MapSet.put(acc_state.pending_initiative_rolls, entity_id)
+            Process.send_after(self(), {:initiative_timeout, entity_id}, 60_000)
+
+            event = %RollRequired{
+              entity_id: entity_id,
+              roll_type: :initiative,
+              dice_expression: "1d20",
+              context_label: "Initiative — #{entity.name}"
+            }
+
+            {%{acc_state | pending_initiative_rolls: pending}, [event | acc_events]}
+          end)
+
+        phase_event = %PhaseTransitioned{from_phase: state.phase, to_phase: :initiative_rolling}
+        events = [phase_event] ++ Enum.reverse(roll_events)
+        persist(new_state)
+        broadcast_batch(new_state, events, :transition_phase)
+        {:reply, :ok, new_state}
+
+      {:error, _reason} = err ->
+        {:reply, err, state}
+    end
+  end
+
+  @impl true
+  def handle_call(:end_initiative_rolling, _from, %{phase: :initiative_rolling} = state) do
+    if MapSet.size(state.pending_initiative_rolls) > 0 do
+      {:reply, {:error, :pending_rolls}, state}
+    else
+      case State.transition_phase(state, :in_combat) do
+        {:ok, new_state} ->
+          event = %PhaseTransitioned{from_phase: :initiative_rolling, to_phase: :in_combat}
+          persist(new_state)
+          broadcast_batch(new_state, [event], :end_initiative_rolling)
+          {:reply, :ok, new_state}
+
+        {:error, _} = err ->
+          {:reply, err, state}
+      end
+    end
+  end
+
+  @impl true
+  def handle_call(:end_initiative_rolling, _from, state),
+    do: {:reply, {:error, :wrong_phase}, state}
+
+  @impl true
   def handle_call({:transition_phase, new_phase, force}, _from, state) do
     result =
       if force do
@@ -833,8 +901,24 @@ defmodule Gibbering.Engine.SceneServer do
   end
 
   @impl true
-  def handle_call({:submit_roll, _entity_id, _value}, _from, state),
-    do: {:reply, state, state}
+  def handle_call({:submit_roll, entity_id, value}, _from, state) do
+    cond do
+      MapSet.member?(state.pending_initiative_rolls, entity_id) ->
+        new_state =
+          state
+          |> State.set_initiative(entity_id, value)
+          |> then(fn s ->
+            %{s | pending_initiative_rolls: MapSet.delete(s.pending_initiative_rolls, entity_id)}
+          end)
+
+        persist(new_state)
+        broadcast_batch(new_state, [], :submit_initiative_roll)
+        {:reply, new_state, new_state}
+
+      true ->
+        {:reply, state, state}
+    end
+  end
 
   @impl true
   def handle_info({:auto_roll_timeout, entity_id}, %{awaiting_roll: true} = state) do
@@ -874,9 +958,35 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_info({:auto_roll_timeout, _entity_id}, state), do: {:noreply, state}
 
+  @impl true
+  def handle_info({:initiative_timeout, entity_id}, state) do
+    if MapSet.member?(state.pending_initiative_rolls, entity_id) do
+      roll = Enum.random(1..20)
+
+      new_state =
+        state
+        |> State.set_initiative(entity_id, roll)
+        |> then(fn s ->
+          %{s | pending_initiative_rolls: MapSet.delete(s.pending_initiative_rolls, entity_id)}
+        end)
+
+      persist(new_state)
+      broadcast_batch(new_state, [], :initiative_timeout)
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
+  end
+
   # --- Helpers ---
 
   defp put_targets(state, targets), do: %{state | valid_targets: targets}
+
+  # Returns hero entity IDs that need a RollRequired event for initiative.
+  # Because Entity rows are not directly linked to CampaignCharacter records,
+  # we emit prompts for all heroes and let each player's LiveView decide whether
+  # to show the prompt (auto_roll: false) or auto-submit immediately (auto_roll: true).
+  defp manual_roll_heroes(_campaign_id, hero_ids), do: hero_ids
 
   defp do_attack(state, attacker_id, attacker, target_id, target, opts) do
     case Rules.attack(state, attacker_id, target_id, opts) do
