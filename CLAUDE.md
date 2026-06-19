@@ -41,8 +41,10 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 26 | [26-tile-occupancy-and-traversability.md](docs/brainstorming/26-tile-occupancy-and-traversability.md) | Tile occupancy and traversability — 5-category taxonomy, effects layer, computed traversability, ice slip test case | open |
 | 27 | [27-coordinate-model-and-spatial-addressing.md](docs/brainstorming/27-coordinate-model-and-spatial-addressing.md) | Coordinate model and spatial addressing — tile grain, elevated surfaces, interior spaces, teleportation destinations | open |
 | 28 | [28-player-dice-roll-prompt-and-auto-roll.md](docs/brainstorming/28-player-dice-roll-prompt-and-auto-roll.md) | Player dice roll prompt + auto-roll preference — pending-roll state, prompt UI, per-player toggle | open |
+| 29 | [29-spinoff-plans-1-6.md](docs/brainstorming/29-spinoff-plans-1-6.md) | Spinoff game mode concepts — Plans 1–6 (Autobattler, Darkest Dungeon, Deckbuilder, Terrain Wrangling, Co-op Raid, Roguelike Tower) | open |
+| 30 | [30-spinoff-plan-7-expedition-chronicle.md](docs/brainstorming/30-spinoff-plan-7-expedition-chronicle.md) | Spinoff Plan 7 — The Expedition Chronicle: structured objective-based adventure mode with Rift Stability, Leader role, Paragon Ranks, Chronicle narration | open |
 
-Next brainstorm number: 29 (see `docs/brainstorming/counter`).
+Next brainstorm number: 31 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
