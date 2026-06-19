@@ -5,7 +5,7 @@ defmodule GibberingWeb.GameLive do
   alias Gibbering.{Campaigns, EventBus}
   alias Gibbering.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
-  alias Gibbering.Events.Scene.SessionEnded
+  alias Gibbering.Events.Scene.{SessionEnded, TurnAdvanced}
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
@@ -49,7 +49,8 @@ defmodule GibberingWeb.GameLive do
            |> assign(:dm_broadcasts, [])
            |> assign(:dm_whispers, [])
            |> assign(:dm_panel, nil)
-           |> assign(:panel_subject, nil)}
+           |> assign(:panel_subject, nil)
+           |> assign(:round, 0)}
 
         {:error, reason} ->
           {:ok,
@@ -238,6 +239,12 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("dm_end", _, %{assigns: %{is_dm: true}} = socket) do
     SceneServer.end_session(socket.assigns.game_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dm_return_to_lobby", _, %{assigns: %{is_dm: true}} = socket) do
+    SceneServer.force_transition_phase(socket.assigns.game_id, :lobby)
     {:noreply, socket}
   end
 
@@ -437,7 +444,8 @@ defmodule GibberingWeb.GameLive do
              "dm_adjust_hp",
              "dm_toggle_visibility",
              "dm_dismiss_broadcast",
-             "dm_dismiss_whisper"
+             "dm_dismiss_whisper",
+             "dm_return_to_lobby"
            ] do
     {:noreply, socket}
   end
@@ -452,7 +460,13 @@ defmodule GibberingWeb.GameLive do
           do: assign(socket, game_state: batch.state_snapshot),
           else: socket
 
-      {:noreply, new_socket}
+      round =
+        Enum.reduce(events, socket.assigns.round, fn
+          %TurnAdvanced{round_number: n}, acc -> max(acc, n)
+          _, acc -> acc
+        end)
+
+      {:noreply, assign(new_socket, round: round)}
     end
   end
 

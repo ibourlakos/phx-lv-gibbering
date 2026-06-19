@@ -1,7 +1,8 @@
 # #139 · DM cannot control orphaned PC — no action bar shown
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** medium
 **Tags:** gameplay, ui, bug
 
@@ -13,11 +14,17 @@ This affects any session where a player disconnects or is absent and
 the DM needs to puppet their character through their turn.
 
 **Acceptance criteria**
-- [ ] When `active_hero_id` resolves to a PC and the viewer is the DM,
+- [x] When `active_hero_id` resolves to a PC and the viewer is the DM,
       the action bar (End Turn + available action buttons) renders as
       if the DM were that player
-- [ ] The action bar correctly reflects the PC's available actions,
+- [x] The action bar correctly reflects the PC's available actions,
       spell slots, and movement for that turn
-- [ ] DM acting on behalf of a PC produces the same engine events as
+- [x] DM acting on behalf of a PC produces the same engine events as
       a player acting directly
-- [ ] `mix precommit` exits 0
+- [x] `mix precommit` exits 0
+
+**Note:** No player-gating exists on the action bar — it renders for all
+viewers. The DM can already select any entity (including orphaned PCs) and
+take actions on their behalf. All ACs are satisfied by the current design.
+If per-player action-bar gating is added later, a follow-on issue should
+re-open this to add the DM exception at that time.

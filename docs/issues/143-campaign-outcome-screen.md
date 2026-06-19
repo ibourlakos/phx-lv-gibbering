@@ -1,7 +1,8 @@
 # #143 · Campaign outcome screen
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** high
 **Tags:** ui, gameplay
 
@@ -31,10 +32,17 @@ clear next step.
 - XP/loot summary on the screen (loot is handled separately by the inventory system).
 
 **Acceptance criteria**
-- [ ] Victory overlay renders for all connected LiveViews when phase is `:victory`
-- [ ] Defeat overlay renders for all connected LiveViews when phase is `:defeat`
-- [ ] Overlay shows turn count; kill count is a nice-to-have
-- [ ] DM sees "Return to Lobby" button; players do not
-- [ ] "Return to Lobby" sends `transition_phase(:lobby)` and all sockets return to game/lobby state
-- [ ] Player inputs remain blocked while overlay is shown (no map interaction)
-- [ ] `mix precommit` passes
+- [x] Victory overlay renders for all connected LiveViews when phase is `:victory`
+- [x] Defeat overlay renders for all connected LiveViews when phase is `:defeat`
+- [x] Overlay shows turn count; kill count is a nice-to-have
+- [x] DM sees "Return to Lobby" button; players do not
+- [x] "Return to Lobby" sends `transition_phase(:lobby)` and all sockets return to game/lobby state
+- [x] Player inputs remain blocked while overlay is shown (no map interaction)
+- [x] `mix precommit` passes
+
+**Implementation notes:**
+- Round count tracked in LiveView assigns from `%TurnAdvanced{round_number: n}` events.
+  Players who connect after combat starts see rounds since they joined.
+- `dm_return_to_lobby` event calls `SceneServer.force_transition_phase(game_id, :lobby)`.
+- Overlay uses `z-index:100` (no `pointer-events:none`) — naturally blocks all map interaction.
+- Kill count omitted (nice-to-have, no kill tracking in current State).

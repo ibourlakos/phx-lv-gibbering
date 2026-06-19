@@ -709,6 +709,32 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     </div>
   <% end %>
 
+  <%!-- Outcome overlay — full-viewport, blocks all interaction. DM sees Return to Lobby. --%>
+  <%= if state.phase in [:victory, :defeat] do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center;">
+      <div class="text-center max-w-md mx-auto px-6">
+        <%= if state.phase == :victory do %>
+          <div class="text-6xl font-bold text-yellow-400 mb-4">Victory!</div>
+          <div class="text-xl text-gray-300 mb-6">The enemies have been vanquished.</div>
+        <% else %>
+          <div class="text-6xl font-bold text-red-500 mb-4">Defeat&hellip;</div>
+          <div class="text-xl text-gray-300 mb-6">The party has fallen.</div>
+        <% end %>
+        <%= if @round > 0 do %>
+          <div class="text-sm text-gray-500 mb-8">Round {@round}</div>
+        <% end %>
+        <%= if @is_dm do %>
+          <button
+            phx-click="dm_return_to_lobby"
+            class="bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg px-8 py-3 text-sm"
+          >
+            Return to Lobby
+          </button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <%!-- End session confirmation modal — DM only --%>
   <%= if @show_end_confirm do %>
     <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center;">

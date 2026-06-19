@@ -492,6 +492,57 @@ defmodule GibberingWeb.GameLiveTest do
     end
   end
 
+  describe "outcome overlay (issue #143)" do
+    defp broadcast_phase(game_id, phase) do
+      state = SceneServer.get_state(game_id)
+
+      Phoenix.PubSub.broadcast(
+        Gibbering.PubSub,
+        SceneServer.topic(game_id),
+        %Gibbering.Events.EventBatch{state_snapshot: %{state | phase: phase}}
+      )
+    end
+
+    test "victory overlay renders for all clients when phase is :victory", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      broadcast_phase(game_id, :victory)
+      assert render(view) =~ "Victory!"
+    end
+
+    test "defeat overlay renders for all clients when phase is :defeat", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      broadcast_phase(game_id, :defeat)
+      assert render(view) =~ "Defeat"
+    end
+
+    test "DM sees Return to Lobby button in the outcome overlay", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      broadcast_phase(game_id, :victory)
+      assert render(view) =~ "dm_return_to_lobby"
+    end
+
+    test "non-DM does not see Return to Lobby button", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      broadcast_phase(game_id, :victory)
+      refute render(view) =~ "dm_return_to_lobby"
+    end
+
+    test "dm_return_to_lobby transitions phase back to :lobby", %{conn: conn} do
+      {view, game_id} = mount_dm_game(conn)
+      SceneServer.force_transition_phase(game_id, :victory)
+      broadcast_phase(game_id, :victory)
+      view |> element("[phx-click='dm_return_to_lobby']") |> render_click()
+      assert SceneServer.get_state(game_id).phase == :lobby
+    end
+
+    test "outcome overlay is absent in lobby phase", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      html = render(view)
+      refute html =~ "Victory!"
+      refute html =~ "Defeat"
+    end
+  end
+
   describe "container panel (issue #127)" do
     defp insert_adjacent_chest(game_id, items \\ []) do
       chest =

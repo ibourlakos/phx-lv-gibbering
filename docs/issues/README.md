@@ -44,10 +44,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` | low |
 | [#124](124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | `rendering` `ui` `architecture` | low |
 | [#138](138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | `rendering` `bug` | low |
-| [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` | medium |
 | [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
-| [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` | high |
 | [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` | medium |
 | [#145](145-player-auto-roll-preference.md) | Player auto-roll preference | `architecture` `gameplay` `rules` | medium |
 | [#146](146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | `ui` `gameplay` `architecture` `rules` | medium |
@@ -106,6 +104,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` |
+| [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` |
 | [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` |
 | [#135](135-left-inspection-panel.md) | Left inspection panel — click-to-inspect map elements | `ui` `gameplay` `rendering` |
 | [#134](134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` socket assign | `architecture` `ui` |
