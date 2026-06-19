@@ -200,23 +200,36 @@ This is a new content type for the detail panel: `:spell_cast_instance` alongsid
 
 **If the catalogue definition changes mid-session** (DM edits a spell): the event log stays accurate because it stores resolution context, not a pointer to the catalogue. The link shows the *current* catalogue definition plus the *actual* resolution qualifiers — no gap.
 
-**Known gap:** passive rule modifiers that applied silently (e.g. a damage-adding modifier not recorded in `resolution_context`) may not appear in the "as cast" overlay. This is a completeness question for the event schema (issue #119), not the link model.
-
-**Open questions added:** Q9–Q10 below.
+**Resolution context and modifiers (Q10):** The overlay generalises beyond spells — all action types carry a `modifiers` list in their resolution context, covering passive features, conditions, and environmental effects (e.g. "Muddy terrain at (3,4) halved movement"). The panel renders this list as "as resolved" qualifiers. This is a constraint on the event schema (issue #119); the panel requires no additional design.
 
 ---
 
 ### 5. Panel layout
 
-Left side is free. Proposed constraints:
-- Fixed width: `~220px`, `position:fixed; top:0; left:0; bottom:0; z-index:35`
-- Scrollable if content overflows (ability scores + inventory can be tall)
-- Dismissable via an ✕ or by clicking empty map space
-- Does not appear until something is inspected (collapsed by default)
+**Resolved (Q8): Two-panel layout — left detail, right tabbed.**
 
-z-index 35 puts it above the SVG (z-0) and below the DM panel (z-50) and modals (z-100). Turn strip is z-30 — the panel would overlap it slightly at the top-left corner; either offset the top by 2.5rem or let them overlap since the strip is centered.
+```
+┌──────────┬──────────────────────┬──────────┐
+│          │                      │          │
+│  Detail  │      Game Grid       │ [Events] │
+│  (left)  │                      │[Catalogue│
+│          │                      │  DM only]│
+└──────────┴──────────────────────┴──────────┘
+                 [Turn Strip]
+```
 
-The existing bottom-right entity list becomes redundant if the inspection panel shows the same and more. Option: keep the entity list as a compact "roster" (just names + color dots) and drop the HP column from it once inspection is live.
+**Left panel** — Detail / Inspection (`panel_subject`):
+- Fixed width `~220px`, `position:fixed; top:0; left:0; bottom:0; z-index:35`
+- Scrollable; dismissed by ✕ or clicking empty map space
+- Collapsed until something is inspected
+
+**Right panel** — Tabbed:
+- Fixed width `~220px`, `position:fixed; top:0; right:0; bottom:0; z-index:35`
+- **Events tab** (all roles): scrollable narrative feed, newest at bottom; badge shows unread count when tab is not active
+- **Catalogue tab** (DM only): scene entity picker — browse catalogue, place entities on the map
+- Tab strip is role-gated: players see only the Events tab; the Catalogue tab does not appear at all (not greyed out, not present)
+
+The existing bottom-right entity roster (bare HP list) is replaced by this panel. The turn strip remains bottom-center and is unaffected.
 
 ---
 
@@ -227,7 +240,7 @@ Options:
 - **Auto-clear on action**: Executing a move, attack, or spell clears the panel. Clean, less noise.
 - **Auto-clear on turn end**: Panel persists within a turn, clears when turn advances.
 
-BG3 uses sticky. Recommendation: sticky, dismissable by clicking empty map space (which can also clear `selected_id`) or the ✕ button.
+BG3 uses sticky. Recommendation: sticky, dismissable by clicking empty map space (which can also clear `actor_id`) or the ✕ button.
 
 Clicking empty map space currently does nothing — we can add `phx-click="deselect"` to the SVG root (pointer events bubble up if no child consumes them).
 
@@ -235,9 +248,9 @@ Clicking empty map space currently does nothing — we can add `phx-click="desel
 
 ### 7. Socket vs. server state
 
-The `inspected` subject should live **entirely in the socket** (`assign(socket, inspected: ...)`). It is display-only, per-client, and has no gameplay effect. No `GameServer` changes needed.
+The `panel_subject` assign should live **entirely in the socket** (`assign(socket, panel_subject: ...)`). It is display-only, per-client, and has no gameplay effect. No `GameServer` changes needed.
 
-`select_entity` continues to update both `selected_id` (server state, game effect) and `inspected` (socket, display). `inspect_tile` updates only `inspected`.
+`select_entity` continues to update both `actor_id` (server state, game effect) and `panel_subject` (socket, display). `inspect_tile` updates only `panel_subject`.
 
 ---
 
@@ -250,6 +263,6 @@ The `inspected` subject should live **entirely in the socket** (`assign(socket, 
 - [x] Q5: Flavour description for `static_decor` — stored or derived? → **Stored on the catalogue entry (issue #132); instances inherit. `object_subtype` promoted from `stats` map to validated catalogue field.**
 - [x] Q6: Should the inventory summary be read-only or interactive? → **Read-only for v1; inventory has its own modal/lightbox.**
 - [x] Q7: What does the DM panel show for a hidden entity? → **Full stat block with a consistent DM-only visual indicator (eye icon / badge), applied uniformly across the UI.**
-- [ ] Q8: Where does the player event feed sit in the viewport layout?
-- [ ] Q9: For tombstone entity links (dead/gone entity), how much of the last-known stat block is shown?
-- [ ] Q10: Should passive rule modifiers that applied to a cast be recorded in the event's resolution context? (Constraint on issue #119 — defer there.)
+- [x] Q8: Where does the player event feed sit in the viewport layout? → **Right panel, tabbed: Events (all roles) + Catalogue (DM only). Tab strip is role-gated — players see only their tabs.**
+- [x] Q9: For tombstone entity links (dead/gone entity), how much of the last-known stat block is shown? → **Full panel, same role-gating as when alive. Death is just a condition (`:dead`, `:destroyed`) — the panel renders current entity state with the condition surfaced as a "Fallen" / "Destroyed" label. No special tombstone mode. Appearance change at 0 HP is handled by the appearance system (issue #132). For entities removed from the scene entirely (fled, teleported), the death/removal event must carry a state snapshot; this is a constraint on the event schema (issue #119).**
+- [x] Q10: Should passive rule modifiers that applied to a cast be recorded in the event's resolution context? → **Yes — generalised beyond spells: all action types carry a `modifiers` list in their resolution context (environmental, passive feature, condition-driven). The "as resolved" overlay in the panel renders this list. Constraint forwarded to issue #119 (event schema). Panel rendering requires no additional design here.**
