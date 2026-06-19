@@ -106,26 +106,20 @@ on entry, alarm spells, and pressure plates.
 
 The ice slip scenario is the minimum viable test for the entry trigger system.
 
-## Open questions
+## Decisions
 
-- Difficult terrain stacking policy: D&D RAW says no stacking (always 2×).
-  Do we enforce this at the engine level or allow homebrew override?
-- How are edge occupants (walls, doors) stored? As a separate edges table/map
-  keyed by `{tile_coord, direction}`, or as attributes of the tile itself?
-- Entry triggers: should they be stored as part of the Effect occupant, or as
-  a separate trigger system the Effect registers with?
-- Can a single tile have multiple effects simultaneously? (Web + darkness +
-  spike growth?) If so, how are their modifiers composed?
-- How does the corpse transition interact with resurrection spells? Does the
-  entity record survive in a `dead` state, or is the corpse a fully new object?
+| Question | Decision |
+|---|---|
+| Difficult terrain stacking? | Enforce RAW: no stacking. Always 2× cost regardless of multiple sources. Homebrew stacking deferred. |
+| Edge occupants storage? | `edges` map in `Engine.State`, keyed `{tile_coord, direction}` (normalised per #156 edge model). No separate DB table for v1. |
+| Entry triggers? | Stored on the Effect occupant as `trigger: %{on_enter: trigger_spec}`. Traversability function fires them as side effects on move. |
+| Multiple effects on one tile? | Yes — effects stored as a list. Traversability: most restrictive modifier wins (highest cost or block). |
+| Corpse/resurrection? | Entity record survives in `state: :dead`. Corpse object references the original `entity_id` for loot resolution and resurrection. |
 
-## Cross-references
+## Issues Opened
 
-- Related: brainstorm #25 (elevation — traversability must account for elevation
-  transitions between tiles)
-- Related: brainstorm #27 (coordinate model — traversability queries reference
-  spatial addresses, not just (x,y))
-- Related: brainstorm #21 (movement overlay — the overlay visualises
-  effective_traversability output per tile)
-- Related: issue #135 (inspection panel — clicking a tile with effects should
-  show effect details in the panel)
+| Issue | Title | Status |
+|---|---|---|
+| [#157](../issues/157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | open |
+
+This brainstorm will be deleted when #157 is closed.
