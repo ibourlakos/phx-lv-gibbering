@@ -18,7 +18,7 @@ DM-only adjustment controls into a new DM tab on the left inspection panel
 | Question | Decision |
 |---|---|
 | Right catalog minimal view? | Name, exact HP (DM only), hidden/visible badge, click-to-inspect shortcut (sets `panel_subject`). |
-| DM controls in left panel — tab strip or section? | A DM section below the stat block, shown only when `is_dm` and `panel_subject` is an entity. No tab strip overhead. |
+| DM controls location? | Separate explicit intervention panel — not a passive section. DM must trigger it deliberately (Intervene button). The visual separation reinforces that HP/condition changes are exceptional acts, not routine inspection. |
 | Hide toggle location? | Right panel catalog row — eye icon button per row. Quick action without opening inspection panel. |
 | Condition dropdown location? | Left panel DM section. DM clicks entity → left panel shows stat block + DM section with condition picker. |
 | Player-facing vs. DM right panel? | Right panel is role-gated. DM sees a "DM" tab (two sections: active scene entity catalog + entity placement picker). Players see Events tab only (from #137). |

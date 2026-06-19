@@ -268,8 +268,8 @@ render time, producing an `Action` with `source: :weapon`.
 |---|---|---|
 | **Q1** | v1 keeps existing storage: spells in DB, weapons derived from `entity.stats["equipped_weapon"]`, class features implicit. Unified Action catalogue (DB table or module per entity type) is Phase 2. | Phase 2 |
 | **Q2** | v1: action bar renders available actions from entity state at render time (existing approach). Predicate-based discovery (`prerequisites` evaluation) is Phase 2. | Phase 2 |
-| **Q3** | `:contest` deferred until Grapple/Shove are explicitly in scope. Not modelled in v1. | Deferred |
-| **Q4** | v1 scope: unify the existing weapon attack (`Rules.attack/5`) and spell (`Rules.cast_spell/5`) paths under the `%Action{}` struct. Fix the `effect.attack_type` `:aoe` misplacement (shape is on `target_area.shape`, not `attack_type`). No new action types. | No |
+| **Q3** | `:contest` included in v1. Grapple (Athletics vs. Athletics/Acrobatics) is the proof-of-concept. Shove is the obvious follow-on. | No |
+| **Q4** | v1 scope: unify existing weapon attack and spell under `%Action{}`, fix `effect.attack_type` `:aoe` misplacement, add `:contest` resolution, implement Grapple. | No |
 | **Q5** | DM freeform improvised actions deferred with #85 (content creation tools). | Deferred (#85) |
 | **Q6** | `economy_slot: :reaction` in the struct already accommodates reactions. No interrupt pipeline designed in v1 — reactions remain a stub. | Phase 2 |
 | **Q7** | Social/exploration actions are a separate non-combat interaction layer, not part of the `%Action{}` combat pipeline in v1. | Deferred |
