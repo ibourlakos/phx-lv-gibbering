@@ -1,7 +1,8 @@
 # #135 · Left inspection panel — click-to-inspect map elements
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** medium
 **Tags:** ui, gameplay, rendering
 
