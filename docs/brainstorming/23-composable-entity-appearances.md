@@ -74,24 +74,20 @@ they visually belong to. This is rendering only; game logic does not address the
 Pickupable items resting on a tile use the tile's integer coordinate as their
 game address; their visual rendering may be offset within the tile for aesthetics.
 
-## Open questions
+## Decisions
 
-- How does the content creator tool expose socket definition? (Click-on-canvas
-  to place sockets per facing direction?)
-- For structures: is the interior a sub-scene (separate LiveView) or a set of
-  interior tiles rendered at a specific elevation layer?
-- Swarms: is the token a single SVG shape or a procedurally scattered cluster
-  of small shapes within the tile bounds?
-- How does archetype interact with size category? A Huge biped-upright still
-  uses the biped-upright slot set, just scaled to a 3×3 tile footprint.
-- Do elemental/amorphous entities need a fully procedural render path, or can
-  they be approximated with a single animated SVG path?
+| Question | Decision |
+|---|---|
+| Content creator socket exposure? | Deferred with #85 (content creation tools). Socket authoring belongs in the appearance editor, not the engine. |
+| Structure interiors — sub-scene or elevation layer? | Elevation layer: interior tiles rendered at z > 0 inside the structure footprint. No separate LiveView for interiors. Deferred to elevation work (#158). |
+| Swarms — single shape or procedural cluster? | Single SVG shape for v1. Procedural scattered cluster is a visual polish deferral. |
+| Archetype + size category? | Size category scales the tile footprint (1×1 medium, 2×2 large, 3×3 huge). Socket offsets scale proportionally. No new archetype needed per size. |
+| Elemental/amorphous render? | Single animated SVG path (morphing shape) for v1. Fully procedural is deferred. |
 
-## Cross-references
+## Issues Opened
 
-- Related: brainstorm #24 (isometric layout — affects tile diamond height used
-  in proportion calculations)
-- Related: brainstorm #25 (elevation — structures have roof/interior layers)
-- Related: brainstorm #26 (tile occupancy — structures and multi-tile objects
-  affect traversability of multiple tiles simultaneously)
-- Related: issue #132 (appearance catalogue — tile textures for terrain types)
+| Issue | Title | Status |
+|---|---|---|
+| [#155](../issues/155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | open |
+
+This brainstorm will be deleted when #155 is closed.
