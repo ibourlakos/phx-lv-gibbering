@@ -32,8 +32,9 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | # | File | Topic | Status |
 |---|---|---|---|
 | 17 | [17-campaign-scene-map-structure.md](docs/brainstorming/17-campaign-scene-map-structure.md) | Campaign / Scene / Map structure — single-map vs. multi-map, maps table, SceneServer scope | open |
+| 18 | [18-inspection-panel.md](docs/brainstorming/18-inspection-panel.md) | Click-to-inspect map elements — hero stats, monster info, tile/decoration details, left-side panel | open |
 
-Next brainstorm number: 18 (see `docs/brainstorming/counter`).
+Next brainstorm number: 19 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
