@@ -24,6 +24,8 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 <div
   id="game-board"
   phx-hook="DiceRoll"
+  phx-window-keydown="deselect_spell"
+  phx-key="Escape"
   style="position:relative; width:100vw; height:100vh; overflow:hidden;"
 >
   <%!--

@@ -90,6 +90,11 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("deselect_spell", _, socket) do
+    {:noreply, assign(socket, selected_spell: nil, spell_targets: [])}
+  end
+
+  @impl true
   def handle_event("move", %{"x" => x, "y" => y}, socket) do
     new_state =
       SceneServer.move_entity(socket.assigns.game_id, String.to_integer(x), String.to_integer(y))
