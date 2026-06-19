@@ -34,9 +34,8 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` | low |
-| [#134](134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` socket assign | `architecture` `ui` | medium |
 | [#135](135-left-inspection-panel.md) | Left inspection panel — click-to-inspect map elements | `ui` `gameplay` `rendering` | medium |
-| [#136](136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + DmRevealed / DmHidden event structs | `architecture` `gameplay` `ui` | medium |
+| [#136](136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden event structs | `architecture` `gameplay` `ui` | medium |
 | [#137](137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | `ui` `gameplay` `architecture` | medium |
 | [#132](132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue and dev seed coverage | `gameplay` `rendering` `architecture` | medium |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
@@ -87,6 +86,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#134](134-rename-selected-id-to-actor-id.md) | Rename `selected_id` → `actor_id`; introduce `panel_subject` socket assign | `architecture` `ui` |
 | [#133](133-introduce-docs-reference-folder.md) | Introduce `docs/reference/` for vocabulary and reference documents | `architecture` |
 | [#127](127-item-pickup-event-loop.md) | Item pickup event loop — SceneServer handlers, Inventory pure module, container panel LiveView | `gameplay` `architecture` `ui` |
 | [#128](128-equipped-item-collect-modifiers-integration.md) | Equipped item `collect_modifiers` integration — `Data.Items` modifiers + `:equipped_items` pipeline source | `rules` `architecture` |

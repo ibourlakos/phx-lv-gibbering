@@ -1,7 +1,8 @@
 # #134 · Rename `selected_id` → `actor_id`; introduce `panel_subject` socket assign
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-19
 **Priority:** medium
 **Tags:** architecture, ui
 
