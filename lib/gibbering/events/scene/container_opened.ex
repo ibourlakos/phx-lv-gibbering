@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.ContainerOpened do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           actor_id: integer(),
           container_id: integer()
         }
@@ -24,7 +25,8 @@ defmodule Gibbering.Events.Scene.ContainerOpened do
     :actor_id,
     :container_id,
     event_type: :container_opened,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

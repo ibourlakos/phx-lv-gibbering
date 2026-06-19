@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.DamageDealt do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           target_id: String.t(),
           target_name: String.t(),
           amount: non_neg_integer(),
@@ -30,7 +31,8 @@ defmodule Gibbering.Events.Scene.DamageDealt do
     :damage_type,
     :new_hp,
     event_type: :damage_dealt,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

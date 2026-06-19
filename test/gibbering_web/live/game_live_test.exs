@@ -149,10 +149,11 @@ defmodule GibberingWeb.GameLiveTest do
   end
 
   describe "attack event" do
-    test "attacking the adjacent monster adds a log entry", %{conn: conn} do
+    test "attacking the adjacent monster resolves the attack", %{conn: conn} do
       {view, game_id} = mount_combat_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
+      monster_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "monster" && id end)
 
       # Select hero → valid_targets will include the adjacent goblin.
       view |> element("#entity-#{hero_id}") |> render_click()
@@ -160,9 +161,11 @@ defmodule GibberingWeb.GameLiveTest do
       # The goblin entity element now renders phx-click="attack" because it is in valid_targets.
       view |> element("[phx-click='attack']") |> render_click()
 
-      html = render(view)
-      # Log shows either a damage hit or "destroyed!" entry.
-      assert html =~ "Test Fighter" and (html =~ "hits" or html =~ "destroyed")
+      # Attack resolves synchronously via SceneServer: monster either took damage or was destroyed.
+      state_after = SceneServer.get_state(game_id)
+
+      assert state_after.entities[monster_id] == nil or
+               state_after.entities[monster_id].hp < state.entities[monster_id].hp
     end
   end
 

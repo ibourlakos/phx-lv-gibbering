@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.PhaseTransitioned do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           from_phase: atom(),
           to_phase: atom()
         }
@@ -24,7 +25,8 @@ defmodule Gibbering.Events.Scene.PhaseTransitioned do
     :from_phase,
     :to_phase,
     event_type: :phase_transitioned,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

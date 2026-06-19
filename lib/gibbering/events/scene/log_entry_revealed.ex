@@ -1,4 +1,4 @@
-defmodule Gibbering.Events.Scene.ItemTaken do
+defmodule Gibbering.Events.Scene.LogEntryRevealed do
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +12,8 @@ defmodule Gibbering.Events.Scene.ItemTaken do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          actor_id: integer(),
-          container_id: integer(),
-          instance_id: String.t(),
-          item_key: String.t(),
-          quantity: pos_integer()
+          original_event_id: String.t(),
+          revealed_at: DateTime.t()
         }
 
   defstruct [
@@ -25,14 +22,11 @@ defmodule Gibbering.Events.Scene.ItemTaken do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :actor_id,
-    :container_id,
-    :instance_id,
-    :item_key,
-    :quantity,
-    event_type: :item_taken,
+    :original_event_id,
+    :revealed_at,
+    event_type: :log_entry_revealed,
     schema_version: @current_version,
-    visibility: :public
+    visibility: :dm_only
   ]
 
   @impl Gibbering.Events.Upcaster

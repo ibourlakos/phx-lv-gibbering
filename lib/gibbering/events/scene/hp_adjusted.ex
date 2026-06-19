@@ -11,6 +11,7 @@ defmodule Gibbering.Events.Scene.HPAdjusted do
           correlation_id: String.t(),
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
           entity_id: String.t(),
           entity_name: String.t(),
           old_hp: integer(),
@@ -30,7 +31,8 @@ defmodule Gibbering.Events.Scene.HPAdjusted do
     :new_hp,
     :reason,
     event_type: :hp_adjusted,
-    schema_version: @current_version
+    schema_version: @current_version,
+    visibility: :dm_only
   ]
 
   @impl Gibbering.Events.Upcaster

@@ -1,7 +1,8 @@
 # #136 · Event visibility taxonomy + LogEntryRevealed / LogEntryHidden event structs
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-20
 **Priority:** medium
 **Tags:** architecture, gameplay, ui
 
@@ -41,14 +42,21 @@ time. A second click emits `LogEntryHidden` and removes it from player feeds.
 player feed so players know the DM chose to share it.
 
 **Acceptance criteria**
-- [ ] `visibility` field (`t :: :public | :dm_only | :revealed`) added to the canonical event envelope typespec
-- [ ] Default visibility assigned correctly per event type at emit time in `SceneServer` / `Rules`
-- [ ] `Gibbering.Events.Scene.LogEntryRevealed` struct defined with `original_event_id`, `revealed_at`, envelope fields
-- [ ] `Gibbering.Events.Scene.LogEntryHidden` struct defined with `original_event_id`, `hidden_at`, envelope fields
-- [ ] Both structs implement `Gibbering.Events.Upcaster` at v1
-- [ ] Player feed projection folds `LogEntryRevealed` / `LogEntryHidden` in log order to derive effective visibility
-- [ ] DM log renders eye-icon reveal affordance on `:dm_only` events
-- [ ] Clicking reveal/hide affordance emits the correct event and updates player feeds via PubSub in real time
-- [ ] Revealed events render with a DM-disclosure marker in the player feed
-- [ ] Unit tests for projection fold logic (revealed → hidden → re-revealed sequence)
-- [ ] `mix precommit` exits 0
+- [x] `visibility` field (`t :: :public | :dm_only | :revealed`) added to the canonical event envelope typespec
+- [x] Default visibility assigned correctly per event type at emit time in `SceneServer` / `Rules`
+- [x] `Gibbering.Events.Scene.LogEntryRevealed` struct defined with `original_event_id`, `revealed_at`, envelope fields
+- [x] `Gibbering.Events.Scene.LogEntryHidden` struct defined with `original_event_id`, `hidden_at`, envelope fields
+- [x] Both structs implement `Gibbering.Events.Upcaster` at v1
+- [x] Player feed projection folds `LogEntryRevealed` / `LogEntryHidden` in log order to derive effective visibility
+- [x] DM log renders eye-icon reveal affordance on `:dm_only` events
+- [x] Clicking reveal/hide affordance emits the correct event and updates player feeds via PubSub in real time
+- [x] Revealed events render with a DM-disclosure marker in the player feed
+- [x] Unit tests for projection fold logic (revealed → hidden → re-revealed sequence)
+- [x] `mix precommit` exits 0
+
+**Implementation notes**
+- `visibility: :public | :dm_only | :revealed` added to all 14 existing scene event structs (on this branch; `RollRequired` lives on the unmerged WP-P branch and will get the field when that PR lands)
+- `HPAdjusted` defaults to `:dm_only` (DM god-mode action); `AttackResolved` set to `:dm_only` at emit time when attacker is a non-hero
+- `Gibbering.Events.EventFeedProjection` — pure fold module; `fold/1` derives `%{event_id => :revealed | :dm_only}`; `player_visible/1` returns `[{event, effective_visibility}]` pairs
+- SceneServer: `reveal_log_entry/2` and `hide_log_entry/2` public API + `handle_call` handlers; emit `LogEntryRevealed` / `LogEntryHidden` into the batch
+- GameLive: `@event_log` assign accumulates typed event structs from each `%EventBatch{}`; DM log panel shows all events with eye-icon toggle on `:dm_only` entries; player Events panel shows `EventFeedProjection.player_visible/1` output with 👁 marker on `:revealed` events

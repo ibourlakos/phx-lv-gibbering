@@ -48,8 +48,7 @@ so active links in the feed have a left panel to open into. `#154` follows `#137
 ## Active Front
 
 ```
-#134  ──→  #135
-#136  ──→  #137  ──→  #154
+#137  ──→  #154      (#136 closed — visibility taxonomy shipped)
 #132  (parallel, feeds both)
 ```
 
