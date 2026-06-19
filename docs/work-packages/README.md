@@ -4,7 +4,7 @@ One file per work package: `docs/work-packages/wp-<letter>.md`. This file is the
 
 A work package groups related issues by concern and establishes sequencing within that concern. See [docs/workflow.md](../workflow.md) ([E] subflow) for creation, maintenance, and completion rules.
 
-**Next letter:** P
+**Next letter:** Q
 
 ---
 
@@ -13,6 +13,7 @@ A work package groups related issues by concern and establishes sequencing withi
 | WP | Title | Open Issues |
 |---|---|---|
 | [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | #134, #135, #136, #137, #132 |
+| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #139, #142, #143, #144, #145, #146, #147 |
 | [WP-A](wp-a.md) | Infrastructure & Data Plumbing | #24 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15 |
 | [WP-F](wp-f.md) | Rendering & Frontend | #125, #21, #84 |
@@ -56,7 +57,7 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 | [#32](../issues/032-dm-override-event-schema.md) | DM override event schema and god-mode mechanics | Discovery — deferred; revisit when DM intervention scope expands |
 | [#33](../issues/033-templates-governance-model.md) | Templates governance model | Discovery — deferred |
 | [#63](../issues/063-playwright-smoke-tests.md) | Playwright smoke tests + smoke Docker env | Ops — deferred |
-| [#85](../issues/085-content-creation-tools-design.md) | Content creation tools — design and scope | Discovery — deferred; unparks after WP-N ✓ |
+| [#85](../issues/085-content-creation-tools-design.md) | Content creation tools — design and scope | Discovery — open; promote to brainstorm before implementation |
 | [#120](../issues/120-items-data-population.md) | Items data module population | Deferred — blocked on content pipeline decisions |
 
 ---
@@ -70,6 +71,10 @@ WP-L:  #123 → #124                         — Projection behaviour first, the
 WP-O:  #134 → #135                         — rename first, then left panel
        #136 → #137                         — visibility taxonomy first, then right panel
        #132 (parallel, feeds both panels)
+WP-P:  #139                                — DM orphaned PC fix (prerequisite for solo-play)
+       #142 → #143                         — outcome phases then outcome screen
+       #144 (after WP-F #125)              — movement confirmation UI
+       #145 → #146 → #147                  — auto-roll preference, dice prompt, then initiative prompt
 ```
 
-No inter-package dependencies. All active WPs can run in any order, or interleaved issue by issue. Within each package the internal chain must be respected (data layer before presentation).
+WP-P has one cross-package dependency: `#144` should follow WP-F `#125`. All other WP-P chains are independent.
