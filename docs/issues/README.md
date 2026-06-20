@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 160 (see `counter`)
+**Next issue number:** 161 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -54,6 +54,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
 | [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
 | [#159](159-condition-badge-overlay.md) | Condition badge overlay on entity tokens | `rendering` `gameplay` `ui` | medium |
+| [#160](160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | `ui` `rendering` `architecture` | medium |
 
 ---
 
