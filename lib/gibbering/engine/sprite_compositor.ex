@@ -1,6 +1,8 @@
 defmodule Gibbering.Engine.SpriteCompositor do
   @moduledoc false
 
+  alias Gibbering.Engine.ConditionBadge
+
   # Compositing pipeline for entity SVG fragments.
   #
   # Design decisions (see issue #100):
@@ -11,7 +13,7 @@ defmodule Gibbering.Engine.SpriteCompositor do
   #   - No explicit fragment cache: LiveView diffing is the primary deduplication mechanism.
   #     An ETS cache is deferred until profiling demonstrates it is needed (see #104).
 
-  @layer_order [:body, :selection_ring, :hp_bar]
+  @layer_order [:body, :selection_ring, :hp_bar, :condition_badges]
 
   @doc """
   Composes an SVG fragment for `entity` using `appearances` and optional render opts.
@@ -84,6 +86,13 @@ defmodule Gibbering.Engine.SpriteCompositor do
       ]
     else
       []
+    end
+  end
+
+  defp build_layer(:condition_badges, entity, _appearances, _opts) do
+    case ConditionBadge.render_badges(entity) do
+      "" -> []
+      svg -> [svg]
     end
   end
 

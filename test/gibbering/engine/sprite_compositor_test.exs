@@ -121,7 +121,33 @@ defmodule Gibbering.Engine.SpriteCompositorTest do
 
   describe "layer_order/0" do
     test "returns the declarative layer list" do
-      assert SpriteCompositor.layer_order() == [:body, :selection_ring, :hp_bar]
+      assert SpriteCompositor.layer_order() == [
+               :body,
+               :selection_ring,
+               :hp_bar,
+               :condition_badges
+             ]
+    end
+  end
+
+  describe "compose/3 — condition_badges layer" do
+    test "no badges when entity has no conditions and full movement" do
+      e = Map.merge(entity(), %{conditions: [], action_economy: %{movement_remaining: 30}})
+      result = SpriteCompositor.compose(e, @appearances, show_hp: false, show_body: false)
+      refute result =~ "cy=\"38\""
+    end
+
+    test "badge rendered for active condition" do
+      e = Map.merge(entity(), %{conditions: [:prone], action_economy: %{movement_remaining: 30}})
+      result = SpriteCompositor.compose(e, @appearances)
+      assert result =~ "<circle"
+      assert result =~ "#d97706"
+    end
+
+    test "movement_exhausted badge rendered when movement_remaining == 0" do
+      e = Map.merge(entity(), %{conditions: [], action_economy: %{movement_remaining: 0}})
+      result = SpriteCompositor.compose(e, @appearances)
+      assert result =~ "#f97316"
     end
   end
 end
