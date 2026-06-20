@@ -1,6 +1,7 @@
 # #159 · Condition badge overlay on entity tokens
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-20
 **Priority:** medium
 **Tags:** rendering, gameplay, ui
 
@@ -25,11 +26,11 @@ visual layer.
 - Rule: badge visibility follows entity visibility
 
 **Acceptance criteria**
-- [ ] Condition badge SVG fragment rendered per active condition on entity token
-- [ ] `movement_exhausted` pseudo-condition badge appears when `movement_remaining == 0`
-- [ ] `movement_exhausted` badge cleared at turn start (on `advance_turn`)
-- [ ] Badges stack with a "+N" overflow label beyond a configurable max (default 3 visible)
-- [ ] Badge position is consistent across biped-upright, quadruped, and swarm archetypes
-- [ ] Badges not shown for hidden entities in player view
-- [ ] At least `prone`, `grappled`, and `movement_exhausted` have distinct icons in dev seeds
-- [ ] `mix precommit` passes
+- [x] Condition badge SVG fragment rendered per active condition on entity token
+- [x] `movement_exhausted` pseudo-condition badge appears when `movement_remaining == 0`
+- [x] `movement_exhausted` badge cleared at turn start (on `advance_turn`)
+- [x] Badges stack with a "+N" overflow label beyond a configurable max (default 3 visible)
+- [x] Badge position is consistent across biped-upright, quadruped, and swarm archetypes
+- [x] Badges not shown for hidden entities in player view
+- [x] At least `prone`, `grappled`, and `movement_exhausted` have distinct icons in dev seeds
+- [x] `mix precommit` passes
