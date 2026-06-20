@@ -62,7 +62,8 @@ defmodule GibberingWeb.GameLive do
            )
            |> assign(:roll_prompt, nil)
            |> assign(:active_tab, :events)
-           |> assign(:unread_count, 0)}
+           |> assign(:unread_count, 0)
+           |> assign(:dm_intervene_entity_id, nil)}
 
         {:error, reason} ->
           {:ok,
@@ -104,7 +105,13 @@ defmodule GibberingWeb.GameLive do
 
   @impl true
   def handle_event("switch_tab", %{"tab" => tab}, socket) do
-    tab_atom = String.to_existing_atom(tab)
+    tab_atom =
+      case tab do
+        "events" -> :events
+        "dm" -> :dm
+        "catalogue" -> :catalogue
+        _ -> socket.assigns.active_tab
+      end
 
     socket =
       socket
@@ -112,6 +119,16 @@ defmodule GibberingWeb.GameLive do
       |> then(fn s -> if tab_atom == :events, do: assign(s, :unread_count, 0), else: s end)
 
     {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("open_dm_intervene", %{"id" => id}, socket) do
+    {:noreply, assign(socket, dm_intervene_entity_id: String.to_integer(id))}
+  end
+
+  @impl true
+  def handle_event("close_dm_intervene", _, socket) do
+    {:noreply, assign(socket, dm_intervene_entity_id: nil)}
   end
 
   @impl true

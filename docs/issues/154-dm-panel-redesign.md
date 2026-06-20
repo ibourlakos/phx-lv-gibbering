@@ -1,6 +1,7 @@
 # #154 · DM panel redesign — right panel entity catalog + DM intervention panel
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-20
 **Priority:** medium
 **Tags:** ui, gameplay, architecture
 **Depends on:** #137 (right panel shell must exist)
@@ -41,13 +42,20 @@ state. They live in a separate panel that the DM must explicitly open:
 The visual separation makes clear: "I am about to do something exceptional to this entity."
 
 **Acceptance criteria**
-- [ ] Right panel has a "DM" tab visible only to DM role
-- [ ] DM tab active entity list shows name, exact HP, condition badges, eye icon
-- [ ] Eye icon toggles entity visibility; fires existing hide/show event
-- [ ] Clicking a catalog row sets `panel_subject`
-- [ ] An "Intervene" affordance (button/icon) on catalog rows and/or left panel header opens the DM intervention panel
-- [ ] DM intervention panel is a distinct visual area (not inline in left panel)
-- [ ] Intervention panel contains ±HP spinner and condition picker
-- [ ] Intervention panel is not rendered for the player role
-- [ ] Existing ±HP and condition controls removed from old right panel location
-- [ ] `mix precommit` passes
+- [x] Right panel has a "DM" tab visible only to DM role
+- [x] DM tab active entity list shows name, exact HP, condition badges, eye icon
+- [x] Eye icon toggles entity visibility; fires existing hide/show event
+- [x] Clicking a catalog row sets `panel_subject`
+- [x] An "Intervene" affordance (button/icon) on catalog rows and/or left panel header opens the DM intervention panel
+- [x] DM intervention panel is a distinct visual area (not inline in left panel)
+- [x] Intervention panel contains ±HP spinner and condition picker
+- [x] Intervention panel is not rendered for the player role
+- [x] Existing ±HP and condition controls removed from old right panel location
+- [x] `mix precommit` passes
+
+**Implementation notes**
+- Old z-50 DM panel ENTITIES section (inline ±HP/condition/hide per entity) removed; replaced by DM tab entity catalog in the right panel.
+- DM tab renders in `@active_tab == :dm` guard (DM only); player sees only Events tab.
+- Intervention panel: `@dm_intervene_entity_id` assign (nil = closed); `open_dm_intervene` / `close_dm_intervene` handle_events; reuses existing `dm_adjust_hp` and `dm_apply_condition` form submission.
+- Entity placement picker: placeholder section at bottom of DM tab — content deferred to #132.
+- `switch_tab` handler replaced `String.to_existing_atom` with explicit case for safety now that `:dm` is a valid tab value.

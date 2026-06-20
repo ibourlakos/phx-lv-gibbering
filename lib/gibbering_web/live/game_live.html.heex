@@ -504,14 +504,14 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <%= if @is_dm do %>
         <button
           phx-click="switch_tab"
-          phx-value-tab="catalogue"
+          phx-value-tab="dm"
           class={[
             "flex-1 py-2 text-xs font-medium tracking-wide transition-colors",
-            (@active_tab == :catalogue && "text-gray-100 border-b-2 border-indigo-500 -mb-px") ||
+            (@active_tab == :dm && "text-gray-100 border-b-2 border-indigo-500 -mb-px") ||
               "text-gray-500 hover:text-gray-300"
           ]}
         >
-          Catalogue
+          DM
         </button>
       <% end %>
     </div>
@@ -635,10 +635,59 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       </div>
     <% end %>
 
-    <%!-- Catalogue tab (DM only) — placeholder; content populated by #132 --%>
-    <%= if @active_tab == :catalogue and @is_dm do %>
-      <div class="flex-1 p-3 text-xs text-gray-600 italic">
-        Entity catalogue — coming in #132
+    <%!-- DM tab (DM only) — active entity catalog + placement picker placeholder --%>
+    <%= if @active_tab == :dm and @is_dm do %>
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
+          <%= for {eid, entity} <- state.entities do %>
+            <% is_hidden = MapSet.member?(state.hidden_entities || MapSet.new(), eid) %>
+            <div class={["rounded text-xs", is_hidden && "opacity-50"]}>
+              <div class="flex items-center gap-1 bg-gray-800/80 rounded px-1.5 py-1">
+                <button
+                  phx-click="inspect_entity"
+                  phx-value-id={eid}
+                  class="flex-1 text-left min-w-0"
+                >
+                  <div class="font-medium text-gray-100 truncate">{entity.name}</div>
+                  <div class="text-gray-400 font-mono text-[10px]">
+                    {entity.hp}/{entity.max_hp} HP
+                  </div>
+                </button>
+                <button
+                  phx-click="dm_toggle_visibility"
+                  phx-value-id={eid}
+                  class={[
+                    "flex-shrink-0 text-sm px-0.5",
+                    (is_hidden && "text-gray-600") || "text-gray-400 hover:text-gray-200"
+                  ]}
+                  title={if is_hidden, do: "Show entity", else: "Hide entity"}
+                >
+                  👁
+                </button>
+                <button
+                  phx-click="open_dm_intervene"
+                  phx-value-id={eid}
+                  class="flex-shrink-0 text-gray-500 hover:text-orange-400 px-0.5"
+                  title="Intervene"
+                >
+                  ⚔
+                </button>
+              </div>
+              <%= if (entity.conditions || []) != [] do %>
+                <div class="flex flex-wrap gap-0.5 px-1.5 pt-0.5">
+                  <%= for cond_id <- entity.conditions do %>
+                    <span class="bg-orange-900/50 text-orange-300 rounded px-1 py-0.5 text-[10px]">
+                      {cond_id}
+                    </span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="flex-shrink-0 border-t border-gray-800 p-2 text-xs text-gray-600 italic">
+          Entity placement — coming in #132
+        </div>
       </div>
     <% end %>
 
@@ -727,67 +776,6 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           </button>
         </div>
 
-        <%!-- Per-entity controls --%>
-        <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
-          <div class="text-xs text-gray-500 uppercase tracking-wide">Entities</div>
-          <%= for {eid, entity} <- state.entities do %>
-            <div class="bg-gray-800 rounded px-1.5 py-1 text-xs flex flex-col gap-1">
-              <div class="font-medium text-gray-200 truncate">{entity.name}</div>
-              <form id={"dm-hp-#{eid}"} phx-submit="dm_adjust_hp" class="flex gap-1 items-center">
-                <input type="hidden" name="entity_id" value={eid} />
-                <input
-                  name="delta"
-                  type="number"
-                  placeholder="±HP"
-                  class="w-14 bg-gray-700 text-white rounded px-1 py-0.5 text-xs border border-gray-600"
-                />
-                <button
-                  type="submit"
-                  class="bg-red-800 hover:bg-red-700 text-white rounded px-1.5 py-0.5 text-xs"
-                >
-                  Adj
-                </button>
-              </form>
-              <form
-                id={"dm-cond-#{eid}"}
-                phx-submit="dm_apply_condition"
-                class="flex gap-1 items-center"
-              >
-                <input type="hidden" name="entity_id" value={eid} />
-                <select
-                  name="condition"
-                  class="flex-1 bg-gray-700 text-white rounded px-1 py-0.5 text-xs border border-gray-600"
-                >
-                  <%= for {cond_id, cond_label} <- ruleset_conditions(state) do %>
-                    <option value={cond_id}>{cond_label}</option>
-                  <% end %>
-                </select>
-                <button
-                  type="submit"
-                  class="bg-orange-800 hover:bg-orange-700 text-white rounded px-1.5 py-0.5 text-xs"
-                >
-                  +
-                </button>
-              </form>
-              <button
-                phx-click="dm_toggle_visibility"
-                phx-value-id={eid}
-                class={[
-                  "text-xs rounded px-1.5 py-0.5 text-white",
-                  if(MapSet.member?(state.hidden_entities || MapSet.new(), eid),
-                    do: "bg-gray-500 hover:bg-gray-400",
-                    else: "bg-gray-600 hover:bg-gray-500"
-                  )
-                ]}
-              >
-                {if MapSet.member?(state.hidden_entities || MapSet.new(), eid),
-                  do: "Show",
-                  else: "Hide"}
-              </button>
-            </div>
-          <% end %>
-        </div>
-
         <%!-- Initiative panel (shown when session is active) --%>
         <%= if state.phase != :lobby do %>
           <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
@@ -872,6 +860,79 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
             </button>
           </div>
         <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%!--
+    z-100: DM intervention panel — entity-scoped HP and condition overrides.
+    Explicitly triggered from the DM entity catalog. Not rendered for players.
+  --%>
+  <%= if @is_dm and @dm_intervene_entity_id do %>
+    <% intervene_entity = state.entities[@dm_intervene_entity_id] %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-5 max-w-xs w-full mx-4">
+        <div class="flex items-center justify-between mb-4">
+          <div class="font-bold text-white text-sm">
+            Intervene — {(intervene_entity && intervene_entity.name) || "Entity"}
+          </div>
+          <button phx-click="close_dm_intervene" class="text-gray-400 hover:text-white text-sm">
+            ✕
+          </button>
+        </div>
+        <div class="flex flex-col gap-4">
+          <form
+            id={"intervene-hp-#{@dm_intervene_entity_id}"}
+            phx-submit="dm_adjust_hp"
+            class="flex flex-col gap-1.5"
+          >
+            <input type="hidden" name="entity_id" value={@dm_intervene_entity_id} />
+            <label class="text-xs text-gray-400 uppercase tracking-wide">HP Adjustment</label>
+            <div class="flex gap-2 items-center">
+              <input
+                name="delta"
+                type="number"
+                placeholder="±HP"
+                class="flex-1 bg-gray-700 text-white rounded px-2 py-1.5 text-sm border border-gray-600 outline-none focus:border-red-500"
+              />
+              <button
+                type="submit"
+                class="bg-red-800 hover:bg-red-700 text-white rounded px-3 py-1.5 text-sm font-medium"
+              >
+                Apply
+              </button>
+            </div>
+            <%= if intervene_entity do %>
+              <div class="text-xs text-gray-500">
+                Current: {intervene_entity.hp}/{intervene_entity.max_hp} HP
+              </div>
+            <% end %>
+          </form>
+          <form
+            id={"intervene-cond-#{@dm_intervene_entity_id}"}
+            phx-submit="dm_apply_condition"
+            class="flex flex-col gap-1.5"
+          >
+            <input type="hidden" name="entity_id" value={@dm_intervene_entity_id} />
+            <label class="text-xs text-gray-400 uppercase tracking-wide">Add Condition</label>
+            <div class="flex gap-2 items-center">
+              <select
+                name="condition"
+                class="flex-1 bg-gray-700 text-white rounded px-2 py-1.5 text-sm border border-gray-600"
+              >
+                <%= for {cond_id, cond_label} <- ruleset_conditions(state) do %>
+                  <option value={cond_id}>{cond_label}</option>
+                <% end %>
+              </select>
+              <button
+                type="submit"
+                class="bg-orange-800 hover:bg-orange-700 text-white rounded px-3 py-1.5 text-sm font-medium"
+              >
+                Add
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   <% end %>
