@@ -8,7 +8,9 @@ defmodule GibberingWeb.GameLiveTest do
   import Gibbering.AccountsFixtures
   import Gibbering.CharactersFixtures
 
-  alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity}
+  import Ecto.Query, only: [from: 2]
+
+  alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity, GameMap, GridTile}
   alias Gibbering.Catalogue.EntityPreset
   alias Gibbering.Engine.{SceneServer, State}
 
@@ -786,6 +788,47 @@ defmodule GibberingWeb.GameLiveTest do
 
       # After submit_roll, awaiting_roll should clear
       assert SceneServer.get_state(game_id).awaiting_roll == false
+    end
+  end
+
+  describe "tile decorations (issue #125)" do
+    defp patch_tile_decoration(game_id, x, y, decoration) do
+      map = Repo.get_by!(GameMap, campaign_id: game_id)
+
+      Repo.update_all(
+        from(t in GridTile, where: t.map_id == ^map.id and t.x == ^x and t.y == ^y),
+        set: [decoration: decoration]
+      )
+    end
+
+    test "tile with 'bones' decoration renders bones SVG", %{conn: conn} do
+      user = register_user()
+      conn = log_in_user(conn, user)
+      game_id = insert_campaign()
+      Campaigns.join_campaign(game_id, user.id)
+      patch_tile_decoration(game_id, 1, 3, "bones")
+      start_supervised!({SceneServer, game_id})
+      {:ok, _view, html} = live(conn, "/game/#{game_id}")
+      # bones sprite uses fill="#d8d0b0" for skull and bone elements
+      assert html =~ ~s(fill="#d8d0b0")
+    end
+
+    test "tile with nil decoration renders no decoration SVG", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      # default fixture tiles have no decorations
+      refute render(view) =~ ~s(fill="#d8d0b0")
+    end
+
+    test "tile with 'dead_tree' decoration renders tree SVG", %{conn: conn} do
+      user = register_user()
+      conn = log_in_user(conn, user)
+      game_id = insert_campaign()
+      Campaigns.join_campaign(game_id, user.id)
+      patch_tile_decoration(game_id, 0, 0, "dead_tree")
+      start_supervised!({SceneServer, game_id})
+      {:ok, _view, html} = live(conn, "/game/#{game_id}")
+      # dead_tree sprite uses fill="#4a3018" for the trunk and branches
+      assert html =~ ~s(fill="#4a3018")
     end
   end
 end
