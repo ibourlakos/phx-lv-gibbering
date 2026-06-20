@@ -1,6 +1,7 @@
 # WP-P · Minimum Playable Campaign Loop
 
-**Status:** active
+**Status:** complete
+**Completed:** 2026-06-20
 **Source:** brainstorm #28 (dice roll prompt); brainstorm #21 (movement gate); brainstorm #17 (campaign structure — campaign outcome slice)
 
 The minimum set of engine and UI work required to run a complete small encounter:

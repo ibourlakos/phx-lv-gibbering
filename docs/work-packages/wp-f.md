@@ -8,8 +8,6 @@ SVG pipeline, art direction, rendering polish. Discoveries #25/#26/#34/#27/#101/
 
 | # | Title | Priority | Depends on |
 |---|---|---|---|
-| [#125](../issues/125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | low | — |
-| [#159](../issues/159-condition-badge-overlay.md) | Condition badge overlay on entity tokens | medium | — |
 | [#138](../issues/138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | low | — |
 | [#140](../issues/140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | low | — |
 | [#155](../issues/155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | low | — |
@@ -18,8 +16,7 @@ SVG pipeline, art direction, rendering polish. Discoveries #25/#26/#34/#27/#101/
 
 ## Sequencing
 
-`#125` is the lead item — unlocks WP-P's `#144` (movement overlay). `#138` and `#140` are
-quick bug fixes with no dependencies. `#155` (composable appearances) and `#21`/`#84`
+`#138` and `#140` are quick bug fixes with no dependencies. `#155` (composable appearances) and `#21`/`#84`
 (dice animation, LOD) are independent polish items.
 
 Deferred items: #83 (volumetric spell effects), #28 (multi-tile entity footprints). Do not

@@ -14,8 +14,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Open Issues |
 |---|---|---|
-| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #144 (blocked on WP-F #125, #159) |
-| [WP-F](wp-f.md) | Rendering & Frontend | #125, #159, #138, #140, #155, #21, #84 |
+| [WP-F](wp-f.md) | Rendering & Frontend | #138, #140, #155, #21, #84 |
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
 | [WP-R](wp-r.md) | Display Testing & Testability | #153 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
@@ -37,6 +36,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Completed |
 |---|---|---|
+| [WP-P](wp-p.md) | Minimum Playable Campaign Loop | 2026-06-20 |
 | [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | 2026-06-20 |
 | [WP-M](wp-m.md) | Inventory & Loot System | 2026-06-19 |
 | [WP-N](wp-n.md) | Campaign / Map Restructure Phase 1 | 2026-06-17 |
@@ -67,17 +67,9 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 ## Active Front
 
 ```
-WP-P:  #19 (lobby stale GameServer bug)
-       #139 (DM orphaned PC — prerequisite for solo-play)
-       #142 → #143                         — outcome phases then outcome screen
-       #144 (after WP-F #125)              — movement confirmation UI
-       #145 → #146 → #147                  — auto-roll, dice prompt, initiative prompt
-
-WP-O:  complete
-
-WP-F:  #125 → (#21, #84)                   — tile decoration first, then polish
-       #138, #140 (quick bug fixes, parallel)
+WP-F:  #138, #140 (quick bug fixes, parallel)
        #155 (composable appearances, parallel)
+       (#21, #84) — polish, low priority
 
 WP-Q:  #156 → (#157, #158)                — coordinate model first, then occupancy + elevation
 
@@ -88,7 +80,3 @@ WP-B:  #152 (Action struct refactor, no dependencies)
 WP-K:  #121 → #122
 WP-L:  #123 → #124
 ```
-
-WP-P has two cross-package dependencies: `#144` requires WP-F `#125` (overlay pipeline)
-and WP-F `#159` (condition badge — movement-exhausted indicator).
-WP-Q can start as soon as WP-P's most urgent issues (#139, #142–#143) are shipped.
