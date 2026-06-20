@@ -60,7 +60,9 @@ defmodule GibberingWeb.GameLive do
              :auto_roll,
              if(campaign_character, do: campaign_character.auto_roll, else: true)
            )
-           |> assign(:roll_prompt, nil)}
+           |> assign(:roll_prompt, nil)
+           |> assign(:active_tab, :events)
+           |> assign(:unread_count, 0)}
 
         {:error, reason} ->
           {:ok,
@@ -98,6 +100,30 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("dismiss_panel", _, socket) do
     {:noreply, assign(socket, panel_subject: nil)}
+  end
+
+  @impl true
+  def handle_event("switch_tab", %{"tab" => tab}, socket) do
+    tab_atom = String.to_existing_atom(tab)
+
+    socket =
+      socket
+      |> assign(:active_tab, tab_atom)
+      |> then(fn s -> if tab_atom == :events, do: assign(s, :unread_count, 0), else: s end)
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("inspect_entity", %{"id" => id}, socket) do
+    {:noreply, assign(socket, panel_subject: {:entity, String.to_integer(id)})}
+  end
+
+  @impl true
+  def handle_event("inspect_spell_cast", %{"event_id" => event_id}, socket) do
+    event = Enum.find(socket.assigns.event_log, &(&1.event_id == event_id))
+    subject = if event, do: {:spell_cast, event}, else: nil
+    {:noreply, assign(socket, panel_subject: subject)}
   end
 
   @impl true
@@ -585,7 +611,19 @@ defmodule GibberingWeb.GameLive do
            do: nil,
            else: roll_prompt
 
-      socket_after_events = assign(new_socket, round: round, roll_prompt: roll_prompt)
+      unread_delta =
+        if socket.assigns.active_tab != :events do
+          Enum.count(events, fn e -> event_label(e) != nil end)
+        else
+          0
+        end
+
+      socket_after_events =
+        assign(new_socket,
+          round: round,
+          roll_prompt: roll_prompt,
+          unread_count: socket.assigns.unread_count + unread_delta
+        )
 
       final_socket =
         Enum.reduce(auto_submit_initiatives, socket_after_events, fn entity_id, s ->
@@ -638,7 +676,7 @@ defmodule GibberingWeb.GameLive do
 
   defp inspect_content({:entity, entity_id}, state, is_dm) do
     case Map.get(state.entities, entity_id) do
-      nil -> nil
+      nil -> {:fallen_entity, entity_id}
       entity -> {:entity, entity, is_dm}
     end
   end
@@ -648,6 +686,10 @@ defmodule GibberingWeb.GameLive do
       nil -> nil
       tile -> {:tile, x, y, tile}
     end
+  end
+
+  defp inspect_content({:spell_cast, event}, _state, _is_dm) do
+    {:spell_cast, event}
   end
 
   defp hp_percent(hp, max_hp) when is_integer(max_hp) and max_hp > 0,
@@ -781,6 +823,81 @@ defmodule GibberingWeb.GameLive do
   defp event_label(%Gibbering.Events.Scene.LogEntryRevealed{}), do: nil
   defp event_label(%Gibbering.Events.Scene.LogEntryHidden{}), do: nil
   defp event_label(_), do: nil
+
+  # Returns structured parts for a feed entry: lists of
+  # {:text, str} | {:entity_link, id, name} | {:tile_link, x, y, label} | {:spell_link, event_id, key}
+  # Used by the right panel to render clickable inline elements.
+
+  defp event_parts(%Gibbering.Events.Scene.AttackResolved{} = e) do
+    verb = if e.hit?, do: " hits ", else: " misses "
+
+    [
+      {:entity_link, e.attacker_id, e.attacker_name},
+      {:text, verb},
+      {:entity_link, e.target_id, e.target_name},
+      {:text, " (roll #{e.roll})"}
+    ]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.DamageDealt{} = e) do
+    [
+      {:entity_link, e.target_id, e.target_name},
+      {:text, " takes #{e.amount} damage (#{e.new_hp} HP left)"}
+    ]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.SpellCast{} = e) do
+    [
+      {:entity_link, e.caster_id, e.caster_name},
+      {:text, " casts "},
+      {:spell_link, e.event_id, e.spell_key},
+      {:text, " → "},
+      {:entity_link, e.target_id, e.target_name},
+      {:text, ": #{e.outcome}"}
+    ]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.EntityMoved{} = e) do
+    {fx, fy} = e.from
+    {tx, ty} = e.to
+
+    [
+      {:entity_link, e.entity_id, e.entity_name},
+      {:tile_link, tx, ty, " moves (#{fx},#{fy})→(#{tx},#{ty})"}
+    ]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.ConditionApplied{} = e) do
+    [{:entity_link, e.entity_id, e.entity_name}, {:text, ": #{e.condition_id} applied"}]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.ConditionRemoved{} = e) do
+    [{:entity_link, e.entity_id, e.entity_name}, {:text, ": #{e.condition_id} removed"}]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.TurnAdvanced{to_entity_id: id, to_entity_name: name})
+       when not is_nil(id) do
+    [{:text, "Turn → "}, {:entity_link, id, name}]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.TurnAdvanced{}), do: [{:text, "Turn → end of round"}]
+
+  defp event_parts(%Gibbering.Events.Scene.ItemTaken{} = e) do
+    [{:entity_link, e.actor_id, "actor"}, {:text, " takes #{e.item_key} ×#{e.quantity}"}]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.ItemEquipped{} = e) do
+    [{:entity_link, e.actor_id, "actor"}, {:text, " equips #{e.item_key} (#{e.slot})"}]
+  end
+
+  defp event_parts(%Gibbering.Events.Scene.HPAdjusted{} = e) do
+    [{:entity_link, e.entity_id, e.entity_name}, {:text, " HP: #{e.old_hp} → #{e.new_hp}"}]
+  end
+
+  defp event_parts(event) do
+    label = event_label(event)
+    if label, do: [{:text, label}], else: []
+  end
 
   # ---------------------------------------------------------------------------
   # Entity sprite components — inline SVG, DST-style ink aesthetic.

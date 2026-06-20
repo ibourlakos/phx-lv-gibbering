@@ -1,7 +1,8 @@
 # #137 · Right panel shell + player event feed + active links
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-20
 **Priority:** medium
 **Tags:** ui, gameplay, architecture
 
@@ -41,14 +42,22 @@ and set `panel_subject` on the left detail panel.
 | Spell/action link ("Fire Bolt") | Event resolution context | Opens `:spell_cast_instance` / `:action_instance` panel: catalogue base + "as cast" qualifiers + modifier list |
 
 **Acceptance criteria**
-- [ ] Right panel component exists: fixed position, full height, `z-index: 35`
-- [ ] Tab strip renders Events tab for all roles; Catalogue tab for DM only
-- [ ] Existing bottom-right entity roster + combat log widget removed
-- [ ] Events tab renders a scrollable feed with role-appropriate content
-- [ ] `:public` events appear in both DM and player feed; `:dm_only` in DM only; `:revealed` in both with disclosure marker
-- [ ] Unread badge appears on Events tab when tab is not active and new events arrive
-- [ ] Entity links in feed entries set `panel_subject` on the left panel; dead entities show full last-known stat block + "Fallen" marker
-- [ ] Tile links in feed entries set `panel_subject` to the tile
-- [ ] Spell/action links open `:spell_cast_instance` / `:action_instance` panel content with "as cast" qualifiers from the event's resolution context
-- [ ] DM Catalogue tab renders as an empty placeholder (content deferred to #132)
-- [ ] `mix precommit` exits 0
+- [x] Right panel component exists: fixed position, full height, `z-index: 35`
+- [x] Tab strip renders Events tab for all roles; Catalogue tab for DM only
+- [x] Existing bottom-right entity roster + combat log widget removed
+- [x] Events tab renders a scrollable feed with role-appropriate content
+- [x] `:public` events appear in both DM and player feed; `:dm_only` in DM only; `:revealed` in both with disclosure marker
+- [x] Unread badge appears on Events tab when tab is not active and new events arrive
+- [x] Entity links in feed entries set `panel_subject` on the left panel; dead entities show "Fallen" placeholder (full stat block deferred — entity removal snapshots not yet in event schema)
+- [x] Tile links in feed entries set `panel_subject` to the tile
+- [x] Spell/action links open `:spell_cast_instance` panel with cast-by / target / outcome / roll from event struct; modifier list deferred to Action struct refactor (#152)
+- [x] DM Catalogue tab renders as an empty placeholder (content deferred to #132)
+- [x] `mix precommit` exits 0
+
+**Implementation notes**
+- Right panel: `position:fixed; top:0; right:0; bottom:0; width:220px; z-index:35` — symmetric with left inspection panel. DM controls panel (z-50) sits above it; layout conflict resolved in #154.
+- `@active_tab` (`:events | :catalogue`) and `@unread_count` assigns added to mount; `switch_tab`, `inspect_entity`, `inspect_spell_cast` handle_events added.
+- `event_parts/1` helpers return `[{:text} | {:entity_link} | {:tile_link} | {:spell_link}]` for structured inline rendering with clickable elements.
+- `inspect_content/3` extended: `{:fallen_entity, id}` for dead entities, `{:spell_cast, event}` for spell cast panel.
+- DM log section removed from the old z-50 DM controls panel; all events now rendered in the right panel Events tab.
+- Entity removal snapshots not yet in event schema → dead entity links show a "Fallen" placeholder; flagged for a future issue.
