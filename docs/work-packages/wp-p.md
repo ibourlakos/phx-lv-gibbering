@@ -53,11 +53,7 @@ behind, `#144` can be stubbed without decoration colours and polished later.
 
 ## Active Front
 
-```
-#144  (blocked — waiting on WP-F #125 and #159)
-```
-
-All other issues closed. WP-P is feature-complete pending #144.
+All issues closed. WP-P is complete.
 
 ---
 

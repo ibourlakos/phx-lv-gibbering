@@ -1,7 +1,8 @@
 # #144 · Movement confirmation UI gate
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-20
 **Priority:** medium
 **Tags:** ui, gameplay, rendering
 **Depends on:** #159 (condition badge overlay — required for the movement-exhausted token indicator)
@@ -40,10 +41,10 @@ committing.
 - **Movement modes:** walk mode only. Climb/swim/fly deferred.
 
 **Acceptance criteria**
-- [ ] Activating move action shows coloured reachable tile overlay
-- [ ] Hover tooltip shows path cost in feet
-- [ ] Clicking a reachable tile commits the move and refreshes overlay
-- [ ] Escape / clicking non-reachable tile cancels without consuming movement
-- [ ] Move button disabled when `movement_remaining == 0`
-- [ ] A movement-exhausted indicator appears on the entity token when `movement_remaining == 0` (same icon layer as condition badges for prone/blind/deafened)
-- [ ] `mix precommit` passes
+- [x] Activating move action shows coloured reachable tile overlay
+- [x] Hover tooltip shows path cost in feet
+- [x] Clicking a reachable tile commits the move and refreshes overlay
+- [x] Escape / clicking non-reachable tile cancels without consuming movement
+- [x] Move button disabled when `movement_remaining == 0`
+- [x] A movement-exhausted indicator appears on the entity token when `movement_remaining == 0` (same icon layer as condition badges for prone/blind/deafened)
+- [x] `mix precommit` passes

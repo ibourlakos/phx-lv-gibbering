@@ -42,7 +42,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#138](138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | `rendering` `bug` | low |
 | [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
-| [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` | medium |
 | [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
 | [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
 | [#152](152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | `architecture` `rules` `gameplay` | medium |
@@ -97,6 +96,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | # | Title | Tags |
 |---|---|---|
 | [#159](159-condition-badge-overlay.md) | Condition badge overlay on entity tokens | `rendering` `gameplay` `ui` |
+| [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` |
 | [#147](147-initiative-roll-prompt.md) | Initiative roll prompt | `gameplay` `rules` `architecture` |
 | [#146](146-dice-roll-prompt-component.md) | Dice roll prompt component + SceneServer pending-roll state | `ui` `gameplay` `architecture` `rules` |
