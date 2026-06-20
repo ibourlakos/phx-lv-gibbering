@@ -15,7 +15,6 @@ Ordered by priority — work at the top before starting work below it.
 | WP | Title | Open Issues |
 |---|---|---|
 | [WP-P](wp-p.md) | Minimum Playable Campaign Loop | #144 (blocked on WP-F #125, #159) |
-| [WP-O](wp-o.md) | Inspection Panel & Player Feed | #134, #135, #132 |
 | [WP-F](wp-f.md) | Rendering & Frontend | #125, #159, #138, #140, #155, #21, #84 |
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
 | [WP-R](wp-r.md) | Display Testing & Testability | #153 |
@@ -38,6 +37,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Completed |
 |---|---|---|
+| [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | 2026-06-20 |
 | [WP-M](wp-m.md) | Inventory & Loot System | 2026-06-19 |
 | [WP-N](wp-n.md) | Campaign / Map Restructure Phase 1 | 2026-06-17 |
 | [WP-J](wp-j.md) | Architecture Operationalization | 2026-06-13 |
@@ -73,8 +73,7 @@ WP-P:  #19 (lobby stale GameServer bug)
        #144 (after WP-F #125)              — movement confirmation UI
        #145 → #146 → #147                  — auto-roll, dice prompt, initiative prompt
 
-WP-O:  #134 → #135                         — rename first, then left panel
-       #132 (parallel, feeds both panels)
+WP-O:  complete
 
 WP-F:  #125 → (#21, #84)                   — tile decoration first, then polish
        #138, #140 (quick bug fixes, parallel)

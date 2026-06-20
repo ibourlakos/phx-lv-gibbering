@@ -37,12 +37,12 @@ defmodule Gibbering.Engine.Inventory do
 
   Checks:
   - Chebyshev distance ≤ 1 (adjacent or diagonal).
-  - Container's `stats["object_subtype"]` is `"loot_source"`.
+  - Container's `object_subtype` is `"loot_source"`.
   """
   @spec can_open_container?(map(), map()) :: :ok | {:error, :not_adjacent | :not_a_container}
   def can_open_container?(actor, container) do
     cond do
-      get_in(container, [:stats, "object_subtype"]) != "loot_source" ->
+      Map.get(container, :object_subtype) != "loot_source" ->
         {:error, :not_a_container}
 
       chebyshev(actor, container) > 1 ->

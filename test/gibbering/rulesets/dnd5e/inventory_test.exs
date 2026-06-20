@@ -45,33 +45,26 @@ defmodule Gibbering.Rulesets.DnD5e.InventoryTest do
   end
 
   describe "object_subtype/1" do
-    test "returns the object_subtype string" do
-      assert Inventory.object_subtype(%{stats: %{"object_subtype" => "loot_source"}}) ==
-               "loot_source"
+    test "returns the object_subtype string from top-level key" do
+      assert Inventory.object_subtype(%{object_subtype: "loot_source"}) == "loot_source"
     end
 
     test "returns nil when absent" do
-      assert Inventory.object_subtype(%{stats: %{}}) == nil
+      assert Inventory.object_subtype(%{}) == nil
     end
   end
 
   describe "loot_source?/1" do
     test "true for an object with object_subtype loot_source" do
-      assert Inventory.loot_source?(%{
-               type: "object",
-               stats: %{"object_subtype" => "loot_source"}
-             })
+      assert Inventory.loot_source?(%{type: "object", object_subtype: "loot_source"})
     end
 
     test "false for static_decor objects" do
-      refute Inventory.loot_source?(%{
-               type: "object",
-               stats: %{"object_subtype" => "static_decor"}
-             })
+      refute Inventory.loot_source?(%{type: "object", object_subtype: "static_decor"})
     end
 
     test "false for non-object entities" do
-      refute Inventory.loot_source?(%{type: "hero", stats: %{"object_subtype" => "loot_source"}})
+      refute Inventory.loot_source?(%{type: "hero", object_subtype: "loot_source"})
     end
   end
 

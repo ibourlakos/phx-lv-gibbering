@@ -6,7 +6,7 @@ defmodule Gibbering.Rulesets.DnD5e.Inventory do
   (see `docs/architecture/data-model.md`, WorldObject section):
 
   - Creatures (`"hero"`, `"monster"`) carry `stats["inventory"]`.
-  - Loot containers (`type: "object"`, `stats["object_subtype"] == "loot_source"`)
+  - Loot containers (`type: "object"`, `object_subtype == "loot_source"`)
     hold `stats["items"]`.
 
   Both lists share one instance shape:
@@ -16,6 +16,9 @@ defmodule Gibbering.Rulesets.DnD5e.Inventory do
   `item_key` references a key in `Gibbering.Data.Items`. Stack-merge and transfer
   logic belong to the pickup event loop (#127); this module only defines the shape
   and read accessors.
+
+  `object_subtype` is a top-level key in the engine entity map, populated at scene load
+  from the entity's `EntityPreset` record. It is not read from `stats` at runtime.
   """
 
   @doc """
@@ -38,9 +41,9 @@ defmodule Gibbering.Rulesets.DnD5e.Inventory do
   @spec items(map()) :: [map()]
   def items(entity), do: get_in(entity, [Access.key(:stats), "items"]) || []
 
-  @doc "The `stats[\"object_subtype\"]` value (`\"loot_source\" | \"static_decor\"`), or nil."
+  @doc "The `object_subtype` value (`\"loot_source\" | \"static_decor\"`), or nil. Populated from EntityPreset at scene load."
   @spec object_subtype(map()) :: String.t() | nil
-  def object_subtype(entity), do: get_in(entity, [Access.key(:stats), "object_subtype"])
+  def object_subtype(entity), do: Map.get(entity, :object_subtype)
 
   @doc "True when the entity is an `object` whose sub-type is `loot_source`."
   @spec loot_source?(map()) :: boolean()

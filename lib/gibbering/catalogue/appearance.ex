@@ -7,6 +7,7 @@ defmodule Gibbering.Catalogue.Appearance do
 
     field :content_type, :string
     field :content_key, :string
+    field :state, :string, default: "default"
     field :data, :map, default: %{}
 
     timestamps()
@@ -14,8 +15,8 @@ defmodule Gibbering.Catalogue.Appearance do
 
   def changeset(appearance, attrs) do
     appearance
-    |> cast(attrs, [:style_id, :content_type, :content_key, :data])
-    |> validate_required([:style_id, :content_type, :content_key])
-    |> unique_constraint([:style_id, :content_type, :content_key])
+    |> cast(attrs, [:style_id, :content_type, :content_key, :state, :data])
+    |> validate_required([:style_id, :content_type, :content_key, :state])
+    |> unique_constraint([:style_id, :content_type, :content_key, :state])
   end
 end

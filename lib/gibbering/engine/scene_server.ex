@@ -37,6 +37,7 @@ defmodule Gibbering.Engine.SceneServer do
 
   alias Gibbering.Engine.Inventory
   alias Gibbering.Rulesets.DnD5e.Stats
+  alias Gibbering.Catalogue
 
   @topic_prefix "game:"
   @notifications_prefix "notifications:"
@@ -238,7 +239,8 @@ defmodule Gibbering.Engine.SceneServer do
             |> Repo.get!(game_id)
             |> Repo.preload([:entities, active_map: :tiles])
 
-          State.from_campaign(campaign)
+          presets = Catalogue.entity_presets_map()
+          State.from_campaign(campaign, presets)
       end
 
     {:ok, state}
@@ -287,10 +289,13 @@ defmodule Gibbering.Engine.SceneServer do
       |> where(campaign_id: ^state.campaign_id)
       |> Repo.all()
 
+    presets = Catalogue.entity_presets_map()
     ruleset = state.ruleset
 
     new_entities =
       Map.new(db_entities, fn e ->
+        preset = e.preset_key && Map.get(presets, e.preset_key)
+
         base = %{
           name: e.name,
           type: e.type,
@@ -303,7 +308,9 @@ defmodule Gibbering.Engine.SceneServer do
           temp_hp: e.temp_hp,
           tags: e.tags,
           stats: e.stats,
-          speed: (e.stats || %{})["speed"] || 30
+          speed: (e.stats || %{})["speed"] || 30,
+          object_subtype: (preset && preset.object_subtype) || (e.stats || %{})["object_subtype"],
+          description: preset && preset.description
         }
 
         merged =

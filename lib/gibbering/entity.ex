@@ -22,6 +22,7 @@ defmodule Gibbering.Entity do
     field :xp_reward, :integer
     field :tags, {:array, :string}, default: []
     field :stats, :map, default: %{}
+    field :preset_key, :string
 
     belongs_to :campaign, Gibbering.Campaign
 
@@ -46,6 +47,7 @@ defmodule Gibbering.Entity do
       :xp_reward,
       :tags,
       :stats,
+      :preset_key,
       :campaign_id
     ])
     |> validate_required([:name, :type, :sprite, :x, :y, :hp, :max_hp, :campaign_id])
