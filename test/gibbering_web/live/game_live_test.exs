@@ -9,6 +9,7 @@ defmodule GibberingWeb.GameLiveTest do
   import Gibbering.CharactersFixtures
 
   alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity}
+  alias Gibbering.Catalogue.EntityPreset
   alias Gibbering.Engine.{SceneServer, State}
 
   defp mount_game(conn) do
@@ -622,17 +623,28 @@ defmodule GibberingWeb.GameLiveTest do
 
   describe "container panel (issue #127)" do
     defp insert_adjacent_chest(game_id, items \\ []) do
+      unless Repo.get(EntityPreset, "chest") do
+        Repo.insert!(%EntityPreset{
+          key: "chest",
+          name: "Wooden Chest",
+          entity_type: "object",
+          object_subtype: "loot_source",
+          description: "A sturdy wooden chest."
+        })
+      end
+
       chest =
         Repo.insert!(%Entity{
           name: "Treasure Chest",
           type: "object",
           sprite: "chest",
+          preset_key: "chest",
           x: 3,
           y: 2,
           hp: 1,
           max_hp: 1,
           tags: [],
-          stats: %{"object_subtype" => "loot_source", "items" => items},
+          stats: %{"items" => items},
           campaign_id: game_id
         })
 

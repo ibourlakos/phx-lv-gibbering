@@ -4,7 +4,11 @@ defmodule Gibbering.Engine.SpriteCompositorTest do
   alias Gibbering.Engine.SpriteCompositor
 
   @appearances %{
-    {"entity", "warrior"} => %{"body_color" => "#4a6fa5", "anchor_x" => 0, "anchor_y" => 0}
+    {"entity", "warrior", "default"} => %{
+      "body_color" => "#4a6fa5",
+      "anchor_x" => 0,
+      "anchor_y" => 0
+    }
   }
 
   defp entity(overrides \\ []) do
@@ -24,7 +28,11 @@ defmodule Gibbering.Engine.SpriteCompositorTest do
 
     test "applies anchor offsets from appearance data" do
       appearances = %{
-        {"entity", "warrior"} => %{"body_color" => "#fff", "anchor_x" => 5, "anchor_y" => 8}
+        {"entity", "warrior", "default"} => %{
+          "body_color" => "#fff",
+          "anchor_x" => 5,
+          "anchor_y" => 8
+        }
       }
 
       result = SpriteCompositor.compose(entity(), appearances)

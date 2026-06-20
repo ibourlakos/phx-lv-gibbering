@@ -27,8 +27,8 @@ defmodule Gibbering.Engine.InventoryTest do
     base = %{
       x: 3,
       y: 2,
+      object_subtype: "loot_source",
       stats: %{
-        "object_subtype" => "loot_source",
         "items" => []
       }
     }
@@ -106,13 +106,13 @@ defmodule Gibbering.Engine.InventoryTest do
 
     test "error :not_a_container when object_subtype is not loot_source" do
       a = actor(x: 2, y: 2)
-      c = container(x: 3, y: 2, stats: %{"object_subtype" => "obstacle", "items" => []})
+      c = container(x: 3, y: 2, object_subtype: "static_decor")
       assert Inventory.can_open_container?(a, c) == {:error, :not_a_container}
     end
 
-    test "error :not_a_container when container stats has no object_subtype" do
+    test "error :not_a_container when object_subtype is absent" do
       a = actor(x: 2, y: 2)
-      c = container(x: 3, y: 2, stats: %{"items" => []})
+      c = container(x: 3, y: 2, object_subtype: nil)
       assert Inventory.can_open_container?(a, c) == {:error, :not_a_container}
     end
   end

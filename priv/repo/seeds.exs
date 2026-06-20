@@ -4,7 +4,7 @@ alias Gibbering.Engine.GameSession
 alias Gibbering.Accounts
 alias Gibbering.Accounts.User
 alias Gibbering.Admin
-alias Gibbering.Catalogue.{Race, Class, Spell, Monster, Style, Appearance}
+alias Gibbering.Catalogue.{Race, Class, Spell, Monster, Style, Appearance, EntityPreset}
 alias Gibbering.Data.{Races, Classes, Spells, Monsters}
 alias Gibbering.Rulesets.DnD5e.Inventory
 
@@ -101,8 +101,53 @@ Enum.each(Monsters.seed_data(), fn {key, attrs} ->
   end
 end)
 
+entity_preset_data = [
+  %{
+    key: "goblin",
+    name: "Goblin",
+    entity_type: "monster",
+    object_subtype: nil,
+    description: "A small, wiry creature with beady eyes and a nasty disposition."
+  },
+  %{
+    key: "chest",
+    name: "Wooden Chest",
+    entity_type: "object",
+    object_subtype: "loot_source",
+    description: "A sturdy wooden chest, bound with iron strips."
+  },
+  %{
+    key: "dead_tree",
+    name: "Dead Tree",
+    entity_type: "object",
+    object_subtype: "static_decor",
+    description: "A gnarled, leafless tree, its bark petrified and pale."
+  },
+  %{
+    key: "rock",
+    name: "Boulder",
+    entity_type: "object",
+    object_subtype: "static_decor",
+    description: "A moss-covered boulder, solid and immovable."
+  }
+]
+
+Enum.each(entity_preset_data, fn attrs ->
+  unless Repo.get(EntityPreset, attrs.key) do
+    Repo.insert!(%EntityPreset{
+      key: attrs.key,
+      name: attrs.name,
+      entity_type: attrs.entity_type,
+      object_subtype: attrs.object_subtype,
+      description: attrs.description,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+end)
+
 IO.puts(
-  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells, #{map_size(Monsters.seed_data())} monsters"
+  "Seeded catalogue: #{map_size(Races.seed_data())} races, #{map_size(Classes.seed_data())} classes, #{map_size(Spells.seed_data())} spells, #{map_size(Monsters.seed_data())} monsters, #{length(entity_preset_data)} entity presets"
 )
 
 # ---------------------------------------------------------------------------
@@ -548,12 +593,13 @@ Repo.insert!(%Entity{
   name: "Overturned Wagon",
   type: "object",
   sprite: "rock",
+  preset_key: "rock",
   x: 8,
   y: 7,
   hp: 10,
   max_hp: 10,
   tags: ["blocking"],
-  stats: %{"object_subtype" => "static_decor"},
+  stats: %{},
   campaign_id: campaign1.id
 })
 
@@ -562,13 +608,13 @@ Repo.insert!(%Entity{
   name: "Saddlebag",
   type: "object",
   sprite: "chest",
+  preset_key: "chest",
   x: 8,
   y: 8,
   hp: 3,
   max_hp: 3,
   tags: ["interactable", "blocking"],
   stats: %{
-    "object_subtype" => "loot_source",
     "items" => [
       Inventory.item_instance("healing_potion", 2),
       Inventory.item_instance("rapier", 1)
@@ -915,12 +961,13 @@ Repo.insert!(%Entity{
   name: "Stone Coffin",
   type: "object",
   sprite: "rock",
+  preset_key: "rock",
   x: 9,
   y: 2,
   hp: 20,
   max_hp: 20,
   tags: ["blocking"],
-  stats: %{"object_subtype" => "static_decor"},
+  stats: %{},
   campaign_id: campaign2.id
 })
 
@@ -929,13 +976,13 @@ Repo.insert!(%Entity{
   name: "Burial Urn",
   type: "object",
   sprite: "chest",
+  preset_key: "chest",
   x: 9,
   y: 9,
   hp: 4,
   max_hp: 4,
   tags: ["interactable", "blocking"],
   stats: %{
-    "object_subtype" => "loot_source",
     "items" => [
       Inventory.item_instance("healing_potion", 1),
       Inventory.item_instance("greater_healing_potion", 1)
@@ -988,80 +1035,88 @@ unless Repo.get_by(Style, slug: "dst") do
       updated_at: now
     })
 
+  # {content_type, content_key, state, data}
   tile_appearances = [
-    {"grass", %{"fill" => "#3d6b45", "stroke" => "#2a4d30"}},
-    {"stone", %{"fill" => "#555555", "stroke" => "#383838"}},
-    {"rubble", %{"fill" => "#7a6248", "stroke" => "#4d3d2c"}}
+    {"grass", "default", %{"fill" => "#3d6b45", "stroke" => "#2a4d30"}},
+    {"stone", "default", %{"fill" => "#555555", "stroke" => "#383838"}},
+    {"rubble", "default", %{"fill" => "#7a6248", "stroke" => "#4d3d2c"}}
   ]
 
   entity_appearances = [
     # Legacy generic sprites
-    {"warrior", %{"body_color" => "#4a6fa5"}},
-    {"wizard", %{"body_color" => "#7b5ea7"}},
-    {"rock", %{"body_color" => "#787878"}},
+    {"warrior", "default", %{"body_color" => "#4a6fa5"}},
+    {"wizard", "default", %{"body_color" => "#7b5ea7"}},
+    {"rock", "default", %{"body_color" => "#787878"}},
+    # Object preset sprites
+    {"chest", "default", %{"body_color" => "#8b6914"}},
+    {"dead_tree", "default", %{"body_color" => "#5a4a3a"}},
     # Human sprites
-    {"human_fighter", %{"body_color" => "#4a6fa5"}},
-    {"human_wizard", %{"body_color" => "#7b5ea7"}},
-    {"human_rogue", %{"body_color" => "#6b4c38"}},
+    {"human_fighter", "default", %{"body_color" => "#4a6fa5"}},
+    {"human_wizard", "default", %{"body_color" => "#7b5ea7"}},
+    {"human_rogue", "default", %{"body_color" => "#6b4c38"}},
     # Elf sprites
-    {"elf_fighter", %{"body_color" => "#5a8f6a"}},
-    {"elf_wizard", %{"body_color" => "#7b5ea7"}},
-    {"elf_rogue", %{"body_color" => "#4a7060"}},
+    {"elf_fighter", "default", %{"body_color" => "#5a8f6a"}},
+    {"elf_wizard", "default", %{"body_color" => "#7b5ea7"}},
+    {"elf_rogue", "default", %{"body_color" => "#4a7060"}},
     # Gnome sprites
-    {"gnome_fighter", %{"body_color" => "#8b4513"}},
-    {"gnome_wizard", %{"body_color" => "#9b59b6"}},
-    {"gnome_rogue", %{"body_color" => "#5d4037"}},
+    {"gnome_fighter", "default", %{"body_color" => "#8b4513"}},
+    {"gnome_wizard", "default", %{"body_color" => "#9b59b6"}},
+    {"gnome_rogue", "default", %{"body_color" => "#5d4037"}},
     # Dwarf sprites (fallback rect — named sprite pending)
-    {"dwarf_fighter", %{"body_color" => "#7a5c2a"}},
-    {"dwarf_cleric", %{"body_color" => "#c0a060"}},
-    {"dwarf_rogue", %{"body_color" => "#5a4020"}},
+    {"dwarf_fighter", "default", %{"body_color" => "#7a5c2a"}},
+    {"dwarf_cleric", "default", %{"body_color" => "#c0a060"}},
+    {"dwarf_rogue", "default", %{"body_color" => "#5a4020"}},
     # Half-elf sprites
-    {"half_elf_fighter", %{"body_color" => "#5a7a60"}},
-    {"half_elf_wizard", %{"body_color" => "#7060a0"}},
-    {"half_elf_rogue", %{"body_color" => "#486050"}},
+    {"half_elf_fighter", "default", %{"body_color" => "#5a7a60"}},
+    {"half_elf_wizard", "default", %{"body_color" => "#7060a0"}},
+    {"half_elf_rogue", "default", %{"body_color" => "#486050"}},
     # Halfling sprites
-    {"halfling_fighter", %{"body_color" => "#c08040"}},
-    {"halfling_rogue", %{"body_color" => "#a06030"}},
+    {"halfling_fighter", "default", %{"body_color" => "#c08040"}},
+    {"halfling_rogue", "default", %{"body_color" => "#a06030"}},
     # Tiefling sprites
-    {"tiefling_warlock", %{"body_color" => "#8b2040"}},
-    {"tiefling_sorcerer", %{"body_color" => "#a03050"}},
+    {"tiefling_warlock", "default", %{"body_color" => "#8b2040"}},
+    {"tiefling_sorcerer", "default", %{"body_color" => "#a03050"}},
     # Dragonborn sprites
-    {"dragonborn_fighter", %{"body_color" => "#2a7060"}},
-    {"dragonborn_paladin", %{"body_color" => "#206858"}},
+    {"dragonborn_fighter", "default", %{"body_color" => "#2a7060"}},
+    {"dragonborn_paladin", "default", %{"body_color" => "#206858"}},
     # Half-orc sprites
-    {"half_orc_barbarian", %{"body_color" => "#4a7830"}},
-    {"half_orc_fighter", %{"body_color" => "#3a6020"}},
+    {"half_orc_barbarian", "default", %{"body_color" => "#4a7830"}},
+    {"half_orc_fighter", "default", %{"body_color" => "#3a6020"}},
     # Monster sprites (fallback rects — named SVGs pending)
-    {"goblin", %{"body_color" => "#5a7a30"}},
-    {"skeleton", %{"body_color" => "#d8d0b0"}},
-    {"zombie", %{"body_color" => "#5a6a3a"}},
-    {"kobold", %{"body_color" => "#8b3a1a"}},
-    {"bandit", %{"body_color" => "#6b5540"}},
-    {"cultist", %{"body_color" => "#4a2060"}},
-    {"guard", %{"body_color" => "#607890"}},
-    {"wolf", %{"body_color" => "#706050"}},
-    {"orc", %{"body_color" => "#3a6030"}},
-    {"bugbear", %{"body_color" => "#5a5030"}},
-    {"ogre", %{"body_color" => "#7a6040"}},
-    {"troll", %{"body_color" => "#3a6838"}}
+    # goblin has a second "dead" appearance to demonstrate one-to-many (see #132)
+    {"goblin", "default", %{"body_color" => "#5a7a30"}},
+    {"goblin", "dead", %{"body_color" => "#3a4a20"}},
+    {"skeleton", "default", %{"body_color" => "#d8d0b0"}},
+    {"zombie", "default", %{"body_color" => "#5a6a3a"}},
+    {"kobold", "default", %{"body_color" => "#8b3a1a"}},
+    {"bandit", "default", %{"body_color" => "#6b5540"}},
+    {"cultist", "default", %{"body_color" => "#4a2060"}},
+    {"guard", "default", %{"body_color" => "#607890"}},
+    {"wolf", "default", %{"body_color" => "#706050"}},
+    {"orc", "default", %{"body_color" => "#3a6030"}},
+    {"bugbear", "default", %{"body_color" => "#5a5030"}},
+    {"ogre", "default", %{"body_color" => "#7a6040"}},
+    {"troll", "default", %{"body_color" => "#3a6838"}}
   ]
 
-  for {key, data} <- tile_appearances do
+  for {key, state, data} <- tile_appearances do
     Repo.insert!(%Appearance{
       style_id: dst.id,
       content_type: "tile",
       content_key: key,
+      state: state,
       data: data,
       inserted_at: now,
       updated_at: now
     })
   end
 
-  for {key, data} <- entity_appearances do
+  for {key, state, data} <- entity_appearances do
     Repo.insert!(%Appearance{
       style_id: dst.id,
       content_type: "entity",
       content_key: key,
+      state: state,
       data: data,
       inserted_at: now,
       updated_at: now

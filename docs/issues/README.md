@@ -35,7 +35,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` | low |
-| [#132](132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue and dev seed coverage | `gameplay` `rendering` `architecture` | medium |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#121](121-spectator-membership-model.md) | Campaign membership: spectator role and invite flow | `architecture` `gameplay` | low |
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
@@ -105,6 +104,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` |
 | [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` |
 | [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` |
+| [#132](132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue and dev seed coverage | `gameplay` `rendering` `architecture` |
 | [#154](154-dm-panel-redesign.md) | DM panel redesign — right panel DM tab entity catalog + intervention modal | `ui` `gameplay` `architecture` |
 | [#137](137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | `ui` `gameplay` `architecture` |
 | [#136](136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden event structs | `architecture` `gameplay` `ui` |

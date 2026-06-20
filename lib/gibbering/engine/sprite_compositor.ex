@@ -49,7 +49,7 @@ defmodule Gibbering.Engine.SpriteCompositor do
 
   defp build_layer(:body, entity, appearances, opts) do
     if Keyword.get(opts, :show_body, true) do
-      data = appearances[{"entity", entity.sprite}] || %{}
+      data = appearances[{"entity", entity.sprite, "default"}] || %{}
       color = data["body_color"] || "#7f8c8d"
       ax = data["anchor_x"] || 0
       ay = data["anchor_y"] || 0

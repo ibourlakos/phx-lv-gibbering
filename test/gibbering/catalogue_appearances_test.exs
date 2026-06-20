@@ -27,11 +27,11 @@ defmodule Gibbering.CatalogueAppearancesTest do
   end
 
   describe "appearances_for_style/1" do
-    test "returns a map keyed by {content_type, content_key}", %{style: style} do
+    test "returns a map keyed by {content_type, content_key, state}", %{style: style} do
       result = Catalogue.appearances_for_style(style.slug)
-      assert result[{"tile", "grass"}]["fill"] == "#aabbcc"
-      assert result[{"tile", "grass"}]["stroke"] == "#112233"
-      assert result[{"entity", "warrior"}]["body_color"] == "#336699"
+      assert result[{"tile", "grass", "default"}]["fill"] == "#aabbcc"
+      assert result[{"tile", "grass", "default"}]["stroke"] == "#112233"
+      assert result[{"entity", "warrior", "default"}]["body_color"] == "#336699"
     end
 
     test "returns empty map for unknown style slug" do
@@ -49,7 +49,7 @@ defmodule Gibbering.CatalogueAppearancesTest do
       })
 
       result = Catalogue.appearances_for_style("test_style")
-      assert result[{"tile", "grass"}]["fill"] == "#aabbcc"
+      assert result[{"tile", "grass", "default"}]["fill"] == "#aabbcc"
     end
 
     test "returns all records for the requested style" do

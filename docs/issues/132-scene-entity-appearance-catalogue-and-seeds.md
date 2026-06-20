@@ -1,7 +1,8 @@
 # #132 · Scene entity appearance catalogue and dev seed coverage
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-20
 **Priority:** medium
 **Tags:** gameplay, rendering, architecture
 
@@ -54,11 +55,20 @@ Catalogue entries (not entity instances) are the right home for:
 Source: brainstorm #18, Q5 decision.
 
 **Acceptance criteria**
-- [ ] `docs/architecture/entity-states.md` is created, covering all four state categories with visual impact tier per entry
-- [ ] A preset catalogue module (or seed fixture) defines at minimum: goblin (humanoid creature), chest (loot_source object), dead_tree and rock (static_decor objects)
-- [ ] Each preset has ≥1 appearance record linked to a valid sprite key
-- [ ] At least one preset has ≥2 appearance records (demonstrating the one-to-many relation)
-- [ ] Dev seeds use these presets; `mix ecto.setup` produces a scene with visual variety covering all entity types (hero, creature, loot_source, static_decor)
-- [ ] Appearance records survive a `mix ecto.reset` without manual intervention
-- [ ] Catalogue entries carry a `description` field (flavour text); at minimum the four presets above have non-empty descriptions
-- [ ] `object_subtype` is a validated field on the catalogue entry schema; `stats["object_subtype"]` workaround is removed from entity instances and seeds
+- [x] `docs/architecture/entity-states.md` is created, covering all four state categories with visual impact tier per entry
+- [x] A preset catalogue module (or seed fixture) defines at minimum: goblin (humanoid creature), chest (loot_source object), dead_tree and rock (static_decor objects)
+- [x] Each preset has ≥1 appearance record linked to a valid sprite key
+- [x] At least one preset has ≥2 appearance records (demonstrating the one-to-many relation)
+- [x] Dev seeds use these presets; `mix ecto.setup` produces a scene with visual variety covering all entity types (hero, creature, loot_source, static_decor)
+- [x] Appearance records survive a `mix ecto.reset` without manual intervention
+- [x] Catalogue entries carry a `description` field (flavour text); at minimum the four presets above have non-empty descriptions
+- [x] `object_subtype` is a validated field on the catalogue entry schema; `stats["object_subtype"]` workaround is removed from entity instances and seeds
+
+**Implementation notes**
+- New `entity_presets` table (`Gibbering.Catalogue.EntityPreset`): key, name, entity_type, object_subtype (validated: static_decor | loot_source), description.
+- `appearances` table gained a `state` field (string, default "default"); unique constraint updated to `(style_id, content_type, content_key, state)`. Appearances map is now keyed by `{type, key, state}` 3-tuples.
+- Goblin has two appearance records (state="default" + state="dead") demonstrating the one-to-many.
+- `Entity` schema gained `preset_key` (nullable string). `stats["object_subtype"]` workaround removed from seeds; `object_subtype` now derived at scene load from the preset.
+- `State.from_campaign/2` and `reload_entities` accept an optional presets map and populate `:object_subtype` and `:description` on each engine entity from its preset (falling back to `stats["object_subtype"]` for entities without a preset key).
+- `Rulesets.DnD5e.Inventory.object_subtype/1` now reads `entity[:object_subtype]` (atom key) instead of `stats["object_subtype"]`.
+- `appearances_for_style/1` returns `%{{type, key, state} => data}` 3-tuple keys; all callers updated.

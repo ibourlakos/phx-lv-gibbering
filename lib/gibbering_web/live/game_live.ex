@@ -768,15 +768,15 @@ defmodule GibberingWeb.GameLive do
   # ---------------------------------------------------------------------------
 
   defp tile_fill(appearances, texture) do
-    (appearances[{"tile", texture}] || %{})["fill"] || "#7f8c8d"
+    (appearances[{"tile", texture, "default"}] || %{})["fill"] || "#7f8c8d"
   end
 
   defp tile_stroke(appearances, texture) do
-    (appearances[{"tile", texture}] || %{})["stroke"] || "#5d6d7e"
+    (appearances[{"tile", texture, "default"}] || %{})["stroke"] || "#5d6d7e"
   end
 
   defp entity_body_color(appearances, sprite) do
-    (appearances[{"entity", sprite}] || %{})["body_color"] || "#7f8c8d"
+    (appearances[{"entity", sprite, "default"}] || %{})["body_color"] || "#7f8c8d"
   end
 
   # ---------------------------------------------------------------------------

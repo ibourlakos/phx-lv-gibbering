@@ -1,6 +1,7 @@
 # WP-O · Inspection Panel & Player Event Feed
 
-**Status:** active
+**Status:** complete
+**Completed:** 2026-06-20
 **Source:** brainstorm #18 (all questions resolved)
 
 Two symmetric panels flanking the game grid: a left detail panel for clicking
@@ -47,10 +48,7 @@ so active links in the feed have a left panel to open into. `#154` follows `#137
 
 ## Active Front
 
-```
-#134 ──→ #135  (actor_id rename → left panel)
-#132           (parallel, feeds both panels)
-```
+All WP-O issues closed.
 
 ---
 

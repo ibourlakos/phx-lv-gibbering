@@ -58,8 +58,14 @@ defmodule Gibbering.Engine.State do
     pending_initiative_rolls: %MapSet{}
   ]
 
-  @doc "Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities."
-  def from_campaign(%Campaign{} = campaign) do
+  @doc """
+  Builds an initial `%State{}` from a `%Campaign{}` loaded with its tiles and entities.
+
+  `presets` is an optional `%{key => %EntityPreset{}}` map. When supplied, each entity whose
+  `preset_key` matches a preset has `:object_subtype` populated from the preset, replacing the
+  old `stats[\"object_subtype\"]` workaround.
+  """
+  def from_campaign(%Campaign{} = campaign, presets \\ %{}) do
     map = campaign.active_map
 
     tiles =
@@ -71,6 +77,8 @@ defmodule Gibbering.Engine.State do
     entities =
       campaign.entities
       |> Map.new(fn e ->
+        preset = e.preset_key && Map.get(presets, e.preset_key)
+
         base = %{
           name: e.name,
           type: e.type,
@@ -85,7 +93,9 @@ defmodule Gibbering.Engine.State do
           temp_hp: e.temp_hp,
           tags: e.tags,
           stats: e.stats,
-          speed: (e.stats || %{})["speed"] || 30
+          speed: (e.stats || %{})["speed"] || 30,
+          object_subtype: (preset && preset.object_subtype) || (e.stats || %{})["object_subtype"],
+          description: preset && preset.description
         }
 
         ruleset = Gibbering.Rulesets.DnD5e
