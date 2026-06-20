@@ -49,7 +49,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
 | [#152](152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | `architecture` `rules` `gameplay` | medium |
 | [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` | medium |
-| [#154](154-dm-panel-redesign.md) | DM panel redesign — right panel entity catalog + left panel DM section | `ui` `gameplay` `architecture` | medium |
 | [#155](155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | `rendering` `architecture` | low |
 | [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` | medium |
 | [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
@@ -105,6 +104,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#143](143-campaign-outcome-screen.md) | Campaign outcome screen | `ui` `gameplay` |
 | [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` |
 | [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` |
+| [#154](154-dm-panel-redesign.md) | DM panel redesign — right panel DM tab entity catalog + intervention modal | `ui` `gameplay` `architecture` |
 | [#137](137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | `ui` `gameplay` `architecture` |
 | [#136](136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden event structs | `architecture` `gameplay` `ui` |
 | [#135](135-left-inspection-panel.md) | Left inspection panel — click-to-inspect map elements | `ui` `gameplay` `rendering` |

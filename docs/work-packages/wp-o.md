@@ -48,7 +48,6 @@ so active links in the feed have a left panel to open into. `#154` follows `#137
 ## Active Front
 
 ```
-#154           (#136 closed, #137 closed — right panel shipped)
 #134 ──→ #135  (actor_id rename → left panel)
 #132           (parallel, feeds both panels)
 ```

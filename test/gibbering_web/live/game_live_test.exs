@@ -425,8 +425,14 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
       original_hp = state.entities[hero_id].hp
 
+      view |> element("[phx-click='switch_tab'][phx-value-tab='dm']") |> render_click()
+
       view
-      |> element("#dm-hp-#{hero_id}")
+      |> element("[phx-click='open_dm_intervene'][phx-value-id='#{hero_id}']")
+      |> render_click()
+
+      view
+      |> element("#intervene-hp-#{hero_id}")
       |> render_submit(%{entity_id: hero_id, delta: "-3"})
 
       new_hp = SceneServer.get_state(game_id).entities[hero_id].hp
@@ -438,8 +444,14 @@ defmodule GibberingWeb.GameLiveTest do
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
+      view |> element("[phx-click='switch_tab'][phx-value-tab='dm']") |> render_click()
+
       view
-      |> element("#dm-cond-#{hero_id}")
+      |> element("[phx-click='open_dm_intervene'][phx-value-id='#{hero_id}']")
+      |> render_click()
+
+      view
+      |> element("#intervene-cond-#{hero_id}")
       |> render_submit(%{entity_id: hero_id, condition: "poisoned"})
 
       assert :poisoned in SceneServer.get_state(game_id).entities[hero_id].conditions
@@ -449,6 +461,8 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_dm_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
+
+      view |> element("[phx-click='switch_tab'][phx-value-tab='dm']") |> render_click()
 
       view
       |> element("[phx-click='dm_toggle_visibility'][phx-value-id='#{hero_id}']")
