@@ -123,7 +123,9 @@ defmodule GibberingWeb.GameLiveTest do
   end
 
   describe "select_entity event" do
-    test "clicking the active hero highlights valid move tiles", %{conn: conn} do
+    test "clicking the active hero does not show move overlay until Move button is clicked", %{
+      conn: conn
+    } do
       {view, game_id} = mount_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
@@ -131,23 +133,30 @@ defmodule GibberingWeb.GameLiveTest do
       view |> element("#entity-#{hero_id}") |> render_click()
 
       html = render(view)
-      # Move overlay tiles carry phx-click="move" — their presence means moves were rendered.
-      assert html =~ "phx-click=\"move\""
+      # Move overlay only appears after explicit activate_move, not on entity select.
+      refute html =~ "phx-click=\"move\""
     end
   end
 
   describe "move event" do
-    test "moving the hero clears the move overlay", %{conn: conn} do
+    test "activating move then clicking a tile refreshes overlay while movement remains", %{
+      conn: conn
+    } do
       {view, game_id} = mount_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
-      # Select hero to show move tiles, then click a specific reachable tile.
+      # Select hero → activate move → overlay appears.
       view |> element("#entity-#{hero_id}") |> render_click()
+      view |> element("[phx-click='activate_move']") |> render_click()
+
+      assert render(view) =~ "phx-click=\"move\""
+
+      # Move one tile — hero has 30ft speed so 25ft remains. Overlay should refresh.
       view |> element("[phx-click='move'][phx-value-x='0'][phx-value-y='0']") |> render_click()
 
       html = render(view)
-      refute html =~ "phx-click=\"move\""
+      assert html =~ "phx-click=\"move\""
     end
   end
 
@@ -202,13 +211,14 @@ defmodule GibberingWeb.GameLiveTest do
   end
 
   describe "end_turn event" do
-    test "end_turn button clears move overlays", %{conn: conn} do
+    test "end_turn button clears any active move overlay", %{conn: conn} do
       {view, game_id} = mount_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
-      # Select hero to show moves, then end turn.
+      # Activate move overlay, then end turn — overlay must be cleared.
       view |> element("#entity-#{hero_id}") |> render_click()
+      view |> element("[phx-click='activate_move']") |> render_click()
       view |> element("[phx-click='end_turn']") |> render_click()
 
       html = render(view)
@@ -829,6 +839,99 @@ defmodule GibberingWeb.GameLiveTest do
       {:ok, _view, html} = live(conn, "/game/#{game_id}")
       # dead_tree sprite uses fill="#4a3018" for the trunk and branches
       assert html =~ ~s(fill="#4a3018")
+    end
+  end
+
+  describe "movement confirmation UI gate (issue #144)" do
+    test "Move button is visible in the action bar for the active entity", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      html = render(view)
+      assert html =~ "phx-click=\"activate_move\""
+    end
+
+    test "move overlay appears only after Move button is clicked", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      # No overlay before selecting the entity
+      refute render(view) =~ "phx-click=\"move\""
+
+      # Select entity — still no overlay
+      view |> element("#entity-#{hero_id}") |> render_click()
+      refute render(view) =~ "phx-click=\"move\""
+
+      # Click Move — overlay appears
+      view |> element("[phx-click='activate_move']") |> render_click()
+      assert render(view) =~ "phx-click=\"move\""
+    end
+
+    test "Escape cancels the move overlay without consuming movement", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view |> element("#entity-#{hero_id}") |> render_click()
+      view |> element("[phx-click='activate_move']") |> render_click()
+      assert render(view) =~ "phx-click=\"move\""
+
+      # Escape key fires escape_pressed — overlay should clear
+      render_keydown(view, "escape_pressed", %{"key" => "Escape"})
+
+      refute render(view) =~ "phx-click=\"move\""
+
+      # Movement was not consumed
+      state_after = SceneServer.get_state(game_id)
+      mr = get_in(state_after.entities[hero_id], [:action_economy, :movement_remaining])
+      assert mr == 30
+    end
+
+    test "move overlay uses green fill for normal-cost tiles", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view |> element("#entity-#{hero_id}") |> render_click()
+      view |> element("[phx-click='activate_move']") |> render_click()
+
+      html = render(view)
+      # Normal terrain tiles render with green overlay fill
+      assert html =~ "rgba(74,222,128"
+    end
+
+    test "move overlay tiles include a ft cost tooltip", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      view |> element("#entity-#{hero_id}") |> render_click()
+      view |> element("[phx-click='activate_move']") |> render_click()
+
+      html = render(view)
+      assert html =~ " ft</title>"
+    end
+
+    test "movement_exhausted badge appears when movement_remaining is 0", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      # Drain 30ft by zigzagging 6 times between (2,1) and (2,2).
+      # Hero starts at (2,2) per fixture. Each Chebyshev-1 step costs 5ft.
+      view |> element("#entity-#{hero_id}") |> render_click()
+
+      Enum.each(0..5, fn i ->
+        view |> element("[phx-click='activate_move']") |> render_click()
+        {tx, ty} = if rem(i, 2) == 0, do: {2, 1}, else: {2, 2}
+
+        view
+        |> element("[phx-click='move'][phx-value-x='#{tx}'][phx-value-y='#{ty}']")
+        |> render_click()
+      end)
+
+      html = render(view)
+      # Badge uses a red circle — check for the fill color
+      assert html =~ ~s(fill="#ef4444")
     end
   end
 end

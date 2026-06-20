@@ -155,18 +155,32 @@ defmodule Gibbering.Rulesets.DnD5e do
 
   @impl Gibbering.Ruleset
   def action_buttons(entity, _state) do
+    movement_remaining = get_in(entity, [:action_economy, :movement_remaining]) || 0
+
+    move_btn = %{
+      event: "activate_move",
+      value: %{},
+      label: "Move",
+      sublabel: "#{movement_remaining} ft",
+      disabled: movement_remaining == 0
+    }
+
     spells = get_in(entity, [:stats, "spells"]) || []
 
-    Enum.map(spells, fn spell_key ->
-      spell = Gibbering.Data.Spells.get(spell_key)
+    spell_btns =
+      Enum.map(spells, fn spell_key ->
+        spell = Gibbering.Data.Spells.get(spell_key)
 
-      %{
-        event: "select_spell",
-        value: %{"key" => spell_key},
-        label: if(spell, do: spell.name, else: humanize_key(spell_key)),
-        sublabel: spell_level_label(spell)
-      }
-    end)
+        %{
+          event: "select_spell",
+          value: %{"key" => spell_key},
+          label: if(spell, do: spell.name, else: humanize_key(spell_key)),
+          sublabel: spell_level_label(spell),
+          disabled: false
+        }
+      end)
+
+    [move_btn | spell_btns]
   end
 
   @impl Gibbering.Ruleset

@@ -24,7 +24,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 <div
   id="game-board"
   phx-hook="DiceRoll"
-  phx-window-keydown="deselect_spell"
+  phx-window-keydown="escape_pressed"
   phx-key="Escape"
   style="position:relative; width:100vw; height:100vh; overflow:hidden;"
 >
@@ -395,6 +395,24 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
             SpriteCompositor.compose(entity, @appearances, selected: is_active, show_body: false)
           )}
         </g>
+
+        <%!-- Movement-exhausted badge — shown when movement_remaining == 0 on the active entity's turn --%>
+        <%= if is_active && (get_in(entity, [:action_economy, :movement_remaining]) || 0) == 0 do %>
+          <g transform={"translate(#{ix + 24}, #{iy + 24})"}>
+            <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#1f2937" stroke-width="1.5" />
+            <text
+              x="0"
+              y="4"
+              text-anchor="middle"
+              font-size="9"
+              font-weight="bold"
+              fill="white"
+              font-family="sans-serif"
+            >
+              M
+            </text>
+          </g>
+        <% end %>
       </g>
     <% end %>
 
@@ -406,16 +424,28 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     --%>
     <%= for {x, y} <- state.valid_moves do %>
       <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+      <% cost_tier = Map.get(state.valid_move_costs || %{}, {x, y}, :normal) %>
+      <% {fill, stroke} =
+        case cost_tier do
+          :difficult -> {"rgba(251,191,36,0.35)", "#fbbf24"}
+          _ -> {"rgba(74,222,128,0.35)", "#4ade80"}
+        end %>
+      <% path_ft =
+        if active_entity,
+          do: max(abs(active_entity.x - x), abs(active_entity.y - y)) * 5,
+          else: 0 %>
       <polygon
         points={iso.diamond_points(sx, sy)}
-        fill="rgba(100,180,255,0.30)"
-        stroke="#64b4ff"
+        fill={fill}
+        stroke={stroke}
         stroke-width="1.5"
         phx-click="move"
         phx-value-x={x}
         phx-value-y={y}
         style="cursor: pointer;"
-      />
+      >
+        <title>{path_ft} ft</title>
+      </polygon>
     <% end %>
   </svg>
 
@@ -446,13 +476,18 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     <%= if action_btns != [] do %>
       <div class="flex gap-2 flex-wrap justify-center" style="pointer-events:auto;">
         <%= for btn <- action_btns do %>
+          <% btn_disabled = Map.get(btn, :disabled, false) %>
           <button
-            phx-click={btn.event}
+            phx-click={if btn_disabled, do: nil, else: btn.event}
             phx-value-key={btn.value["key"]}
+            disabled={btn_disabled}
             class={[
-              "text-sm rounded-lg px-3 py-1.5 flex items-center gap-1 border",
-              (@selected_spell == btn.value["key"] &&
-                 "bg-purple-700/90 text-white border-purple-400 ring-1 ring-purple-400") ||
+              "text-sm rounded-lg px-3 py-1.5 flex items-center gap-1 border transition-colors",
+              btn_disabled &&
+                "opacity-40 cursor-not-allowed bg-gray-800/60 text-gray-500 border-gray-700",
+              !btn_disabled && @selected_spell == btn.value["key"] &&
+                "bg-purple-700/90 text-white border-purple-400 ring-1 ring-purple-400",
+              !btn_disabled && @selected_spell != btn.value["key"] &&
                 "bg-gray-800/90 hover:bg-gray-700/90 text-gray-200 border-gray-600"
             ]}
           >

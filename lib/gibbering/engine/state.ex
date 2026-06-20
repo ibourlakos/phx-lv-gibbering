@@ -28,6 +28,8 @@ defmodule Gibbering.Engine.State do
     :actor_id,
     # [{x, y}]
     :valid_moves,
+    # %{{x, y} => :normal | :difficult} — terrain cost tier per reachable tile; populated with valid_moves
+    :valid_move_costs,
     # [entity_id] — entities the selected entity can attack or target this turn
     :valid_targets,
     # [entity_id] — hero ids in sequence
@@ -125,6 +127,7 @@ defmodule Gibbering.Engine.State do
       entities: entities,
       actor_id: nil,
       valid_moves: [],
+      valid_move_costs: %{},
       valid_targets: [],
       turn_order: hero_ids,
       active_index: 0,
@@ -415,6 +418,7 @@ defmodule Gibbering.Engine.State do
       | active_index: next,
         actor_id: nil,
         valid_moves: [],
+        valid_move_costs: %{},
         valid_targets: [],
         entities: entities
     }

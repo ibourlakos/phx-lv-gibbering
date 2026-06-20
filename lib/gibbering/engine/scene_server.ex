@@ -52,9 +52,17 @@ defmodule Gibbering.Engine.SceneServer do
   @doc "Returns the current `%State{}` for the given game."
   def get_state(game_id), do: GenServer.call(via(game_id), :get_state)
 
-  @doc "Selects `entity_id` as the active entity, computing valid moves."
+  @doc "Selects `entity_id` as the active entity (sets actor_id and valid_targets). Move overlay is NOT shown until the player activates it via `activate_move/1`."
   def select_entity(game_id, entity_id),
     do: GenServer.call(via(game_id), {:select_entity, entity_id})
+
+  @doc "Activates the move overlay for the selected entity — computes valid_moves and valid_move_costs."
+  def activate_move(game_id),
+    do: GenServer.call(via(game_id), :activate_move)
+
+  @doc "Cancels the active move overlay — clears valid_moves and valid_move_costs without moving."
+  def cancel_move(game_id),
+    do: GenServer.call(via(game_id), :cancel_move)
 
   @doc "Moves the selected entity to `{x, y}` if the tile is reachable this turn."
   def move_entity(game_id, x, y),
@@ -363,15 +371,47 @@ defmodule Gibbering.Engine.SceneServer do
 
     new_state =
       if entity_id == active do
-        moves = Rules.valid_moves(state, entity_id)
         targets = Rules.valid_targets(state, entity_id)
-        %{state | actor_id: entity_id, valid_moves: moves, valid_targets: targets}
+
+        %{
+          state
+          | actor_id: entity_id,
+            valid_moves: [],
+            valid_move_costs: %{},
+            valid_targets: targets
+        }
       else
         state
       end
 
     persist(new_state)
     broadcast_batch(new_state, [], :select_entity)
+    {:reply, new_state, new_state}
+  end
+
+  @impl true
+  def handle_call(:activate_move, _from, state) do
+    new_state =
+      case state.actor_id do
+        nil ->
+          state
+
+        entity_id ->
+          moves = Rules.valid_moves(state, entity_id)
+          costs = build_move_costs(state, moves)
+          %{state | valid_moves: moves, valid_move_costs: costs}
+      end
+
+    persist(new_state)
+    broadcast_batch(new_state, [], :activate_move)
+    {:reply, new_state, new_state}
+  end
+
+  @impl true
+  def handle_call(:cancel_move, _from, state) do
+    new_state = %{state | valid_moves: [], valid_move_costs: %{}}
+    persist(new_state)
+    broadcast_batch(new_state, [], :cancel_move)
     {:reply, new_state, new_state}
   end
 
@@ -396,7 +436,21 @@ defmodule Gibbering.Engine.SceneServer do
           end
 
         targets = Rules.valid_targets(after_move, selected)
-        result = %{after_move | valid_moves: [], actor_id: selected} |> put_targets(targets)
+
+        remaining =
+          get_in(after_move.entities, [selected, :action_economy, :movement_remaining]) || 0
+
+        {moves, costs} =
+          if remaining > 0 do
+            m = Rules.valid_moves(after_move, selected)
+            {m, build_move_costs(after_move, m)}
+          else
+            {[], %{}}
+          end
+
+        result =
+          %{after_move | valid_moves: moves, valid_move_costs: costs, actor_id: selected}
+          |> put_targets(targets)
 
         event = %EntityMoved{
           entity_id: selected,
@@ -874,7 +928,14 @@ defmodule Gibbering.Engine.SceneServer do
 
   @impl true
   def handle_call(:deselect_entity, _from, state) do
-    new_state = %{state | actor_id: nil, valid_moves: [], valid_targets: []}
+    new_state = %{
+      state
+      | actor_id: nil,
+        valid_moves: [],
+        valid_move_costs: %{},
+        valid_targets: []
+    }
+
     persist(new_state)
     broadcast_batch(new_state, [], :deselect_entity)
     {:reply, new_state, new_state}
@@ -1024,6 +1085,14 @@ defmodule Gibbering.Engine.SceneServer do
   # --- Helpers ---
 
   defp put_targets(state, targets), do: %{state | valid_targets: targets}
+
+  defp build_move_costs(state, moves) do
+    Map.new(moves, fn {x, y} ->
+      perm = Rules.tile_movement_permission(state, x, y, "walk")
+      tier = if perm >= 100, do: :normal, else: :difficult
+      {{x, y}, tier}
+    end)
+  end
 
   # Returns hero entity IDs that need a RollRequired event for initiative.
   # Because Entity rows are not directly linked to CampaignCharacter records,

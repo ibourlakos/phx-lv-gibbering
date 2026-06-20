@@ -167,19 +167,36 @@ defmodule Gibbering.Rulesets.DnD5eTest do
   end
 
   describe "action_buttons/2" do
-    test "returns empty list for entity with no spells" do
-      assert DnD5e.action_buttons(entity(), %{}) == []
+    test "always returns a Move button as the first button" do
+      buttons = DnD5e.action_buttons(entity(), %{})
+      [move_btn | _] = buttons
+      assert move_btn.event == "activate_move"
+      assert Map.has_key?(move_btn, :disabled)
+      assert Map.has_key?(move_btn, :sublabel)
     end
 
-    test "returns one button per spell in stats[\"spells\"]" do
+    test "Move button is disabled when movement_remaining is 0" do
+      e = entity() |> Map.put(:action_economy, %{movement_remaining: 0})
+      [move_btn | _] = DnD5e.action_buttons(e, %{})
+      assert move_btn.disabled == true
+    end
+
+    test "Move button is enabled when movement_remaining > 0" do
+      e = entity() |> Map.put(:action_economy, %{movement_remaining: 30})
+      [move_btn | _] = DnD5e.action_buttons(e, %{})
+      assert move_btn.disabled == false
+      assert move_btn.sublabel == "30 ft"
+    end
+
+    test "returns Move + one button per spell in stats[\"spells\"]" do
       e = entity() |> Map.put(:stats, %{"spells" => ["fire_bolt", "magic_missile"]})
       buttons = DnD5e.action_buttons(e, %{})
-      assert length(buttons) == 2
+      assert length(buttons) == 3
     end
 
-    test "each button has required keys" do
+    test "spell button has required keys" do
       e = entity() |> Map.put(:stats, %{"spells" => ["fire_bolt"]})
-      [btn] = DnD5e.action_buttons(e, %{})
+      [_move | [btn]] = DnD5e.action_buttons(e, %{})
       assert is_binary(btn.label)
       assert btn.event == "select_spell"
       assert btn.value == %{"key" => "fire_bolt"}
@@ -188,14 +205,14 @@ defmodule Gibbering.Rulesets.DnD5eTest do
 
     test "known spell gets display name and level label" do
       e = entity() |> Map.put(:stats, %{"spells" => ["fire_bolt"]})
-      [btn] = DnD5e.action_buttons(e, %{})
+      [_move | [btn]] = DnD5e.action_buttons(e, %{})
       assert btn.label == "Fire Bolt"
       assert btn.sublabel == "cantrip"
     end
 
     test "unknown spell key gets humanized name" do
       e = entity() |> Map.put(:stats, %{"spells" => ["custom_blast"]})
-      [btn] = DnD5e.action_buttons(e, %{})
+      [_move | [btn]] = DnD5e.action_buttons(e, %{})
       assert btn.label == "Custom Blast"
     end
   end

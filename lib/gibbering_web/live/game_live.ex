@@ -88,11 +88,6 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
-  def handle_event("inspect_tile", %{"x" => x, "y" => y}, socket) do
-    {:noreply, assign(socket, panel_subject: {:tile, String.to_integer(x), String.to_integer(y)})}
-  end
-
-  @impl true
   def handle_event("deselect", _, socket) do
     new_state = SceneServer.deselect_entity(socket.assigns.game_id)
     {:noreply, assign(socket, game_state: new_state, valid_targets: [])}
@@ -149,11 +144,50 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("escape_pressed", _, socket) do
+    socket =
+      socket
+      |> assign(selected_spell: nil, spell_targets: [])
+
+    if socket.assigns.game_state.valid_moves != [] do
+      new_state = SceneServer.cancel_move(socket.assigns.game_id)
+      {:noreply, assign(socket, game_state: new_state)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("activate_move", _, socket) do
+    new_state = SceneServer.activate_move(socket.assigns.game_id)
+    {:noreply, assign(socket, game_state: new_state)}
+  end
+
+  @impl true
+  def handle_event("cancel_move", _, socket) do
+    new_state = SceneServer.cancel_move(socket.assigns.game_id)
+    {:noreply, assign(socket, game_state: new_state)}
+  end
+
+  @impl true
   def handle_event("move", %{"x" => x, "y" => y}, socket) do
     new_state =
       SceneServer.move_entity(socket.assigns.game_id, String.to_integer(x), String.to_integer(y))
 
     {:noreply, assign(socket, game_state: new_state, valid_targets: new_state.valid_targets)}
+  end
+
+  @impl true
+  def handle_event("inspect_tile", %{"x" => x, "y" => y}, socket) do
+    game_state = socket.assigns.game_state
+
+    if game_state.valid_moves != [] do
+      new_state = SceneServer.cancel_move(socket.assigns.game_id)
+      {:noreply, assign(socket, game_state: new_state)}
+    else
+      {:noreply,
+       assign(socket, panel_subject: {:tile, String.to_integer(x), String.to_integer(y)})}
+    end
   end
 
   @impl true

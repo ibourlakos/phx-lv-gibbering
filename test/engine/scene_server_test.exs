@@ -37,7 +37,7 @@ defmodule Gibbering.Engine.SceneServerTest do
   end
 
   describe "select_entity/2" do
-    test "sets actor_id and populates valid_moves for the active hero" do
+    test "sets actor_id but does NOT populate valid_moves (move overlay gated behind activate_move)" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
@@ -45,7 +45,19 @@ defmodule Gibbering.Engine.SceneServerTest do
       new_state = SceneServer.select_entity(game_id, hero_id)
 
       assert new_state.actor_id == hero_id
-      assert new_state.valid_moves != []
+      assert new_state.valid_moves == []
+    end
+
+    test "activate_move/1 populates valid_moves for the selected entity" do
+      game_id = start_server()
+      state = SceneServer.get_state(game_id)
+      hero_id = State.active_hero_id(state)
+
+      SceneServer.select_entity(game_id, hero_id)
+      move_state = SceneServer.activate_move(game_id)
+
+      assert move_state.valid_moves != []
+      assert move_state.valid_move_costs != %{}
     end
 
     test "does not change state when selecting a non-active entity" do
@@ -68,8 +80,9 @@ defmodule Gibbering.Engine.SceneServerTest do
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
-      # Select the hero first to generate valid_moves.
+      # Select the hero then activate the move overlay to populate valid_moves.
       SceneServer.select_entity(game_id, hero_id)
+      SceneServer.activate_move(game_id)
 
       # Pick any valid move.
       selected_state = SceneServer.get_state(game_id)
@@ -101,11 +114,13 @@ defmodule Gibbering.Engine.SceneServerTest do
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
       SceneServer.select_entity(game_id, hero_id)
+      SceneServer.activate_move(game_id)
 
       selected_state = SceneServer.get_state(game_id)
       {tx, ty} = hd(selected_state.valid_moves)
 
-      # Drain the select_entity broadcast first.
+      # Drain the select_entity + activate_move broadcasts first.
+      assert_receive %EventBatch{}, 500
       assert_receive %EventBatch{}, 500
 
       SceneServer.move_entity(game_id, tx, ty)
@@ -239,6 +254,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       # Move the hero in-memory (SceneServer updates runtime state, not entity table x/y).
       SceneServer.select_entity(game_id, hero_id)
+      SceneServer.activate_move(game_id)
       moved_state = SceneServer.get_state(game_id)
       {tx, ty} = hd(moved_state.valid_moves)
       SceneServer.move_entity(game_id, tx, ty)
