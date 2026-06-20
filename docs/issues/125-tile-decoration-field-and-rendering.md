@@ -1,6 +1,7 @@
 # #125 · Tile decoration field and rendering
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-12
+**Closed:** 2026-06-20
 **Priority:** low
 **Tags:** architecture, rendering
 
@@ -31,8 +32,8 @@ Derived from #27 (tile decoration storage discovery — tile-field approach chos
 - The decoration layer sits between ground tiles and entities in the SVG layer stack (consistent with the layer order settled in BS-14 / #83)
 
 **Acceptance criteria**
-- [ ] `%GridTile{}` has a `decoration: atom | nil` field
-- [ ] `grid_data` JSONB load/save round-trips the `decoration` field correctly
-- [ ] `:dead_tree`, `:rock`, and `:bones` render visibly on the isometric grid in the correct depth-sort position
-- [ ] Tiles with `decoration: nil` render unchanged
-- [ ] Existing rendering tests pass; new snapshot or unit test covers at least one decoration type
+- [x] `%GridTile{}` has a `decoration: atom | nil` field
+- [x] `grid_data` JSONB load/save round-trips the `decoration` field correctly
+- [x] `:dead_tree`, `:rock`, and `:bones` render visibly on the isometric grid in the correct depth-sort position
+- [x] Tiles with `decoration: nil` render unchanged
+- [x] Existing rendering tests pass; new snapshot or unit test covers at least one decoration type
