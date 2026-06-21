@@ -14,7 +14,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Open Issues |
 |---|---|---|
-| [WP-F](wp-f.md) | Rendering & Frontend | #155, #21, #84 |
+| [WP-F](wp-f.md) | Rendering & Frontend | #21, #84 |
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
 | [WP-R](wp-r.md) | Display Testing & Testability | #153 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
@@ -67,8 +67,7 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 ## Active Front
 
 ```
-WP-F:  #155 (composable appearances, parallel)
-       (#21, #84) — polish, low priority
+WP-F:  #21, #84 — polish, low priority
 
 WP-Q:  #156 → (#157, #158)                — coordinate model first, then occupancy + elevation
 
