@@ -387,6 +387,8 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           x={ix}
           y={iy}
           body_color={entity_body_color(@appearances, entity.sprite)}
+          entity={entity}
+          appearances={@appearances}
         />
 
         <%!-- Compositor overlays: selection ring (active entity) + HP bar --%>
