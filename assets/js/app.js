@@ -241,7 +241,7 @@ const Hooks = {
       const cx = this.vbX + (e.clientX - rect.left) / rect.width * this.vbW
       const cy = this.vbY + (e.clientY - rect.top) / rect.height * this.vbH
       // Scale factor; clamp so vbW stays in [svgW/4, svgW]
-      const rawF = Math.pow(1.1, -e.deltaY / 100)
+      const rawF = Math.pow(1.1, e.deltaY / 100)
       const newVbW = Math.max(svgW / 4, Math.min(svgW, this.vbW * rawF))
       const scale = newVbW / this.vbW
       this.vbH *= scale
