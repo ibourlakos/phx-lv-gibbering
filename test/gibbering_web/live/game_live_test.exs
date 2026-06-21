@@ -120,6 +120,22 @@ defmodule GibberingWeb.GameLiveTest do
       polygon_count = html |> String.split("<polygon") |> length() |> Kernel.-(1)
       assert polygon_count >= 25
     end
+
+    test "active turn indicator is absent in lobby phase", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      html = render(view)
+      # Yellow ellipse (SpriteCompositor selection_ring) must not appear before combat starts.
+      refute html =~ ~s(stroke="#f0e040")
+      # Yellow dashed polygon (template active-turn ring) must also be absent.
+      refute html =~ ~s(stroke="#f1c40f")
+    end
+
+    test "active turn indicator appears in in_combat phase", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      SceneServer.force_transition_phase(game_id, :in_combat)
+      html = render(view)
+      assert html =~ ~s(stroke="#f0e040")
+    end
   end
 
   describe "select_entity event" do
@@ -913,6 +929,7 @@ defmodule GibberingWeb.GameLiveTest do
 
     test "movement_exhausted badge appears when movement_remaining is 0", %{conn: conn} do
       {view, game_id} = mount_game(conn)
+      SceneServer.force_transition_phase(game_id, :in_combat)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 

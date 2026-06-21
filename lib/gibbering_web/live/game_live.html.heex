@@ -315,7 +315,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
             MapSet.member?(state.hidden_entities || MapSet.new(), id)
           end) %>
     <%= for {id, entity} <- visible_entities do %>
-      <% is_active = id == active_id %>
+      <% is_active = id == active_id && state.phase == :in_combat %>
       <% is_selected = id == state.actor_id %>
       <% is_target = id in @valid_targets %>
       <% is_spell_target = id in @spell_targets %>
