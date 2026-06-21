@@ -8,16 +8,13 @@ SVG pipeline, art direction, rendering polish. Discoveries #25/#26/#34/#27/#101/
 
 | # | Title | Priority | Depends on |
 |---|---|---|---|
-| [#138](../issues/138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | low | — |
-| [#140](../issues/140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | low | — |
 | [#155](../issues/155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | low | — |
 | [#21](../issues/021-dice-roll-cycling-faces.md) | Dice roll cycling faces | low | — |
 | [#84](../issues/084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | low | — |
 
 ## Sequencing
 
-`#138` and `#140` are quick bug fixes with no dependencies. `#155` (composable appearances) and `#21`/`#84`
-(dice animation, LOD) are independent polish items.
+`#155` (composable appearances) and `#21`/`#84` (dice animation, LOD) are independent polish items.
 
 Deferred items: #83 (volumetric spell effects), #28 (multi-tile entity footprints). Do not
 start these until a brainstorm specifically scopes them. #82 (Z-axis elevation) is cancelled —

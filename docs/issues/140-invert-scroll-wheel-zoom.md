@@ -1,7 +1,8 @@
 # #140 · Invert scroll wheel zoom direction
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-21
 **Priority:** low
 **Tags:** ui, rendering
 
@@ -12,7 +13,7 @@ Root cause: `Math.pow(1.1, -e.deltaY / 100)` in the PanZoom hook.
 Removing the negation (`Math.pow(1.1, e.deltaY / 100)`) flips the direction.
 
 **Acceptance criteria**
-- [ ] Scrolling up zooms in (smaller viewBox, map appears larger)
-- [ ] Scrolling down zooms out (larger viewBox, map appears smaller)
-- [ ] Zoom min/max clamps are unchanged
-- [ ] `mix precommit` exits 0
+- [x] Scrolling up zooms in (smaller viewBox, map appears larger)
+- [x] Scrolling down zooms out (larger viewBox, map appears smaller)
+- [x] Zoom min/max clamps are unchanged
+- [x] `mix precommit` exits 0
