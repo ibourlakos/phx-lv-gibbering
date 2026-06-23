@@ -1,6 +1,7 @@
 # #161 · Freeform dice tray — player-initiated multi-die roll
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-23
+**Closed:** 2026-06-23
 **Priority:** low
 **Tags:** gameplay, ui, rendering
 
@@ -24,10 +25,10 @@ Design settled in brainstorm #31.
 tray (separate concern).
 
 **Acceptance criteria**
-- [ ] Die picker renders in player panel with all 7 die types; counts update on click
-- [ ] Roll button disabled when no dice selected
-- [ ] Clear resets all counts
-- [ ] Server generates results for all selected dice and broadcasts `FreeformRoll` event
-- [ ] Roll animation fires (sequential stagger, ≤3 dice animated)
-- [ ] Event feed shows full expression, individual results, and total
-- [ ] `mix precommit` passes
+- [x] Die picker renders in player panel with all 7 die types; counts update on click
+- [x] Roll button disabled when no dice selected
+- [x] Clear resets all counts
+- [x] Server generates results for all selected dice and broadcasts `FreeformRoll` event
+- [x] Roll animation fires (sequential stagger, ≤3 dice animated)
+- [x] Event feed shows full expression, individual results, and total
+- [x] `mix precommit` passes
