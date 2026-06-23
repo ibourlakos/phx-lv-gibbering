@@ -3,9 +3,21 @@ defmodule GibberingWeb.GameLive do
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
   alias Gibbering.{Campaigns, CampaignCharacters, EventBus}
-  alias Gibbering.Events.{EventBatch}
+  alias Gibbering.Events.{EventBatch, FreeformRolled}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias Gibbering.Events.Scene.{RollRequired, SessionEnded, TurnAdvanced}
+
+  @dice_faces %{
+    "d4" => 4,
+    "d6" => 6,
+    "d8" => 8,
+    "d10" => 10,
+    "d12" => 12,
+    "d20" => 20,
+    "d100" => 100
+  }
+  @dice_order ~w(d4 d6 d8 d10 d12 d20 d100)
+  @empty_freeform_dice Map.new(@dice_order, &{&1, 0})
   alias Gibbering.Catalogue
   alias Gibbering.Data.Spells
 
@@ -63,7 +75,8 @@ defmodule GibberingWeb.GameLive do
            |> assign(:roll_prompt, nil)
            |> assign(:active_tab, :events)
            |> assign(:unread_count, 0)
-           |> assign(:dm_intervene_entity_id, nil)}
+           |> assign(:dm_intervene_entity_id, nil)
+           |> assign(:freeform_dice, @empty_freeform_dice)}
 
         {:error, reason} ->
           {:ok,
@@ -592,6 +605,83 @@ defmodule GibberingWeb.GameLive do
   end
 
   @impl true
+  def handle_event("freeform_dice_inc", %{"die" => die}, socket)
+      when is_map_key(@dice_faces, die) and not socket.assigns.is_dm do
+    count = Map.get(socket.assigns.freeform_dice, die, 0)
+    updated = Map.put(socket.assigns.freeform_dice, die, min(count + 1, 10))
+    {:noreply, assign(socket, freeform_dice: updated)}
+  end
+
+  @impl true
+  def handle_event("freeform_dice_dec", %{"die" => die}, socket)
+      when is_map_key(@dice_faces, die) and not socket.assigns.is_dm do
+    count = Map.get(socket.assigns.freeform_dice, die, 0)
+    updated = Map.put(socket.assigns.freeform_dice, die, max(count - 1, 0))
+    {:noreply, assign(socket, freeform_dice: updated)}
+  end
+
+  @impl true
+  def handle_event("freeform_dice_clear", _, %{assigns: %{is_dm: false}} = socket) do
+    {:noreply, assign(socket, freeform_dice: @empty_freeform_dice)}
+  end
+
+  @impl true
+  def handle_event("freeform_roll", _, %{assigns: %{is_dm: false}} = socket) do
+    dice = socket.assigns.freeform_dice
+    active_dice = Enum.filter(dice, fn {_die, count} -> count > 0 end)
+
+    if active_dice == [] do
+      {:noreply, socket}
+    else
+      results =
+        Map.new(active_dice, fn {die, count} ->
+          faces = @dice_faces[die]
+          {die, Enum.map(1..count, fn _ -> Enum.random(1..faces) end)}
+        end)
+
+      total = results |> Map.values() |> List.flatten() |> Enum.sum()
+
+      roller_name =
+        case socket.assigns.campaign_character do
+          nil -> socket.assigns.current_user.email
+          cc -> cc.character_name || socket.assigns.current_user.email
+        end
+
+      event = %FreeformRolled{
+        roller_name: roller_name,
+        dice_map: Map.new(active_dice),
+        results: results,
+        total: total
+      }
+
+      EventBus.broadcast(SceneServer.topic(socket.assigns.game_id), event)
+
+      # animate up to 3 dice (pick the most numerous die type first)
+      dice_for_anim =
+        active_dice
+        |> Enum.sort_by(fn {_die, count} -> -count end)
+        |> Enum.flat_map(fn {die, _count} -> results[die] end)
+        |> Enum.take(3)
+
+      animation_payload =
+        dice_for_anim
+        |> Enum.with_index()
+        |> Enum.map(fn {result, i} ->
+          %{
+            result: min(result, 6),
+            label: "#{roller_name} rolled #{die_expression(active_dice)}",
+            delay: i * 300
+          }
+        end)
+
+      {:noreply,
+       socket
+       |> assign(freeform_dice: @empty_freeform_dice)
+       |> push_event("roll_dice_sequence", %{dice: animation_payload})}
+    end
+  end
+
+  @impl true
   def handle_event(event, _, socket)
       when event in [
              "dm_start",
@@ -699,6 +789,16 @@ defmodule GibberingWeb.GameLive do
     else
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_info(%FreeformRolled{} = event, socket) do
+    unread_delta = if socket.assigns.active_tab != :events, do: 1, else: 0
+
+    {:noreply,
+     socket
+     |> update(:event_log, fn log -> log ++ [event] end)
+     |> assign(unread_count: socket.assigns.unread_count + unread_delta)}
   end
 
   def handle_info({:ejected, reason}, socket) do
@@ -873,6 +973,19 @@ defmodule GibberingWeb.GameLive do
 
   defp event_label(%Gibbering.Events.Scene.LogEntryRevealed{}), do: nil
   defp event_label(%Gibbering.Events.Scene.LogEntryHidden{}), do: nil
+
+  defp event_label(%FreeformRolled{} = e) do
+    results_str =
+      @dice_order
+      |> Enum.filter(&Map.has_key?(e.results, &1))
+      |> Enum.map_join(" + ", fn die ->
+        vals = e.results[die] |> Enum.join(", ")
+        "[#{vals}]"
+      end)
+
+    "#{e.roller_name} rolled #{die_expression(Map.to_list(e.dice_map))} → #{results_str} = #{e.total}"
+  end
+
   defp event_label(_), do: nil
 
   # Returns structured parts for a feed entry: lists of
@@ -945,9 +1058,23 @@ defmodule GibberingWeb.GameLive do
     [{:entity_link, e.entity_id, e.entity_name}, {:text, " HP: #{e.old_hp} → #{e.new_hp}"}]
   end
 
+  defp event_parts(%FreeformRolled{} = e) do
+    [{:text, event_label(e)}]
+  end
+
   defp event_parts(event) do
     label = event_label(event)
     if label, do: [{:text, label}], else: []
+  end
+
+  # ---------------------------------------------------------------------------
+  # Freeform dice helpers
+  # ---------------------------------------------------------------------------
+
+  defp die_expression(active_dice) do
+    active_dice
+    |> Enum.sort_by(fn {die, _} -> Enum.find_index(@dice_order, &(&1 == die)) end)
+    |> Enum.map_join(" + ", fn {die, count} -> "#{count}#{die}" end)
   end
 
   # ---------------------------------------------------------------------------

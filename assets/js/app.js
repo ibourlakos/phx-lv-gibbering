@@ -166,6 +166,11 @@ const Hooks = {
       this.handleEvent("roll_dice", ({result, label}) => {
         rollDiceAnimation(result, label || "Rolled")
       })
+      this.handleEvent("roll_dice_sequence", ({dice}) => {
+        dice.forEach(({result, label, delay}) => {
+          setTimeout(() => rollDiceAnimation(result, label), delay)
+        })
+      })
     }
   },
 

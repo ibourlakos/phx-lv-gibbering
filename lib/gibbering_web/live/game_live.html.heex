@@ -728,6 +728,63 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       </div>
     <% end %>
 
+    <%!-- Freeform dice tray (all players, not DM) --%>
+    <%= if not @is_dm do %>
+      <% any_selected = Enum.any?(@freeform_dice, fn {_die, count} -> count > 0 end) %>
+      <div class="flex-shrink-0 border-t border-gray-800 p-2">
+        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Roll dice</div>
+        <div class="grid grid-cols-4 gap-1 mb-1.5">
+          <%= for die <- ~w(d4 d6 d8 d10 d12 d20 d100) do %>
+            <% count = @freeform_dice[die] %>
+            <div class="relative">
+              <button
+                phx-click="freeform_dice_inc"
+                phx-value-die={die}
+                class={[
+                  "w-full text-xs rounded px-1 py-1 font-mono font-bold transition-colors",
+                  (count > 0 && "bg-indigo-700 hover:bg-indigo-600 text-white") ||
+                    "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                ]}
+              >
+                {die}
+              </button>
+              <%= if count > 0 do %>
+                <button
+                  phx-click="freeform_dice_dec"
+                  phx-value-die={die}
+                  class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-500 hover:bg-red-500 text-white text-xs leading-none flex items-center justify-center"
+                  title={"Remove one #{die}"}
+                >
+                  {count}
+                </button>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="flex gap-1">
+          <button
+            phx-click="freeform_roll"
+            disabled={not any_selected}
+            class={[
+              "flex-1 text-xs rounded px-2 py-1 font-bold transition-colors",
+              (any_selected && "bg-yellow-600 hover:bg-yellow-500 text-white") ||
+                "bg-gray-800 text-gray-600 cursor-not-allowed"
+            ]}
+          >
+            Roll
+          </button>
+          <%= if any_selected do %>
+            <button
+              phx-click="freeform_dice_clear"
+              class="text-xs rounded px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors"
+            >
+              Clear
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
     <%!-- Auto-roll toggle (player with campaign_character) — bottom of right panel --%>
     <%= if not @is_dm and not is_nil(@campaign_character) do %>
       <div class="flex-shrink-0 border-t border-gray-800 p-2">
