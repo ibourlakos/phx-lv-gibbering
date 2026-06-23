@@ -8,12 +8,11 @@ SVG pipeline, art direction, rendering polish. Discoveries #25/#26/#34/#27/#101/
 
 | # | Title | Priority | Depends on |
 |---|---|---|---|
-| [#21](../issues/021-dice-roll-cycling-faces.md) | Dice roll cycling faces | low | — |
 | [#84](../issues/084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | low | — |
 
 ## Sequencing
 
-`#21`/`#84` (dice animation, LOD) are independent polish items.
+`#84` (LOD) is an independent polish item.
 
 Deferred items: #83 (volumetric spell effects), #28 (multi-tile entity footprints). Do not
 start these until a brainstorm specifically scopes them. #82 (Z-axis elevation) is cancelled —
