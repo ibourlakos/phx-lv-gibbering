@@ -63,7 +63,11 @@ function rollDiceAnimation(result, label) {
     width: 64px; height: 64px;
     filter: drop-shadow(0 4px 16px rgba(0,0,0,0.7));
   `
-  container.innerHTML = buildDiceFaceSVG(result)
+  container.innerHTML = buildDiceFaceSVG(Math.ceil(Math.random() * 6))
+
+  const flipInterval = setInterval(() => {
+    container.innerHTML = buildDiceFaceSVG(Math.ceil(Math.random() * 6))
+  }, 80)
 
   const label_el = document.createElement("div")
   label_el.style.cssText = `
@@ -123,7 +127,8 @@ function rollDiceAnimation(result, label) {
         label_el.style.top = `${landY + 72}px`
         label_el.style.opacity = "1"
 
-        // switch to result face immediately on land
+        // snap to result face on land
+        clearInterval(flipInterval)
         container.innerHTML = buildDiceFaceSVG(result)
       }
       if (phase === "flying") requestAnimationFrame(step)
