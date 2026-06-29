@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 162 (see `counter`)
+**Next issue number:** 167 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -47,6 +47,11 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
 | [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
 | [#160](160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | `ui` `rendering` `architecture` | medium |
+| [#162](162-engine-phase0-namespace-cleanup.md) | Engine decomposition Phase 0 — namespace cleanup (RuleModifier move, Events split) | `architecture` | low |
+| [#163](163-engine-phase1-ruleset-state-field.md) | Engine decomposition Phase 1 — `ruleset_state: term()` opaque field in Engine.State | `architecture` | medium |
+| [#164](164-lobby-live-test-coverage.md) | LobbyLive test coverage — character assignment, readiness gate, session start | `ops` `ui` | medium |
+| [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
+| [#166](166-confidentiality-enforcement-test.md) | Confidentiality enforcement — assert player subscriber cannot receive `:dm_only` events | `security` `architecture` `ops` | high |
 
 ---
 
