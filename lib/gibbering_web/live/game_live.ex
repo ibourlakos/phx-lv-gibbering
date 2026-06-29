@@ -3,7 +3,7 @@ defmodule GibberingWeb.GameLive do
 
   alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
   alias Gibbering.{Campaigns, CampaignCharacters, EventBus}
-  alias Gibbering.Events.{EventBatch, FreeformRolled}
+  alias Gibbering.Events.{EventBatch, EventFeedProjection, FreeformRolled}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias Gibbering.Events.Scene.{RollRequired, SessionEnded, TurnAdvanced}
 
@@ -146,7 +146,15 @@ defmodule GibberingWeb.GameLive do
 
   @impl true
   def handle_event("inspect_spell_cast", %{"event_id" => event_id}, socket) do
-    event = Enum.find(socket.assigns.event_log, &(&1.event_id == event_id))
+    overrides = EventFeedProjection.fold(socket.assigns.event_log)
+
+    event =
+      Enum.find(socket.assigns.event_log, fn e ->
+        e.event_id == event_id and
+          (socket.assigns.is_dm or
+             EventFeedProjection.effective_visibility(e, overrides) in [:public, :revealed])
+      end)
+
     subject = if event, do: {:spell_cast, event}, else: nil
     {:noreply, assign(socket, panel_subject: subject)}
   end

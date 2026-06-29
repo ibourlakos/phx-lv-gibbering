@@ -951,4 +951,40 @@ defmodule GibberingWeb.GameLiveTest do
       assert html =~ ~s(fill="#ef4444")
     end
   end
+
+  describe "event confidentiality" do
+    test "player feed does not render :dm_only HP adjustment events", %{conn: conn} do
+      dm_user = register_user()
+      player_user = register_user()
+      game_id = insert_campaign(%{dm_id: dm_user.id})
+      Campaigns.join_campaign(game_id, player_user.id)
+      start_supervised!({SceneServer, game_id})
+
+      player_conn = log_in_user(conn, player_user)
+      {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero_hp = state.entities[hero_id].hp
+
+      # HPAdjusted defaults to visibility: :dm_only
+      SceneServer.dm_adjust_hp(game_id, hero_id, -3)
+
+      html = render(player_view)
+      refute html =~ "HP: #{hero_hp} →"
+      refute html =~ "→ #{hero_hp - 3}"
+    end
+
+    test "DM feed shows :dm_only HP adjustment events", %{conn: conn} do
+      {dm_view, game_id} = mount_dm_game(conn)
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero_hp = state.entities[hero_id].hp
+
+      SceneServer.dm_adjust_hp(game_id, hero_id, -3)
+
+      assert render(dm_view) =~ "HP: #{hero_hp} → #{hero_hp - 3}"
+    end
+  end
 end
