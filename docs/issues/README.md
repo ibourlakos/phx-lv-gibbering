@@ -51,7 +51,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#163](163-engine-phase1-ruleset-state-field.md) | Engine decomposition Phase 1 — `ruleset_state: term()` opaque field in Engine.State | `architecture` | medium |
 | [#164](164-lobby-live-test-coverage.md) | LobbyLive test coverage — character assignment, readiness gate, session start | `ops` `ui` | medium |
 | [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
-| [#166](166-confidentiality-enforcement-test.md) | Confidentiality enforcement — assert player subscriber cannot receive `:dm_only` events | `security` `architecture` `ops` | high |
 
 ---
 
@@ -96,6 +95,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#166](166-confidentiality-enforcement-test.md) | Confidentiality enforcement — assert player subscriber cannot receive `:dm_only` events | `security` `architecture` `ops` |
 | [#161](161-freeform-dice-tray.md) | Freeform dice tray — player-initiated multi-die roll | `gameplay` `ui` `rendering` |
 | [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` |
 | [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` |

@@ -1,7 +1,8 @@
 # #166 · Confidentiality enforcement — assert player subscriber cannot receive `:dm_only` events
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-29
+**Closed:** 2026-06-29
 **Priority:** high
 **Tags:** security, architecture, ops
 
