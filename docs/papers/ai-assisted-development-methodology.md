@@ -83,6 +83,36 @@ Tests follow a three-layer hierarchy: pure function tests first, integration tes
 
 Architecture documents are the AI's primary source of context about the design. They are also the human's record of design decisions. When the AI proposes a change that would alter the architecture, the change must be reflected in the documentation. The AI cannot operate consistently across sessions without accurate docs; the human cannot reason about the system without them. The incentives align.
 
+### 2.7 Issue tracking inside the codebase
+
+This project keeps issue files in `docs/issues/` — versioned markdown, one file per issue, with a plain-integer counter and a hand-maintained index. This is a deliberate trade-off against external trackers (GitHub Issues, Linear, Jira) and is worth examining explicitly because the AI-assisted context changes the calculus.
+
+**What it gets right:**
+
+*Co-location creates atomicity.* Closing an issue is part of the same commit as the fix. Code state and issue state are always in sync by construction. External trackers fake this with webhooks and commit-message parsing.
+
+*The AI can read it natively.* With an external tracker, the AI would require API calls or copy-pasting to access issue context. With issues as markdown in the repo, the AI reads them as part of the codebase. This is a meaningful advantage in an AI-assisted workflow and partially motivated the design choice.
+
+*Decisions are versioned.* `git log docs/issues/` shows when every issue was opened, when it changed status, when it closed, and which branch was active. That is richer provenance than most external trackers provide.
+
+*No external dependency.* No account management, no data in a third-party system, works offline.
+
+**Where the seams show:**
+
+*The counter file is a serialization point.* Two contributors opening issues simultaneously get a merge conflict on a single-integer file. At solo scale this never occurs. At team scale it is a recurring friction.
+
+*The README index is a conflict magnet* for the same reason — every issue open or close touches the same table.
+
+*No notifications, assignments, or queries.* "Show me all open bugs" is a grep. Adequate when the codebase is familiar; friction for newcomers.
+
+*Discoverability mismatch.* New team members expect issues in GitHub Issues or a project management tool. The `docs/issues/` convention requires explicit onboarding.
+
+**The honest framing:**
+
+This is the ADR (Architecture Decision Record) pattern applied to issue tracking — treating issues as first-class versioned artifacts rather than ephemeral tickets. The trade-off is that external trackers optimize for collaboration features (assignments, notifications, integrations) at the cost of co-location. This project makes the opposite trade, and at solo or small-team scale with an AI pair, it is the right one.
+
+If the team grows past three or four contributors, the counter and README conflicts will motivate tooling: a script that reads the highest existing issue number rather than a single counter file, and a generated index rather than a hand-maintained one.
+
 ---
 
 ## 3. Failure Modes
