@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 161 (see `counter`)
+**Next issue number:** 167 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -32,25 +32,24 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
 | [#15](015-stats-map-tradeoff.md) | Document `stats: map()` tradeoffs for entity stats | `architecture` | low |
-| [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` | low |
 | [#24](024-grid-data-jsonb.md) | Consolidate grid_tiles rows into JSONB column | `architecture` `rendering` | low |
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#121](121-spectator-membership-model.md) | Campaign membership: spectator role and invite flow | `architecture` `gameplay` | low |
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
 | [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` | low |
 | [#124](124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | `rendering` `ui` `architecture` | low |
-| [#138](138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | `rendering` `bug` | low |
-| [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
 | [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
 | [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
 | [#152](152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | `architecture` `rules` `gameplay` | medium |
-| [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` | medium |
-| [#155](155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | `rendering` `architecture` | low |
 | [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` | medium |
 | [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
 | [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
 | [#160](160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | `ui` `rendering` `architecture` | medium |
+| [#162](162-engine-phase0-namespace-cleanup.md) | Engine decomposition Phase 0 — namespace cleanup (RuleModifier move, Events split) | `architecture` | low |
+| [#163](163-engine-phase1-ruleset-state-field.md) | Engine decomposition Phase 1 — `ruleset_state: term()` opaque field in Engine.State | `architecture` | medium |
+| [#164](164-lobby-live-test-coverage.md) | LobbyLive test coverage — character assignment, readiness gate, session start | `ops` `ui` | medium |
+| [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
 
 ---
 
@@ -95,6 +94,12 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` |
+| [#166](166-confidentiality-enforcement-test.md) | Confidentiality enforcement — assert player subscriber cannot receive `:dm_only` events | `security` `architecture` `ops` |
+| [#161](161-freeform-dice-tray.md) | Freeform dice tray — player-initiated multi-die roll | `gameplay` `ui` `rendering` |
+| [#21](021-dice-roll-cycling-faces.md) | Dice roll shows final face during flight instead of cycling faces | `gameplay` `rendering` |
+| [#140](140-invert-scroll-wheel-zoom.md) | Invert scroll wheel zoom direction | `ui` `rendering` |
+| [#138](138-stray-active-entity-indicator.md) | Stray yellow circle on active entity indicator | `rendering` `bug` |
 | [#159](159-condition-badge-overlay.md) | Condition badge overlay on entity tokens | `rendering` `gameplay` `ui` |
 | [#144](144-movement-confirmation-ui-gate.md) | Movement confirmation UI gate | `ui` `gameplay` `rendering` |
 | [#125](125-tile-decoration-field-and-rendering.md) | Tile decoration field and rendering | `architecture` `rendering` |
@@ -105,6 +110,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#139](139-dm-cannot-control-orphaned-pc.md) | DM cannot control orphaned PC — no action bar shown | `gameplay` `ui` `bug` |
 | [#142](142-victory-defeat-scene-phases.md) | Victory and defeat scene phases + auto-trigger | `architecture` `gameplay` `rules` |
 | [#132](132-scene-entity-appearance-catalogue-and-seeds.md) | Scene entity appearance catalogue and dev seed coverage | `gameplay` `rendering` `architecture` |
+| [#155](155-composable-entity-appearance-pipeline.md) | Composable entity appearance pipeline — archetype render system v1 | `rendering` `architecture` |
 | [#154](154-dm-panel-redesign.md) | DM panel redesign — right panel DM tab entity catalog + intervention modal | `ui` `gameplay` `architecture` |
 | [#137](137-right-panel-event-feed.md) | Right panel shell + player event feed + active links | `ui` `gameplay` `architecture` |
 | [#136](136-event-visibility-and-dm-reveal.md) | Event visibility taxonomy + LogEntryRevealed / LogEntryHidden event structs | `architecture` `gameplay` `ui` |

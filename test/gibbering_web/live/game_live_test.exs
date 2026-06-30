@@ -7,6 +7,7 @@ defmodule GibberingWeb.GameLiveTest do
   import Gibbering.GameFixtures
   import Gibbering.AccountsFixtures
   import Gibbering.CharactersFixtures
+  import GibberingWeb.SVGAssertions
 
   import Ecto.Query, only: [from: 2]
 
@@ -120,6 +121,22 @@ defmodule GibberingWeb.GameLiveTest do
       polygon_count = html |> String.split("<polygon") |> length() |> Kernel.-(1)
       assert polygon_count >= 25
     end
+
+    test "active turn indicator is absent in lobby phase", %{conn: conn} do
+      {view, _game_id} = mount_game(conn)
+      html = render(view)
+      # SpriteCompositor selection-ring must not appear before combat starts.
+      refute_selection_ring(html)
+      # Active-turn dashed ring must also be absent.
+      refute html =~ ~s(data-highlight-type="active-turn")
+    end
+
+    test "active turn indicator appears in in_combat phase", %{conn: conn} do
+      {view, game_id} = mount_game(conn)
+      SceneServer.force_transition_phase(game_id, :in_combat)
+      html = render(view)
+      assert_selection_ring(html)
+    end
   end
 
   describe "select_entity event" do
@@ -134,7 +151,7 @@ defmodule GibberingWeb.GameLiveTest do
 
       html = render(view)
       # Move overlay only appears after explicit activate_move, not on entity select.
-      refute html =~ "phx-click=\"move\""
+      refute_move_overlay(html)
     end
   end
 
@@ -150,13 +167,13 @@ defmodule GibberingWeb.GameLiveTest do
       view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='activate_move']") |> render_click()
 
-      assert render(view) =~ "phx-click=\"move\""
+      assert_move_overlay(render(view))
 
       # Move one tile — hero has 30ft speed so 25ft remains. Overlay should refresh.
       view |> element("[phx-click='move'][phx-value-x='0'][phx-value-y='0']") |> render_click()
 
       html = render(view)
-      assert html =~ "phx-click=\"move\""
+      assert_move_overlay(html)
     end
   end
 
@@ -222,7 +239,7 @@ defmodule GibberingWeb.GameLiveTest do
       view |> element("[phx-click='end_turn']") |> render_click()
 
       html = render(view)
-      refute html =~ "phx-click=\"move\""
+      refute_move_overlay(html)
     end
   end
 
@@ -819,14 +836,13 @@ defmodule GibberingWeb.GameLiveTest do
       patch_tile_decoration(game_id, 1, 3, "bones")
       start_supervised!({SceneServer, game_id})
       {:ok, _view, html} = live(conn, "/game/#{game_id}")
-      # bones sprite uses fill="#d8d0b0" for skull and bone elements
-      assert html =~ ~s(fill="#d8d0b0")
+      assert_decoration(html, "bones")
     end
 
     test "tile with nil decoration renders no decoration SVG", %{conn: conn} do
       {view, _game_id} = mount_game(conn)
       # default fixture tiles have no decorations
-      refute render(view) =~ ~s(fill="#d8d0b0")
+      refute_decoration(render(view), "bones")
     end
 
     test "tile with 'dead_tree' decoration renders tree SVG", %{conn: conn} do
@@ -837,8 +853,7 @@ defmodule GibberingWeb.GameLiveTest do
       patch_tile_decoration(game_id, 0, 0, "dead_tree")
       start_supervised!({SceneServer, game_id})
       {:ok, _view, html} = live(conn, "/game/#{game_id}")
-      # dead_tree sprite uses fill="#4a3018" for the trunk and branches
-      assert html =~ ~s(fill="#4a3018")
+      assert_decoration(html, "dead_tree")
     end
   end
 
@@ -855,15 +870,15 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # No overlay before selecting the entity
-      refute render(view) =~ "phx-click=\"move\""
+      refute_move_overlay(render(view))
 
       # Select entity — still no overlay
       view |> element("#entity-#{hero_id}") |> render_click()
-      refute render(view) =~ "phx-click=\"move\""
+      refute_move_overlay(render(view))
 
       # Click Move — overlay appears
       view |> element("[phx-click='activate_move']") |> render_click()
-      assert render(view) =~ "phx-click=\"move\""
+      assert_move_overlay(render(view))
     end
 
     test "Escape cancels the move overlay without consuming movement", %{conn: conn} do
@@ -873,12 +888,12 @@ defmodule GibberingWeb.GameLiveTest do
 
       view |> element("#entity-#{hero_id}") |> render_click()
       view |> element("[phx-click='activate_move']") |> render_click()
-      assert render(view) =~ "phx-click=\"move\""
+      assert_move_overlay(render(view))
 
       # Escape key fires escape_pressed — overlay should clear
       render_keydown(view, "escape_pressed", %{"key" => "Escape"})
 
-      refute render(view) =~ "phx-click=\"move\""
+      refute_move_overlay(render(view))
 
       # Movement was not consumed
       state_after = SceneServer.get_state(game_id)
@@ -895,8 +910,8 @@ defmodule GibberingWeb.GameLiveTest do
       view |> element("[phx-click='activate_move']") |> render_click()
 
       html = render(view)
-      # Normal terrain tiles render with green overlay fill
-      assert html =~ "rgba(74,222,128"
+      # Normal terrain tiles render with green move overlay polygons
+      assert_move_overlay(html)
     end
 
     test "move overlay tiles include a ft cost tooltip", %{conn: conn} do
@@ -913,6 +928,7 @@ defmodule GibberingWeb.GameLiveTest do
 
     test "movement_exhausted badge appears when movement_remaining is 0", %{conn: conn} do
       {view, game_id} = mount_game(conn)
+      SceneServer.force_transition_phase(game_id, :in_combat)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
 
@@ -930,8 +946,115 @@ defmodule GibberingWeb.GameLiveTest do
       end)
 
       html = render(view)
-      # Badge uses a red circle — check for the fill color
-      assert html =~ ~s(fill="#ef4444")
+      assert html =~ ~s(data-movement-badge)
+    end
+  end
+
+  describe "event confidentiality" do
+    test "player feed does not render :dm_only HP adjustment events", %{conn: conn} do
+      dm_user = register_user()
+      player_user = register_user()
+      game_id = insert_campaign(%{dm_id: dm_user.id})
+      Campaigns.join_campaign(game_id, player_user.id)
+      start_supervised!({SceneServer, game_id})
+
+      player_conn = log_in_user(conn, player_user)
+      {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero_hp = state.entities[hero_id].hp
+
+      # HPAdjusted defaults to visibility: :dm_only
+      SceneServer.dm_adjust_hp(game_id, hero_id, -3)
+
+      html = render(player_view)
+      refute html =~ "HP: #{hero_hp} →"
+      refute html =~ "→ #{hero_hp - 3}"
+    end
+
+    test "DM feed shows :dm_only HP adjustment events", %{conn: conn} do
+      {dm_view, game_id} = mount_dm_game(conn)
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero_hp = state.entities[hero_id].hp
+
+      SceneServer.dm_adjust_hp(game_id, hero_id, -3)
+
+      assert render(dm_view) =~ "HP: #{hero_hp} → #{hero_hp - 3}"
+    end
+  end
+
+  describe "role-gating" do
+    test "DM sees exact HP values; player sees bucket label only", %{conn: conn} do
+      dm_user = register_user()
+      player_user = register_user()
+      game_id = insert_campaign(%{dm_id: dm_user.id})
+      Campaigns.join_campaign(game_id, dm_user.id)
+      Campaigns.join_campaign(game_id, player_user.id)
+      start_supervised!({SceneServer, game_id})
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero = state.entities[hero_id]
+
+      dm_conn = log_in_user(build_conn(), dm_user)
+      player_conn = log_in_user(conn, player_user)
+
+      {:ok, dm_view, _} = live(dm_conn, "/game/#{game_id}")
+      {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
+
+      assert_hp_exact(render(dm_view), hero_id, hero.hp, hero.max_hp)
+      refute_hp_exact(render(player_view), hero_id)
+    end
+
+    test "player HP bucket label reflects health fraction", %{conn: conn} do
+      dm_user = register_user()
+      player_user = register_user()
+      game_id = insert_campaign(%{dm_id: dm_user.id})
+      Campaigns.join_campaign(game_id, dm_user.id)
+      Campaigns.join_campaign(game_id, player_user.id)
+      start_supervised!({SceneServer, game_id})
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+
+      player_conn = log_in_user(conn, player_user)
+      {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
+
+      # Full health → Unscathed
+      assert_hp_bucket(render(player_view), hero_id, "Unscathed")
+    end
+  end
+
+  describe "fog of war" do
+    test "hidden entity is visible to DM but absent from player render", %{conn: conn} do
+      dm_user = register_user()
+      player_user = register_user()
+      game_id = insert_campaign(%{dm_id: dm_user.id})
+      Campaigns.join_campaign(game_id, dm_user.id)
+      Campaigns.join_campaign(game_id, player_user.id)
+      start_supervised!({SceneServer, game_id})
+
+      state = SceneServer.get_state(game_id)
+      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+
+      dm_conn = log_in_user(build_conn(), dm_user)
+      {:ok, dm_view, _} = live(dm_conn, "/game/#{game_id}")
+
+      # DM hides the entity via the DM panel
+      dm_view |> element("[phx-click='switch_tab'][phx-value-tab='dm']") |> render_click()
+
+      dm_view
+      |> element("[phx-click='dm_toggle_visibility'][phx-value-id='#{hero_id}']")
+      |> render_click()
+
+      player_conn = log_in_user(conn, player_user)
+      {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
+
+      assert_entity_visible(render(dm_view), hero_id)
+      refute_entity_visible(render(player_view), hero_id)
     end
   end
 end

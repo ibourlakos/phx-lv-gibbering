@@ -424,10 +424,13 @@ defmodule Gibbering.Engine.SceneServer do
         entity = state.entities[selected]
         cost_ft = chebyshev(entity.x, entity.y, x, y) * 5
 
+        new_facing = facing_from_delta(x - entity.x, y - entity.y, entity[:facing] || :south)
+
         moved_state =
           state
           |> put_in([Access.key(:entities), selected, :x], x)
           |> put_in([Access.key(:entities), selected, :y], y)
+          |> put_in([Access.key(:entities), selected, :facing], new_facing)
 
         after_move =
           case State.consume_movement(moved_state, selected, cost_ft) do
@@ -1212,6 +1215,12 @@ defmodule Gibbering.Engine.SceneServer do
   defp maybe_trigger_outcome(state), do: {state, []}
 
   defp chebyshev(x1, y1, x2, y2), do: max(abs(x1 - x2), abs(y1 - y2))
+
+  defp facing_from_delta(dx, _dy, _current) when dx > 0, do: :east
+  defp facing_from_delta(dx, _dy, _current) when dx < 0, do: :west
+  defp facing_from_delta(_dx, dy, _current) when dy > 0, do: :south
+  defp facing_from_delta(_dx, dy, _current) when dy < 0, do: :north
+  defp facing_from_delta(_dx, _dy, current), do: current
 
   defp broadcast_batch(state, raw_events, command) do
     now = DateTime.utc_now()

@@ -1,7 +1,8 @@
 # #21 · Dice roll shows final face during flight instead of cycling faces
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-05
+**Closed:** 2026-06-23
 **Priority:** low
 **Tags:** gameplay, rendering
 
@@ -28,5 +29,5 @@ container.innerHTML = buildDiceFaceSVG(result)
 ```
 
 **Acceptance criteria**
-- [ ] Die shows randomly cycling pip faces while tumbling in flight
-- [ ] Face snaps to the correct result pip at the moment of landing/bounce
+- [x] Die shows randomly cycling pip faces while tumbling in flight
+- [x] Face snaps to the correct result pip at the moment of landing/bounce

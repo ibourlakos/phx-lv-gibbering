@@ -1092,7 +1092,7 @@ unless Repo.get_by(Style, slug: "dst") do
     {"bandit", "default", %{"body_color" => "#6b5540"}},
     {"cultist", "default", %{"body_color" => "#4a2060"}},
     {"guard", "default", %{"body_color" => "#607890"}},
-    {"wolf", "default", %{"body_color" => "#706050"}},
+    {"wolf", "default", %{"body_color" => "#706050", "archetype" => "quadruped"}},
     {"orc", "default", %{"body_color" => "#3a6030"}},
     {"bugbear", "default", %{"body_color" => "#5a5030"}},
     {"ogre", "default", %{"body_color" => "#7a6040"}},

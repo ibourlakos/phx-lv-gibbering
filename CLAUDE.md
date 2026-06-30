@@ -43,8 +43,11 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 28 | [28-player-dice-roll-prompt-and-auto-roll.md](docs/brainstorming/28-player-dice-roll-prompt-and-auto-roll.md) | Player dice roll prompt + auto-roll preference — pending-roll state, prompt UI, per-player toggle | open |
 | 29 | [29-spinoff-plans-1-6.md](docs/brainstorming/29-spinoff-plans-1-6.md) | Spinoff game mode concepts — Plans 1–6 (Autobattler, Darkest Dungeon, Deckbuilder, Terrain Wrangling, Co-op Raid, Roguelike Tower) | open |
 | 30 | [30-spinoff-plan-7-expedition-chronicle.md](docs/brainstorming/30-spinoff-plan-7-expedition-chronicle.md) | Spinoff Plan 7 — The Expedition Chronicle: structured objective-based adventure mode with Rift Stability, Leader role, Paragon Ranks, Chronicle narration | open |
+| 31 | [31-freeform-dice-tray.md](docs/brainstorming/31-freeform-dice-tray.md) | Freeform dice tray — player-initiated multi-die roll, die picker UI, sequential stagger animation, always-public event feed | open |
+| 32 | [32-gibbering-duels-concept.md](docs/brainstorming/32-gibbering-duels-concept.md) | GibberingDuels concept game — engine decomposition proof, minimal 2-player card-placement game implementing GibberingEngine.Ruleset with zero D&D imports | open |
+| 33 | [33-visual-regression-testing.md](docs/brainstorming/33-visual-regression-testing.md) | Visual regression testing strategy — Playwright screenshots, SVG-to-PNG pixel diffing, property-based geometric invariants; trade-off comparison for five approaches | open |
 
-Next brainstorm number: 31 (see `docs/brainstorming/counter`).
+Next brainstorm number: 34 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 

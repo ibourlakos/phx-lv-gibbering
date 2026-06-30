@@ -1,6 +1,7 @@
 # #155 · Composable entity appearance pipeline — archetype render system v1
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-21
 **Priority:** low
 **Tags:** rendering, architecture
 
@@ -24,11 +25,11 @@ current placeholder shape rendering for entities.
 structure interiors (deferred with #158), procedural swarm clusters.
 
 **Acceptance criteria**
-- [ ] `AppearanceArchetype` struct defined with socket map and facing variants
-- [ ] Render function resolves entity archetype → layer list for given facing direction
-- [ ] West facing uses East asset with `transform="scaleX(-1)"`
-- [ ] Layer order changes correctly per facing (shield example)
-- [ ] Biped-upright entities render at 2–2.5× tile height
-- [ ] Size category footprint scaling applied (large = 2×2 tile origin)
-- [ ] At least one non-humanoid archetype (quadruped or insectoid) rendered in dev seeds
-- [ ] `mix precommit` passes
+- [x] `AppearanceArchetype` struct defined with socket map and facing variants
+- [x] Render function resolves entity archetype → layer list for given facing direction
+- [x] West facing uses East asset with `transform="scaleX(-1)"`
+- [x] Layer order changes correctly per facing (shield example)
+- [x] Biped-upright entities render at 2–2.5× tile height
+- [x] Size category footprint scaling applied (large = 2×2 tile origin)
+- [x] At least one non-humanoid archetype (quadruped or insectoid) rendered in dev seeds
+- [x] `mix precommit` passes

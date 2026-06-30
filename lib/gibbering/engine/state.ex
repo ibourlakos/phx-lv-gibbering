@@ -89,6 +89,7 @@ defmodule Gibbering.Engine.State do
           class: e.class || "fighter",
           x: e.x,
           y: e.y,
+          facing: :south,
           hp: e.hp,
           max_hp: e.max_hp,
           level: e.level,

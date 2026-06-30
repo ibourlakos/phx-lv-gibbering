@@ -92,7 +92,8 @@ defmodule Gibbering.Engine.ConditionBadge do
     cx = bx + 4
     cy = by + 4
 
-    ~s(<circle cx="#{cx}" cy="#{cy}" r="4" fill="#{color}"/>\n) <> badge_icon(cond_id, bx, by)
+    ~s(<circle cx="#{cx}" cy="#{cy}" r="4" fill="#{color}" data-condition="#{cond_id}"/>\n) <>
+      badge_icon(cond_id, bx, by)
   end
 
   defp render_overflow(n, bx, by) do
