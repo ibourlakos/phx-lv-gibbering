@@ -2,7 +2,8 @@ defmodule Gibbering.Events.EventFeedProjectionTest do
   use ExUnit.Case, async: true
 
   alias Gibbering.Events.EventFeedProjection
-  alias Gibbering.Events.Scene.{AttackResolved, DamageDealt, LogEntryHidden, LogEntryRevealed}
+  alias Gibbering.Events.Engine.{LogEntryHidden, LogEntryRevealed}
+  alias Gibbering.Events.DnD5e.{AttackResolved, DamageDealt}
 
   defp attack(id, visibility \\ :public) do
     %AttackResolved{

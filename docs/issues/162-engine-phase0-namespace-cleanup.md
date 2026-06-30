@@ -1,7 +1,8 @@
 # #162 · Engine decomposition Phase 0 — namespace cleanup
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-29
+**Closed:** 2026-06-30
 **Priority:** low
 **Tags:** architecture
 
@@ -20,7 +21,7 @@ Derived from the engine decomposition plan in [`docs/architecture/engine-decompo
 3. Add `@moduledoc` to all event structs. Each doc must state: which layer the event belongs to (engine or D&D), who emits it, and what it signals.
 
 **Acceptance criteria**
-- [ ] `Gibbering.Engine.RuleModifier` exists; old module removed; all callers updated
-- [ ] Generic events live under `Gibbering.Events.Engine.*`; D&D events under `Gibbering.Events.DnD5e.*`; old aliases removed
-- [ ] All event struct modules have a `@moduledoc` explaining layer, emitter, and signal
-- [ ] `mix precommit` passes
+- [x] `Gibbering.Engine.RuleModifier` exists; old module removed; all callers updated
+- [x] Generic events live under `Gibbering.Events.Engine.*`; D&D events under `Gibbering.Events.DnD5e.*`; old aliases removed
+- [x] All event struct modules have a `@moduledoc` explaining layer, emitter, and signal
+- [x] `mix precommit` passes (978 tests, 0 failures)

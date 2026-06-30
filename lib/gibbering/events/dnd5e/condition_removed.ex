@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.SessionEnded do
+defmodule Gibbering.Events.DnD5e.ConditionRemoved do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), when a 5e condition is removed from an entity.
+  Signals: condition_id was removed from entity; reason is a ruleset atom
+  (e.g. :duration_expired, :dispelled, :saving_throw_success).
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,7 +19,10 @@ defmodule Gibbering.Events.Scene.SessionEnded do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          campaign_id: String.t()
+          entity_id: String.t(),
+          entity_name: String.t(),
+          condition_id: atom(),
+          reason: atom()
         }
 
   defstruct [
@@ -21,8 +31,11 @@ defmodule Gibbering.Events.Scene.SessionEnded do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :campaign_id,
-    event_type: :session_ended,
+    :entity_id,
+    :entity_name,
+    :condition_id,
+    :reason,
+    event_type: :condition_removed,
     schema_version: @current_version,
     visibility: :public
   ]

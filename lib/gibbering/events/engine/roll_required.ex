@@ -1,7 +1,16 @@
-defmodule Gibbering.Events.Scene.ConditionRemoved do
+defmodule Gibbering.Events.Engine.RollRequired do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when the engine requires a player-supplied die roll.
+  Signals: entity_id must roll dice_expression for roll_type; context_label is a
+  human-readable description for the UI prompt. Roll types are ruleset-defined atoms.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
+
+  @type roll_type :: :attack | :damage | :saving_throw | :ability_check | :initiative
 
   @type t :: %__MODULE__{
           event_id: String.t(),
@@ -12,10 +21,10 @@ defmodule Gibbering.Events.Scene.ConditionRemoved do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          entity_id: String.t(),
-          entity_name: String.t(),
-          condition_id: atom(),
-          reason: atom()
+          entity_id: integer(),
+          roll_type: roll_type(),
+          dice_expression: String.t(),
+          context_label: String.t()
         }
 
   defstruct [
@@ -25,10 +34,10 @@ defmodule Gibbering.Events.Scene.ConditionRemoved do
     :causation_id,
     :sequence_number,
     :entity_id,
-    :entity_name,
-    :condition_id,
-    :reason,
-    event_type: :condition_removed,
+    :roll_type,
+    :dice_expression,
+    :context_label,
+    event_type: :roll_required,
     schema_version: @current_version,
     visibility: :public
   ]

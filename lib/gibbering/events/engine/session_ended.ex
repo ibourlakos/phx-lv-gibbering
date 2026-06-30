@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.SpellCast do
+defmodule Gibbering.Events.Engine.SessionEnded do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when the DM ends the session.
+  Signals: the game session for campaign_id has terminated; all subscribers should
+  clean up and redirect to the post-session view.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,12 +19,7 @@ defmodule Gibbering.Events.Scene.SpellCast do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          caster_id: String.t(),
-          caster_name: String.t(),
-          spell_key: atom(),
-          target_id: String.t() | nil,
-          target_name: String.t() | nil,
-          outcome: atom()
+          campaign_id: String.t()
         }
 
   defstruct [
@@ -26,13 +28,8 @@ defmodule Gibbering.Events.Scene.SpellCast do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :caster_id,
-    :caster_name,
-    :spell_key,
-    :target_id,
-    :target_name,
-    :outcome,
-    event_type: :spell_cast,
+    :campaign_id,
+    event_type: :session_ended,
     schema_version: @current_version,
     visibility: :public
   ]

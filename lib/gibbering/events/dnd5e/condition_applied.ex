@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.LogEntryHidden do
+defmodule Gibbering.Events.DnD5e.ConditionApplied do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), when a 5e condition is applied to an entity.
+  Signals: condition_id (e.g. :blinded, :prone) was applied to entity from source_id,
+  with optional duration in rounds. Conditions are defined in the D&D 5e SRD.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,8 +19,11 @@ defmodule Gibbering.Events.Scene.LogEntryHidden do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          original_event_id: String.t(),
-          hidden_at: DateTime.t()
+          entity_id: String.t(),
+          entity_name: String.t(),
+          condition_id: atom(),
+          source_id: String.t(),
+          duration: non_neg_integer() | nil
         }
 
   defstruct [
@@ -22,11 +32,14 @@ defmodule Gibbering.Events.Scene.LogEntryHidden do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :original_event_id,
-    :hidden_at,
-    event_type: :log_entry_hidden,
+    :entity_id,
+    :entity_name,
+    :condition_id,
+    :source_id,
+    :duration,
+    event_type: :condition_applied,
     schema_version: @current_version,
-    visibility: :dm_only
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

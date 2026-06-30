@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.HPAdjusted do
+defmodule Gibbering.Events.Engine.LogEntryHidden do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when the DM hides a previously visible log entry.
+  Signals: the event with original_event_id has been demoted to :dm_only visibility;
+  player feeds should remove it.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +19,8 @@ defmodule Gibbering.Events.Scene.HPAdjusted do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          entity_id: String.t(),
-          entity_name: String.t(),
-          old_hp: integer(),
-          new_hp: integer(),
-          reason: atom()
+          original_event_id: String.t(),
+          hidden_at: DateTime.t()
         }
 
   defstruct [
@@ -25,12 +29,9 @@ defmodule Gibbering.Events.Scene.HPAdjusted do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :entity_id,
-    :entity_name,
-    :old_hp,
-    :new_hp,
-    :reason,
-    event_type: :hp_adjusted,
+    :original_event_id,
+    :hidden_at,
+    event_type: :log_entry_hidden,
     schema_version: @current_version,
     visibility: :dm_only
   ]

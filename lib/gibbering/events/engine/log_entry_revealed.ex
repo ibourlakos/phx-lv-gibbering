@@ -1,9 +1,14 @@
-defmodule Gibbering.Events.Scene.RollRequired do
+defmodule Gibbering.Events.Engine.LogEntryRevealed do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when the DM reveals a previously dm_only log entry.
+  Signals: the event with original_event_id has been promoted to :revealed visibility;
+  player feeds should now include it.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
-
-  @type roll_type :: :attack | :damage | :saving_throw | :ability_check | :initiative
 
   @type t :: %__MODULE__{
           event_id: String.t(),
@@ -14,10 +19,8 @@ defmodule Gibbering.Events.Scene.RollRequired do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          entity_id: integer(),
-          roll_type: roll_type(),
-          dice_expression: String.t(),
-          context_label: String.t()
+          original_event_id: String.t(),
+          revealed_at: DateTime.t()
         }
 
   defstruct [
@@ -26,13 +29,11 @@ defmodule Gibbering.Events.Scene.RollRequired do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :entity_id,
-    :roll_type,
-    :dice_expression,
-    :context_label,
-    event_type: :roll_required,
+    :original_event_id,
+    :revealed_at,
+    event_type: :log_entry_revealed,
     schema_version: @current_version,
-    visibility: :public
+    visibility: :dm_only
   ]
 
   @impl Gibbering.Events.Upcaster

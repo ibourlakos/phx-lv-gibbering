@@ -1,4 +1,10 @@
-defmodule Gibbering.Events.Scene.ResourceConsumed do
+defmodule Gibbering.Events.Engine.ContainerOpened do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when an actor opens a container entity.
+  Signals: actor_id opened container_id; the container's inventory is now accessible to the actor.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +18,8 @@ defmodule Gibbering.Events.Scene.ResourceConsumed do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          entity_id: String.t(),
-          entity_name: String.t(),
-          resource_key: atom(),
-          amount_used: pos_integer(),
-          remaining: non_neg_integer()
+          actor_id: integer(),
+          container_id: integer()
         }
 
   defstruct [
@@ -25,12 +28,9 @@ defmodule Gibbering.Events.Scene.ResourceConsumed do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :entity_id,
-    :entity_name,
-    :resource_key,
-    :amount_used,
-    :remaining,
-    event_type: :resource_consumed,
+    :actor_id,
+    :container_id,
+    event_type: :container_opened,
     schema_version: @current_version,
     visibility: :public
   ]

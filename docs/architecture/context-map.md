@@ -68,17 +68,17 @@ All event-typed edges (E) enumerate the exact topics, publishers, and event stru
 
 | Publisher | Event type | Struct |
 |---|---|---|
-| `Engine.SceneServer` | Entity moved | `Gibbering.Events.Scene.EntityMoved` |
-| `Engine.SceneServer` | Turn advanced | `Gibbering.Events.Scene.TurnAdvanced` |
-| `Engine.SceneServer` | Attack resolved | `Gibbering.Events.Scene.AttackResolved` |
-| `Engine.SceneServer` | Damage dealt | `Gibbering.Events.Scene.DamageDealt` |
-| `Engine.SceneServer` | Entity died | `Gibbering.Events.Scene.EntityDied` |
-| `Engine.SceneServer` | Condition applied | `Gibbering.Events.Scene.ConditionApplied` |
-| `Engine.SceneServer` | Condition removed | `Gibbering.Events.Scene.ConditionRemoved` |
-| `Engine.SceneServer` | Session started | `Gibbering.Events.Scene.SessionStarted` |
-| `Engine.SceneServer` | Session ended | `Gibbering.Events.Scene.SessionEnded` |
-| `Engine.SceneServer` | DM override applied | `Gibbering.Events.Scene.DmOverrideApplied` |
-| `Engine.SceneServer` | Spell cast | `Gibbering.Events.Scene.SpellCast` |
+| `Engine.SceneServer` | Entity moved | `Gibbering.Events.Engine.EntityMoved` |
+| `Engine.SceneServer` | Turn advanced | `Gibbering.Events.Engine.TurnAdvanced` |
+| `Engine.SceneServer` | Attack resolved | `Gibbering.Events.DnD5e.AttackResolved` |
+| `Engine.SceneServer` | Damage dealt | `Gibbering.Events.DnD5e.DamageDealt` |
+| `Engine.SceneServer` | Entity died | `Gibbering.Events.Engine.EntityDied` |
+| `Engine.SceneServer` | Condition applied | `Gibbering.Events.DnD5e.ConditionApplied` |
+| `Engine.SceneServer` | Condition removed | `Gibbering.Events.DnD5e.ConditionRemoved` |
+| `Engine.SceneServer` | Session started | `Gibbering.Events.Engine.SessionStarted` |
+| `Engine.SceneServer` | Session ended | `Gibbering.Events.Engine.SessionEnded` |
+| `Engine.SceneServer` | DM override applied | `Gibbering.Events.Engine.DmOverrideApplied` |
+| `Engine.SceneServer` | Spell cast | `Gibbering.Events.DnD5e.SpellCast` |
 
 All are wrapped in `%Gibbering.Events.EventBatch{}` before broadcast.
 
@@ -125,7 +125,7 @@ insulate its own internal model from upstream vocabulary changes.
 
 | Consumer | Upstream | ACL status | Notes |
 |---|---|---|---|
-| `GibberingWeb.GameLive` | `Gibbering.Events.Scene.*` | Informal | `handle_info(%EventBatch{events: e}, socket)` projects events into assigns. Not yet a standalone projection module — see #113 |
+| `GibberingWeb.GameLive` | `Gibbering.Events.Engine.*` | Informal | `handle_info(%EventBatch{events: e}, socket)` projects events into assigns. Not yet a standalone projection module — see #113 |
 | `GibberingWeb.Live.Admin.CampaignMonitoringPage` | `"system:admin"` metrics | None | Receives raw maps; no translation layer. Low risk while this is an internal admin page only |
 
 When #113 (CQRS read model formalization) is implemented, each event subscriber should have an

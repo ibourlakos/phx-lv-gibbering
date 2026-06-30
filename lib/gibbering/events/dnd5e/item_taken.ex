@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.PhaseTransitioned do
+defmodule Gibbering.Events.DnD5e.ItemTaken do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), when an actor takes an item from a container.
+  Signals: actor took quantity of item_key (instance_id) from container_id.
+  Item keys, quantities, and container inventory are D&D 5e inventory concepts.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,8 +19,11 @@ defmodule Gibbering.Events.Scene.PhaseTransitioned do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          from_phase: atom(),
-          to_phase: atom()
+          actor_id: integer(),
+          container_id: integer(),
+          instance_id: String.t(),
+          item_key: String.t(),
+          quantity: pos_integer()
         }
 
   defstruct [
@@ -22,9 +32,12 @@ defmodule Gibbering.Events.Scene.PhaseTransitioned do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :from_phase,
-    :to_phase,
-    event_type: :phase_transitioned,
+    :actor_id,
+    :container_id,
+    :instance_id,
+    :item_key,
+    :quantity,
+    event_type: :item_taken,
     schema_version: @current_version,
     visibility: :public
   ]

@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.ItemTaken do
+defmodule Gibbering.Events.DnD5e.SpellCast do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), when a caster successfully casts a spell.
+  Signals: caster cast spell_key at target (may be nil for self/area spells); outcome
+  is a ruleset-defined atom (e.g. :hit, :miss, :saved). Spells are a D&D 5e SRD concept.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +19,12 @@ defmodule Gibbering.Events.Scene.ItemTaken do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          actor_id: integer(),
-          container_id: integer(),
-          instance_id: String.t(),
-          item_key: String.t(),
-          quantity: pos_integer()
+          caster_id: String.t(),
+          caster_name: String.t(),
+          spell_key: atom(),
+          target_id: String.t() | nil,
+          target_name: String.t() | nil,
+          outcome: atom()
         }
 
   defstruct [
@@ -25,12 +33,13 @@ defmodule Gibbering.Events.Scene.ItemTaken do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :actor_id,
-    :container_id,
-    :instance_id,
-    :item_key,
-    :quantity,
-    event_type: :item_taken,
+    :caster_id,
+    :caster_name,
+    :spell_key,
+    :target_id,
+    :target_name,
+    :outcome,
+    event_type: :spell_cast,
     schema_version: @current_version,
     visibility: :public
   ]

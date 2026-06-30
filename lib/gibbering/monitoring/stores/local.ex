@@ -19,7 +19,7 @@ defmodule Gibbering.Monitoring.Stores.Local do
   alias Gibbering.{Repo, PubSub}
   alias Gibbering.EventBus
   alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Scene.SessionEnded
+  alias Gibbering.Events.Engine.SessionEnded
   alias Gibbering.Monitoring.CampaignMetricSnapshot
 
   @ets_table :gibbering_metrics_buffer

@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.DamageDealt do
+defmodule Gibbering.Events.Engine.HPAdjusted do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, whenever an entity's HP changes for any reason.
+  Signals: entity HP moved from old_hp to new_hp; reason is a caller-supplied atom
+  (e.g. :damage, :healing, :temp_hp). Visibility is dm_only to protect player HP information.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +19,11 @@ defmodule Gibbering.Events.Scene.DamageDealt do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          target_id: String.t(),
-          target_name: String.t(),
-          amount: non_neg_integer(),
-          damage_type: atom(),
-          new_hp: integer()
+          entity_id: String.t(),
+          entity_name: String.t(),
+          old_hp: integer(),
+          new_hp: integer(),
+          reason: atom()
         }
 
   defstruct [
@@ -25,14 +32,14 @@ defmodule Gibbering.Events.Scene.DamageDealt do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :target_id,
-    :target_name,
-    :amount,
-    :damage_type,
+    :entity_id,
+    :entity_name,
+    :old_hp,
     :new_hp,
-    event_type: :damage_dealt,
+    :reason,
+    event_type: :hp_adjusted,
     schema_version: @current_version,
-    visibility: :public
+    visibility: :dm_only
   ]
 
   @impl Gibbering.Events.Upcaster

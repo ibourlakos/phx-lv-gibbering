@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.LogEntryRevealed do
+defmodule Gibbering.Events.Engine.ResourceConsumed do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when an entity spends a tracked resource.
+  Signals: entity spent amount_used of resource_key; remaining units left after the spend.
+  Resource keys are ruleset-defined (e.g. :spell_slots_1, :ki_points).
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,8 +19,11 @@ defmodule Gibbering.Events.Scene.LogEntryRevealed do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          original_event_id: String.t(),
-          revealed_at: DateTime.t()
+          entity_id: String.t(),
+          entity_name: String.t(),
+          resource_key: atom(),
+          amount_used: pos_integer(),
+          remaining: non_neg_integer()
         }
 
   defstruct [
@@ -22,11 +32,14 @@ defmodule Gibbering.Events.Scene.LogEntryRevealed do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :original_event_id,
-    :revealed_at,
-    event_type: :log_entry_revealed,
+    :entity_id,
+    :entity_name,
+    :resource_key,
+    :amount_used,
+    :remaining,
+    event_type: :resource_consumed,
     schema_version: @current_version,
-    visibility: :dm_only
+    visibility: :public
   ]
 
   @impl Gibbering.Events.Upcaster

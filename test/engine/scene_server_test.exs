@@ -8,12 +8,11 @@ defmodule Gibbering.Engine.SceneServerTest do
   alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Events.EventBatch
 
-  alias Gibbering.Events.Scene.{
+  alias Gibbering.Events.Engine.{
     EntityMoved,
     PhaseTransitioned,
     RollRequired,
-    SessionEnded,
-    TurnAdvanced
+    SessionEnded
   }
 
   # Start a SceneServer backed by a real (sandbox) DB campaign.

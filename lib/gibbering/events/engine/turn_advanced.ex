@@ -1,4 +1,10 @@
-defmodule Gibbering.Events.Scene.AttackResolved do
+defmodule Gibbering.Events.Engine.TurnAdvanced do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, after the active entity's turn ends and the next begins.
+  Signals: the initiative order has advanced; from_entity's turn is over, to_entity's turn starts.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,12 +18,11 @@ defmodule Gibbering.Events.Scene.AttackResolved do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          attacker_id: String.t(),
-          attacker_name: String.t(),
-          target_id: String.t(),
-          target_name: String.t(),
-          roll: non_neg_integer(),
-          hit?: boolean()
+          from_entity_id: String.t(),
+          from_entity_name: String.t(),
+          to_entity_id: String.t(),
+          to_entity_name: String.t(),
+          round_number: pos_integer()
         }
 
   defstruct [
@@ -26,13 +31,12 @@ defmodule Gibbering.Events.Scene.AttackResolved do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :attacker_id,
-    :attacker_name,
-    :target_id,
-    :target_name,
-    :roll,
-    :hit?,
-    event_type: :attack_resolved,
+    :from_entity_id,
+    :from_entity_name,
+    :to_entity_id,
+    :to_entity_name,
+    :round_number,
+    event_type: :turn_advanced,
     schema_version: @current_version,
     visibility: :public
   ]

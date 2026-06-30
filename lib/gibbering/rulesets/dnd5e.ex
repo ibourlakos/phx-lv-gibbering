@@ -8,7 +8,8 @@ defmodule Gibbering.Rulesets.DnD5e do
 
   @behaviour Gibbering.Ruleset
 
-  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, RuleModifier, Stats}
+  alias Gibbering.Engine.RuleModifier
+  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, Stats}
 
   # SRD spell slot table for full casters (Wizard, Cleric, Sorcerer, Bard, Druid).
   # Keys are character level; values are slot counts per spell level.

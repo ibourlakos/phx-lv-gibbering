@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.EntityMoved do
+defmodule Gibbering.Events.DnD5e.AttackResolved do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), after an attack roll is resolved.
+  Signals: attacker rolled against target; hit? indicates whether the attack hit.
+  This event is D&D-specific because the attack/hit resolution model is a 5e concept.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +19,12 @@ defmodule Gibbering.Events.Scene.EntityMoved do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          entity_id: String.t(),
-          entity_name: String.t(),
-          from: {non_neg_integer(), non_neg_integer()},
-          to: {non_neg_integer(), non_neg_integer()},
-          cost_ft: non_neg_integer()
+          attacker_id: String.t(),
+          attacker_name: String.t(),
+          target_id: String.t(),
+          target_name: String.t(),
+          roll: non_neg_integer(),
+          hit?: boolean()
         }
 
   defstruct [
@@ -25,12 +33,13 @@ defmodule Gibbering.Events.Scene.EntityMoved do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :entity_id,
-    :entity_name,
-    :from,
-    :to,
-    :cost_ft,
-    event_type: :entity_moved,
+    :attacker_id,
+    :attacker_name,
+    :target_id,
+    :target_name,
+    :roll,
+    :hit?,
+    event_type: :attack_resolved,
     schema_version: @current_version,
     visibility: :public
   ]

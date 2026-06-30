@@ -1,9 +1,14 @@
-defmodule Gibbering.Rulesets.DnD5e.RuleModifier do
+defmodule Gibbering.Engine.RuleModifier do
   @moduledoc """
-  A data-driven representation of a single D&D 5e rule modifier.
+  A data-driven representation of a single atomic rule modifier.
 
-  See docs/predicate-vocabulary.md for the canonical trigger, predicate,
-  and effect vocabulary that populates these fields.
+  Layer: engine (generic — no D&D concepts).
+  This struct is game-agnostic; any ruleset may produce RuleModifier values
+  and feed them through its modifier pipeline. The engine itself never
+  inspects or constructs RuleModifier structs — only ruleset code does.
+
+  See docs/architecture/predicate-vocabulary.md for the canonical trigger,
+  predicate, and effect vocabulary used by the D&D 5e ruleset.
   """
 
   @enforce_keys [:id, :name, :trigger, :predicate, :effect]

@@ -389,7 +389,7 @@ defstruct [:key, :name, :level, :school, :casting_time, :range, :components,
 
 ---
 
-### Planned: `Gibbering.Rulesets.DnD5e.RuleModifier` (issue #40)
+### `Gibbering.Engine.RuleModifier` (implemented; formerly `Rulesets.DnD5e.RuleModifier`, issue #40)
 
 The engine's rule representation — no DB, pure Elixir data:
 

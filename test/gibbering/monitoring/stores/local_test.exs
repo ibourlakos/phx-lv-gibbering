@@ -3,7 +3,7 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
 
   alias Gibbering.Monitoring.Stores.Local
   alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Scene.SessionEnded
+  alias Gibbering.Events.Engine.SessionEnded
 
   # Stores.Local uses named ETS tables. We start the GenServer directly here
   # to get fresh tables, then stop it after each test.

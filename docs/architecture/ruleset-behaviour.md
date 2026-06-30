@@ -5,7 +5,7 @@ The engine is ruleset-agnostic. `Gibbering.Ruleset` is a **behaviour** (not a pr
 
 ```elixir
 defmodule Gibbering.Ruleset do
-  @callback collect_modifiers(entity, action, state) :: [RuleModifier.t()]
+  @callback collect_modifiers(entity, action, state) :: [Gibbering.Engine.RuleModifier.t()]
   @callback initial_resources(entity) :: map()
   @callback initial_action_economy(entity) :: map()
   @callback advance_turn(entity) :: entity
@@ -16,7 +16,8 @@ end
 ```
 
 `Engine.State` holds the ruleset module as a plain field (default `Gibbering.Rulesets.DnD5e`).
-All `DnD5e.*` subsystems live under `Gibbering.Rulesets.DnD5e.*` (Stats, Spell, RuleModifier, Condition).
+All `DnD5e.*` subsystems live under `Gibbering.Rulesets.DnD5e.*` (Stats, Spell, Condition).
+`RuleModifier` is engine-generic and lives at `Gibbering.Engine.RuleModifier` (Phase 0).
 
 ## State must stay generic
 

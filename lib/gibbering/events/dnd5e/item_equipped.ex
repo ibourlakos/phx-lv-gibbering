@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.ConditionApplied do
+defmodule Gibbering.Events.DnD5e.ItemEquipped do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), when an actor equips an item to a slot.
+  Signals: actor equipped item_key instance (instance_id) to equipment slot.
+  Equipment slots and item keys are D&D 5e inventory concepts.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +19,10 @@ defmodule Gibbering.Events.Scene.ConditionApplied do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          entity_id: String.t(),
-          entity_name: String.t(),
-          condition_id: atom(),
-          source_id: String.t(),
-          duration: non_neg_integer() | nil
+          actor_id: integer(),
+          instance_id: String.t(),
+          item_key: String.t(),
+          slot: String.t()
         }
 
   defstruct [
@@ -25,12 +31,11 @@ defmodule Gibbering.Events.Scene.ConditionApplied do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :entity_id,
-    :entity_name,
-    :condition_id,
-    :source_id,
-    :duration,
-    event_type: :condition_applied,
+    :actor_id,
+    :instance_id,
+    :item_key,
+    :slot,
+    event_type: :item_equipped,
     schema_version: @current_version,
     visibility: :public
   ]

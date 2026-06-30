@@ -1,4 +1,10 @@
-defmodule Gibbering.Events.Scene.TurnAdvanced do
+defmodule Gibbering.Events.Engine.EntityMoved do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, on successful entity movement.
+  Signals: an entity has moved from one grid tile to another, at the stated movement cost.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,11 +18,11 @@ defmodule Gibbering.Events.Scene.TurnAdvanced do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          from_entity_id: String.t(),
-          from_entity_name: String.t(),
-          to_entity_id: String.t(),
-          to_entity_name: String.t(),
-          round_number: pos_integer()
+          entity_id: String.t(),
+          entity_name: String.t(),
+          from: {non_neg_integer(), non_neg_integer()},
+          to: {non_neg_integer(), non_neg_integer()},
+          cost_ft: non_neg_integer()
         }
 
   defstruct [
@@ -25,12 +31,12 @@ defmodule Gibbering.Events.Scene.TurnAdvanced do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :from_entity_id,
-    :from_entity_name,
-    :to_entity_id,
-    :to_entity_name,
-    :round_number,
-    event_type: :turn_advanced,
+    :entity_id,
+    :entity_name,
+    :from,
+    :to,
+    :cost_ft,
+    event_type: :entity_moved,
     schema_version: @current_version,
     visibility: :public
   ]

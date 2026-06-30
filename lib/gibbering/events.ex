@@ -8,7 +8,8 @@ defmodule Gibbering.Events do
 
   Sub-namespaces:
 
-  - `Gibbering.Events.Scene.*`  — scene-domain events (combat, movement, turns)
+  - `Gibbering.Events.Engine.*`  — generic engine events (movement, turns, HP, resources)
+  - `Gibbering.Events.DnD5e.*`  — D&D 5e-specific events (attacks, spells, conditions, items)
   - `Gibbering.Events.Notification.*`  — out-of-band DM/player messages
   - `Gibbering.Events.EventBatch`  — batch envelope carrying a causal event chain
 

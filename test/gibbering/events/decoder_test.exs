@@ -2,7 +2,8 @@ defmodule Gibbering.Events.DecoderTest do
   use ExUnit.Case, async: true
 
   alias Gibbering.Events.Decoder
-  alias Gibbering.Events.Scene.{DamageDealt, TurnAdvanced, SessionEnded}
+  alias Gibbering.Events.Engine.{TurnAdvanced, SessionEnded}
+  alias Gibbering.Events.DnD5e.DamageDealt
 
   defp damage_dealt_raw do
     %{

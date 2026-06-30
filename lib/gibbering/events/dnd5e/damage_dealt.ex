@@ -1,4 +1,11 @@
-defmodule Gibbering.Events.Scene.ItemEquipped do
+defmodule Gibbering.Events.DnD5e.DamageDealt do
+  @moduledoc """
+  Layer: D&D 5e ruleset.
+  Emitted by: SceneServer (via DnD5e ruleset), after damage is applied to a target.
+  Signals: target took amount damage of damage_type; new_hp is the authoritative
+  post-damage HP. Damage types (slashing, fire, etc.) are D&D 5e SRD concepts.
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,10 +19,11 @@ defmodule Gibbering.Events.Scene.ItemEquipped do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          actor_id: integer(),
-          instance_id: String.t(),
-          item_key: String.t(),
-          slot: String.t()
+          target_id: String.t(),
+          target_name: String.t(),
+          amount: non_neg_integer(),
+          damage_type: atom(),
+          new_hp: integer()
         }
 
   defstruct [
@@ -24,11 +32,12 @@ defmodule Gibbering.Events.Scene.ItemEquipped do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :actor_id,
-    :instance_id,
-    :item_key,
-    :slot,
-    event_type: :item_equipped,
+    :target_id,
+    :target_name,
+    :amount,
+    :damage_type,
+    :new_hp,
+    event_type: :damage_dealt,
     schema_version: @current_version,
     visibility: :public
   ]

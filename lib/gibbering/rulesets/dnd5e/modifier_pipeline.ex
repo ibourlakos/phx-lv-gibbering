@@ -12,7 +12,8 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   """
 
   alias Gibbering.Data.{Classes, Items, Races}
-  alias Gibbering.Rulesets.DnD5e.{Condition, Predicate, RuleModifier}
+  alias Gibbering.Engine.RuleModifier
+  alias Gibbering.Rulesets.DnD5e.{Condition, Predicate}
 
   # ---------------------------------------------------------------------------
   # collect_modifiers/3

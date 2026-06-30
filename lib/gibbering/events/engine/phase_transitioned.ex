@@ -1,4 +1,10 @@
-defmodule Gibbering.Events.Scene.ContainerOpened do
+defmodule Gibbering.Events.Engine.PhaseTransitioned do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when the scene transitions between phases.
+  Signals: the scene has moved from from_phase to to_phase (e.g. :lobby → :active, :active → :ended).
+  """
+
   @current_version 1
 
   @behaviour Gibbering.Events.Upcaster
@@ -12,8 +18,8 @@ defmodule Gibbering.Events.Scene.ContainerOpened do
           causation_id: String.t(),
           sequence_number: non_neg_integer(),
           visibility: :public | :dm_only | :revealed,
-          actor_id: integer(),
-          container_id: integer()
+          from_phase: atom(),
+          to_phase: atom()
         }
 
   defstruct [
@@ -22,9 +28,9 @@ defmodule Gibbering.Events.Scene.ContainerOpened do
     :correlation_id,
     :causation_id,
     :sequence_number,
-    :actor_id,
-    :container_id,
-    event_type: :container_opened,
+    :from_phase,
+    :to_phase,
+    event_type: :phase_transitioned,
     schema_version: @current_version,
     visibility: :public
   ]
