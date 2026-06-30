@@ -48,7 +48,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#160](160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | `ui` `rendering` `architecture` | medium |
 | [#162](162-engine-phase0-namespace-cleanup.md) | Engine decomposition Phase 0 — namespace cleanup (RuleModifier move, Events split) | `architecture` | low |
 | [#163](163-engine-phase1-ruleset-state-field.md) | Engine decomposition Phase 1 — `ruleset_state: term()` opaque field in Engine.State | `architecture` | medium |
-| [#164](164-lobby-live-test-coverage.md) | LobbyLive test coverage — character assignment, readiness gate, session start | `ops` `ui` | medium |
 | [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
 
 ---
@@ -94,6 +93,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#164](164-lobby-live-test-coverage.md) | LobbyLive test coverage — character assignment, readiness gate, session start | `ops` `ui` |
 | [#153](153-svg-testability-data-attributes-floki.md) | SVG testability — data attributes and Floki assertion layer | `ops` `architecture` `rendering` |
 | [#166](166-confidentiality-enforcement-test.md) | Confidentiality enforcement — assert player subscriber cannot receive `:dm_only` events | `security` `architecture` `ops` |
 | [#161](161-freeform-dice-tray.md) | Freeform dice tray — player-initiated multi-die roll | `gameplay` `ui` `rendering` |

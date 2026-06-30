@@ -1550,10 +1550,18 @@ defmodule GibberingWeb.GameLive do
     """
   end
 
-  def entity_sprite(assigns) do
+  def entity_sprite(%{entity: _} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
       {Phoenix.HTML.raw(Gibbering.Engine.AppearanceArchetype.render_body(@entity, @appearances))}
+    </g>
+    """
+  end
+
+  def entity_sprite(assigns) do
+    ~H"""
+    <g transform={"translate(#{@x}, #{@y})"}>
+      <rect x="8" y="8" width="48" height="48" rx="4" fill="#4a4a5a" />
     </g>
     """
   end
