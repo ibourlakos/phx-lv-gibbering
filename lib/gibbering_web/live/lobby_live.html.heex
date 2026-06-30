@@ -1,7 +1,7 @@
 <% campaign = @campaign
 heroes = Enum.filter(campaign.entities, &(&1.type == "hero"))
 me = @current_user
-is_dm = me.role in ["dm", "support"]
+is_dm = me.id == campaign.dm_id
 my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id end) %>
 
 <div class="min-h-screen bg-gray-900 text-white p-6">
@@ -274,9 +274,9 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id en
               <%= for trait <- race.traits do %>
                 <span
                   class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
-                  title={trait.description}
+                  title={trait["description"]}
                 >
-                  {trait.name}
+                  {trait["name"]}
                 </span>
               <% end %>
             </div>
@@ -309,9 +309,9 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id en
               <%= for feat <- cls.features do %>
                 <span
                   class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
-                  title={feat.description}
+                  title={feat["description"]}
                 >
-                  {feat.name}
+                  {feat["name"]}
                 </span>
               <% end %>
             </div>
