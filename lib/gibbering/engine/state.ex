@@ -1,18 +1,11 @@
 defmodule Gibbering.Engine.State do
-  @moduledoc "Runtime scene state: entity map, grid, turn order, phase machine, and action economy helpers."
+  @moduledoc "Runtime scene state: entity map, grid, turn order, and action economy helpers."
 
   alias Gibbering.Campaign
-  alias Gibbering.Rulesets.DnD5e.Stats
+  alias Gibbering.Rulesets.DnD5e.{RulesetState, Stats}
 
   @type scene_phase ::
           :lobby | :exploration | :initiative_rolling | :in_combat | :paused | :victory | :defeat
-
-  @valid_transitions %{
-    lobby: [:exploration, :paused],
-    exploration: [:initiative_rolling, :in_combat, :paused],
-    initiative_rolling: [:in_combat, :paused],
-    in_combat: [:exploration, :paused, :victory, :defeat]
-  }
 
   defstruct [
     :campaign_id,
@@ -36,28 +29,10 @@ defmodule Gibbering.Engine.State do
     :turn_order,
     # index into turn_order
     :active_index,
-    # scene_phase() — current phase of the scene
-    phase: :lobby,
-    # scene_phase() | nil — phase before entering :paused
-    previous_phase: nil,
     # module implementing Gibbering.Ruleset behaviour
     ruleset: Gibbering.Rulesets.DnD5e,
-    # [%{id, entity_id, condition_id, conditions, source, duration}]
-    active_effects: [],
-    # %{entity_id => integer} — DM-rolled initiative values per entity
-    initiative_values: %{},
-    # MapSet of entity_ids hidden from player view (DM-only visibility)
-    hidden_entities: %MapSet{},
-    # [{timestamp, text}] — chronological intervention log, newest first
-    session_log: [],
-    # entity_id of the container currently open for the active hero, or nil
-    open_container_id: nil,
-    # true while waiting for a player to submit a manual roll value
-    awaiting_roll: false,
-    # {:attack, target_id} | {:cast_spell, spell_key, target_id} | nil — the suspended action
-    pending_roll: nil,
-    # MapSet of entity_ids whose initiative rolls are still pending player input
-    pending_initiative_rolls: %MapSet{}
+    # opaque D&D 5e-specific state (phase, initiative, effects, etc.)
+    ruleset_state: nil
   ]
 
   @doc """
@@ -118,6 +93,8 @@ defmodule Gibbering.Engine.State do
       |> Enum.filter(&(&1.type == "hero"))
       |> Enum.map(& &1.id)
 
+    ruleset = Gibbering.Rulesets.DnD5e
+
     %__MODULE__{
       campaign_id: campaign.id,
       map_id: map.id,
@@ -132,39 +109,56 @@ defmodule Gibbering.Engine.State do
       valid_targets: [],
       turn_order: hero_ids,
       active_index: 0,
-      phase: :lobby,
-      previous_phase: nil,
-      ruleset: Gibbering.Rulesets.DnD5e,
-      active_effects: []
+      ruleset: ruleset,
+      ruleset_state: ruleset.init_ruleset_state()
     }
   end
+
+  # ---------------------------------------------------------------------------
+  # Accessors — read ruleset_state fields through DnD5e.RulesetState functions
+  # ---------------------------------------------------------------------------
+
+  @doc "Returns the current scene phase."
+  def phase(%__MODULE__{ruleset_state: rs}), do: RulesetState.phase(rs)
+
+  @doc "Returns the phase before entering :paused, or nil."
+  def previous_phase(%__MODULE__{ruleset_state: rs}), do: RulesetState.previous_phase(rs)
+
+  @doc "Returns true while waiting for a manual player roll."
+  def awaiting_roll?(%__MODULE__{ruleset_state: rs}), do: RulesetState.awaiting_roll?(rs)
+
+  @doc "Returns the suspended action pending a roll result."
+  def pending_roll(%__MODULE__{ruleset_state: rs}), do: RulesetState.pending_roll(rs)
+
+  @doc "Returns the MapSet of entity_ids whose initiative rolls are still pending."
+  def pending_initiative_rolls(%__MODULE__{ruleset_state: rs}),
+    do: RulesetState.pending_initiative_rolls(rs)
+
+  @doc "Returns the entity_id of the container currently open for the active hero, or nil."
+  def open_container_id(%__MODULE__{ruleset_state: rs}), do: RulesetState.open_container_id(rs)
+
+  # ---------------------------------------------------------------------------
+  # Phase transitions (delegate to RulesetState)
+  # ---------------------------------------------------------------------------
 
   @doc """
   Transitions to `new_phase` if the transition is valid.
   From `:paused`, the only valid target is `previous_phase`.
   Returns `{:ok, new_state}` or `{:error, reason}`.
   """
-  def transition_phase(%__MODULE__{phase: same} = state, same), do: {:ok, state}
-
-  def transition_phase(%__MODULE__{phase: :paused, previous_phase: prev} = state, new_phase) do
-    if new_phase == prev do
-      {:ok, %{state | phase: new_phase, previous_phase: nil}}
-    else
-      {:error, "cannot leave :paused to #{new_phase}; expected #{prev}"}
-    end
-  end
-
-  def transition_phase(%__MODULE__{phase: current} = state, new_phase) do
-    if new_phase in Map.get(@valid_transitions, current, []) do
-      {:ok, %{state | previous_phase: current, phase: new_phase}}
-    else
-      {:error, "invalid transition: #{current} → #{new_phase}"}
+  def transition_phase(%__MODULE__{} = state, new_phase) do
+    case RulesetState.transition_phase(state.ruleset_state, new_phase) do
+      {:ok, rs} -> {:ok, %{state | ruleset_state: rs}}
+      err -> err
     end
   end
 
   @doc "Forces a phase transition without validation — for DM override calls."
-  def force_transition_phase(%__MODULE__{phase: current} = state, new_phase) do
-    {:ok, %{state | previous_phase: current, phase: new_phase}}
+  def force_transition_phase(%__MODULE__{} = state, new_phase) do
+    case RulesetState.force_transition_phase(state.ruleset_state, new_phase) do
+      {:ok, rs} -> {:ok, %{state | ruleset_state: rs}}
+      err -> err
+    end
   end
 
   @doc """
@@ -172,11 +166,12 @@ defmodule Gibbering.Engine.State do
   initiative descending. The currently active entity remains active after the sort.
   """
   def set_initiative(%__MODULE__{} = state, entity_id, value) do
+    new_rs = RulesetState.set_initiative_value(state.ruleset_state, entity_id, value)
+    initiative_values = RulesetState.initiative_values(new_rs)
     current = Enum.at(state.turn_order, state.active_index)
-    new_initiative = Map.put(state.initiative_values || %{}, entity_id, value)
-    sorted = Enum.sort_by(state.turn_order, fn id -> -Map.get(new_initiative, id, 0) end)
+    sorted = Enum.sort_by(state.turn_order, fn id -> -Map.get(initiative_values, id, 0) end)
     new_index = (current && Enum.find_index(sorted, &(&1 == current))) || 0
-    %{state | initiative_values: new_initiative, turn_order: sorted, active_index: new_index}
+    %{state | ruleset_state: new_rs, turn_order: sorted, active_index: new_index}
   end
 
   @doc "Appends `entity_id` to `turn_order`. No-op if already present or not in entities."
@@ -221,26 +216,62 @@ defmodule Gibbering.Engine.State do
 
   @doc "Adds `entity_id` to the DM-hidden set."
   def hide_entity(%__MODULE__{} = state, entity_id) do
-    %{state | hidden_entities: MapSet.put(state.hidden_entities || MapSet.new(), entity_id)}
+    %{state | ruleset_state: RulesetState.hide_entity(state.ruleset_state, entity_id)}
   end
 
   @doc "Removes `entity_id` from the DM-hidden set."
   def show_entity(%__MODULE__{} = state, entity_id) do
-    %{state | hidden_entities: MapSet.delete(state.hidden_entities || MapSet.new(), entity_id)}
+    %{state | ruleset_state: RulesetState.show_entity(state.ruleset_state, entity_id)}
   end
 
   @doc "Toggles `entity_id` in the hidden set."
   def toggle_visibility(%__MODULE__{} = state, entity_id) do
-    set = state.hidden_entities || MapSet.new()
-
-    if MapSet.member?(set, entity_id),
-      do: show_entity(state, entity_id),
-      else: hide_entity(state, entity_id)
+    %{state | ruleset_state: RulesetState.toggle_visibility(state.ruleset_state, entity_id)}
   end
 
   @doc "Prepends a log entry string to `session_log`."
   def add_log_entry(%__MODULE__{} = state, entry) do
-    %{state | session_log: [entry | state.session_log || []]}
+    %{state | ruleset_state: RulesetState.add_log_entry(state.ruleset_state, entry)}
+  end
+
+  # ---------------------------------------------------------------------------
+  # Roll state (delegate to RulesetState)
+  # ---------------------------------------------------------------------------
+
+  @doc "Clears the suspended roll: sets awaiting_roll to false and pending_roll to nil."
+  def clear_pending_roll(%__MODULE__{} = state) do
+    %{state | ruleset_state: RulesetState.clear_pending_roll(state.ruleset_state)}
+  end
+
+  @doc "Adds `entity_id` to the pending initiative rolls set."
+  def add_pending_initiative_roll(%__MODULE__{} = state, entity_id) do
+    %{
+      state
+      | ruleset_state: RulesetState.add_pending_initiative_roll(state.ruleset_state, entity_id)
+    }
+  end
+
+  @doc "Removes `entity_id` from the pending initiative rolls set."
+  def remove_pending_initiative_roll(%__MODULE__{} = state, entity_id) do
+    %{
+      state
+      | ruleset_state: RulesetState.remove_pending_initiative_roll(state.ruleset_state, entity_id)
+    }
+  end
+
+  @doc "Sets the open_container_id in ruleset_state."
+  def set_open_container_id(%__MODULE__{} = state, id) do
+    %{state | ruleset_state: RulesetState.set_open_container_id(state.ruleset_state, id)}
+  end
+
+  @doc "Suspends an action pending a player roll. Sets awaiting_roll: true and records the pending action."
+  def set_awaiting_roll(%__MODULE__{} = state, pending_action) do
+    rs =
+      state.ruleset_state
+      |> RulesetState.set_awaiting_roll(true)
+      |> RulesetState.set_pending_roll(pending_action)
+
+    %{state | ruleset_state: rs}
   end
 
   @doc "Returns the entity id of the hero whose turn it currently is, or `nil` when there is no turn order."
@@ -353,7 +384,7 @@ defmodule Gibbering.Engine.State do
 
   @doc """
   Applies `condition_id` to `entity_id`.
-  Adds an ActiveEffect entry to `state.active_effects` and appends the key to
+  Adds an ActiveEffect entry to `ruleset_state.active_effects` and appends the key to
   `entity.conditions`. Opts: `source:` (default `:unknown`), `duration:` integer
   turns or nil for permanent.
   Returns `{:ok, new_state}`.
@@ -368,12 +399,14 @@ defmodule Gibbering.Engine.State do
       duration: Keyword.get(opts, :duration, nil)
     }
 
+    new_rs = RulesetState.add_active_effect(state.ruleset_state, effect)
+
     new_entities =
       Map.update!(state.entities, entity_id, fn entity ->
         Map.update(entity, :conditions, [condition_id], &Enum.uniq([condition_id | &1]))
       end)
 
-    {:ok, %{state | active_effects: [effect | state.active_effects], entities: new_entities}}
+    {:ok, %{state | ruleset_state: new_rs, entities: new_entities}}
   end
 
   @doc """
@@ -382,15 +415,8 @@ defmodule Gibbering.Engine.State do
   still lists it. Returns `{:ok, new_state}`.
   """
   def remove_condition(%__MODULE__{} = state, entity_id, condition_id) do
-    new_effects =
-      Enum.reject(state.active_effects, fn ae ->
-        ae.entity_id == entity_id and ae.condition_id == condition_id
-      end)
-
-    still_active =
-      Enum.any?(new_effects, fn ae ->
-        ae.entity_id == entity_id and condition_id in (ae.conditions || [])
-      end)
+    {new_rs, still_active} =
+      RulesetState.remove_active_effects_for(state.ruleset_state, entity_id, condition_id)
 
     new_entities =
       Map.update!(state.entities, entity_id, fn entity ->
@@ -399,7 +425,7 @@ defmodule Gibbering.Engine.State do
           else: Map.update(entity, :conditions, [], &List.delete(&1, condition_id))
       end)
 
-    {:ok, %{state | active_effects: new_effects, entities: new_entities}}
+    {:ok, %{state | ruleset_state: new_rs, entities: new_entities}}
   end
 
   @doc "Advances to the next hero in the turn order and resets that hero's action economy for the new turn."

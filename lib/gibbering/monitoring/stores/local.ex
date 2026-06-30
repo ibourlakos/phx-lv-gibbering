@@ -128,7 +128,11 @@ defmodule Gibbering.Monitoring.Stores.Local do
       {:noreply,
        %{state | subscribed_campaigns: MapSet.delete(state.subscribed_campaigns, campaign_id)}}
     else
-      :ets.insert(@scene_info_table, {campaign_id, map_size(snapshot.entities), snapshot.phase})
+      :ets.insert(
+        @scene_info_table,
+        {campaign_id, map_size(snapshot.entities), Gibbering.Engine.State.phase(snapshot)}
+      )
+
       {:noreply, state}
     end
   end

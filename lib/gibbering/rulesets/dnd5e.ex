@@ -9,7 +9,7 @@ defmodule Gibbering.Rulesets.DnD5e do
   @behaviour Gibbering.Ruleset
 
   alias Gibbering.Engine.RuleModifier
-  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, Stats}
+  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, RulesetState, Stats}
 
   # SRD spell slot table for full casters (Wizard, Cleric, Sorcerer, Bard, Druid).
   # Keys are character level; values are slot counts per spell level.
@@ -189,6 +189,9 @@ defmodule Gibbering.Rulesets.DnD5e do
     Gibbering.Rulesets.DnD5e.Condition.all()
     |> Enum.map(fn {id, defn} -> {id, defn.name} end)
   end
+
+  @impl Gibbering.Ruleset
+  def init_ruleset_state, do: RulesetState.new()
 
   # ---------------------------------------------------------------------------
   # Private helpers

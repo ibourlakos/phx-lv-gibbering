@@ -6,6 +6,7 @@ defmodule Gibbering.Engine.SceneServerTest do
   import Gibbering.GameFixtures
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
+  alias Gibbering.Rulesets.DnD5e.RulesetState
   alias Gibbering.Events.EventBatch
 
   alias Gibbering.Events.Engine.{
@@ -293,14 +294,15 @@ defmodule Gibbering.Engine.SceneServerTest do
     test "transitions phase from lobby to exploration" do
       game_id = start_server()
       assert :ok = SceneServer.start_session(game_id)
-      assert SceneServer.get_state(game_id).phase == :exploration
+      assert State.phase(SceneServer.get_state(game_id)) == :exploration
     end
 
     test "broadcasts %EventBatch{} with exploration phase after start" do
       game_id = start_server()
       Phoenix.PubSub.subscribe(Gibbering.PubSub, SceneServer.topic(game_id))
       :ok = SceneServer.start_session(game_id)
-      assert_receive %EventBatch{state_snapshot: %State{phase: :exploration}}, 500
+      assert_receive %EventBatch{state_snapshot: snapshot}, 500
+      assert State.phase(snapshot) == :exploration
     end
   end
 
@@ -310,8 +312,8 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.start_session(game_id)
       assert :ok = SceneServer.pause_session(game_id)
       state = SceneServer.get_state(game_id)
-      assert state.phase == :paused
-      assert state.previous_phase == :exploration
+      assert State.phase(state) == :paused
+      assert State.previous_phase(state) == :exploration
     end
 
     test "is idempotent when already paused" do
@@ -319,7 +321,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.start_session(game_id)
       :ok = SceneServer.pause_session(game_id)
       assert :ok = SceneServer.pause_session(game_id)
-      assert SceneServer.get_state(game_id).phase == :paused
+      assert State.phase(SceneServer.get_state(game_id)) == :paused
     end
   end
 
@@ -329,7 +331,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.start_session(game_id)
       :ok = SceneServer.pause_session(game_id)
       assert :ok = SceneServer.resume_session(game_id)
-      assert SceneServer.get_state(game_id).phase == :exploration
+      assert State.phase(SceneServer.get_state(game_id)) == :exploration
     end
 
     test "returns error when not paused" do
@@ -393,13 +395,13 @@ defmodule Gibbering.Engine.SceneServerTest do
     test "valid transition succeeds and updates phase" do
       game_id = start_server()
       assert :ok = SceneServer.transition_phase(game_id, :exploration)
-      assert SceneServer.get_state(game_id).phase == :exploration
+      assert State.phase(SceneServer.get_state(game_id)) == :exploration
     end
 
     test "invalid transition returns error and leaves phase unchanged" do
       game_id = start_server()
       assert {:error, _} = SceneServer.transition_phase(game_id, :in_combat)
-      assert SceneServer.get_state(game_id).phase == :lobby
+      assert State.phase(SceneServer.get_state(game_id)) == :lobby
     end
 
     test "pausing preserves previous_phase" do
@@ -407,8 +409,8 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.transition_phase(game_id, :exploration)
       SceneServer.transition_phase(game_id, :paused)
       state = SceneServer.get_state(game_id)
-      assert state.phase == :paused
-      assert state.previous_phase == :exploration
+      assert State.phase(state) == :paused
+      assert State.previous_phase(state) == :exploration
     end
 
     test "resuming from paused restores previous phase" do
@@ -416,13 +418,13 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.transition_phase(game_id, :exploration)
       SceneServer.transition_phase(game_id, :paused)
       SceneServer.transition_phase(game_id, :exploration)
-      assert SceneServer.get_state(game_id).phase == :exploration
+      assert State.phase(SceneServer.get_state(game_id)) == :exploration
     end
 
     test "force_transition_phase/2 allows any transition" do
       game_id = start_server()
       assert :ok = SceneServer.force_transition_phase(game_id, :in_combat)
-      assert SceneServer.get_state(game_id).phase == :in_combat
+      assert State.phase(SceneServer.get_state(game_id)) == :in_combat
     end
   end
 
@@ -437,7 +439,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert :ok = SceneServer.set_initiative(game_id, hero_id, 14)
 
       new_state = SceneServer.get_state(game_id)
-      assert new_state.initiative_values[hero_id] == 14
+      assert RulesetState.initiative_values(new_state.ruleset_state)[hero_id] == 14
       assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
@@ -517,7 +519,11 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       assert :ok = SceneServer.dm_broadcast(game_id, "Narrative text")
       state = SceneServer.get_state(game_id)
-      assert Enum.any?(state.session_log, &String.contains?(&1, "Narrative text"))
+
+      assert Enum.any?(
+               RulesetState.session_log(state.ruleset_state),
+               &String.contains?(&1, "Narrative text")
+             )
     end
   end
 
@@ -587,10 +593,18 @@ defmodule Gibbering.Engine.SceneServerTest do
       hero_id = State.active_hero_id(state)
 
       assert :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
-      assert MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
+
+      assert MapSet.member?(
+               RulesetState.hidden_entities(SceneServer.get_state(game_id).ruleset_state),
+               hero_id
+             )
 
       assert :ok = SceneServer.dm_toggle_visibility(game_id, hero_id)
-      refute MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
+
+      refute MapSet.member?(
+               RulesetState.hidden_entities(SceneServer.get_state(game_id).ruleset_state),
+               hero_id
+             )
     end
 
     test "broadcasts %EventBatch{} after toggle" do
@@ -636,7 +650,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       chest = insert_chest(game_id, [])
 
       {:ok, new_state} = SceneServer.open_container(game_id, chest.id)
-      assert new_state.open_container_id == chest.id
+      assert State.open_container_id(new_state) == chest.id
     end
 
     test "returns error when active hero is not adjacent to container" do
@@ -759,7 +773,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
 
       final_state = SceneServer.get_state(game_id)
-      assert final_state.phase == :victory
+      assert State.phase(final_state) == :victory
 
       assert_receive %EventBatch{events: events}, 500
       assert Enum.any?(events, fn e -> match?(%PhaseTransitioned{to_phase: :victory}, e) end)
@@ -777,7 +791,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.dm_adjust_hp(game_id, hero_id, -9999)
 
       final_state = SceneServer.get_state(game_id)
-      assert final_state.phase == :defeat
+      assert State.phase(final_state) == :defeat
 
       assert_receive %EventBatch{events: events}, 500
       assert Enum.any?(events, fn e -> match?(%PhaseTransitioned{to_phase: :defeat}, e) end)
@@ -791,7 +805,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
 
       final_state = SceneServer.get_state(game_id)
-      assert final_state.phase == :lobby
+      assert State.phase(final_state) == :lobby
     end
   end
 
@@ -809,8 +823,8 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert_receive %EventBatch{}, 500
       returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
 
-      assert returned.awaiting_roll == true
-      assert returned.pending_roll == {:attack, monster_id}
+      assert State.awaiting_roll?(returned) == true
+      assert State.pending_roll(returned) == {:attack, monster_id}
 
       assert_receive %EventBatch{events: events}, 500
       assert Enum.any?(events, fn e -> match?(%RollRequired{roll_type: :attack}, e) end)
@@ -825,7 +839,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.select_entity(game_id, hero_id)
       returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: true)
 
-      assert returned.awaiting_roll == false
+      assert State.awaiting_roll?(returned) == false
     end
 
     test "actions are blocked while awaiting_roll is true" do
@@ -851,11 +865,11 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       SceneServer.select_entity(game_id, hero_id)
       SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
-      assert SceneServer.get_state(game_id).awaiting_roll == true
+      assert State.awaiting_roll?(SceneServer.get_state(game_id)) == true
 
       result = SceneServer.submit_roll(game_id, hero_id, 20)
-      assert result.awaiting_roll == false
-      assert result.pending_roll == nil
+      assert State.awaiting_roll?(result) == false
+      assert State.pending_roll(result) == nil
       surviving_hp = get_in(result.entities, [monster_id, :hp])
       # A 20 is a critical hit — damage must have been dealt.
       assert surviving_hp == nil or surviving_hp < original_hp
@@ -873,7 +887,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       # Value 0 is out of 1..20 range — Rules.attack will clamp or reject it; the
       # key thing is SceneServer does not crash and still clears the pending state.
       result = SceneServer.submit_roll(game_id, hero_id, 0)
-      assert result.awaiting_roll == false
+      assert State.awaiting_roll?(result) == false
     end
   end
 
@@ -904,7 +918,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
 
       state = SceneServer.get_state(game_id)
-      assert MapSet.size(state.pending_initiative_rolls) >= 1
+      assert MapSet.size(State.pending_initiative_rolls(state)) >= 1
     end
 
     test "submit_roll with hero in pending_initiative_rolls clears the entity" do
@@ -913,11 +927,11 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
 
       state = SceneServer.get_state(game_id)
-      [hero_id | _] = MapSet.to_list(state.pending_initiative_rolls)
+      [hero_id | _] = MapSet.to_list(State.pending_initiative_rolls(state))
 
       result = SceneServer.submit_roll(game_id, hero_id, 15)
-      assert not MapSet.member?(result.pending_initiative_rolls, hero_id)
-      assert Map.get(result.initiative_values, hero_id) == 15
+      assert not MapSet.member?(State.pending_initiative_rolls(result), hero_id)
+      assert Map.get(RulesetState.initiative_values(result.ruleset_state), hero_id) == 15
     end
 
     test "end_initiative_rolling returns error when rolls are still pending" do
@@ -926,7 +940,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.transition_phase(game_id, :initiative_rolling)
 
       state = SceneServer.get_state(game_id)
-      assert MapSet.size(state.pending_initiative_rolls) > 0
+      assert MapSet.size(State.pending_initiative_rolls(state)) > 0
 
       assert {:error, :pending_rolls} = SceneServer.end_initiative_rolling(game_id)
     end
@@ -938,12 +952,12 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       state = SceneServer.get_state(game_id)
 
-      Enum.each(MapSet.to_list(state.pending_initiative_rolls), fn hero_id ->
+      Enum.each(MapSet.to_list(State.pending_initiative_rolls(state)), fn hero_id ->
         SceneServer.submit_roll(game_id, hero_id, 10)
       end)
 
       assert :ok = SceneServer.end_initiative_rolling(game_id)
-      assert SceneServer.get_state(game_id).phase == :in_combat
+      assert State.phase(SceneServer.get_state(game_id)) == :in_combat
     end
 
     test "end_initiative_rolling returns error in wrong phase" do

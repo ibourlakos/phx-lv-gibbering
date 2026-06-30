@@ -4,6 +4,7 @@ defmodule Gibbering.Engine.StateTest do
 
   import Gibbering.GameFixtures
   alias Gibbering.Engine.State
+  alias Gibbering.Rulesets.DnD5e.RulesetState
 
   describe "active_hero_id/1" do
     test "returns the hero at active_index" do
@@ -351,7 +352,7 @@ defmodule Gibbering.Engine.StateTest do
     test "adds an active_effect entry for the entity" do
       state = build_state()
       assert {:ok, new_state} = State.apply_condition(state, hero_id(), :poisoned)
-      assert [effect] = new_state.active_effects
+      assert [effect] = RulesetState.active_effects(new_state.ruleset_state)
       assert effect.entity_id == hero_id()
       assert effect.condition_id == :poisoned
       assert :poisoned in effect.conditions
@@ -376,7 +377,7 @@ defmodule Gibbering.Engine.StateTest do
       {:ok, new_state} =
         State.apply_condition(state, hero_id(), :blinded, source: :spell, duration: 3)
 
-      [effect] = new_state.active_effects
+      [effect] = RulesetState.active_effects(new_state.ruleset_state)
       assert effect.source == :spell
       assert effect.duration == 3
     end
@@ -393,14 +394,14 @@ defmodule Gibbering.Engine.StateTest do
       state = build_state()
       {:ok, with_cond} = State.apply_condition(state, hero_id(), :poisoned)
       assert {:ok, cleared} = State.remove_condition(with_cond, hero_id(), :poisoned)
-      assert cleared.active_effects == []
+      assert RulesetState.active_effects(cleared.ruleset_state) == []
       refute :poisoned in cleared.entities[hero_id()].conditions
     end
 
     test "removing a non-existent condition is a no-op" do
       state = build_state()
       assert {:ok, same} = State.remove_condition(state, hero_id(), :blinded)
-      assert same.active_effects == []
+      assert RulesetState.active_effects(same.ruleset_state) == []
     end
 
     test "removing one condition does not affect other conditions on the same entity" do
@@ -417,7 +418,7 @@ defmodule Gibbering.Engine.StateTest do
     test "stores the initiative value for the entity" do
       state = build_state()
       new_state = State.set_initiative(state, hero_id(), 15)
-      assert new_state.initiative_values[hero_id()] == 15
+      assert RulesetState.initiative_values(new_state.ruleset_state)[hero_id()] == 15
     end
 
     test "sorts turn_order by initiative descending after roll" do
@@ -442,7 +443,7 @@ defmodule Gibbering.Engine.StateTest do
 
     test "stores initiative_values as an empty map by default" do
       state = build_state()
-      assert state.initiative_values == %{}
+      assert RulesetState.initiative_values(state.ruleset_state) == %{}
     end
   end
 
@@ -569,30 +570,36 @@ defmodule Gibbering.Engine.StateTest do
 
   describe "transition_phase/2 — victory and defeat phases" do
     test "in_combat → victory is a valid transition" do
-      state = %{build_state() | phase: :in_combat}
+      {:ok, state} = State.transition_phase(build_state(), :exploration)
+      {:ok, state} = State.transition_phase(state, :in_combat)
       assert {:ok, new_state} = State.transition_phase(state, :victory)
-      assert new_state.phase == :victory
+      assert State.phase(new_state) == :victory
     end
 
     test "in_combat → defeat is a valid transition" do
-      state = %{build_state() | phase: :in_combat}
+      {:ok, state} = State.transition_phase(build_state(), :exploration)
+      {:ok, state} = State.transition_phase(state, :in_combat)
       assert {:ok, new_state} = State.transition_phase(state, :defeat)
-      assert new_state.phase == :defeat
+      assert State.phase(new_state) == :defeat
     end
 
     test "victory and defeat are terminal — no further validated transitions" do
-      victory_state = %{build_state() | phase: :victory}
+      {:ok, state} = State.transition_phase(build_state(), :exploration)
+      {:ok, state} = State.transition_phase(state, :in_combat)
+      {:ok, victory_state} = State.transition_phase(state, :victory)
       assert {:error, _} = State.transition_phase(victory_state, :in_combat)
       assert {:error, _} = State.transition_phase(victory_state, :lobby)
 
-      defeat_state = %{build_state() | phase: :defeat}
+      {:ok, defeat_state} = State.transition_phase(state, :defeat)
       assert {:error, _} = State.transition_phase(defeat_state, :in_combat)
     end
 
     test "force_transition_phase can leave victory back to lobby" do
-      state = %{build_state() | phase: :victory}
-      assert {:ok, new_state} = State.force_transition_phase(state, :lobby)
-      assert new_state.phase == :lobby
+      {:ok, state} = State.transition_phase(build_state(), :exploration)
+      {:ok, state} = State.transition_phase(state, :in_combat)
+      {:ok, victory_state} = State.transition_phase(state, :victory)
+      assert {:ok, new_state} = State.force_transition_phase(victory_state, :lobby)
+      assert State.phase(new_state) == :lobby
     end
   end
 
@@ -636,21 +643,25 @@ defmodule Gibbering.Engine.StateTest do
     test "hide_entity adds entity_id to hidden_entities" do
       state = build_state()
       new_state = State.hide_entity(state, hero_id())
-      assert MapSet.member?(new_state.hidden_entities, hero_id())
+      assert MapSet.member?(RulesetState.hidden_entities(new_state.ruleset_state), hero_id())
     end
 
     test "show_entity removes entity_id from hidden_entities" do
       state = build_state()
       hidden = State.hide_entity(state, hero_id())
       shown = State.show_entity(hidden, hero_id())
-      refute MapSet.member?(shown.hidden_entities, hero_id())
+      refute MapSet.member?(RulesetState.hidden_entities(shown.ruleset_state), hero_id())
     end
 
     test "hide_entity is idempotent" do
       state = build_state()
       once = State.hide_entity(state, hero_id())
       twice = State.hide_entity(once, hero_id())
-      assert MapSet.equal?(once.hidden_entities, twice.hidden_entities)
+
+      assert MapSet.equal?(
+               RulesetState.hidden_entities(once.ruleset_state),
+               RulesetState.hidden_entities(twice.ruleset_state)
+             )
     end
   end
 
@@ -658,15 +669,15 @@ defmodule Gibbering.Engine.StateTest do
     test "prepends an entry to session_log" do
       state = build_state()
       new_state = State.add_log_entry(state, "DM broadcast: hello")
-      assert hd(new_state.session_log) == "DM broadcast: hello"
+      assert hd(RulesetState.session_log(new_state.ruleset_state)) == "DM broadcast: hello"
     end
 
     test "accumulates multiple entries" do
       state = build_state()
       s1 = State.add_log_entry(state, "first")
       s2 = State.add_log_entry(s1, "second")
-      assert length(s2.session_log) == 2
-      assert hd(s2.session_log) == "second"
+      assert length(RulesetState.session_log(s2.ruleset_state)) == 2
+      assert hd(RulesetState.session_log(s2.ruleset_state)) == "second"
     end
   end
 end

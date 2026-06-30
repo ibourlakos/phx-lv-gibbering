@@ -14,6 +14,7 @@ defmodule GibberingWeb.GameLiveTest do
   alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity, GameMap, GridTile}
   alias Gibbering.Catalogue.EntityPreset
   alias Gibbering.Engine.{SceneServer, State}
+  alias Gibbering.Rulesets.DnD5e.RulesetState
 
   defp mount_game(conn) do
     user = register_user()
@@ -261,7 +262,7 @@ defmodule GibberingWeb.GameLiveTest do
     test "DM can start the session", %{conn: conn} do
       {view, game_id} = mount_dm_game(conn)
       view |> element("[phx-click='dm_start']") |> render_click()
-      assert SceneServer.get_state(game_id).phase == :exploration
+      assert State.phase(SceneServer.get_state(game_id)) == :exploration
     end
 
     test "DM sees Pause and End buttons when session is active", %{conn: conn} do
@@ -293,10 +294,10 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_dm_game(conn)
       view |> element("[phx-click='dm_start']") |> render_click()
       view |> element("[phx-click='dm_pause']") |> render_click()
-      assert SceneServer.get_state(game_id).phase == :paused
+      assert State.phase(SceneServer.get_state(game_id)) == :paused
       html = render(view)
       view |> element("[phx-click='dm_resume']") |> render_click()
-      assert SceneServer.get_state(game_id).phase == :exploration
+      assert State.phase(SceneServer.get_state(game_id)) == :exploration
       _ = html
     end
 
@@ -359,7 +360,8 @@ defmodule GibberingWeb.GameLiveTest do
       |> element("[phx-click='dm_roll_initiative'][phx-value-id='#{hero_id}']")
       |> render_click()
 
-      assert SceneServer.get_state(game_id).initiative_values[hero_id] != nil
+      assert RulesetState.initiative_values(SceneServer.get_state(game_id).ruleset_state)[hero_id] !=
+               nil
     end
 
     test "DM can add an entity to the turn order", %{conn: conn} do
@@ -498,7 +500,10 @@ defmodule GibberingWeb.GameLiveTest do
       |> element("[phx-click='dm_toggle_visibility'][phx-value-id='#{hero_id}']")
       |> render_click()
 
-      assert MapSet.member?(SceneServer.get_state(game_id).hidden_entities, hero_id)
+      assert MapSet.member?(
+               RulesetState.hidden_entities(SceneServer.get_state(game_id).ruleset_state),
+               hero_id
+             )
     end
 
     test "dm_broadcast shows banner on handle_info %BroadcastSent{}", %{conn: conn} do
@@ -602,11 +607,12 @@ defmodule GibberingWeb.GameLiveTest do
   describe "outcome overlay (issue #143)" do
     defp broadcast_phase(game_id, phase) do
       state = SceneServer.get_state(game_id)
+      {:ok, updated_state} = State.force_transition_phase(state, phase)
 
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        %Gibbering.Events.EventBatch{state_snapshot: %{state | phase: phase}}
+        %Gibbering.Events.EventBatch{state_snapshot: updated_state}
       )
     end
 
@@ -639,7 +645,7 @@ defmodule GibberingWeb.GameLiveTest do
       SceneServer.force_transition_phase(game_id, :victory)
       broadcast_phase(game_id, :victory)
       view |> element("[phx-click='dm_return_to_lobby']") |> render_click()
-      assert SceneServer.get_state(game_id).phase == :lobby
+      assert State.phase(SceneServer.get_state(game_id)) == :lobby
     end
 
     test "outcome overlay is absent in lobby phase", %{conn: conn} do
@@ -745,7 +751,7 @@ defmodule GibberingWeb.GameLiveTest do
         Gibbering.PubSub,
         SceneServer.topic(game_id),
         %Gibbering.Events.EventBatch{
-          state_snapshot: %{state | awaiting_roll: true},
+          state_snapshot: State.set_awaiting_roll(state, {:attack, nil}),
           events: [
             %Gibbering.Events.Engine.RollRequired{
               entity_id: entity_id,
@@ -765,7 +771,7 @@ defmodule GibberingWeb.GameLiveTest do
         Gibbering.PubSub,
         SceneServer.topic(game_id),
         %Gibbering.Events.EventBatch{
-          state_snapshot: %{state | awaiting_roll: false}
+          state_snapshot: State.clear_pending_roll(state)
         }
       )
     end
@@ -807,14 +813,14 @@ defmodule GibberingWeb.GameLiveTest do
       SceneServer.select_entity(game_id, hero_id)
       # Put server into awaiting_roll state via direct API
       SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
-      assert SceneServer.get_state(game_id).awaiting_roll == true
+      assert State.awaiting_roll?(SceneServer.get_state(game_id)) == true
 
       # Simulate the PubSub message reaching the LiveView
       broadcast_roll_required(game_id, hero_id)
       view |> element("[phx-click='roll_submit']") |> render_click()
 
       # After submit_roll, awaiting_roll should clear
-      assert SceneServer.get_state(game_id).awaiting_roll == false
+      assert State.awaiting_roll?(SceneServer.get_state(game_id)) == false
     end
   end
 

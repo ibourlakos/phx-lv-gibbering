@@ -4,6 +4,7 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
   alias Gibbering.Monitoring.Stores.Local
   alias Gibbering.Events.EventBatch
   alias Gibbering.Events.Engine.SessionEnded
+  alias Gibbering.Rulesets.DnD5e.RulesetState
 
   # Stores.Local uses named ETS tables. We start the GenServer directly here
   # to get fresh tables, then stop it after each test.
@@ -71,7 +72,7 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
       state = %Gibbering.Engine.State{
         campaign_id: 42,
         entities: %{1 => %{}, 2 => %{}},
-        phase: :in_combat,
+        ruleset_state: %RulesetState{phase: :in_combat},
         turn_order: [],
         active_index: 0
       }
@@ -96,7 +97,7 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
       state = %Gibbering.Engine.State{
         campaign_id: 7,
         entities: %{1 => %{}},
-        phase: :exploration,
+        ruleset_state: %RulesetState{phase: :exploration},
         turn_order: [],
         active_index: 0
       }
