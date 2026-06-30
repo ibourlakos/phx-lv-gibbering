@@ -318,7 +318,7 @@ defmodule GibberingWeb.GameLiveTest do
       view |> element("[phx-click='dm_end']") |> render_click()
 
       assert_receive %Gibbering.Events.EventBatch{
-                       events: [%Gibbering.Events.Scene.SessionEnded{} | _]
+                       events: [%Gibbering.Events.Engine.SessionEnded{} | _]
                      },
                      500
     end
@@ -333,7 +333,7 @@ defmodule GibberingWeb.GameLiveTest do
         Gibbering.PubSub,
         SceneServer.topic(game_id),
         %Gibbering.Events.EventBatch{
-          events: [%Gibbering.Events.Scene.SessionEnded{campaign_id: game_id}]
+          events: [%Gibbering.Events.Engine.SessionEnded{campaign_id: game_id}]
         }
       )
 
@@ -747,7 +747,7 @@ defmodule GibberingWeb.GameLiveTest do
         %Gibbering.Events.EventBatch{
           state_snapshot: %{state | awaiting_roll: true},
           events: [
-            %Gibbering.Events.Scene.RollRequired{
+            %Gibbering.Events.Engine.RollRequired{
               entity_id: entity_id,
               roll_type: :attack,
               dice_expression: "1d20",

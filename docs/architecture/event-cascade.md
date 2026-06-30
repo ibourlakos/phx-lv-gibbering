@@ -20,7 +20,7 @@ Aggregator) of the polytope paper.
 
 ## Per-event envelope fields
 
-Each event struct in `Gibbering.Events.Scene.*` carries:
+Each event struct in `Gibbering.Events.Engine.*` and `Gibbering.Events.DnD5e.*` carries:
 
 | Field | Type | Meaning |
 |---|---|---|

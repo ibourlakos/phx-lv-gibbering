@@ -1,7 +1,8 @@
 defmodule Gibbering.Rulesets.DnD5e.ModifierPipelineTest do
   use ExUnit.Case, async: true
 
-  alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, RuleModifier}
+  alias Gibbering.Engine.RuleModifier
+  alias Gibbering.Rulesets.DnD5e.ModifierPipeline
 
   defp modifier(overrides) do
     defaults = %{

@@ -208,7 +208,7 @@ defmodule Gibbering.Data.Races do
   def modifiers(race)
 
   def modifiers("elf") do
-    alias Gibbering.Rulesets.DnD5e.RuleModifier
+    alias Gibbering.Engine.RuleModifier
 
     [
       %RuleModifier{
@@ -233,7 +233,7 @@ defmodule Gibbering.Data.Races do
   end
 
   def modifiers("gnome") do
-    alias Gibbering.Rulesets.DnD5e.RuleModifier
+    alias Gibbering.Engine.RuleModifier
 
     [
       %RuleModifier{

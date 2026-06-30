@@ -26,10 +26,10 @@ rename to `Gibbering.Scene.*` is a future refactor tracked separately if desired
 
 ```
 Gibbering.Ruleset                        ← behaviour port: any ruleset must implement this
+Gibbering.Engine.RuleModifier            ← generic modifier struct: source, operation, value (engine layer)
 Gibbering.Rulesets.DnD5e                 ← D&D 5e SRD ruleset (Strategy implementation)
 Gibbering.Rulesets.DnD5e.Stats           ← HP, speed, proficiency, stat modifiers
 Gibbering.Rulesets.DnD5e.Spell           ← spell resolution, damage, saving throws
-Gibbering.Rulesets.DnD5e.RuleModifier    ← modifier struct: source, operation, value
 Gibbering.Rulesets.DnD5e.ModifierPipeline ← Chain of Responsibility over modifiers
 Gibbering.Rulesets.DnD5e.Predicate       ← composable boolean rule conditions
 Gibbering.Rulesets.DnD5e.Condition       ← condition type definitions (Paralyzed, Frightened …)
@@ -140,7 +140,13 @@ Gibbering.Events                  ← registry root / namespace documentation
 Gibbering.Events.EventBatch       ← batch envelope: command, batch_id, correlation_id, events
 Gibbering.Events.Upcaster         ← behaviour: upcast/2, current_version/0 (event-log migration)
 Gibbering.Events.Decoder          ← decode(module, raw_map) — event-log read path
-Gibbering.Events.Scene.*          ← 11 scene-domain event structs (combat, movement, turns)
+Gibbering.Events.Engine.*         ← 10 generic engine events: EntityMoved, TurnAdvanced,
+                                     PhaseTransitioned, HPAdjusted, ResourceConsumed,
+                                     ContainerOpened, RollRequired, SessionEnded,
+                                     LogEntryRevealed, LogEntryHidden
+Gibbering.Events.DnD5e.*          ← 7 D&D 5e-specific events: AttackResolved, DamageDealt,
+                                     SpellCast, ConditionApplied, ConditionRemoved,
+                                     ItemEquipped, ItemTaken
 Gibbering.Events.Notification.*   ← out-of-band DM/player message structs: BroadcastSent, WhisperDelivered
 ```
 

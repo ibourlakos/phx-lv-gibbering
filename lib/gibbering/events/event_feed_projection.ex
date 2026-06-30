@@ -17,7 +17,7 @@ defmodule Gibbering.Events.EventFeedProjection do
       effective_vis = Map.get(overrides, event.event_id, event.visibility)
   """
 
-  alias Gibbering.Events.Scene.{LogEntryRevealed, LogEntryHidden}
+  alias Gibbering.Events.Engine.{LogEntryRevealed, LogEntryHidden}
 
   @type overrides :: %{String.t() => :revealed | :dm_only}
 

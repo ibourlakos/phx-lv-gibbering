@@ -4,7 +4,8 @@ defmodule Gibbering.Engine.EntityMovementTest do
   import Gibbering.GameFixtures
   alias Gibbering.Engine.Rules
   alias Gibbering.Rulesets.DnD5e
-  alias Gibbering.Rulesets.DnD5e.{Stats, Condition, RuleModifier}
+  alias Gibbering.Engine.RuleModifier
+  alias Gibbering.Rulesets.DnD5e.{Stats, Condition}
 
   # ---------------------------------------------------------------------------
   # Stats.speed_for_mode/2

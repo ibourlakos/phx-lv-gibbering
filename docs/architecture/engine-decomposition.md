@@ -2,7 +2,7 @@
 
 Working document tracking the planned separation of the reusable game engine from its D&D 5e implementation. Companion to [bounded-contexts.md](bounded-contexts.md) and [ruleset-behaviour.md](ruleset-behaviour.md).
 
-**Status**: Planning. No code changes yet. Updated as decisions are made.
+**Status**: Phase 0 complete (2026-06-30). Phase 1 (#163) in progress. Updated as decisions are made.
 
 ---
 
@@ -43,22 +43,23 @@ Appearance/display elements are intentionally **vertical** — the rendering pip
 | `Engine.Inventory` | Carry weight in D&D pounds; uses `Data.Items` | Move D&D weight logic to `DnD5e` ruleset; engine handles only item transfer |
 | `Rulesets.DnD5e.ModifierPipeline` | Algorithm generic; data sources are D&D | Algorithm extractable to `Engine.ModifierPipeline`; data sources injected |
 | `Rulesets.DnD5e.Predicate` | Evaluator logic generic; 12 of 51 predicates name D&D concepts | Core evaluator extractable; D&D predicates stay in ruleset |
-| `Rulesets.DnD5e.RuleModifier` | Data struct; no D&D logic | Already generic — just move to engine namespace |
+| `Engine.RuleModifier` | Data struct; no D&D logic | Moved to engine namespace (Phase 0 ✓) |
 
-### Generic Events
+### Generic Events (Phase 0 complete ✓)
 
-| Generic | D&D-specific |
+| `Events.Engine.*` (generic) | `Events.DnD5e.*` (D&D-specific) |
 |---------|-------------|
 | `EntityMoved` | `AttackResolved` |
 | `TurnAdvanced` | `DamageDealt` |
 | `PhaseTransitioned` | `SpellCast` |
-| `HpAdjusted` | `ConditionApplied` / `ConditionRemoved` |
+| `HPAdjusted` | `ConditionApplied` / `ConditionRemoved` |
 | `ResourceConsumed` | `ItemEquipped` / `ItemTaken` |
 | `ContainerOpened` | |
 | `RollRequired` | |
 | `SessionEnded` | |
 | `LogEntryRevealed` / `LogEntryHidden` | |
-| `BroadcastSent` / `WhisperDelivered` | |
+
+`BroadcastSent` / `WhisperDelivered` remain in `Events.Notification.*` (already separated).
 
 ### Pure D&D (never reusable as-is)
 
@@ -68,7 +69,7 @@ Appearance/display elements are intentionally **vertical** — the rendering pip
 - `Rulesets.DnD5e.Spell` — spell mechanics struct
 - `Catalogue.Monster`, `Race`, `Class`, `Spell` — SRD content schemas
 - `Data.*` — all static reference tables (Items, Spells, Classes, Races, Backgrounds, Monsters)
-- `Events.Scene.AttackResolved`, `DamageDealt`, `SpellCast`, `ConditionApplied`, `ConditionRemoved`, `ItemEquipped`, `ItemTaken`
+- `Events.DnD5e.AttackResolved`, `DamageDealt`, `SpellCast`, `ConditionApplied`, `ConditionRemoved`, `ItemEquipped`, `ItemTaken`
 - All LiveView campaign UI (`GameLive`, `CampaignPrepLive`, `CharactersLive`, `DashboardLive`, `InviteLive`)
 
 ---
@@ -116,10 +117,10 @@ gibbering_umbrella/
 
 ### Migration path (incremental, no big-bang rewrite)
 
-1. **Phase 0 — Namespace cleanup (no structural change):**
-   - Move `Rulesets.DnD5e.RuleModifier` → `Engine.RuleModifier` (it's already generic)
-   - Move generic events to `Events.Engine.*`, D&D events to `Events.DnD5e.*`
-   - Document the seam in module @moduledoc — no code changes needed yet
+1. **Phase 0 — Namespace cleanup (complete ✓ 2026-06-30):**
+   - Moved `Rulesets.DnD5e.RuleModifier` → `Engine.RuleModifier`
+   - Moved generic events to `Events.Engine.*`, D&D events to `Events.DnD5e.*`
+   - Added `@moduledoc` to all event structs stating layer, emitter, and signal
 
 2. **Phase 1 — State boundary:**
    - Add `ruleset_state: term()` to `Engine.State`

@@ -17,22 +17,25 @@ defmodule Gibbering.Engine.SceneServer do
   alias Gibbering.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
 
-  alias Gibbering.Events.Scene.{
-    AttackResolved,
-    ConditionApplied,
+  alias Gibbering.Events.Engine.{
     ContainerOpened,
-    DamageDealt,
     EntityMoved,
     HPAdjusted,
-    ItemEquipped,
-    ItemTaken,
     LogEntryHidden,
     LogEntryRevealed,
     PhaseTransitioned,
     RollRequired,
     SessionEnded,
-    SpellCast,
     TurnAdvanced
+  }
+
+  alias Gibbering.Events.DnD5e.{
+    AttackResolved,
+    ConditionApplied,
+    DamageDealt,
+    ItemEquipped,
+    ItemTaken,
+    SpellCast
   }
 
   alias Gibbering.Engine.Inventory
