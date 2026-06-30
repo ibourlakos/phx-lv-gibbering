@@ -1,6 +1,7 @@
 # #153 · SVG testability — data attributes and Floki assertion layer
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-06-30
 **Priority:** medium
 **Tags:** ops, architecture, rendering
 

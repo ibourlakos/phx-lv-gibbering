@@ -125,14 +125,97 @@ You drive the view with `element/2` + `render_click/1`:
 ```elixir
 view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
 html = render(view)
-assert html =~ "phx-click=\"move\""
+assert_move_overlay(html)
 ```
+
+### SVG assertion conventions
+
+Import `GibberingWeb.SVGAssertions` (built on [Floki](https://github.com/philss/floki)) to assert SVG structure via `data-*` attributes rather than fill/stroke colour strings. Colour-based assertions are brittle: a palette tweak breaks every test that matches `fill="#ef4444"`. Data attribute assertions survive visual changes.
+
+```elixir
+import GibberingWeb.SVGAssertions
+
+# Entity presence / fog of war
+assert_entity_visible(html, entity_id)
+refute_entity_visible(html, entity_id)
+
+# HP bar — role-gated (DM sees exact values; player sees bucket label)
+assert_hp_exact(html, entity_id, 15, 20)     # DM only
+refute_hp_exact(html, entity_id)              # player: no data-hp attribute
+assert_hp_bucket(html, entity_id, "Bloodied") # player: 25–50% health
+
+# Tiles
+assert_tile_at(html, 3, 2)
+
+# Move overlay
+assert_move_overlay(html)
+refute_move_overlay(html)
+
+# Selection ring (SpriteCompositor active-turn ellipse)
+assert_selection_ring(html)
+refute_selection_ring(html)
+
+# Decorations
+assert_decoration(html, "bones")
+refute_decoration(html, "bones")
+
+# Condition badges
+assert_condition_badge(html, "poisoned")
+```
+
+Use `=~` only for text content (entity names, log messages, UI labels) — Floki has no `:contains` equivalent and these strings don't risk false-positive colour matches.
+
+#### HP bucket labels
+
+| Fraction | Label |
+|---|---|
+| > 75% | Unscathed |
+| 50–75% | Hurt |
+| 25–50% | Bloodied |
+| ≤ 25% | Critical |
+
+#### Data attribute catalogue
+
+| Attribute | Element | Notes |
+|---|---|---|
+| `data-entity-id` | entity `<g>` | entity UUID |
+| `data-entity-type` | entity `<g>` | `"hero"`, `"monster"`, `"object"` |
+| `data-layer` | SpriteCompositor child | `"body"`, `"selection-ring"`, `"hp-bar"`, `"condition-badges"` |
+| `data-hp` / `data-max-hp` | hp-bar `<g>` | DM role only |
+| `data-hp-bucket` | hp-bar `<g>` | player role only |
+| `data-condition` | condition badge circle | condition key, e.g. `"poisoned"` |
+| `data-grid-x` / `data-grid-y` | tile `<polygon>` | grid coordinates |
+| `data-tile-texture` | tile `<polygon>` | texture key, e.g. `"grass"` |
+| `data-move-overlay` | overlay `<polygon>` | present when overlay is active |
+| `data-move-cost` | overlay `<polygon>` | cost tier string |
+| `data-highlight-type` | active-turn ring | `"active-turn"` |
+| `data-movement-badge` | movement badge circle | present when movement exhausted |
+| `data-decoration` | decoration `<g>` | decoration key, e.g. `"bones"`, `"dead_tree"` |
+
+### Two-session pattern (role-gating and fog of war)
+
+Mount two separate connections — DM and player — on the same `game_id`:
+
+```elixir
+dm_conn = log_in_user(build_conn(), dm_user)
+player_conn = log_in_user(conn, player_user)
+
+{:ok, dm_view, _} = live(dm_conn, "/game/#{game_id}")
+{:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
+
+assert_hp_exact(render(dm_view), hero_id, 20, 20)
+refute_hp_exact(render(player_view), hero_id)
+```
+
+Both views share the same `SceneServer` process. State changes (HP adjust, toggle visibility) made via one view are reflected in the other on next `render/1` call.
 
 ### What to test here
 
 - That the SVG renders (sanity check on mount).
 - That clicking an entity triggers a visible state change (move overlay appears/disappears).
 - That the event log updates after an attack.
+- Role-gated rendering: DM vs player see different data attributes on the same entity.
+- Fog of war: hidden entities absent from player DOM, present in DM DOM.
 
 ### What NOT to test here
 

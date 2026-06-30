@@ -909,14 +909,6 @@ defmodule GibberingWeb.GameLive do
   # Fallback colours ensure graceful degradation when no record exists.
   # ---------------------------------------------------------------------------
 
-  defp tile_fill(appearances, texture) do
-    (appearances[{"tile", texture, "default"}] || %{})["fill"] || "#7f8c8d"
-  end
-
-  defp tile_stroke(appearances, texture) do
-    (appearances[{"tile", texture, "default"}] || %{})["stroke"] || "#5d6d7e"
-  end
-
   defp entity_body_color(appearances, sprite) do
     (appearances[{"entity", sprite, "default"}] || %{})["body_color"] || "#7f8c8d"
   end
@@ -1572,7 +1564,7 @@ defmodule GibberingWeb.GameLive do
 
   defp decoration_sprite(%{decoration: "dead_tree"} = assigns) do
     ~H"""
-    <g transform={"translate(#{@x}, #{@y})"}>
+    <g transform={"translate(#{@x}, #{@y})"} data-decoration={@decoration}>
       <ellipse cx="32" cy="60" rx="10" ry="3" fill="rgba(0,0,0,0.3)" />
       <rect
         x="29"
@@ -1639,7 +1631,7 @@ defmodule GibberingWeb.GameLive do
 
   defp decoration_sprite(%{decoration: "rock_cluster"} = assigns) do
     ~H"""
-    <g transform={"translate(#{@x}, #{@y})"}>
+    <g transform={"translate(#{@x}, #{@y})"} data-decoration={@decoration}>
       <ellipse cx="30" cy="60" rx="18" ry="5" fill="rgba(0,0,0,0.3)" />
       <polygon
         points="16,56 12,42 22,32 38,32 46,42 42,56"
@@ -1655,7 +1647,7 @@ defmodule GibberingWeb.GameLive do
 
   defp decoration_sprite(%{decoration: "bones"} = assigns) do
     ~H"""
-    <g transform={"translate(#{@x}, #{@y})"}>
+    <g transform={"translate(#{@x}, #{@y})"} data-decoration={@decoration}>
       <ellipse cx="26" cy="52" rx="7" ry="6" fill="#d8d0b0" stroke="#111" stroke-width="1.5" />
       <rect x="23" y="56" width="6" height="5" rx="1" fill="#d8d0b0" stroke="#111" stroke-width="1" />
       <line x1="24" y1="50" x2="48" y2="44" stroke="#d8d0b0" stroke-width="3" stroke-linecap="round" />
@@ -1678,7 +1670,7 @@ defmodule GibberingWeb.GameLive do
 
   defp decoration_sprite(%{decoration: "grass_tuft"} = assigns) do
     ~H"""
-    <g transform={"translate(#{@x}, #{@y})"}>
+    <g transform={"translate(#{@x}, #{@y})"} data-decoration={@decoration}>
       <path
         d="M22,58 Q18,50 16,42"
         stroke="#4a7830"

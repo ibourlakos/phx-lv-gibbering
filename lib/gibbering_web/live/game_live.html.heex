@@ -285,16 +285,15 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     <%!-- Layer 1: Ground tiles — clickable to inspect when no entity/overlay is on top --%>
     <%= for {{x, y}, tile} <- state.grid_tiles do %>
       <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
-      <polygon
-        points={iso.diamond_points(sx, sy)}
-        fill={tile_fill(@appearances, tile.texture)}
-        stroke={tile_stroke(@appearances, tile.texture)}
-        stroke-width="1"
-        phx-click="inspect_tile"
-        phx-value-x={x}
-        phx-value-y={y}
-        style="cursor: crosshair;"
-      />
+      {Phoenix.HTML.raw(
+        GibberingWeb.TileRenderer.render_tile(
+          tile,
+          x,
+          y,
+          iso.diamond_points(sx, sy),
+          @appearances
+        )
+      )}
     <% end %>
 
     <%!-- Layer 2: Tile decorations (depth-sorted) --%>
@@ -324,6 +323,8 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 
       <g
         id={"entity-#{id}"}
+        data-entity-id={id}
+        data-entity-type={entity.type}
         phx-click={
           cond do
             is_spell_target -> "cast_spell"
@@ -378,6 +379,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
             stroke="#f1c40f"
             stroke-width="2"
             stroke-dasharray="4 3"
+            data-highlight-type="active-turn"
           />
         <% end %>
 
@@ -394,14 +396,26 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         <%!-- Compositor overlays: selection ring (active entity) + HP bar --%>
         <g transform={"translate(#{ix}, #{iy})"}>
           {Phoenix.HTML.raw(
-            SpriteCompositor.compose(entity, @appearances, selected: is_active, show_body: false)
+            SpriteCompositor.compose(entity, @appearances,
+              selected: is_active,
+              show_body: false,
+              viewer_role: if(@is_dm, do: :dm, else: :player)
+            )
           )}
         </g>
 
         <%!-- Movement-exhausted badge — shown when movement_remaining == 0 on the active entity's turn --%>
         <%= if is_active && (get_in(entity, [:action_economy, :movement_remaining]) || 0) == 0 do %>
           <g transform={"translate(#{ix + 24}, #{iy + 24})"}>
-            <circle cx="0" cy="0" r="7" fill="#ef4444" stroke="#1f2937" stroke-width="1.5" />
+            <circle
+              cx="0"
+              cy="0"
+              r="7"
+              fill="#ef4444"
+              stroke="#1f2937"
+              stroke-width="1.5"
+              data-movement-badge
+            />
             <text
               x="0"
               y="4"
@@ -444,6 +458,8 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         phx-click="move"
         phx-value-x={x}
         phx-value-y={y}
+        data-move-overlay="true"
+        data-move-cost={cost_tier}
         style="cursor: pointer;"
       >
         <title>{path_ft} ft</title>
