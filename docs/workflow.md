@@ -176,6 +176,14 @@ Apply to paths A, B, C only.
 
 **Seed sub-gate:** Any migration in this branch must leave `mix ecto.reset` (drop → create → migrate → seed) exiting 0 before the Verify phase begins. Also review `priv/repo/seeds.exs`: any new table or column that should carry representative dev data must be populated — a silent omission won't crash reset but will leave the dev DB semantically stale. This includes structured values: if a JSONB column or Ecto embed changes internal shape, update the seed data to match even when no migration is involved.
 
+**Module namespace sub-gate:** Any change that moves, renames, or introduces a module that is listed by name in `docs/architecture/*.md` must update those files in the **same commit** as the code change. The files most likely to need updating are `bounded-contexts.md` (module listings per context), `engine-decomposition.md` (classification tables), and `ruleset-behaviour.md` (behaviour contract). After making the code change, grep for the old module name before committing:
+
+```bash
+grep -r "OldModuleName" docs/architecture/
+```
+
+Zero hits (or only correctly updated occurrences) is the gate condition. The engine-decomposition status line ("Planning / Phase N complete") must also be advanced when a phase finishes.
+
 **Event schema sub-gate:** Adding or changing any `Gibbering.Events.*` struct is a Published
 Language change — a system-wide API contract, not a local code change. Before implementing:
 1. Run the mini-cycle: Event Storming (brainstorm) → envelope spec → versioning policy review
