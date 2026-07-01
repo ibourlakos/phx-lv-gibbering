@@ -21,14 +21,15 @@ defmodule Mix.Tasks.Gibbering.Ingest do
   Open5e API — https://api.open5e.com
   License: CC-BY-4.0 (mirrors SRD 5.1 content)
 
-  All entries are passed through `Gibbering.Pipeline.LegalGuard` before
+  All entries are passed through `GibberingTales.Pipeline.LegalGuard` before
   insertion. Entries containing WotC Product Identity terms are skipped.
   """
 
   require Logger
 
-  alias Gibbering.{Repo, Pipeline.LegalGuard}
-  alias Gibbering.Catalogue.Monster
+  alias Gibbering.Repo
+  alias GibberingTales.Pipeline.LegalGuard
+  alias GibberingTales.Catalogue.Monster
 
   @open5e_base "https://api.open5e.com"
   @monsters_path "/monsters/"

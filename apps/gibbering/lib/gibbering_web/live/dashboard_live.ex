@@ -1,7 +1,7 @@
 defmodule GibberingWeb.DashboardLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.Campaigns
+  alias GibberingTales.Campaigns
 
   @impl true
   def mount(_params, _session, socket) do

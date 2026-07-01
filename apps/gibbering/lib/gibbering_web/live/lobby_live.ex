@@ -1,8 +1,9 @@
 defmodule GibberingWeb.LobbyLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.{Repo, Campaign, Entity, Campaigns}
-  alias Gibbering.Catalogue.Cache, as: Catalogue
+  alias GibberingTales.Repo
+  alias GibberingTales.{Campaign, Entity, Campaigns}
+  alias GibberingTales.Catalogue.Cache, as: Catalogue
   alias Gibbering.Engine.SceneServer
 
   @impl true

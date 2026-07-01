@@ -1,7 +1,8 @@
 defmodule GibberingWeb.PageController do
   use GibberingWeb, :controller
 
-  alias Gibbering.{Repo, Campaign, Campaigns}
+  alias GibberingTales.Repo
+  alias GibberingTales.{Campaign, Campaigns}
   import Ecto.Query, only: [order_by: 2]
 
   def home(conn, _params) do

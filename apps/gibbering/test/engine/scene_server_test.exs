@@ -4,9 +4,10 @@ defmodule Gibbering.Engine.SceneServerTest do
   use Gibbering.DataCase, async: false
 
   import Gibbering.GameFixtures
-  alias Gibbering.{Repo, Entity}
+  alias GibberingTales.Repo
+  alias GibberingTales.Entity
   alias Gibbering.Engine.{SceneServer, State}
-  alias Gibbering.Rulesets.DnD5e.RulesetState
+  alias GibberingTales.Rulesets.DnD5e.RulesetState
   alias GibberingEngine.Events.EventBatch
 
   alias GibberingEngine.Events.{
@@ -512,7 +513,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       assert :ok = SceneServer.dm_broadcast(game_id, "Hello players!")
 
-      assert_receive %Gibbering.Events.Notification.BroadcastSent{text: "Hello players!"}, 500
+      assert_receive %GibberingTales.Events.Notification.BroadcastSent{text: "Hello players!"}, 500
     end
 
     test "appends entry to session_log in state" do
@@ -535,7 +536,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       assert :ok = SceneServer.dm_whisper(game_id, user_id, "Secret message")
 
-      assert_receive %Gibbering.Events.Notification.WhisperDelivered{
+      assert_receive %GibberingTales.Events.Notification.WhisperDelivered{
                        target_player_id: 42,
                        text: "Secret message"
                      },
@@ -549,7 +550,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       assert :ok = SceneServer.dm_whisper(game_id, user_id, "Secret")
 
-      refute_receive %Gibbering.Events.Notification.WhisperDelivered{}, 200
+      refute_receive %GibberingTales.Events.Notification.WhisperDelivered{}, 200
     end
   end
 

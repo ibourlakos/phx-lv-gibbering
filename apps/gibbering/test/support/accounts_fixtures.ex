@@ -1,7 +1,7 @@
 defmodule Gibbering.AccountsFixtures do
   @moduledoc "Factories for User records in tests."
 
-  alias Gibbering.Accounts
+  alias GibberingTales.Accounts
 
   def unique_username, do: "user#{System.unique_integer([:positive])}"
 

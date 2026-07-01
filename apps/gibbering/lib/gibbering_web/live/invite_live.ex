@@ -1,8 +1,8 @@
 defmodule GibberingWeb.InviteLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.{CampaignInviteLinks, Repo}
-  alias Gibbering.Campaign
+  alias GibberingTales.Repo
+  alias GibberingTales.{Campaign, CampaignInviteLinks}
 
   @impl true
   def mount(%{"token" => token}, _session, socket) do

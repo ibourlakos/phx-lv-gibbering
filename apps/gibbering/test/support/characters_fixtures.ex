@@ -1,5 +1,5 @@
 defmodule Gibbering.CharactersFixtures do
-  alias Gibbering.Characters
+  alias GibberingTales.Characters
 
   def valid_character_attrs(overrides \\ %{}) do
     Map.merge(

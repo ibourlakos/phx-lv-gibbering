@@ -1,8 +1,8 @@
 defmodule Gibbering.Admin.CharactersAdminTest do
   use Gibbering.DataCase, async: true
 
-  import Gibbering.AccountsFixtures
-  import Gibbering.CharactersFixtures
+  import GibberingTales.AccountsFixtures
+  import GibberingTales.CharactersFixtures
 
   alias Gibbering.Admin
 

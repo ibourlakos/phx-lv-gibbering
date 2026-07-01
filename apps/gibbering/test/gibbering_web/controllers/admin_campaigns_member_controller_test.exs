@@ -1,10 +1,11 @@
 defmodule GibberingWeb.AdminCampaignsMemberControllerTest do
   use GibberingWeb.ConnCase, async: true
 
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
   import Gibbering.GameFixtures
 
-  alias Gibbering.{Admin, Campaigns}
+  alias Gibbering.Admin
+  alias GibberingTales.Campaigns
 
   defp log_in_support(conn, role \\ "admin") do
     {:ok, actor} =

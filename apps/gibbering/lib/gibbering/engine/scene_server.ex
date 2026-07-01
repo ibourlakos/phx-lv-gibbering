@@ -12,11 +12,12 @@ defmodule Gibbering.Engine.SceneServer do
   use GenServer
 
   import Ecto.Query
-  alias Gibbering.{Repo, Campaign, Entity}
+  alias GibberingTales.{Repo, Campaign, Entity}
   alias GibberingEngine.EventBus
-  alias Gibbering.Engine.{State, Rules, GameSession}
+  alias Gibbering.Engine.{State, Rules}
+  alias GibberingTales.Engine.GameSession
   alias GibberingEngine.Events.{EventBatch}
-  alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
+  alias GibberingTales.Events.Notification.{BroadcastSent, WhisperDelivered}
 
   alias GibberingEngine.Events.{
     ContainerOpened,
@@ -30,7 +31,7 @@ defmodule Gibbering.Engine.SceneServer do
     TurnAdvanced
   }
 
-  alias Gibbering.Events.DnD5e.{
+  alias GibberingTales.Events.DnD5e.{
     AttackResolved,
     ConditionApplied,
     DamageDealt,
@@ -39,9 +40,9 @@ defmodule Gibbering.Engine.SceneServer do
     SpellCast
   }
 
-  alias Gibbering.Engine.Inventory
-  alias Gibbering.Rulesets.DnD5e.Stats
-  alias Gibbering.Catalogue
+  alias GibberingTales.Engine.Inventory
+  alias GibberingTales.Rulesets.DnD5e.Stats
+  alias GibberingTales.Catalogue
 
   @topic_prefix "game:"
   @notifications_prefix "notifications:"
@@ -436,7 +437,7 @@ defmodule Gibbering.Engine.SceneServer do
             caster = state.actors[caster_id]
             target = state.actors[target_id]
 
-            spell = Gibbering.Data.Spells.get(spell_key)
+            spell = GibberingTales.Data.Spells.get(spell_key)
             needs_roll = spell && spell.effect.attack_type in [:melee_attack, :ranged_attack]
 
             if not auto_roll and needs_roll do
@@ -840,7 +841,7 @@ defmodule Gibbering.Engine.SceneServer do
       {:ok, new_actor} ->
         inventory = get_in(actor, [:stats, "inventory"]) || []
         item_key = (Enum.find(inventory, &(&1["instance_id"] == instance_id)) || %{})["item_key"]
-        item = Gibbering.Data.Items.get(item_key)
+        item = GibberingTales.Data.Items.get(item_key)
         slot = if item && item.item_type == :weapon, do: "equipped_weapon", else: "equipped_armor"
 
         new_entities = Map.put(state.actors, actor_id, new_actor)

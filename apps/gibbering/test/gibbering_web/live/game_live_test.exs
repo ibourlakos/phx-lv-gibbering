@@ -5,16 +5,17 @@ defmodule GibberingWeb.GameLiveTest do
 
   import Phoenix.LiveViewTest
   import Gibbering.GameFixtures
-  import Gibbering.AccountsFixtures
-  import Gibbering.CharactersFixtures
+  import GibberingTales.AccountsFixtures
+  import GibberingTales.CharactersFixtures
   import GibberingWeb.SVGAssertions
 
   import Ecto.Query, only: [from: 2]
 
-  alias Gibbering.{Campaigns, CampaignCharacters, Repo, Entity, GameMap, GridTile}
-  alias Gibbering.Catalogue.EntityPreset
+  alias GibberingTales.Repo
+  alias GibberingTales.{Campaigns, CampaignCharacters, Entity, GameMap, GridTile}
+  alias GibberingTales.Catalogue.EntityPreset
   alias Gibbering.Engine.{SceneServer, State}
-  alias Gibbering.Rulesets.DnD5e.RulesetState
+  alias GibberingTales.Rulesets.DnD5e.RulesetState
 
   defp mount_game(conn) do
     user = register_user()
@@ -512,7 +513,7 @@ defmodule GibberingWeb.GameLiveTest do
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.notifications_topic(game_id),
-        %Gibbering.Events.Notification.BroadcastSent{
+        %GibberingTales.Events.Notification.BroadcastSent{
           event_id: "evt-test",
           campaign_id: game_id,
           text: "Ambient noise fills the room",
@@ -527,12 +528,12 @@ defmodule GibberingWeb.GameLiveTest do
       conn: conn
     } do
       {view, game_id} = mount_dm_game(conn)
-      user_id = Gibbering.Campaigns.get!(game_id).dm_id
+      user_id = GibberingTales.Campaigns.get!(game_id).dm_id
 
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.notifications_topic(game_id),
-        %Gibbering.Events.Notification.WhisperDelivered{
+        %GibberingTales.Events.Notification.WhisperDelivered{
           event_id: "evt-test",
           campaign_id: game_id,
           target_player_id: user_id,

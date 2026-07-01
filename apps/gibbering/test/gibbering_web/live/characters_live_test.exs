@@ -2,8 +2,8 @@ defmodule GibberingWeb.CharactersLiveTest do
   use GibberingWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
-  import Gibbering.AccountsFixtures
-  import Gibbering.CharactersFixtures
+  import GibberingTales.AccountsFixtures
+  import GibberingTales.CharactersFixtures
 
   defp mount_characters(conn) do
     user = register_user()
@@ -185,7 +185,7 @@ defmodule GibberingWeb.CharactersLiveTest do
       assert html =~ "To Be Deleted"
 
       char_id =
-        Gibbering.Characters.list_for_user(user.id) |> hd() |> Map.fetch!(:id)
+        GibberingTales.Characters.list_for_user(user.id) |> hd() |> Map.fetch!(:id)
 
       html =
         view

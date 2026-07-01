@@ -1,7 +1,7 @@
 defmodule GibberingWeb.AdminCampaignsControllerTest do
   use GibberingWeb.ConnCase, async: true
 
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
   import Gibbering.GameFixtures
 
   alias Gibbering.Admin
@@ -66,7 +66,7 @@ defmodule GibberingWeb.AdminCampaignsControllerTest do
 
       assert redirected_to(conn) == "/admin/campaigns/#{campaign_id}"
 
-      campaign = Gibbering.Campaigns.get!(campaign_id)
+      campaign = GibberingTales.Campaigns.get!(campaign_id)
       assert campaign.status == "ended"
     end
 

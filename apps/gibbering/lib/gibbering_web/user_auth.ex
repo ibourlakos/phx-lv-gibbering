@@ -13,7 +13,7 @@ defmodule GibberingWeb.UserAuth do
   import Plug.Conn
   import Phoenix.Controller, only: [redirect: 2, put_flash: 3]
 
-  alias Gibbering.Accounts
+  alias GibberingTales.Accounts
 
   # ---------------------------------------------------------------------------
   # Controller plugs

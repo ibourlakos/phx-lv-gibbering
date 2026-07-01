@@ -2,10 +2,10 @@ defmodule Gibbering.Engine.State do
   @moduledoc "Runtime scene state: entity map, grid, turn order, and action economy helpers."
 
   # dnd5e.ex and state.ex are recompiled together; suppress cross-file undefined warning
-  @compile {:no_warn_undefined, Gibbering.Rulesets.DnD5e}
+  @compile {:no_warn_undefined, GibberingTales.Rulesets.DnD5e}
 
-  alias Gibbering.Campaign
-  alias Gibbering.Rulesets.DnD5e.{RulesetState, Stats}
+  alias GibberingTales.Campaign
+  alias GibberingTales.Rulesets.DnD5e.{RulesetState, Stats}
 
   @type scene_phase ::
           :lobby | :exploration | :initiative_rolling | :in_combat | :paused | :victory | :defeat
@@ -33,7 +33,7 @@ defmodule Gibbering.Engine.State do
     # index into turn_order
     :active_index,
     # module implementing Gibbering.Ruleset behaviour
-    ruleset: Gibbering.Rulesets.DnD5e,
+    ruleset: GibberingTales.Rulesets.DnD5e,
     # opaque D&D 5e-specific state (phase, initiative, effects, etc.)
     ruleset_state: nil
   ]
@@ -79,7 +79,7 @@ defmodule Gibbering.Engine.State do
           description: preset && preset.description
         }
 
-        ruleset = Gibbering.Rulesets.DnD5e
+        ruleset = GibberingTales.Rulesets.DnD5e
 
         hydrated =
           base
@@ -96,7 +96,7 @@ defmodule Gibbering.Engine.State do
       |> Enum.filter(&(&1.type == "hero"))
       |> Enum.map(& &1.id)
 
-    ruleset = Gibbering.Rulesets.DnD5e
+    ruleset = GibberingTales.Rulesets.DnD5e
 
     %__MODULE__{
       campaign_id: campaign.id,

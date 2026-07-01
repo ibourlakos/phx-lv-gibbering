@@ -6,7 +6,9 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
   import Ecto.Query
   import Phoenix.HTML, only: [raw: 1]
 
-  alias Gibbering.{Admin, Campaign, Repo}
+  alias Gibbering.Admin
+  alias GibberingTales.Repo
+  alias GibberingTales.Campaign
   alias GibberingEngine.Monitoring.MetricsStore
 
   @impl true

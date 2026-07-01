@@ -10,7 +10,7 @@ defmodule Mix.Tasks.Check.Docs do
   `docs/` exist and are at least 100 bytes (guards against accidental truncation).
 
   Phase 2 — inline doc coverage: after compiling the app, scans all modules
-  under the `Gibbering.Engine`, `Gibbering.Data`, and `Gibbering.Rulesets`
+  under the `Gibbering.Engine`, `GibberingTales.Data`, and `GibberingTales.Rulesets`
   namespaces and fails if any module is missing `@moduledoc` or any public
   function is missing `@doc`. Use `@moduledoc false` / `@doc false` to
   explicitly suppress docs for internal modules and functions.
@@ -26,8 +26,8 @@ defmodule Mix.Tasks.Check.Docs do
 
   @core_prefixes [
     "Elixir.Gibbering.Engine.",
-    "Elixir.Gibbering.Data.",
-    "Elixir.Gibbering.Rulesets."
+    "Elixir.GibberingTales.Data.",
+    "Elixir.GibberingTales.Rulesets."
   ]
 
   # Standard OTP/Ecto callbacks that never need @doc.
@@ -73,25 +73,33 @@ defmodule Mix.Tasks.Check.Docs do
 
   defp check_module_docs do
     Mix.Task.run("compile", [])
-    beam_dir = Mix.Project.compile_path()
 
-    case File.ls(beam_dir) do
-      {:ok, files} ->
-        files
-        |> Enum.filter(&String.ends_with?(&1, ".beam"))
-        |> Enum.flat_map(fn file ->
-          module = file |> String.replace_suffix(".beam", "") |> String.to_atom()
+    env = Mix.env()
+    build_root = Path.join(File.cwd!(), "_build/#{env}/lib")
 
-          if core_module?(module) do
-            check_module(module)
-          else
-            []
-          end
-        end)
+    beam_dirs =
+      case File.ls(build_root) do
+        {:ok, apps} ->
+          Enum.map(apps, &Path.join([build_root, &1, "ebin"]))
 
-      {:error, _} ->
-        []
-    end
+        {:error, _} ->
+          []
+      end
+
+    Enum.flat_map(beam_dirs, fn beam_dir ->
+      case File.ls(beam_dir) do
+        {:ok, files} ->
+          files
+          |> Enum.filter(&String.ends_with?(&1, ".beam"))
+          |> Enum.flat_map(fn file ->
+            module = file |> String.replace_suffix(".beam", "") |> String.to_atom()
+            if core_module?(module), do: check_module(module), else: []
+          end)
+
+        {:error, _} ->
+          []
+      end
+    end)
   end
 
   defp core_module?(module) do

@@ -1,7 +1,7 @@
 <% state = @game_state
 phase = Gibbering.Engine.State.phase(state)
-hidden_entities = Gibbering.Rulesets.DnD5e.RulesetState.hidden_entities(state.ruleset_state)
-initiative_values = Gibbering.Rulesets.DnD5e.RulesetState.initiative_values(state.ruleset_state)
+hidden_entities = GibberingTales.Rulesets.DnD5e.RulesetState.hidden_entities(state.ruleset_state)
+initiative_values = GibberingTales.Rulesets.DnD5e.RulesetState.initiative_values(state.ruleset_state)
 pending_initiative_rolls = Gibbering.Engine.State.pending_initiative_rolls(state)
 map_h = state.y_extent
 map_w = state.x_extent
@@ -1224,7 +1224,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
             name="user_id"
             class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3 border border-gray-500"
           >
-            <%= for member <- Gibbering.Campaigns.list_members(@game_id) do %>
+            <%= for member <- GibberingTales.Campaigns.list_members(@game_id) do %>
               <option value={member.id}>{member.username}</option>
             <% end %>
           </select>
@@ -1281,7 +1281,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
         <% else %>
           <div class="space-y-2 mb-3">
             <%= for item_inst <- items do %>
-              <% item_data = Gibbering.Data.Items.get(item_inst["item_key"]) %>
+              <% item_data = GibberingTales.Data.Items.get(item_inst["item_key"]) %>
               <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
                 <div>
                   <div class="text-white text-xs font-medium">

@@ -52,9 +52,11 @@ config :gibbering_engine, GibberingEngine.EventBus, adapter: GibberingEngine.Eve
 config :gibbering_engine, GibberingEngine.Monitoring.MetricsStore,
   adapter: GibberingEngine.Monitoring.Stores.NoOp
 
-# --- :gibbering_tales (stub — populated in Phase 2c) ---
+# --- :gibbering_tales ---
 
-config :gibbering_tales, ecto_repos: []
+config :gibbering_tales,
+  ecto_repos: [GibberingTales.Repo],
+  generators: [timestamp_type: :utc_datetime]
 
 # --- :gibbering_tales_web (stub — populated in Phase 2d) ---
 

@@ -3,11 +3,11 @@ defmodule GibberingWeb.GameLive do
 
   alias Gibbering.Engine.{SceneServer, State, Rules}
   alias GibberingEngine.SpriteCompositor
-  alias Gibbering.{Campaigns, CampaignCharacters}
+  alias GibberingTales.{Campaigns, CampaignCharacters}
   alias GibberingEngine.EventBus
   alias GibberingEngine.Events.EventBatch
   alias Gibbering.Events.{EventFeedProjection, FreeformRolled}
-  alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
+  alias GibberingTales.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias GibberingEngine.Events.{RollRequired, SessionEnded, TurnAdvanced}
 
   @dice_faces %{
@@ -21,8 +21,8 @@ defmodule GibberingWeb.GameLive do
   }
   @dice_order ~w(d4 d6 d8 d10 d12 d20 d100)
   @empty_freeform_dice Map.new(@dice_order, &{&1, 0})
-  alias Gibbering.Catalogue
-  alias Gibbering.Data.Spells
+  alias GibberingTales.Catalogue
+  alias GibberingTales.Data.Spells
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
@@ -920,17 +920,17 @@ defmodule GibberingWeb.GameLive do
   # Event log helpers
   # ---------------------------------------------------------------------------
 
-  defp event_label(%Gibbering.Events.DnD5e.AttackResolved{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.AttackResolved{} = e) do
     if e.hit?,
       do: "#{e.attacker_name} hits #{e.target_name} (roll #{e.roll})",
       else: "#{e.attacker_name} misses #{e.target_name} (roll #{e.roll})"
   end
 
-  defp event_label(%Gibbering.Events.DnD5e.DamageDealt{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.DamageDealt{} = e) do
     "#{e.target_name} takes #{e.amount} damage (#{e.new_hp} HP left)"
   end
 
-  defp event_label(%Gibbering.Events.DnD5e.SpellCast{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.SpellCast{} = e) do
     "#{e.caster_name} casts #{e.spell_key} → #{e.target_name}: #{e.outcome}"
   end
 
@@ -940,11 +940,11 @@ defmodule GibberingWeb.GameLive do
     "#{e.entity_name} moves (#{fx},#{fy})→(#{tx},#{ty})"
   end
 
-  defp event_label(%Gibbering.Events.DnD5e.ConditionApplied{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.ConditionApplied{} = e) do
     "#{e.entity_name}: #{e.condition_id} applied"
   end
 
-  defp event_label(%Gibbering.Events.DnD5e.ConditionRemoved{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.ConditionRemoved{} = e) do
     "#{e.entity_name}: #{e.condition_id} removed"
   end
 
@@ -956,11 +956,11 @@ defmodule GibberingWeb.GameLive do
     "Phase: #{e.from_phase} → #{e.to_phase}"
   end
 
-  defp event_label(%Gibbering.Events.DnD5e.ItemTaken{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.ItemTaken{} = e) do
     "Item taken: #{e.item_key} (×#{e.quantity})"
   end
 
-  defp event_label(%Gibbering.Events.DnD5e.ItemEquipped{} = e) do
+  defp event_label(%GibberingTales.Events.DnD5e.ItemEquipped{} = e) do
     "Item equipped: #{e.item_key} in #{e.slot}"
   end
 
@@ -995,7 +995,7 @@ defmodule GibberingWeb.GameLive do
   # {:text, str} | {:entity_link, id, name} | {:tile_link, x, y, label} | {:spell_link, event_id, key}
   # Used by the right panel to render clickable inline elements.
 
-  defp event_parts(%Gibbering.Events.DnD5e.AttackResolved{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.AttackResolved{} = e) do
     verb = if e.hit?, do: " hits ", else: " misses "
 
     [
@@ -1006,14 +1006,14 @@ defmodule GibberingWeb.GameLive do
     ]
   end
 
-  defp event_parts(%Gibbering.Events.DnD5e.DamageDealt{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.DamageDealt{} = e) do
     [
       {:entity_link, e.target_id, e.target_name},
       {:text, " takes #{e.amount} damage (#{e.new_hp} HP left)"}
     ]
   end
 
-  defp event_parts(%Gibbering.Events.DnD5e.SpellCast{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.SpellCast{} = e) do
     [
       {:entity_link, e.caster_id, e.caster_name},
       {:text, " casts "},
@@ -1034,11 +1034,11 @@ defmodule GibberingWeb.GameLive do
     ]
   end
 
-  defp event_parts(%Gibbering.Events.DnD5e.ConditionApplied{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.ConditionApplied{} = e) do
     [{:entity_link, e.entity_id, e.entity_name}, {:text, ": #{e.condition_id} applied"}]
   end
 
-  defp event_parts(%Gibbering.Events.DnD5e.ConditionRemoved{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.ConditionRemoved{} = e) do
     [{:entity_link, e.entity_id, e.entity_name}, {:text, ": #{e.condition_id} removed"}]
   end
 
@@ -1049,11 +1049,11 @@ defmodule GibberingWeb.GameLive do
 
   defp event_parts(%GibberingEngine.Events.TurnAdvanced{}), do: [{:text, "Turn → end of round"}]
 
-  defp event_parts(%Gibbering.Events.DnD5e.ItemTaken{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.ItemTaken{} = e) do
     [{:entity_link, e.actor_id, "actor"}, {:text, " takes #{e.item_key} ×#{e.quantity}"}]
   end
 
-  defp event_parts(%Gibbering.Events.DnD5e.ItemEquipped{} = e) do
+  defp event_parts(%GibberingTales.Events.DnD5e.ItemEquipped{} = e) do
     [{:entity_link, e.actor_id, "actor"}, {:text, " equips #{e.item_key} (#{e.slot})"}]
   end
 

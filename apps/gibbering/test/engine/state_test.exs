@@ -4,7 +4,7 @@ defmodule Gibbering.Engine.StateTest do
 
   import Gibbering.GameFixtures
   alias Gibbering.Engine.State
-  alias Gibbering.Rulesets.DnD5e.RulesetState
+  alias GibberingTales.Rulesets.DnD5e.RulesetState
 
   describe "active_hero_id/1" do
     test "returns the hero at active_index" do
@@ -82,18 +82,18 @@ defmodule Gibbering.Engine.StateTest do
   describe "from_campaign/1" do
     test "builds state from campaign struct" do
       tiles = [
-        %Gibbering.GridTile{
+        %GibberingTales.GridTile{
           x: 0,
           y: 0,
           texture: "grass",
           movement: %{"walk" => 100, "fly" => 100},
           map_id: 1
         },
-        %Gibbering.GridTile{x: 1, y: 0, texture: "stone", movement: %{}, map_id: 1}
+        %GibberingTales.GridTile{x: 1, y: 0, texture: "stone", movement: %{}, map_id: 1}
       ]
 
       entities = [
-        %Gibbering.Entity{
+        %GibberingTales.Entity{
           id: 10,
           name: "Warrior",
           type: "hero",
@@ -108,10 +108,10 @@ defmodule Gibbering.Engine.StateTest do
         }
       ]
 
-      campaign = %Gibbering.Campaign{
+      campaign = %GibberingTales.Campaign{
         id: 1,
         name: "Test",
-        active_map: %Gibbering.GameMap{
+        active_map: %GibberingTales.GameMap{
           id: 1,
           x_extent: 2,
           y_extent: 1,
@@ -141,7 +141,7 @@ defmodule Gibbering.Engine.StateTest do
 
     test "only heroes are included in turn_order" do
       entities = [
-        %Gibbering.Entity{
+        %GibberingTales.Entity{
           id: 1,
           name: "Hero",
           type: "hero",
@@ -154,7 +154,7 @@ defmodule Gibbering.Engine.StateTest do
           stats: %{},
           campaign_id: 1
         },
-        %Gibbering.Entity{
+        %GibberingTales.Entity{
           id: 2,
           name: "Orc",
           type: "monster",
@@ -169,10 +169,10 @@ defmodule Gibbering.Engine.StateTest do
         }
       ]
 
-      campaign = %Gibbering.Campaign{
+      campaign = %GibberingTales.Campaign{
         id: 1,
         name: "T",
-        active_map: %Gibbering.GameMap{id: 1, x_extent: 2, y_extent: 1, tile_size: 32, tiles: []},
+        active_map: %GibberingTales.GameMap{id: 1, x_extent: 2, y_extent: 1, tile_size: 32, tiles: []},
         entities: entities
       }
 
@@ -182,7 +182,7 @@ defmodule Gibbering.Engine.StateTest do
 
     test "hydrates entities with action_economy, resources, and conditions" do
       entities = [
-        %Gibbering.Entity{
+        %GibberingTales.Entity{
           id: 10,
           name: "Wizard",
           type: "hero",
@@ -201,10 +201,10 @@ defmodule Gibbering.Engine.StateTest do
         }
       ]
 
-      campaign = %Gibbering.Campaign{
+      campaign = %GibberingTales.Campaign{
         id: 1,
         name: "T",
-        active_map: %Gibbering.GameMap{id: 1, x_extent: 1, y_extent: 1, tile_size: 32, tiles: []},
+        active_map: %GibberingTales.GameMap{id: 1, x_extent: 1, y_extent: 1, tile_size: 32, tiles: []},
         entities: entities
       }
 
@@ -223,7 +223,7 @@ defmodule Gibbering.Engine.StateTest do
 
     test "fighter entities get second_wind resource" do
       entities = [
-        %Gibbering.Entity{
+        %GibberingTales.Entity{
           id: 5,
           name: "Fighter",
           type: "hero",
@@ -242,10 +242,10 @@ defmodule Gibbering.Engine.StateTest do
         }
       ]
 
-      campaign = %Gibbering.Campaign{
+      campaign = %GibberingTales.Campaign{
         id: 1,
         name: "T",
-        active_map: %Gibbering.GameMap{id: 1, x_extent: 1, y_extent: 1, tile_size: 32, tiles: []},
+        active_map: %GibberingTales.GameMap{id: 1, x_extent: 1, y_extent: 1, tile_size: 32, tiles: []},
         entities: entities
       }
 

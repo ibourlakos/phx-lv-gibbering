@@ -1,10 +1,10 @@
 defmodule Gibbering.Admin.UsersAdminTest do
   use Gibbering.DataCase, async: true
 
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
 
   alias Gibbering.Admin
-  alias Gibbering.Accounts
+  alias GibberingTales.Accounts
 
   defp create_actor do
     {:ok, actor} =

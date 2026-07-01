@@ -10,7 +10,7 @@ defmodule Gibbering.Application do
     children = [
       GibberingWeb.Telemetry,
       Gibbering.Repo,
-      Gibbering.Catalogue.Cache,
+      GibberingTales.Catalogue.Cache,
       {DNSCluster, query: Application.get_env(:gibbering, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Gibbering.PubSub},
       {Registry, keys: :unique, name: Gibbering.GameRegistry},

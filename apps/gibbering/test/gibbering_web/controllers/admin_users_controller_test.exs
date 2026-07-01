@@ -1,7 +1,7 @@
 defmodule GibberingWeb.AdminUsersControllerTest do
   use GibberingWeb.ConnCase, async: true
 
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
 
   alias Gibbering.Admin
 
@@ -66,7 +66,7 @@ defmodule GibberingWeb.AdminUsersControllerTest do
       conn = post(conn, "/admin/users/#{user.id}/suspend")
       assert redirected_to(conn) == "/admin/users/#{user.id}"
 
-      updated = Gibbering.Accounts.get_user_by_id(user.id)
+      updated = GibberingTales.Accounts.get_user_by_id(user.id)
       assert updated.suspended_at != nil
     end
 
@@ -86,7 +86,7 @@ defmodule GibberingWeb.AdminUsersControllerTest do
       conn = post(conn, "/admin/users/#{user.id}/unsuspend")
       assert redirected_to(conn) == "/admin/users/#{user.id}"
 
-      updated = Gibbering.Accounts.get_user_by_id(user.id)
+      updated = GibberingTales.Accounts.get_user_by_id(user.id)
       assert is_nil(updated.suspended_at)
     end
   end

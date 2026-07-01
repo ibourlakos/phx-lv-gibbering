@@ -1,7 +1,7 @@
 defmodule GibberingWeb.CampaignPrepLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.{Campaigns, CampaignCharacters, CampaignInviteLinks}
+  alias GibberingTales.{Campaigns, CampaignCharacters, CampaignInviteLinks}
 
   @ability_keys ~w(strength dexterity constitution intelligence wisdom charisma)
 

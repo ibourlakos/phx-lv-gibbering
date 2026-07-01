@@ -2,9 +2,9 @@ defmodule GibberingWeb.InviteLiveTest do
   use GibberingWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
 
-  alias Gibbering.{Repo, Campaign, Campaigns, CampaignInviteLinks}
+  alias GibberingTales.{Repo, Campaign, Campaigns, CampaignInviteLinks}
   alias Gibbering.GameFixtures
 
   setup do

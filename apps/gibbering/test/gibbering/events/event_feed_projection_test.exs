@@ -3,7 +3,7 @@ defmodule Gibbering.Events.EventFeedProjectionTest do
 
   alias Gibbering.Events.EventFeedProjection
   alias GibberingEngine.Events.{LogEntryHidden, LogEntryRevealed}
-  alias Gibbering.Events.DnD5e.{AttackResolved, DamageDealt}
+  alias GibberingTales.Events.DnD5e.{AttackResolved, DamageDealt}
 
   defp attack(id, visibility \\ :public) do
     %AttackResolved{

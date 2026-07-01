@@ -1,8 +1,8 @@
 defmodule GibberingWeb.CharactersLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.{Characters, Data}
-  alias Gibbering.Catalogue.Cache, as: Catalogue
+  alias GibberingTales.{Characters, Data}
+  alias GibberingTales.Catalogue.Cache, as: Catalogue
   import GibberingWeb.Components.CharacterSprite
 
   @standard_array [15, 14, 13, 12, 10, 8]

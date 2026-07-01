@@ -10,8 +10,8 @@ defmodule Gibbering.GameFixtures do
   """
 
   alias Gibbering.Engine.State
-  alias Gibbering.Rulesets.{DnD5e, DnD5e.Stats, DnD5e.RulesetState}
-  alias Gibbering.{Repo, Campaign, GameMap, GridTile, Entity}
+  alias GibberingTales.Rulesets.{DnD5e, DnD5e.Stats, DnD5e.RulesetState}
+  alias GibberingTales.{Repo, Campaign, GameMap, GridTile, Entity}
 
   # ---------------------------------------------------------------------------
   # In-memory state builders

@@ -1,5 +1,14 @@
 import Config
 
+config :gibbering_tales, GibberingTales.Repo,
+  username: "gibbering",
+  password: "gibbering",
+  hostname: "db",
+  database: "gibbering_dev",
+  stacktrace: true,
+  show_sensitive_data_on_connection_error: true,
+  pool_size: 10
+
 config :gibbering, Gibbering.Repo,
   username: "gibbering",
   password: "gibbering",

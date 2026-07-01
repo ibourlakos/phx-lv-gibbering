@@ -2,10 +2,11 @@ defmodule GibberingWeb.DashboardLiveTest do
   use GibberingWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
 
-  alias Gibbering.{Repo, Campaign, Campaigns, CampaignCharacters}
-  alias Gibbering.CharactersFixtures
+  alias GibberingTales.Repo
+  alias GibberingTales.{Campaign, Campaigns, CampaignCharacters}
+  alias GibberingTales.CharactersFixtures
 
   defp insert_campaign(dm) do
     {:ok, campaign} =

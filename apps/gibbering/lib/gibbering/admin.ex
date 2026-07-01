@@ -4,9 +4,10 @@ defmodule Gibbering.Admin do
   import Ecto.Query
 
   alias Gibbering.Repo
+  alias GibberingTales.Repo, as: DomainRepo
   alias Gibbering.Admin.{SupportUser, AuditLog}
-  alias Gibbering.Accounts.User
-  alias Gibbering.{Campaign, CampaignMember, Character}
+  alias GibberingTales.Accounts.User
+  alias GibberingTales.{Campaign, CampaignMember, Character}
   alias GibberingEngine.EventBus
 
   @doc "Creates a support user. Returns `{:ok, user}` or `{:error, changeset}`."
@@ -86,25 +87,25 @@ defmodule Gibbering.Admin do
 
     base
     |> maybe_search_username(Keyword.get(opts, :search))
-    |> Repo.all()
+    |> DomainRepo.all()
   end
 
   @doc "Returns user with campaign_members preloaded, or nil."
   def get_user_with_memberships(id) do
     User
     |> preload(:campaign_members)
-    |> Repo.get(id)
+    |> DomainRepo.get(id)
   end
 
   @doc "Sets suspended_at on the user and logs the action. Returns `{:ok, user}`."
   def suspend_user(actor_id, user_id) do
-    user = Repo.get!(User, user_id)
+    user = DomainRepo.get!(User, user_id)
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
     {:ok, updated} =
       user
       |> Ecto.Changeset.change(suspended_at: now)
-      |> Repo.update()
+      |> DomainRepo.update()
 
     log_action(actor_id, "user.suspend", "user", user_id)
     {:ok, updated}
@@ -112,12 +113,12 @@ defmodule Gibbering.Admin do
 
   @doc "Clears suspended_at on the user and logs the action. Returns `{:ok, user}`."
   def unsuspend_user(actor_id, user_id) do
-    user = Repo.get!(User, user_id)
+    user = DomainRepo.get!(User, user_id)
 
     {:ok, updated} =
       user
       |> Ecto.Changeset.change(suspended_at: nil)
-      |> Repo.update()
+      |> DomainRepo.update()
 
     log_action(actor_id, "user.unsuspend", "user", user_id)
     {:ok, updated}
@@ -138,14 +139,14 @@ defmodule Gibbering.Admin do
     Campaign
     |> order_by([c], desc: c.id)
     |> preload(:dm)
-    |> Repo.all()
+    |> DomainRepo.all()
   end
 
   @doc "Returns campaign with dm and campaign_members (with user) preloaded, or nil."
   def get_campaign_with_members(id) do
     Campaign
     |> preload([:dm, :active_map, campaign_members: :user])
-    |> Repo.get(id)
+    |> DomainRepo.get(id)
   end
 
   @doc """
@@ -153,7 +154,7 @@ defmodule Gibbering.Admin do
   and logs the action. Returns `{:ok, campaign}` or `{:error, :not_found}`.
   """
   def force_close_campaign(actor_id, campaign_id, reason) do
-    case Repo.get(Campaign, campaign_id) do
+    case DomainRepo.get(Campaign, campaign_id) do
       nil ->
         {:error, :not_found}
 
@@ -161,7 +162,7 @@ defmodule Gibbering.Admin do
         {:ok, updated} =
           campaign
           |> Campaign.changeset(%{status: "ended"})
-          |> Repo.update()
+          |> DomainRepo.update()
 
         maybe_terminate_scene_server(campaign_id)
 
@@ -186,7 +187,7 @@ defmodule Gibbering.Admin do
          {:ok, campaign} <- fetch_campaign(campaign_id),
          :ok <- check_not_dm(campaign, user_id),
          {:ok, member} <- fetch_member(campaign_id, user_id) do
-      Repo.delete!(member)
+      DomainRepo.delete!(member)
       broadcast_ejection(campaign_id, user_id)
 
       log_action(
@@ -206,7 +207,7 @@ defmodule Gibbering.Admin do
   end
 
   defp fetch_campaign(id) do
-    case Repo.get(Campaign, id) do
+    case DomainRepo.get(Campaign, id) do
       nil -> {:error, :not_found}
       campaign -> {:ok, campaign}
     end
@@ -218,7 +219,7 @@ defmodule Gibbering.Admin do
   defp check_not_dm(_, _), do: :ok
 
   defp fetch_member(campaign_id, user_id) do
-    case Repo.get_by(CampaignMember, campaign_id: campaign_id, user_id: user_id) do
+    case DomainRepo.get_by(CampaignMember, campaign_id: campaign_id, user_id: user_id) do
       nil -> {:error, :not_a_member}
       member -> {:ok, member}
     end
@@ -246,14 +247,14 @@ defmodule Gibbering.Admin do
       order_by: [asc: c.name]
     )
     |> maybe_search_character(Keyword.get(opts, :search))
-    |> Repo.all()
+    |> DomainRepo.all()
   end
 
   @doc "Returns character with user and user's campaign_members preloaded. Raises if not found."
   def get_character_for_admin!(id) do
     Character
     |> preload([:user, user: :campaign_members])
-    |> Repo.get!(id)
+    |> DomainRepo.get!(id)
   end
 
   defp maybe_search_character(q, nil), do: q

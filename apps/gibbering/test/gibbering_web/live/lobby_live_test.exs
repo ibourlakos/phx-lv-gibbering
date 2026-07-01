@@ -3,10 +3,10 @@ defmodule GibberingWeb.LobbyLiveTest do
 
   import Phoenix.LiveViewTest
   import Gibbering.GameFixtures
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
   import Ecto.Query, only: [from: 2]
 
-  alias Gibbering.{Repo, Entity, Campaigns}
+  alias GibberingTales.{Repo, Entity, Campaigns}
 
   # ---------------------------------------------------------------------------
   # Shared setup

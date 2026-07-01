@@ -16,11 +16,12 @@ defmodule Gibbering.Monitoring.Stores.Local do
 
   import Ecto.Query
 
-  alias Gibbering.{Repo, PubSub}
+  alias GibberingTales.Repo
+  alias Gibbering.PubSub
   alias GibberingEngine.EventBus
   alias GibberingEngine.Events.EventBatch
   alias GibberingEngine.Events.SessionEnded
-  alias Gibbering.Monitoring.CampaignMetricSnapshot
+  alias GibberingTales.Monitoring.CampaignMetricSnapshot
 
   @ets_table :gibbering_metrics_buffer
   @scene_info_table :gibbering_scene_info

@@ -2,10 +2,11 @@ defmodule GibberingWeb.CampaignPrepLiveTest do
   use GibberingWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
-  import Gibbering.AccountsFixtures
+  import GibberingTales.AccountsFixtures
 
-  alias Gibbering.{Repo, Campaign, CampaignCharacter, CampaignCharacters, Campaigns}
-  alias Gibbering.Characters
+  alias GibberingTales.Repo
+  alias GibberingTales.{Campaign, CampaignCharacter, CampaignCharacters, Campaigns}
+  alias GibberingTales.Characters
 
   # ---------------------------------------------------------------------------
   # Fixture helpers

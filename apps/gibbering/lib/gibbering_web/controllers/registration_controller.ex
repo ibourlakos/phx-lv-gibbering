@@ -1,7 +1,7 @@
 defmodule GibberingWeb.RegistrationController do
   use GibberingWeb, :controller
 
-  alias Gibbering.Accounts
+  alias GibberingTales.Accounts
   alias GibberingWeb.UserAuth
 
   def new(conn, _params) do
