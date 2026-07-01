@@ -1,7 +1,8 @@
 # #163 · Engine decomposition Phase 1 — `ruleset_state: term()` opaque field
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-29
+**Closed:** 2026-06-30
 **Priority:** medium
 **Tags:** architecture
 
@@ -21,9 +22,9 @@ Derived from [`docs/architecture/engine-decomposition.md`](../architecture/engin
 - `SceneServer` passes `ruleset_state` through without touching its structure
 
 **Acceptance criteria**
-- [ ] `Gibbering.Rulesets.DnD5e.RulesetState` struct exists with the 10 moved fields
-- [ ] `Engine.State` no longer declares those 10 fields; `ruleset_state: term()` is present
-- [ ] No engine module (`SceneServer`, `Rules`, `Engine.*`) accesses `ruleset_state` fields by name
-- [ ] All `DnD5e` ruleset callbacks access their state via `state.ruleset_state`
-- [ ] `Engine.State` tests updated; `DnD5e.RulesetState` tests added for field initialization
-- [ ] `mix precommit` passes
+- [x] `Gibbering.Rulesets.DnD5e.RulesetState` struct exists with the 10 moved fields
+- [x] `Engine.State` no longer declares those 10 fields; `ruleset_state: term()` is present
+- [x] No engine module (`SceneServer`, `Rules`, `Engine.*`) accesses `ruleset_state` fields by name
+- [x] All `DnD5e` ruleset callbacks access their state via `state.ruleset_state`
+- [x] `Engine.State` tests updated; `DnD5e.RulesetState` tests added for field initialization
+- [x] `mix precommit` passes

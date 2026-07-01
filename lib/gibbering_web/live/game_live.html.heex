@@ -1,4 +1,8 @@
 <% state = @game_state
+phase = Gibbering.Engine.State.phase(state)
+hidden_entities = Gibbering.Rulesets.DnD5e.RulesetState.hidden_entities(state.ruleset_state)
+initiative_values = Gibbering.Rulesets.DnD5e.RulesetState.initiative_values(state.ruleset_state)
+pending_initiative_rolls = Gibbering.Engine.State.pending_initiative_rolls(state)
 map_h = state.y_extent
 map_w = state.x_extent
 active_id = Gibbering.Engine.State.active_hero_id(state)
@@ -311,10 +315,10 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         do: sorted_entities,
         else:
           Enum.reject(sorted_entities, fn {id, _} ->
-            MapSet.member?(state.hidden_entities || MapSet.new(), id)
+            MapSet.member?(hidden_entities, id)
           end) %>
     <%= for {id, entity} <- visible_entities do %>
-      <% is_active = id == active_id && state.phase == :in_combat %>
+      <% is_active = id == active_id && phase == :in_combat %>
       <% is_selected = id == state.actor_id %>
       <% is_target = id in @valid_targets %>
       <% is_spell_target = id in @spell_targets %>
@@ -480,7 +484,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <span class="font-bold text-yellow-400">
         {if active_entity, do: active_entity.name, else: "—"}
       </span>
-      <span class="text-xs text-gray-600 font-mono">[{state.phase}]</span>
+      <span class="text-xs text-gray-600 font-mono">[{phase}]</span>
     </div>
   </div>
 
@@ -693,7 +697,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
       <div class="flex-1 flex flex-col min-h-0">
         <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
           <%= for {eid, entity} <- state.entities do %>
-            <% is_hidden = MapSet.member?(state.hidden_entities || MapSet.new(), eid) %>
+            <% is_hidden = MapSet.member?(hidden_entities, eid) %>
             <div class={["rounded text-xs", is_hidden && "opacity-50"]}>
               <div class="flex items-center gap-1 bg-gray-800/80 rounded px-1.5 py-1">
                 <button
@@ -835,7 +839,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         <%!-- Session controls --%>
         <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
           <div class="text-xs text-gray-500 uppercase tracking-wide">Session</div>
-          <%= if state.phase == :lobby do %>
+          <%= if phase == :lobby do %>
             <button
               phx-click="dm_start"
               class="bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded px-2 py-1"
@@ -843,7 +847,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               Start Session
             </button>
           <% end %>
-          <%= if state.phase in [:exploration, :initiative_rolling, :in_combat] do %>
+          <%= if phase in [:exploration, :initiative_rolling, :in_combat] do %>
             <button
               phx-click="dm_pause"
               class="bg-yellow-700 hover:bg-yellow-600 text-white text-xs rounded px-2 py-1"
@@ -851,7 +855,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               Pause
             </button>
           <% end %>
-          <%= if state.phase == :paused do %>
+          <%= if phase == :paused do %>
             <button
               phx-click="dm_resume"
               class="bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded px-2 py-1"
@@ -859,7 +863,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               Resume
             </button>
           <% end %>
-          <%= if state.phase != :lobby do %>
+          <%= if phase != :lobby do %>
             <button
               phx-click="dm_end_confirm"
               class="bg-red-900 hover:bg-red-800 text-white text-xs rounded px-2 py-1"
@@ -887,13 +891,13 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
         </div>
 
         <%!-- Initiative panel (shown when session is active) --%>
-        <%= if state.phase != :lobby do %>
+        <%= if phase != :lobby do %>
           <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Initiative</div>
             <%= for {entry_id, idx} <- Enum.with_index(state.turn_order) do %>
               <% entry = state.entities[entry_id] %>
               <% is_active = idx == state.active_index %>
-              <% ini_val = Map.get(state.initiative_values || %{}, entry_id) %>
+              <% ini_val = Map.get(initiative_values || %{}, entry_id) %>
               <div class={[
                 "flex items-center gap-1 text-xs rounded px-1.5 py-0.5",
                 (is_active && "bg-yellow-900 border border-yellow-600") || "bg-gray-800"
@@ -944,18 +948,18 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               </button>
             <% end %>
 
-            <%= if state.phase == :initiative_rolling do %>
+            <%= if phase == :initiative_rolling do %>
               <button
                 phx-click="dm_end_initiative_rolling"
                 class={[
                   "text-white text-xs rounded px-2 py-0.5 mt-0.5",
-                  (MapSet.size(state.pending_initiative_rolls) > 0 &&
+                  (MapSet.size(pending_initiative_rolls) > 0 &&
                      "bg-gray-500 cursor-not-allowed opacity-60") ||
                     "bg-green-700 hover:bg-green-600"
                 ]}
                 title={
-                  if MapSet.size(state.pending_initiative_rolls) > 0,
-                    do: "Waiting for #{MapSet.size(state.pending_initiative_rolls)} player(s)",
+                  if MapSet.size(pending_initiative_rolls) > 0,
+                    do: "Waiting for #{MapSet.size(pending_initiative_rolls)} player(s)",
                     else: "Start combat"
                 }
               >
@@ -1080,7 +1084,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
   <% end %>
 
   <%!-- Pause overlay — shown to all clients while session is paused --%>
-  <%= if state.phase == :paused do %>
+  <%= if phase == :paused do %>
     <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.70); display:flex; align-items:center; justify-content:center; pointer-events:none;">
       <div class="text-center">
         <div class="text-5xl font-bold text-yellow-400 mb-3">SESSION PAUSED</div>
@@ -1126,10 +1130,10 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
   <% end %>
 
   <%!-- Outcome overlay — full-viewport, blocks all interaction. DM sees Return to Lobby. --%>
-  <%= if state.phase in [:victory, :defeat] do %>
+  <%= if phase in [:victory, :defeat] do %>
     <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center;">
       <div class="text-center max-w-md mx-auto px-6">
-        <%= if state.phase == :victory do %>
+        <%= if phase == :victory do %>
           <div class="text-6xl font-bold text-yellow-400 mb-4">Victory!</div>
           <div class="text-xl text-gray-300 mb-6">The enemies have been vanquished.</div>
         <% else %>
@@ -1252,7 +1256,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
   <% end %>
 
   <%!-- Container loot panel — shown when the active hero has a container open --%>
-  <%= if container_id = @game_state.open_container_id do %>
+  <%= if container_id = Gibbering.Engine.State.open_container_id(@game_state) do %>
     <% container = @game_state.entities[container_id] %>
     <% items = get_in(container, [:stats, "items"]) || [] %>
     <div

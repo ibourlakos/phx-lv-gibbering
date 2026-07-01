@@ -10,7 +10,7 @@ defmodule Gibbering.GameFixtures do
   """
 
   alias Gibbering.Engine.State
-  alias Gibbering.Rulesets.{DnD5e, DnD5e.Stats}
+  alias Gibbering.Rulesets.{DnD5e, DnD5e.Stats, DnD5e.RulesetState}
   alias Gibbering.{Repo, Campaign, GameMap, GridTile, Entity}
 
   # ---------------------------------------------------------------------------
@@ -128,7 +128,8 @@ defmodule Gibbering.GameFixtures do
       actor_id: nil,
       valid_moves: [],
       turn_order: [@hero_id],
-      active_index: 0
+      active_index: 0,
+      ruleset_state: RulesetState.new()
     }
 
     Enum.reduce(opts, base, fn

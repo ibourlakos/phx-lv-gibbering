@@ -225,7 +225,7 @@ defmodule GibberingWeb.GameLive do
         auto_roll: socket.assigns.auto_roll
       )
 
-    if new_state.awaiting_roll do
+    if State.awaiting_roll?(new_state) do
       {:noreply, assign(socket, game_state: new_state)}
     else
       damage =
@@ -284,7 +284,7 @@ defmodule GibberingWeb.GameLive do
         auto_roll: socket.assigns.auto_roll
       )
 
-    if new_state.awaiting_roll do
+    if State.awaiting_roll?(new_state) do
       {:noreply, assign(socket, game_state: new_state)}
     else
       {damage, log_entry} =
@@ -755,7 +755,7 @@ defmodule GibberingWeb.GameLive do
 
       # Clear prompt when state_snapshot shows awaiting_roll is now false
       roll_prompt =
-        if batch.state_snapshot && !batch.state_snapshot.awaiting_roll &&
+        if batch.state_snapshot && !State.awaiting_roll?(batch.state_snapshot) &&
              (roll_prompt == nil or roll_prompt.roll_type != :initiative),
            do: nil,
            else: roll_prompt

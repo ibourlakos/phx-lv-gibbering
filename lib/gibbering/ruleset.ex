@@ -74,4 +74,10 @@ defmodule Gibbering.Ruleset do
   Each entry is `{condition_id :: atom(), label :: String.t()}`.
   """
   @callback available_conditions() :: [{atom(), String.t()}]
+
+  @doc """
+  Returns an initialized ruleset state term for a new scene.
+  Stored as `Engine.State.ruleset_state`; the engine treats it as an opaque term.
+  """
+  @callback init_ruleset_state() :: term()
 end
