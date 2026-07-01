@@ -112,7 +112,7 @@ defmodule Gibbering.Engine.MovementPermissionTest do
 
     test "rubble tile after destructible entity death is walk-passable" do
       state = build_state() |> with_entity(monster_id(), hp: 1, tags: ["destructible"])
-      monster_pos = {state.entities[monster_id()].x, state.entities[monster_id()].y}
+      monster_pos = {state.actors[monster_id()].x, state.actors[monster_id()].y}
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
 
       assert Rules.tile_movement_permission(

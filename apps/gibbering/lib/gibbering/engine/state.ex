@@ -1,6 +1,9 @@
 defmodule Gibbering.Engine.State do
   @moduledoc "Runtime scene state: entity map, grid, turn order, and action economy helpers."
 
+  # dnd5e.ex and state.ex are recompiled together; suppress cross-file undefined warning
+  @compile {:no_warn_undefined, Gibbering.Rulesets.DnD5e}
+
   alias Gibbering.Campaign
   alias Gibbering.Rulesets.DnD5e.{RulesetState, Stats}
 
@@ -16,7 +19,7 @@ defmodule Gibbering.Engine.State do
     # %{{x, y} => %{texture: string, movement: map, decoration: string | nil}}
     :grid_tiles,
     # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
-    :entities,
+    :actors,
     # integer | nil
     :actor_id,
     # [{x, y}]
@@ -102,7 +105,7 @@ defmodule Gibbering.Engine.State do
       y_extent: map.y_extent,
       tile_size: map.tile_size,
       grid_tiles: tiles,
-      entities: entities,
+      actors: entities,
       actor_id: nil,
       valid_moves: [],
       valid_move_costs: %{},
@@ -176,7 +179,7 @@ defmodule Gibbering.Engine.State do
 
   @doc "Appends `entity_id` to `turn_order`. No-op if already present or not in entities."
   def add_to_turn_order(%__MODULE__{} = state, entity_id) do
-    if entity_id in state.turn_order or not Map.has_key?(state.entities, entity_id) do
+    if entity_id in state.turn_order or not Map.has_key?(state.actors, entity_id) do
       state
     else
       %{state | turn_order: state.turn_order ++ [entity_id]}
@@ -203,14 +206,14 @@ defmodule Gibbering.Engine.State do
 
   @doc "Applies `delta` HP to `entity_id`, clamping to `[0, max_hp]`. No-op for unknown ids."
   def adjust_hp(%__MODULE__{} = state, entity_id, delta) do
-    case Map.get(state.entities, entity_id) do
+    case Map.get(state.actors, entity_id) do
       nil ->
         state
 
       entity ->
         new_hp = max(0, min(entity.max_hp, entity.hp + delta))
         updated = Map.put(entity, :hp, new_hp)
-        %{state | entities: Map.put(state.entities, entity_id, updated)}
+        %{state | actors: Map.put(state.actors, entity_id, updated)}
     end
   end
 
@@ -283,7 +286,7 @@ defmodule Gibbering.Engine.State do
   or `nil` if neither condition is met. Requires at least one entity of each relevant
   type to be present before triggering. Intended to be called only during `:in_combat`.
   """
-  def check_combat_outcome(%__MODULE__{entities: entities}) do
+  def check_combat_outcome(%__MODULE__{actors: entities}) do
     {heroes, monsters} =
       Enum.split_with(Map.values(entities), fn e -> e.type == "hero" end)
 
@@ -300,12 +303,12 @@ defmodule Gibbering.Engine.State do
   """
   def consume_action(%__MODULE__{} = state, entity_id, slot)
       when slot in [:action, :bonus_action, :reaction] do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
 
     case get_in(entity, [:action_economy, slot]) do
       :available ->
         updated = put_in(entity, [:action_economy, slot], :spent)
-        {:ok, %{state | entities: Map.put(state.entities, entity_id, updated)}}
+        {:ok, %{state | actors: Map.put(state.actors, entity_id, updated)}}
 
       _ ->
         {:error, :already_spent}
@@ -317,12 +320,12 @@ defmodule Gibbering.Engine.State do
   Returns `{:ok, new_state}` or `{:error, :insufficient_movement}`.
   """
   def consume_movement(%__MODULE__{} = state, entity_id, feet) do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
     remaining = get_in(entity, [:action_economy, :movement_remaining]) || 0
 
     if remaining >= feet do
       updated = put_in(entity, [:action_economy, :movement_remaining], remaining - feet)
-      {:ok, %{state | entities: Map.put(state.entities, entity_id, updated)}}
+      {:ok, %{state | actors: Map.put(state.actors, entity_id, updated)}}
     else
       {:error, :insufficient_movement}
     end
@@ -333,12 +336,12 @@ defmodule Gibbering.Engine.State do
   Returns `{:ok, new_state}` or `{:error, :no_charges}`.
   """
   def consume_resource(%__MODULE__{} = state, entity_id, resource_key) do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
     current = get_in(entity, [:resources, resource_key]) || 0
 
     if is_integer(current) and current >= 1 do
       updated = put_in(entity, [:resources, resource_key], current - 1)
-      {:ok, %{state | entities: Map.put(state.entities, entity_id, updated)}}
+      {:ok, %{state | actors: Map.put(state.actors, entity_id, updated)}}
     else
       {:error, :no_charges}
     end
@@ -349,12 +352,12 @@ defmodule Gibbering.Engine.State do
   Returns `{:ok, new_state}` or `{:error, :no_slots}`.
   """
   def consume_spell_slot(%__MODULE__{} = state, entity_id, level) do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
     current = get_in(entity, [:resources, :spell_slots, level]) || 0
 
     if current >= 1 do
       updated = put_in(entity, [:resources, :spell_slots, level], current - 1)
-      {:ok, %{state | entities: Map.put(state.entities, entity_id, updated)}}
+      {:ok, %{state | actors: Map.put(state.actors, entity_id, updated)}}
     else
       {:error, :no_slots}
     end
@@ -362,23 +365,23 @@ defmodule Gibbering.Engine.State do
 
   @doc "Applies short-rest recovery to a single entity via the active ruleset."
   def apply_short_rest(%__MODULE__{} = state, entity_id) do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
 
     {:ok,
      %{
        state
-       | entities: Map.put(state.entities, entity_id, state.ruleset.short_rest_entity(entity))
+       | actors: Map.put(state.actors, entity_id, state.ruleset.short_rest_entity(entity))
      }}
   end
 
   @doc "Applies long-rest recovery to a single entity via the active ruleset."
   def apply_long_rest(%__MODULE__{} = state, entity_id) do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
 
     {:ok,
      %{
        state
-       | entities: Map.put(state.entities, entity_id, state.ruleset.long_rest_entity(entity))
+       | actors: Map.put(state.actors, entity_id, state.ruleset.long_rest_entity(entity))
      }}
   end
 
@@ -402,11 +405,11 @@ defmodule Gibbering.Engine.State do
     new_rs = RulesetState.add_active_effect(state.ruleset_state, effect)
 
     new_entities =
-      Map.update!(state.entities, entity_id, fn entity ->
+      Map.update!(state.actors, entity_id, fn entity ->
         Map.update(entity, :conditions, [condition_id], &Enum.uniq([condition_id | &1]))
       end)
 
-    {:ok, %{state | ruleset_state: new_rs, entities: new_entities}}
+    {:ok, %{state | ruleset_state: new_rs, actors: new_entities}}
   end
 
   @doc """
@@ -419,13 +422,13 @@ defmodule Gibbering.Engine.State do
       RulesetState.remove_active_effects_for(state.ruleset_state, entity_id, condition_id)
 
     new_entities =
-      Map.update!(state.entities, entity_id, fn entity ->
+      Map.update!(state.actors, entity_id, fn entity ->
         if still_active,
           do: entity,
           else: Map.update(entity, :conditions, [], &List.delete(&1, condition_id))
       end)
 
-    {:ok, %{state | ruleset_state: new_rs, entities: new_entities}}
+    {:ok, %{state | ruleset_state: new_rs, actors: new_entities}}
   end
 
   @doc "Advances to the next hero in the turn order and resets that hero's action economy for the new turn."
@@ -434,10 +437,10 @@ defmodule Gibbering.Engine.State do
     next_id = Enum.at(state.turn_order, next)
 
     entities =
-      if next_id && Map.has_key?(state.entities, next_id) do
-        Map.update!(state.entities, next_id, &state.ruleset.advance_turn/1)
+      if next_id && Map.has_key?(state.actors, next_id) do
+        Map.update!(state.actors, next_id, &state.ruleset.advance_turn/1)
       else
-        state.entities
+        state.actors
       end
 
     %{
@@ -447,7 +450,7 @@ defmodule Gibbering.Engine.State do
         valid_moves: [],
         valid_move_costs: %{},
         valid_targets: [],
-        entities: entities
+        actors: entities
     }
   end
 end

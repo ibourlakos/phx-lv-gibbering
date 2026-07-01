@@ -41,7 +41,7 @@ defmodule Gibbering.Engine.StateTest do
 
       state = %{
         build_state()
-        | entities: Map.put(build_state().entities, 99, second_hero),
+        | actors: Map.put(build_state().actors, 99, second_hero),
           turn_order: [hero_id(), 99]
       }
 
@@ -70,7 +70,7 @@ defmodule Gibbering.Engine.StateTest do
 
       advanced = State.advance_turn(state)
 
-      assert advanced.entities[hero_id()].action_economy == %{
+      assert advanced.actors[hero_id()].action_economy == %{
                action: :available,
                bonus_action: :available,
                reaction: :available,
@@ -134,7 +134,7 @@ defmodule Gibbering.Engine.StateTest do
              }
 
       assert state.grid_tiles[{1, 0}] == %{texture: "stone", movement: %{}, decoration: nil}
-      assert state.entities[10].name == "Warrior"
+      assert state.actors[10].name == "Warrior"
       assert state.turn_order == [10]
       assert state.active_index == 0
     end
@@ -208,7 +208,7 @@ defmodule Gibbering.Engine.StateTest do
         entities: entities
       }
 
-      entity = State.from_campaign(campaign).entities[10]
+      entity = State.from_campaign(campaign).actors[10]
 
       assert entity.action_economy == %{
                action: :available,
@@ -249,7 +249,7 @@ defmodule Gibbering.Engine.StateTest do
         entities: entities
       }
 
-      entity = State.from_campaign(campaign).entities[5]
+      entity = State.from_campaign(campaign).actors[5]
       assert entity.resources == %{second_wind: 1}
       assert entity.conditions == []
     end
@@ -259,7 +259,7 @@ defmodule Gibbering.Engine.StateTest do
     test "marks an available slot as spent" do
       state = build_state()
       assert {:ok, new_state} = State.consume_action(state, hero_id(), :action)
-      assert new_state.entities[hero_id()].action_economy.action == :spent
+      assert new_state.actors[hero_id()].action_economy.action == :spent
     end
 
     test "returns error when slot is already spent" do
@@ -279,8 +279,8 @@ defmodule Gibbering.Engine.StateTest do
     test "consuming bonus_action does not affect action slot" do
       state = build_state()
       {:ok, new_state} = State.consume_action(state, hero_id(), :bonus_action)
-      assert new_state.entities[hero_id()].action_economy.action == :available
-      assert new_state.entities[hero_id()].action_economy.bonus_action == :spent
+      assert new_state.actors[hero_id()].action_economy.action == :available
+      assert new_state.actors[hero_id()].action_economy.bonus_action == :spent
     end
   end
 
@@ -288,7 +288,7 @@ defmodule Gibbering.Engine.StateTest do
     test "deducts feet from movement_remaining" do
       state = build_state()
       assert {:ok, new_state} = State.consume_movement(state, hero_id(), 15)
-      assert new_state.entities[hero_id()].action_economy.movement_remaining == 15
+      assert new_state.actors[hero_id()].action_economy.movement_remaining == 15
     end
 
     test "returns error when insufficient movement" do
@@ -317,7 +317,7 @@ defmodule Gibbering.Engine.StateTest do
         )
 
       assert {:ok, new_state} = State.consume_movement(state, hero_id(), 10)
-      assert new_state.entities[hero_id()].action_economy.movement_remaining == 0
+      assert new_state.actors[hero_id()].action_economy.movement_remaining == 0
     end
   end
 
@@ -325,7 +325,7 @@ defmodule Gibbering.Engine.StateTest do
     test "decrements a class resource charge" do
       state = with_entity(build_state(), hero_id(), resources: %{second_wind: 1})
       assert {:ok, new_state} = State.consume_resource(state, hero_id(), :second_wind)
-      assert new_state.entities[hero_id()].resources.second_wind == 0
+      assert new_state.actors[hero_id()].resources.second_wind == 0
     end
 
     test "returns error when no charges remain" do
@@ -338,8 +338,8 @@ defmodule Gibbering.Engine.StateTest do
     test "decrements a spell slot at the given level" do
       state = with_entity(build_state(), hero_id(), resources: %{spell_slots: %{1 => 3, 2 => 2}})
       assert {:ok, new_state} = State.consume_spell_slot(state, hero_id(), 1)
-      assert new_state.entities[hero_id()].resources.spell_slots[1] == 2
-      assert new_state.entities[hero_id()].resources.spell_slots[2] == 2
+      assert new_state.actors[hero_id()].resources.spell_slots[1] == 2
+      assert new_state.actors[hero_id()].resources.spell_slots[2] == 2
     end
 
     test "returns error when no slots at the requested level" do
@@ -361,14 +361,14 @@ defmodule Gibbering.Engine.StateTest do
     test "appends the condition key to entity.conditions" do
       state = build_state()
       {:ok, new_state} = State.apply_condition(state, hero_id(), :poisoned)
-      assert :poisoned in new_state.entities[hero_id()].conditions
+      assert :poisoned in new_state.actors[hero_id()].conditions
     end
 
     test "applying the same condition twice does not duplicate entity.conditions" do
       state = build_state()
       {:ok, s1} = State.apply_condition(state, hero_id(), :poisoned)
       {:ok, s2} = State.apply_condition(s1, hero_id(), :poisoned)
-      assert Enum.count(s2.entities[hero_id()].conditions, &(&1 == :poisoned)) == 1
+      assert Enum.count(s2.actors[hero_id()].conditions, &(&1 == :poisoned)) == 1
     end
 
     test "accepts source and duration opts" do
@@ -385,7 +385,7 @@ defmodule Gibbering.Engine.StateTest do
     test "does not affect other entities" do
       state = build_state()
       {:ok, new_state} = State.apply_condition(state, hero_id(), :poisoned)
-      assert new_state.entities[monster_id()].conditions == []
+      assert new_state.actors[monster_id()].conditions == []
     end
   end
 
@@ -395,7 +395,7 @@ defmodule Gibbering.Engine.StateTest do
       {:ok, with_cond} = State.apply_condition(state, hero_id(), :poisoned)
       assert {:ok, cleared} = State.remove_condition(with_cond, hero_id(), :poisoned)
       assert RulesetState.active_effects(cleared.ruleset_state) == []
-      refute :poisoned in cleared.entities[hero_id()].conditions
+      refute :poisoned in cleared.actors[hero_id()].conditions
     end
 
     test "removing a non-existent condition is a no-op" do
@@ -409,8 +409,8 @@ defmodule Gibbering.Engine.StateTest do
       {:ok, s1} = State.apply_condition(state, hero_id(), :poisoned)
       {:ok, s2} = State.apply_condition(s1, hero_id(), :blinded)
       {:ok, s3} = State.remove_condition(s2, hero_id(), :poisoned)
-      refute :poisoned in s3.entities[hero_id()].conditions
-      assert :blinded in s3.entities[hero_id()].conditions
+      refute :poisoned in s3.actors[hero_id()].conditions
+      assert :blinded in s3.actors[hero_id()].conditions
     end
   end
 
@@ -518,7 +518,7 @@ defmodule Gibbering.Engine.StateTest do
         )
 
       assert {:ok, new_state} = State.apply_long_rest(state, hero_id())
-      assert new_state.entities[hero_id()].resources.spell_slots[1] == 2
+      assert new_state.actors[hero_id()].resources.spell_slots[1] == 2
     end
   end
 
@@ -532,8 +532,8 @@ defmodule Gibbering.Engine.StateTest do
         )
 
       assert {:ok, new_state} = State.apply_short_rest(state, hero_id())
-      assert new_state.entities[hero_id()].resources.second_wind == 1
-      assert new_state.entities[hero_id()].resources.action_surge == 1
+      assert new_state.actors[hero_id()].resources.second_wind == 1
+      assert new_state.actors[hero_id()].resources.action_surge == 1
     end
   end
 
@@ -541,25 +541,25 @@ defmodule Gibbering.Engine.StateTest do
     test "adds a positive delta to entity HP" do
       state = with_entity(build_state(), hero_id(), hp: 5, max_hp: 20)
       new_state = State.adjust_hp(state, hero_id(), 10)
-      assert new_state.entities[hero_id()].hp == 15
+      assert new_state.actors[hero_id()].hp == 15
     end
 
     test "clamps HP at max_hp" do
       state = with_entity(build_state(), hero_id(), hp: 18, max_hp: 20)
       new_state = State.adjust_hp(state, hero_id(), 10)
-      assert new_state.entities[hero_id()].hp == 20
+      assert new_state.actors[hero_id()].hp == 20
     end
 
     test "subtracts a negative delta" do
       state = with_entity(build_state(), hero_id(), hp: 15, max_hp: 20)
       new_state = State.adjust_hp(state, hero_id(), -5)
-      assert new_state.entities[hero_id()].hp == 10
+      assert new_state.actors[hero_id()].hp == 10
     end
 
     test "clamps HP at 0 for negative delta" do
       state = with_entity(build_state(), hero_id(), hp: 3, max_hp: 20)
       new_state = State.adjust_hp(state, hero_id(), -10)
-      assert new_state.entities[hero_id()].hp == 0
+      assert new_state.actors[hero_id()].hp == 0
     end
 
     test "no-op for unknown entity_id" do
@@ -629,12 +629,12 @@ defmodule Gibbering.Engine.StateTest do
     end
 
     test "returns nil when there are no monsters (e.g. exploration-only scene)" do
-      state = %{build_state() | entities: %{hero_id() => build_state().entities[hero_id()]}}
+      state = %{build_state() | actors: %{hero_id() => build_state().actors[hero_id()]}}
       assert State.check_combat_outcome(state) == nil
     end
 
     test "returns nil when there are no heroes" do
-      state = %{build_state() | entities: %{monster_id() => build_state().entities[monster_id()]}}
+      state = %{build_state() | actors: %{monster_id() => build_state().actors[monster_id()]}}
       assert State.check_combat_outcome(state) == nil
     end
   end

@@ -456,7 +456,7 @@ defmodule Gibbering.Data.Classes do
   def modifiers(class)
 
   def modifiers("fighter") do
-    alias Gibbering.Engine.RuleModifier
+    alias GibberingEngine.RuleModifier
 
     [
       %RuleModifier{
@@ -482,7 +482,7 @@ defmodule Gibbering.Data.Classes do
   end
 
   def modifiers("rogue") do
-    alias Gibbering.Engine.RuleModifier
+    alias GibberingEngine.RuleModifier
 
     [
       %RuleModifier{
@@ -498,7 +498,7 @@ defmodule Gibbering.Data.Classes do
   end
 
   def modifiers("barbarian") do
-    alias Gibbering.Engine.RuleModifier
+    alias GibberingEngine.RuleModifier
 
     [
       %RuleModifier{

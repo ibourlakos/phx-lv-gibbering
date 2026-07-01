@@ -20,7 +20,7 @@ defmodule Gibbering.Data.Items do
   item is equipped. Items with no mechanical effect carry `modifiers: []`.
   """
 
-  alias Gibbering.Engine.RuleModifier
+  alias GibberingEngine.RuleModifier
 
   @items %{
     # -------------------------------------------------------------------------

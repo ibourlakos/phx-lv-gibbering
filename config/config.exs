@@ -9,10 +9,6 @@ config :gibbering,
   ecto_repos: [Gibbering.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitoring.Stores.Local
-
-config :gibbering, Gibbering.EventBus, adapter: Gibbering.EventBus.PubSub
-
 config :gibbering, GibberingWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
@@ -49,11 +45,12 @@ config :logger, :default_formatter,
 
 config :phoenix, :json_library, Jason
 
-# --- :gibbering_engine (stub — populated in Phase 2b) ---
+# --- :gibbering_engine ---
 
-config :gibbering_engine,
-  event_bus_adapter: nil,
-  metrics_store_adapter: nil
+config :gibbering_engine, GibberingEngine.EventBus, adapter: GibberingEngine.EventBus.Local
+
+config :gibbering_engine, GibberingEngine.Monitoring.MetricsStore,
+  adapter: GibberingEngine.Monitoring.Stores.NoOp
 
 # --- :gibbering_tales (stub — populated in Phase 2c) ---
 

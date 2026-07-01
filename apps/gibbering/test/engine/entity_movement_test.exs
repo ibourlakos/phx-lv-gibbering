@@ -4,7 +4,7 @@ defmodule Gibbering.Engine.EntityMovementTest do
   import Gibbering.GameFixtures
   alias Gibbering.Engine.Rules
   alias Gibbering.Rulesets.DnD5e
-  alias Gibbering.Engine.RuleModifier
+  alias GibberingEngine.RuleModifier
   alias Gibbering.Rulesets.DnD5e.{Stats, Condition}
 
   # ---------------------------------------------------------------------------
@@ -148,7 +148,7 @@ defmodule Gibbering.Engine.EntityMovementTest do
   describe "advance_turn with speed-zeroing conditions" do
     test "Restrained condition zeroes movement_remaining on advance_turn" do
       entity =
-        build_state().entities[hero_id()]
+        build_state().actors[hero_id()]
         |> Map.put(:conditions, [:restrained])
 
       updated = DnD5e.advance_turn(entity)
@@ -157,7 +157,7 @@ defmodule Gibbering.Engine.EntityMovementTest do
 
     test "Grappled condition zeroes movement_remaining on advance_turn" do
       entity =
-        build_state().entities[hero_id()]
+        build_state().actors[hero_id()]
         |> Map.put(:conditions, [:grappled])
 
       updated = DnD5e.advance_turn(entity)
@@ -165,14 +165,14 @@ defmodule Gibbering.Engine.EntityMovementTest do
     end
 
     test "No speed-zeroing conditions: movement_remaining = entity walk speed" do
-      entity = build_state().entities[hero_id()]
+      entity = build_state().actors[hero_id()]
       updated = DnD5e.advance_turn(entity)
       assert updated.action_economy.movement_remaining == 30
     end
 
     test "Non-movement condition does not affect movement_remaining" do
       entity =
-        build_state().entities[hero_id()]
+        build_state().actors[hero_id()]
         |> Map.put(:conditions, [:blinded])
 
       updated = DnD5e.advance_turn(entity)

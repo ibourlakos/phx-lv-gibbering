@@ -34,7 +34,7 @@ defmodule Gibbering.Engine.Rules do
           0
         else
           entities_at =
-            Enum.filter(state.entities, fn {_, e} -> e.x == x and e.y == y end)
+            Enum.filter(state.actors, fn {_, e} -> e.x == x and e.y == y end)
 
           entity_min =
             entities_at
@@ -59,7 +59,7 @@ defmodule Gibbering.Engine.Rules do
   has no speed for that mode (nil or 0).
   """
   def valid_moves(%State{} = state, entity_id, mode \\ "walk") do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
 
     speed_ft =
       case mode do
@@ -99,10 +99,10 @@ defmodule Gibbering.Engine.Rules do
     if is_nil(spell) do
       []
     else
-      caster = state.entities[caster_id]
+      caster = state.actors[caster_id]
       max_tiles = spell_range_tiles(spell.range)
 
-      state.entities
+      state.actors
       |> Enum.filter(fn {id, target} ->
         id != caster_id and
           chebyshev(caster.x, caster.y, target.x, target.y) <= max_tiles and
@@ -114,9 +114,9 @@ defmodule Gibbering.Engine.Rules do
 
   @doc "Returns entity ids that the active entity can attack (adjacent, destructible or enemy)."
   def valid_targets(%State{} = state, entity_id) do
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
 
-    state.entities
+    state.actors
     |> Enum.filter(fn {id, target} ->
       id != entity_id and
         chebyshev(entity.x, entity.y, target.x, target.y) <= 1 and
@@ -141,8 +141,8 @@ defmodule Gibbering.Engine.Rules do
   end
 
   defp do_attack(%State{} = state, attacker_id, target_id, opts) do
-    attacker = state.entities[attacker_id]
-    target = state.entities[target_id]
+    attacker = state.actors[attacker_id]
+    target = state.actors[target_id]
 
     roll = Keyword.get(opts, :roll, Enum.random(1..20))
     bonus = attack_bonus_for(attacker)
@@ -188,7 +188,7 @@ defmodule Gibbering.Engine.Rules do
   Pass `roll: n` in opts to fix the d20 value (for testing).
   """
   def saving_throw(%State{} = state, target_id, ability, dc, opts \\ []) do
-    entity = state.entities[target_id]
+    entity = state.actors[target_id]
     roll = Keyword.get(opts, :roll, Enum.random(1..20))
     ability_str = to_string(ability)
 
@@ -259,8 +259,8 @@ defmodule Gibbering.Engine.Rules do
   end
 
   defp do_cast(state, caster_id, spell, target_id, opts) do
-    caster = state.entities[caster_id]
-    target = state.entities[target_id]
+    caster = state.actors[caster_id]
+    target = state.actors[target_id]
 
     case spell.effect.attack_type do
       :ranged_attack ->
@@ -399,13 +399,13 @@ defmodule Gibbering.Engine.Rules do
   end
 
   defp put_entity_hp(state, id, hp) do
-    updated = Map.put(state.entities[id], :hp, hp)
-    %{state | entities: Map.put(state.entities, id, updated)}
+    updated = Map.put(state.actors[id], :hp, hp)
+    %{state | actors: Map.put(state.actors, id, updated)}
   end
 
   defp maybe_destroy(state, id, 0) do
-    entity = state.entities[id]
-    new_entities = Map.delete(state.entities, id)
+    entity = state.actors[id]
+    new_entities = Map.delete(state.actors, id)
 
     new_tiles =
       if "destructible" in entity.tags do
@@ -417,7 +417,7 @@ defmodule Gibbering.Engine.Rules do
         state.grid_tiles
       end
 
-    %{state | entities: new_entities, grid_tiles: new_tiles}
+    %{state | actors: new_entities, grid_tiles: new_tiles}
   end
 
   defp maybe_destroy(state, _id, _hp), do: state
@@ -428,6 +428,6 @@ defmodule Gibbering.Engine.Rules do
     do: x >= 0 and x < state.x_extent and y >= 0 and y < state.y_extent
 
   defp occupied_by_hero?(state, x, y) do
-    Enum.any?(state.entities, fn {_, e} -> e.type == "hero" and e.x == x and e.y == y end)
+    Enum.any?(state.actors, fn {_, e} -> e.type == "hero" and e.x == x and e.y == y end)
   end
 end

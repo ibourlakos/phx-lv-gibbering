@@ -12,14 +12,14 @@ defmodule Gibbering.Monitoring.Stores.Local do
 
   use GenServer
 
-  @behaviour Gibbering.Monitoring.MetricsStore
+  @behaviour GibberingEngine.Monitoring.MetricsStore
 
   import Ecto.Query
 
   alias Gibbering.{Repo, PubSub}
-  alias Gibbering.EventBus
-  alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Engine.SessionEnded
+  alias GibberingEngine.EventBus
+  alias GibberingEngine.Events.EventBatch
+  alias GibberingEngine.Events.SessionEnded
   alias Gibbering.Monitoring.CampaignMetricSnapshot
 
   @ets_table :gibbering_metrics_buffer
@@ -37,7 +37,7 @@ defmodule Gibbering.Monitoring.Stores.Local do
   # Public API (MetricsStore behaviour)
   # ---------------------------------------------------------------------------
 
-  @impl Gibbering.Monitoring.MetricsStore
+  @impl GibberingEngine.Monitoring.MetricsStore
   def record(campaign_id, metric, value) do
     now_ms = System.system_time(:millisecond)
     cutoff_ms = now_ms - @buffer_window_ms
@@ -55,7 +55,7 @@ defmodule Gibbering.Monitoring.Stores.Local do
     :ok
   end
 
-  @impl Gibbering.Monitoring.MetricsStore
+  @impl GibberingEngine.Monitoring.MetricsStore
   def history(campaign_id, metric) do
     match_spec = [
       {{{:"$1", :"$2", :"$3"}, :"$4"}, [{:==, :"$1", campaign_id}, {:==, :"$2", metric}],
@@ -71,7 +71,7 @@ defmodule Gibbering.Monitoring.Stores.Local do
     end)
   end
 
-  @impl Gibbering.Monitoring.MetricsStore
+  @impl GibberingEngine.Monitoring.MetricsStore
   def scene_snapshot(campaign_id) do
     case :ets.lookup(@scene_info_table, campaign_id) do
       [{^campaign_id, entity_count, phase}] -> {entity_count, phase}
@@ -130,7 +130,7 @@ defmodule Gibbering.Monitoring.Stores.Local do
     else
       :ets.insert(
         @scene_info_table,
-        {campaign_id, map_size(snapshot.entities), Gibbering.Engine.State.phase(snapshot)}
+        {campaign_id, map_size(snapshot.actors), Gibbering.Engine.State.phase(snapshot)}
       )
 
       {:noreply, state}

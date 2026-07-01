@@ -3,12 +3,12 @@ defmodule Gibbering.Rulesets.DnD5e do
   D&D 5e SRD ruleset implementation.
 
   This is the primary ruleset for The Gibbering Engine. All DnD5e subsystems
-  (Stats, Spell, RuleModifier, Condition) live under `Gibbering.Rulesets.DnD5e.*`.
+  (Stats, Spell, RuleModifier, Condition) live under `GibberingEngine.Rulesets.DnD5e.*`.
   """
 
-  @behaviour Gibbering.Ruleset
+  @behaviour GibberingEngine.Ruleset
 
-  alias Gibbering.Engine.RuleModifier
+  alias GibberingEngine.RuleModifier
   alias Gibbering.Rulesets.DnD5e.{ModifierPipeline, RulesetState, Stats}
 
   # SRD spell slot table for full casters (Wizard, Cleric, Sorcerer, Bard, Druid).
@@ -61,11 +61,11 @@ defmodule Gibbering.Rulesets.DnD5e do
     20 => %{1 => 4, 2 => 3, 3 => 3, 4 => 3, 5 => 2}
   }
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def collect_modifiers(entity, trigger, eval_context),
     do: ModifierPipeline.collect_modifiers(entity, trigger, eval_context)
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def initial_resources(entity) do
     class = Map.get(entity, :class, "fighter")
     level = Map.get(entity, :level, 1) |> max(1) |> min(20)
@@ -96,7 +96,7 @@ defmodule Gibbering.Rulesets.DnD5e do
     end
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def initial_action_economy(entity) do
     speed = Stats.speed(entity)
     movement_remaining = apply_passive_speed(entity, speed)
@@ -109,7 +109,7 @@ defmodule Gibbering.Rulesets.DnD5e do
     }
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def advance_turn(entity) do
     speed = Stats.speed(entity)
     movement_remaining = apply_passive_speed(entity, speed)
@@ -122,7 +122,7 @@ defmodule Gibbering.Rulesets.DnD5e do
     })
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def short_rest_entity(entity) do
     class = Map.get(entity, :class, "fighter")
     level = Map.get(entity, :level, 1) |> max(1) |> min(20)
@@ -149,12 +149,12 @@ defmodule Gibbering.Rulesets.DnD5e do
     end
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def long_rest_entity(entity) do
     Map.put(entity, :resources, initial_resources(entity))
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def action_buttons(entity, _state) do
     movement_remaining = get_in(entity, [:action_economy, :movement_remaining]) || 0
 
@@ -184,13 +184,13 @@ defmodule Gibbering.Rulesets.DnD5e do
     [move_btn | spell_btns]
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def available_conditions do
     Gibbering.Rulesets.DnD5e.Condition.all()
     |> Enum.map(fn {id, defn} -> {id, defn.name} end)
   end
 
-  @impl Gibbering.Ruleset
+  @impl GibberingEngine.Ruleset
   def init_ruleset_state, do: RulesetState.new()
 
   # ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@ defmodule GibberingWeb.Admin.CampaignMonitoringPage do
   import Phoenix.HTML, only: [raw: 1]
 
   alias Gibbering.{Admin, Campaign, Repo}
-  alias Gibbering.Monitoring.MetricsStore
+  alias GibberingEngine.Monitoring.MetricsStore
 
   @impl true
   def menu_link(_, _), do: {:ok, "Campaigns"}

@@ -12,12 +12,13 @@ defmodule Gibbering.Engine.SceneServer do
   use GenServer
 
   import Ecto.Query
-  alias Gibbering.{Repo, Campaign, Entity, EventBus}
+  alias Gibbering.{Repo, Campaign, Entity}
+  alias GibberingEngine.EventBus
   alias Gibbering.Engine.{State, Rules, GameSession}
-  alias Gibbering.Events.{EventBatch}
+  alias GibberingEngine.Events.{EventBatch}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
 
-  alias Gibbering.Events.Engine.{
+  alias GibberingEngine.Events.{
     ContainerOpened,
     EntityMoved,
     HPAdjusted,
@@ -295,7 +296,7 @@ defmodule Gibbering.Engine.SceneServer do
         }
 
         merged =
-          case Map.get(state.entities, e.id) do
+          case Map.get(state.actors, e.id) do
             nil ->
               base
               |> Map.put(:x, e.x)
@@ -328,7 +329,7 @@ defmodule Gibbering.Engine.SceneServer do
 
     new_state = %{
       state
-      | entities: new_entities,
+      | actors: new_entities,
         turn_order: hero_ids,
         active_index: new_active_index
     }
@@ -391,8 +392,8 @@ defmodule Gibbering.Engine.SceneServer do
         {new_state, events} =
           if state.actor_id do
             attacker_id = state.actor_id
-            attacker = state.entities[attacker_id]
-            target = state.entities[target_id]
+            attacker = state.actors[attacker_id]
+            target = state.actors[target_id]
 
             if not auto_roll do
               paused = State.set_awaiting_roll(state, {:attack, target_id})
@@ -432,8 +433,8 @@ defmodule Gibbering.Engine.SceneServer do
         {new_state, events} =
           if state.actor_id do
             caster_id = state.actor_id
-            caster = state.entities[caster_id]
-            target = state.entities[target_id]
+            caster = state.actors[caster_id]
+            target = state.actors[target_id]
 
             spell = Gibbering.Data.Spells.get(spell_key)
             needs_roll = spell && spell.effect.attack_type in [:melee_attack, :ranged_attack]
@@ -555,7 +556,7 @@ defmodule Gibbering.Engine.SceneServer do
     case State.transition_phase(state, :initiative_rolling) do
       {:ok, transitioned} ->
         hero_ids =
-          state.entities
+          state.actors
           |> Enum.filter(fn {_, e} -> e.type == "hero" end)
           |> Enum.map(fn {id, _} -> id end)
 
@@ -564,7 +565,7 @@ defmodule Gibbering.Engine.SceneServer do
         {new_state, roll_events} =
           Enum.reduce(manual_hero_ids, {transitioned, []}, fn entity_id,
                                                               {acc_state, acc_events} ->
-            entity = acc_state.entities[entity_id]
+            entity = acc_state.actors[entity_id]
             Process.send_after(self(), {:initiative_timeout, entity_id}, 60_000)
 
             event = %RollRequired{
@@ -675,7 +676,7 @@ defmodule Gibbering.Engine.SceneServer do
     {:ok, new_state} = State.apply_condition(state, entity_id, condition_id)
     entry = "Condition applied: #{condition_id} → entity #{entity_id}"
     new_state = State.add_log_entry(new_state, entry)
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
 
     event = %ConditionApplied{
       entity_id: entity_id,
@@ -693,11 +694,11 @@ defmodule Gibbering.Engine.SceneServer do
     after_hp = State.adjust_hp(state, entity_id, delta)
     entry = "HP adjusted: entity #{entity_id} by #{delta}"
     after_hp = State.add_log_entry(after_hp, entry)
-    entity = state.entities[entity_id]
+    entity = state.actors[entity_id]
     old_hp = if entity, do: entity.hp, else: nil
 
     new_hp =
-      if entity, do: after_hp.entities[entity_id] && after_hp.entities[entity_id].hp, else: nil
+      if entity, do: after_hp.actors[entity_id] && after_hp.actors[entity_id].hp, else: nil
 
     hp_event = %HPAdjusted{
       entity_id: entity_id,
@@ -725,8 +726,8 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call({:open_container, container_id}, _from, state) do
     actor_id = state.actor_id || State.active_hero_id(state)
-    actor = state.entities[actor_id]
-    container = state.entities[container_id]
+    actor = state.actors[actor_id]
+    container = state.actors[container_id]
 
     case Inventory.can_open_container?(actor, container) do
       :ok ->
@@ -745,8 +746,8 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call({:take_item, container_id, instance_id, quantity}, _from, state) do
     actor_id = state.actor_id || State.active_hero_id(state)
-    actor = state.entities[actor_id]
-    container = state.entities[container_id]
+    actor = state.actors[actor_id]
+    container = state.actors[container_id]
 
     case Inventory.take_item(actor, container, instance_id, quantity) do
       {:error, _} = err ->
@@ -754,7 +755,7 @@ defmodule Gibbering.Engine.SceneServer do
 
       {:ok, new_actor, new_container} ->
         new_entities =
-          state.entities
+          state.actors
           |> Map.put(actor_id, new_actor)
           |> Map.put(container_id, new_container)
 
@@ -762,7 +763,7 @@ defmodule Gibbering.Engine.SceneServer do
           if new_container.stats["items"] == [], do: nil, else: State.open_container_id(state)
 
         new_state =
-          %{state | entities: new_entities}
+          %{state | actors: new_entities}
           |> State.set_open_container_id(open_id)
 
         persist(new_state)
@@ -783,8 +784,8 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call({:take_all_items, container_id}, _from, state) do
     actor_id = state.actor_id || State.active_hero_id(state)
-    actor = state.entities[actor_id]
-    container = state.entities[container_id]
+    actor = state.actors[actor_id]
+    container = state.actors[container_id]
     items = get_in(container, [:stats, "items"]) || []
 
     {new_actor, events} =
@@ -814,12 +815,12 @@ defmodule Gibbering.Engine.SceneServer do
     empty_container = put_in(container, [:stats, "items"], [])
 
     new_entities =
-      state.entities
+      state.actors
       |> Map.put(actor_id, new_actor)
       |> Map.put(container_id, empty_container)
 
     new_state =
-      %{state | entities: new_entities}
+      %{state | actors: new_entities}
       |> State.set_open_container_id(nil)
 
     persist(new_state)
@@ -830,7 +831,7 @@ defmodule Gibbering.Engine.SceneServer do
   @impl true
   def handle_call({:equip_item, instance_id}, _from, state) do
     actor_id = state.actor_id || State.active_hero_id(state)
-    actor = state.entities[actor_id]
+    actor = state.actors[actor_id]
 
     case Inventory.equip_item(actor, instance_id) do
       {:error, _} = err ->
@@ -842,8 +843,8 @@ defmodule Gibbering.Engine.SceneServer do
         item = Gibbering.Data.Items.get(item_key)
         slot = if item && item.item_type == :weapon, do: "equipped_weapon", else: "equipped_armor"
 
-        new_entities = Map.put(state.entities, actor_id, new_actor)
-        new_state = %{state | entities: new_entities}
+        new_entities = Map.put(state.actors, actor_id, new_actor)
+        new_state = %{state | actors: new_entities}
         persist(new_state)
 
         event = %ItemEquipped{
@@ -888,8 +889,8 @@ defmodule Gibbering.Engine.SceneServer do
         {new_state, events} =
           case State.pending_roll(state) do
             {:attack, target_id} ->
-              attacker = state.entities[entity_id]
-              target = state.entities[target_id]
+              attacker = state.actors[entity_id]
+              target = state.actors[target_id]
               cleared = State.clear_pending_roll(state)
 
               if attacker && target do
@@ -899,8 +900,8 @@ defmodule Gibbering.Engine.SceneServer do
               end
 
             {:cast_spell, spell_key, target_id} ->
-              caster = state.entities[entity_id]
-              target = state.entities[target_id]
+              caster = state.actors[entity_id]
+              target = state.actors[target_id]
               cleared = State.clear_pending_roll(state)
 
               if caster && target do
@@ -966,8 +967,8 @@ defmodule Gibbering.Engine.SceneServer do
       {new_state, events} =
         case State.pending_roll(state) do
           {:attack, target_id} ->
-            attacker = state.entities[entity_id]
-            target = state.entities[target_id]
+            attacker = state.actors[entity_id]
+            target = state.actors[target_id]
             cleared = State.clear_pending_roll(state)
 
             if attacker && target do
@@ -977,8 +978,8 @@ defmodule Gibbering.Engine.SceneServer do
             end
 
           {:cast_spell, spell_key, target_id} ->
-            caster = state.entities[entity_id]
-            target = state.entities[target_id]
+            caster = state.actors[entity_id]
+            target = state.actors[target_id]
             cleared = State.clear_pending_roll(state)
 
             if caster && target do
@@ -1047,16 +1048,16 @@ defmodule Gibbering.Engine.SceneServer do
 
     {new_state, events} =
       if selected && {x, y} in state.valid_moves do
-        entity = state.entities[selected]
+        entity = state.actors[selected]
         cost_ft = chebyshev(entity.x, entity.y, x, y) * 5
 
         new_facing = facing_from_delta(x - entity.x, y - entity.y, entity[:facing] || :south)
 
         moved_state =
           state
-          |> put_in([Access.key(:entities), selected, :x], x)
-          |> put_in([Access.key(:entities), selected, :y], y)
-          |> put_in([Access.key(:entities), selected, :facing], new_facing)
+          |> put_in([Access.key(:actors), selected, :x], x)
+          |> put_in([Access.key(:actors), selected, :y], y)
+          |> put_in([Access.key(:actors), selected, :facing], new_facing)
 
         after_move =
           case State.consume_movement(moved_state, selected, cost_ft) do
@@ -1067,7 +1068,7 @@ defmodule Gibbering.Engine.SceneServer do
         targets = Rules.valid_targets(after_move, selected)
 
         remaining =
-          get_in(after_move.entities, [selected, :action_economy, :movement_remaining]) || 0
+          get_in(after_move.actors, [selected, :action_economy, :movement_remaining]) || 0
 
         {moves, costs} =
           if remaining > 0 do
@@ -1136,7 +1137,7 @@ defmodule Gibbering.Engine.SceneServer do
         damage_events =
           if details.hit do
             new_hp =
-              case Map.get(after_attack.entities, target_id) do
+              case Map.get(after_attack.actors, target_id) do
                 nil -> 0
                 e -> e.hp
               end
@@ -1184,7 +1185,7 @@ defmodule Gibbering.Engine.SceneServer do
         damage_events =
           if details[:hit] && details[:damage] do
             new_hp =
-              case Map.get(after_cast.entities, target_id) do
+              case Map.get(after_cast.actors, target_id) do
                 nil -> 0
                 e -> e.hp
               end
@@ -1273,9 +1274,9 @@ defmodule Gibbering.Engine.SceneServer do
 
     %TurnAdvanced{
       from_entity_id: from_id,
-      from_entity_name: from_id && before_state.entities[from_id].name,
+      from_entity_name: from_id && before_state.actors[from_id].name,
       to_entity_id: to_id,
-      to_entity_name: to_id && (Map.get(after_state.entities, to_id) || %{name: nil}).name,
+      to_entity_name: to_id && (Map.get(after_state.actors, to_id) || %{name: nil}).name,
       round_number: nil
     }
   end

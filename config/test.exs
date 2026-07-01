@@ -31,4 +31,7 @@ config :phoenix,
 
 config :pbkdf2_elixir, :rounds, 1
 
-config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitoring.Stores.NoOp
+config :gibbering_engine, GibberingEngine.EventBus, adapter: Gibbering.EventBus.PubSub
+
+config :gibbering_engine, GibberingEngine.Monitoring.MetricsStore,
+  adapter: GibberingEngine.Monitoring.Stores.NoOp

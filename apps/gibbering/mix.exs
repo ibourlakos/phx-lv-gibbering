@@ -32,6 +32,7 @@ defmodule Gibbering.MixProject do
 
   defp deps do
     [
+      {:gibbering_engine, in_umbrella: true},
       {:phoenix, "~> 1.8.7"},
       {:phoenix_ecto, "~> 4.5"},
       {:ecto_sql, "~> 3.13"},

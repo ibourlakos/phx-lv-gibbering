@@ -8,7 +8,7 @@ defmodule Gibbering.Events.DnD5e.DamageDealt do
 
   @current_version 1
 
-  @behaviour Gibbering.Events.Upcaster
+  @behaviour GibberingEngine.Events.Upcaster
 
   @type t :: %__MODULE__{
           event_id: String.t(),
@@ -42,9 +42,9 @@ defmodule Gibbering.Events.DnD5e.DamageDealt do
     visibility: :public
   ]
 
-  @impl Gibbering.Events.Upcaster
+  @impl GibberingEngine.Events.Upcaster
   def current_version, do: @current_version
 
-  @impl Gibbering.Events.Upcaster
+  @impl GibberingEngine.Events.Upcaster
   def upcast(_from_version, raw_map), do: raw_map
 end

@@ -68,7 +68,7 @@ defmodule Gibbering.Engine.RulesTest do
         stats: %{"speed" => 30}
       }
 
-      state = %{build_state() | entities: Map.put(build_state().entities, 99, second_hero)}
+      state = %{build_state() | actors: Map.put(build_state().actors, 99, second_hero)}
       moves = Rules.valid_moves(state, hero_id())
       refute {2, 1} in moves
     end
@@ -119,7 +119,7 @@ defmodule Gibbering.Engine.RulesTest do
         stats: %{}
       }
 
-      state = %{build_state() | entities: Map.put(build_state().entities, 50, barrel)}
+      state = %{build_state() | actors: Map.put(build_state().actors, 50, barrel)}
       targets = Rules.valid_targets(state, hero_id())
       assert 50 in targets
     end
@@ -137,7 +137,7 @@ defmodule Gibbering.Engine.RulesTest do
         stats: %{}
       }
 
-      state = %{build_state() | entities: Map.put(build_state().entities, 77, ally)}
+      state = %{build_state() | actors: Map.put(build_state().actors, 77, ally)}
       targets = Rules.valid_targets(state, hero_id())
       refute 77 in targets
     end
@@ -199,10 +199,10 @@ defmodule Gibbering.Engine.RulesTest do
 
     test "miss deals no damage and does not change target hp" do
       state = build_state()
-      original_hp = state.entities[monster_id()].hp
+      original_hp = state.actors[monster_id()].hp
       {_result, new_state, details} = Rules.attack(state, hero_id(), monster_id(), roll: 1)
       assert details.damage == nil
-      assert new_state.entities[monster_id()].hp == original_hp
+      assert new_state.actors[monster_id()].hp == original_hp
     end
 
     test "returns roll details with expected keys" do
@@ -236,41 +236,41 @@ defmodule Gibbering.Engine.RulesTest do
     test "consumes the action slot on a hit" do
       state = build_state()
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
-      assert new_state.entities[hero_id()].action_economy.action == :spent
+      assert new_state.actors[hero_id()].action_economy.action == :spent
     end
 
     test "consumes the action slot on a miss" do
       state = build_state()
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 1)
-      assert new_state.entities[hero_id()].action_economy.action == :spent
+      assert new_state.actors[hero_id()].action_economy.action == :spent
     end
   end
 
   describe "attack/4 — state effects" do
     test "reduces target hp on hit" do
       state = build_state()
-      original_hp = state.entities[monster_id()].hp
+      original_hp = state.actors[monster_id()].hp
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
-      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
+      new_hp = get_in(new_state.actors, [monster_id(), :hp]) || 0
       assert new_hp < original_hp
     end
 
     test "hp cannot drop below 0" do
       state = build_state() |> with_entity(monster_id(), hp: 1)
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
-      hp = get_in(new_state.entities, [monster_id(), :hp])
+      hp = get_in(new_state.actors, [monster_id(), :hp])
       assert hp == nil or hp >= 0
     end
 
     test "removes entity from state when hp reaches 0" do
       state = build_state() |> with_entity(monster_id(), hp: 1)
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
-      refute Map.has_key?(new_state.entities, monster_id())
+      refute Map.has_key?(new_state.actors, monster_id())
     end
 
     test "converts destructible entity tile to rubble on death" do
       state = build_state() |> with_entity(monster_id(), hp: 1, tags: ["destructible"])
-      monster_pos = {state.entities[monster_id()].x, state.entities[monster_id()].y}
+      monster_pos = {state.actors[monster_id()].x, state.actors[monster_id()].y}
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
       assert new_state.grid_tiles[monster_pos].texture == "rubble"
       assert new_state.grid_tiles[monster_pos].movement["walk"] == 100
@@ -278,7 +278,7 @@ defmodule Gibbering.Engine.RulesTest do
 
     test "does not turn tile to rubble for non-destructible entity" do
       state = build_state() |> with_entity(monster_id(), hp: 1)
-      monster_pos = {state.entities[monster_id()].x, state.entities[monster_id()].y}
+      monster_pos = {state.actors[monster_id()].x, state.actors[monster_id()].y}
       {_result, new_state, _details} = Rules.attack(state, hero_id(), monster_id(), roll: 20)
       tile = new_state.grid_tiles[monster_pos]
       refute tile.texture == "rubble"
@@ -354,7 +354,7 @@ defmodule Gibbering.Engine.RulesTest do
         resources: %{}
       }
 
-      state = %{build_state() | entities: Map.put(build_state().entities, 99, ally)}
+      state = %{build_state() | actors: Map.put(build_state().actors, 99, ally)}
       targets = Rules.valid_spell_targets(state, hero_id(), :fire_bolt)
       refute 99 in targets
     end
@@ -370,7 +370,7 @@ defmodule Gibbering.Engine.RulesTest do
     |> with_entity(hero_id(),
       class: "wizard",
       stats:
-        Map.merge(build_state().entities[hero_id()].stats, %{
+        Map.merge(build_state().actors[hero_id()].stats, %{
           "intelligence" => 16
         }),
       ability_modifiers: %{"intelligence" => 3, "strength" => 3, "dexterity" => 1},
@@ -455,12 +455,12 @@ defmodule Gibbering.Engine.RulesTest do
     end
 
     test "hit reduces target hp" do
-      original_hp = wizard_state().entities[monster_id()].hp
+      original_hp = wizard_state().actors[monster_id()].hp
 
       {_result, new_state, _details} =
         Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: 20)
 
-      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
+      new_hp = get_in(new_state.actors, [monster_id(), :hp]) || 0
       assert new_hp < original_hp
     end
 
@@ -469,7 +469,7 @@ defmodule Gibbering.Engine.RulesTest do
         {_result, new_state, _details} =
           Rules.cast_spell(wizard_state(), hero_id(), :fire_bolt, monster_id(), roll: roll)
 
-        assert new_state.entities[hero_id()].action_economy.action == :spent
+        assert new_state.actors[hero_id()].action_economy.action == :spent
       end
     end
   end
@@ -492,18 +492,18 @@ defmodule Gibbering.Engine.RulesTest do
         Rules.cast_spell(state, hero_id(), :magic_missile, monster_id())
 
       assert is_integer(details.damage) and details.damage >= 1
-      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
-      assert new_hp < state.entities[monster_id()].hp
+      new_hp = get_in(new_state.actors, [monster_id(), :hp]) || 0
+      assert new_hp < state.actors[monster_id()].hp
     end
 
     test "consumes a level-1 spell slot" do
       state = wizard_state()
-      slots_before = get_in(state.entities, [hero_id(), :resources, :spell_slots, 1])
+      slots_before = get_in(state.actors, [hero_id(), :resources, :spell_slots, 1])
 
       {_result, new_state, _details} =
         Rules.cast_spell(state, hero_id(), :magic_missile, monster_id())
 
-      slots_after = get_in(new_state.entities, [hero_id(), :resources, :spell_slots, 1])
+      slots_after = get_in(new_state.actors, [hero_id(), :resources, :spell_slots, 1])
       assert slots_after == slots_before - 1
     end
   end
@@ -517,7 +517,7 @@ defmodule Gibbering.Engine.RulesTest do
 
       assert result == :hit
       assert details.damage == nil
-      assert new_state.entities[monster_id()].hp == state.entities[monster_id()].hp
+      assert new_state.actors[monster_id()].hp == state.actors[monster_id()].hp
     end
   end
 
@@ -582,7 +582,7 @@ defmodule Gibbering.Engine.RulesTest do
     test "failed save deals full damage and reports :fail" do
       # wizard spell_dc = 8 + prof(2) + INT_mod(3) = 13
       # monster CON save: roll 1 + mod 0 + prof 2 = 3 < 13 → FAIL
-      original_hp = wizard_state().entities[monster_id()].hp
+      original_hp = wizard_state().actors[monster_id()].hp
 
       {result, new_state, details} =
         Rules.cast_spell(wizard_state(), hero_id(), :thunderwave, monster_id(), roll: 1)
@@ -591,7 +591,7 @@ defmodule Gibbering.Engine.RulesTest do
       assert details.save_result == :fail
       assert is_integer(details.damage) and details.damage > 0
       # monster may be dead (removed) or wounded — either proves damage landed
-      new_hp = get_in(new_state.entities, [monster_id(), :hp]) || 0
+      new_hp = get_in(new_state.actors, [monster_id(), :hp]) || 0
       assert new_hp < original_hp
     end
 
@@ -605,12 +605,12 @@ defmodule Gibbering.Engine.RulesTest do
     end
 
     test "consumes the level-1 spell slot" do
-      slots_before = get_in(wizard_state().entities, [hero_id(), :resources, :spell_slots, 1])
+      slots_before = get_in(wizard_state().actors, [hero_id(), :resources, :spell_slots, 1])
 
       {_result, new_state, _details} =
         Rules.cast_spell(wizard_state(), hero_id(), :thunderwave, monster_id(), roll: 1)
 
-      slots_after = get_in(new_state.entities, [hero_id(), :resources, :spell_slots, 1])
+      slots_after = get_in(new_state.actors, [hero_id(), :resources, :spell_slots, 1])
       assert slots_after == slots_before - 1
     end
   end

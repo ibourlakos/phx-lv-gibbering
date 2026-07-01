@@ -7,9 +7,9 @@ defmodule Gibbering.Engine.SceneServerTest do
   alias Gibbering.{Repo, Entity}
   alias Gibbering.Engine.{SceneServer, State}
   alias Gibbering.Rulesets.DnD5e.RulesetState
-  alias Gibbering.Events.EventBatch
+  alias GibberingEngine.Events.EventBatch
 
-  alias Gibbering.Events.Engine.{
+  alias GibberingEngine.Events.{
     EntityMoved,
     PhaseTransitioned,
     RollRequired,
@@ -32,7 +32,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       assert %State{} = state
       assert state.campaign_id == game_id
-      assert map_size(state.entities) == 2
+      assert map_size(state.actors) == 2
     end
   end
 
@@ -65,7 +65,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       state = SceneServer.get_state(game_id)
 
       # Find any entity id that is NOT the active hero.
-      non_active = state.entities |> Map.keys() |> Enum.find(&(&1 != State.active_hero_id(state)))
+      non_active = state.actors |> Map.keys() |> Enum.find(&(&1 != State.active_hero_id(state)))
 
       new_state = SceneServer.select_entity(game_id, non_active)
 
@@ -89,22 +89,22 @@ defmodule Gibbering.Engine.SceneServerTest do
       {tx, ty} = hd(selected_state.valid_moves)
 
       new_state = SceneServer.move_entity(game_id, tx, ty)
-      assert new_state.entities[hero_id].x == tx
-      assert new_state.entities[hero_id].y == ty
+      assert new_state.actors[hero_id].x == tx
+      assert new_state.actors[hero_id].y == ty
     end
 
     test "ignores move to a tile not in valid_moves" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      original_x = state.entities[hero_id].x
-      original_y = state.entities[hero_id].y
+      original_x = state.actors[hero_id].x
+      original_y = state.actors[hero_id].y
 
       # Move without selecting first — valid_moves is empty.
       new_state = SceneServer.move_entity(game_id, 0, 0)
 
-      assert new_state.entities[hero_id].x == original_x
-      assert new_state.entities[hero_id].y == original_y
+      assert new_state.actors[hero_id].x == original_x
+      assert new_state.actors[hero_id].y == original_y
     end
 
     test "broadcasts %EventBatch{} containing %EntityMoved{} on valid move" do
@@ -134,15 +134,15 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
 
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
-      original_hp = state.entities[monster_id].hp
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      original_hp = state.actors[monster_id].hp
 
       hero_id = State.active_hero_id(state)
       SceneServer.select_entity(game_id, hero_id)
 
       new_state = SceneServer.attack_entity(game_id, monster_id)
 
-      surviving_hp = get_in(new_state.entities, [monster_id, :hp])
+      surviving_hp = get_in(new_state.actors, [monster_id, :hp])
       # A miss is valid; HP can only decrease or stay the same — never increase from an attack.
       assert surviving_hp == nil or surviving_hp <= original_hp
     end
@@ -150,7 +150,7 @@ defmodule Gibbering.Engine.SceneServerTest do
     test "advances turn after attack" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.select_entity(game_id, State.active_hero_id(state))
       new_state = SceneServer.attack_entity(game_id, monster_id)
@@ -244,7 +244,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.reload_entities(game_id)
       new_state = SceneServer.get_state(game_id)
 
-      assert new_state.entities[hero_id].name == "Renamed Hero"
+      assert new_state.actors[hero_id].name == "Renamed Hero"
     end
 
     test "preserves runtime position after reload" do
@@ -263,8 +263,8 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.reload_entities(game_id)
       new_state = SceneServer.get_state(game_id)
 
-      assert new_state.entities[hero_id].x == tx
-      assert new_state.entities[hero_id].y == ty
+      assert new_state.actors[hero_id].x == tx
+      assert new_state.actors[hero_id].y == ty
     end
 
     test "removes an entity that was deleted from DB" do
@@ -277,7 +277,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       :ok = SceneServer.reload_entities(game_id)
       new_state = SceneServer.get_state(game_id)
 
-      refute Map.has_key?(new_state.entities, hero_id)
+      refute Map.has_key?(new_state.actors, hero_id)
     end
 
     test "broadcasts %EventBatch{} after reload" do
@@ -378,7 +378,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      original_x = state.entities[hero_id].x
+      original_x = state.actors[hero_id].x
 
       :ok = SceneServer.start_session(game_id)
       SceneServer.select_entity(game_id, hero_id)
@@ -387,7 +387,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.move_entity(game_id, 0, 0)
 
       new_state = SceneServer.get_state(game_id)
-      assert new_state.entities[hero_id].x == original_x
+      assert new_state.actors[hero_id].x == original_x
     end
   end
 
@@ -448,7 +448,7 @@ defmodule Gibbering.Engine.SceneServerTest do
     test "adds an entity not already in turn_order" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       assert :ok = SceneServer.add_to_turn_order(game_id, monster_id)
       assert monster_id in SceneServer.get_state(game_id).turn_order
@@ -473,7 +473,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       hero_id = State.active_hero_id(state)
 
       monster_id =
-        state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+        state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       # Add monster to turn_order first, then reorder
       :ok = SceneServer.add_to_turn_order(game_id, monster_id)
@@ -564,7 +564,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       assert :ok = SceneServer.dm_apply_condition(game_id, hero_id, :poisoned)
 
       new_state = SceneServer.get_state(game_id)
-      assert :poisoned in new_state.entities[hero_id].conditions
+      assert :poisoned in new_state.actors[hero_id].conditions
       assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
@@ -576,12 +576,12 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      original_hp = state.entities[hero_id].hp
+      original_hp = state.actors[hero_id].hp
 
       assert :ok = SceneServer.dm_adjust_hp(game_id, hero_id, -5)
 
       new_state = SceneServer.get_state(game_id)
-      assert new_state.entities[hero_id].hp == max(original_hp - 5, 0)
+      assert new_state.actors[hero_id].hp == max(original_hp - 5, 0)
       assert_receive %EventBatch{state_snapshot: %State{}}, 500
     end
   end
@@ -706,9 +706,9 @@ defmodule Gibbering.Engine.SceneServerTest do
       SceneServer.open_container(game_id, chest.id)
       {:ok, new_state} = SceneServer.take_item(game_id, chest.id, "i1", 1)
 
-      hero = new_state.entities[hero_id]
+      hero = new_state.actors[hero_id]
       assert Enum.any?(hero.stats["inventory"] || [], &(&1["item_key"] == "dagger"))
-      assert new_state.entities[chest.id].stats["items"] == []
+      assert new_state.actors[chest.id].stats["items"] == []
     end
 
     test "broadcasts an EventBatch after take_item" do
@@ -754,7 +754,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       {:ok, equipped_state} = SceneServer.equip_item(game_id, "r1")
 
-      hero = equipped_state.entities[hero_id]
+      hero = equipped_state.actors[hero_id]
       assert hero.stats["equipped_weapon"]["key"] == "rapier"
       refute Enum.any?(hero.stats["inventory"] || [], &(&1["instance_id"] == "r1"))
     end
@@ -764,7 +764,7 @@ defmodule Gibbering.Engine.SceneServerTest do
     test "dm_adjust_hp killing the last monster transitions to :victory" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.start_session(game_id)
       SceneServer.transition_phase(game_id, :in_combat)
@@ -800,7 +800,7 @@ defmodule Gibbering.Engine.SceneServerTest do
     test "auto-trigger does not fire outside :in_combat phase" do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.dm_adjust_hp(game_id, monster_id, -9999)
 
@@ -816,7 +816,7 @@ defmodule Gibbering.Engine.SceneServerTest do
 
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.select_entity(game_id, hero_id)
       # Drain the select_entity broadcast before asserting on the attack batch.
@@ -834,7 +834,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.select_entity(game_id, hero_id)
       returned = SceneServer.attack_entity(game_id, monster_id, auto_roll: true)
@@ -846,7 +846,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.select_entity(game_id, hero_id)
       SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
@@ -860,8 +860,8 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
-      original_hp = state.entities[monster_id].hp
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      original_hp = state.actors[monster_id].hp
 
       SceneServer.select_entity(game_id, hero_id)
       SceneServer.attack_entity(game_id, monster_id, auto_roll: false)
@@ -870,7 +870,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       result = SceneServer.submit_roll(game_id, hero_id, 20)
       assert State.awaiting_roll?(result) == false
       assert State.pending_roll(result) == nil
-      surviving_hp = get_in(result.entities, [monster_id, :hp])
+      surviving_hp = get_in(result.actors, [monster_id, :hp])
       # A 20 is a critical hit — damage must have been dealt.
       assert surviving_hp == nil or surviving_hp < original_hp
     end
@@ -879,7 +879,7 @@ defmodule Gibbering.Engine.SceneServerTest do
       game_id = start_server()
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.select_entity(game_id, hero_id)
       SceneServer.attack_entity(game_id, monster_id, auto_roll: false)

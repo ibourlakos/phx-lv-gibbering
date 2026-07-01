@@ -1,11 +1,14 @@
 defmodule GibberingWeb.GameLive do
   use GibberingWeb, :live_view
 
-  alias Gibbering.Engine.{SceneServer, State, Rules, SpriteCompositor}
-  alias Gibbering.{Campaigns, CampaignCharacters, EventBus}
-  alias Gibbering.Events.{EventBatch, EventFeedProjection, FreeformRolled}
+  alias Gibbering.Engine.{SceneServer, State, Rules}
+  alias GibberingEngine.SpriteCompositor
+  alias Gibbering.{Campaigns, CampaignCharacters}
+  alias GibberingEngine.EventBus
+  alias GibberingEngine.Events.EventBatch
+  alias Gibbering.Events.{EventFeedProjection, FreeformRolled}
   alias Gibbering.Events.Notification.{BroadcastSent, WhisperDelivered}
-  alias Gibbering.Events.Engine.{RollRequired, SessionEnded, TurnAdvanced}
+  alias GibberingEngine.Events.{RollRequired, SessionEnded, TurnAdvanced}
 
   @dice_faces %{
     "d4" => 4,
@@ -215,10 +218,10 @@ defmodule GibberingWeb.GameLive do
   def handle_event("attack", %{"id" => target_id}, socket) do
     target_id = String.to_integer(target_id)
     state = socket.assigns.game_state
-    target_name = state.entities[target_id].name
+    target_name = state.actors[target_id].name
 
     attacker_id = state.actor_id
-    attacker_name = if attacker_id, do: state.entities[attacker_id].name, else: "?"
+    attacker_name = if attacker_id, do: state.actors[attacker_id].name, else: "?"
 
     new_state =
       SceneServer.attack_entity(socket.assigns.game_id, target_id,
@@ -229,17 +232,17 @@ defmodule GibberingWeb.GameLive do
       {:noreply, assign(socket, game_state: new_state)}
     else
       damage =
-        if Map.has_key?(new_state.entities, target_id) do
-          state.entities[target_id].hp - new_state.entities[target_id].hp
+        if Map.has_key?(new_state.actors, target_id) do
+          state.actors[target_id].hp - new_state.actors[target_id].hp
         else
-          state.entities[target_id].hp
+          state.actors[target_id].hp
         end
 
       dice_result = max(min(damage, 6), 1)
 
       log_entry =
-        if Map.has_key?(new_state.entities, target_id) do
-          hp = new_state.entities[target_id].hp
+        if Map.has_key?(new_state.actors, target_id) do
+          hp = new_state.actors[target_id].hp
           "#{attacker_name} hits #{target_name} for #{damage}! (#{hp} HP left)"
         else
           "#{target_name} destroyed!"
@@ -274,8 +277,8 @@ defmodule GibberingWeb.GameLive do
     spell_key = socket.assigns.selected_spell
 
     caster_id = state.actor_id
-    caster_name = if caster_id, do: state.entities[caster_id].name, else: "?"
-    target_name = state.entities[target_id].name
+    caster_name = if caster_id, do: state.actors[caster_id].name, else: "?"
+    target_name = state.actors[target_id].name
     spell = Spells.get(spell_key)
     spell_name = if spell, do: spell.name, else: spell_key
 
@@ -288,14 +291,14 @@ defmodule GibberingWeb.GameLive do
       {:noreply, assign(socket, game_state: new_state)}
     else
       {damage, log_entry} =
-        if Map.has_key?(new_state.entities, target_id) do
-          dmg = state.entities[target_id].hp - new_state.entities[target_id].hp
-          hp = new_state.entities[target_id].hp
+        if Map.has_key?(new_state.actors, target_id) do
+          dmg = state.actors[target_id].hp - new_state.actors[target_id].hp
+          hp = new_state.actors[target_id].hp
 
           {max(dmg, 0),
            "#{caster_name} casts #{spell_name} → #{target_name} for #{dmg}! (#{hp} HP left)"}
         else
-          {state.entities[target_id].hp,
+          {state.actors[target_id].hp,
            "#{caster_name} casts #{spell_name} → #{target_name} destroyed!"}
         end
 
@@ -373,7 +376,7 @@ defmodule GibberingWeb.GameLive do
   @impl true
   def handle_event("dm_roll_initiative", %{"id" => id}, %{assigns: %{is_dm: true}} = socket) do
     id = String.to_integer(id)
-    entity = socket.assigns.game_state.entities[id]
+    entity = socket.assigns.game_state.actors[id]
     dex = get_in(entity, [:stats, "dexterity"]) || 10
     dex_mod = div(dex - 10, 2)
     value = :rand.uniform(20) + dex_mod
@@ -834,7 +837,7 @@ defmodule GibberingWeb.GameLive do
   defp inspect_content(nil, _state, _is_dm), do: nil
 
   defp inspect_content({:entity, entity_id}, state, is_dm) do
-    case Map.get(state.entities, entity_id) do
+    case Map.get(state.actors, entity_id) do
       nil -> {:fallen_entity, entity_id}
       entity -> {:entity, entity, is_dm}
     end
@@ -931,7 +934,7 @@ defmodule GibberingWeb.GameLive do
     "#{e.caster_name} casts #{e.spell_key} → #{e.target_name}: #{e.outcome}"
   end
 
-  defp event_label(%Gibbering.Events.Engine.EntityMoved{} = e) do
+  defp event_label(%GibberingEngine.Events.EntityMoved{} = e) do
     {fx, fy} = e.from
     {tx, ty} = e.to
     "#{e.entity_name} moves (#{fx},#{fy})→(#{tx},#{ty})"
@@ -945,11 +948,11 @@ defmodule GibberingWeb.GameLive do
     "#{e.entity_name}: #{e.condition_id} removed"
   end
 
-  defp event_label(%Gibbering.Events.Engine.TurnAdvanced{} = e) do
+  defp event_label(%GibberingEngine.Events.TurnAdvanced{} = e) do
     "Turn → #{e.to_entity_name || "end of round"}"
   end
 
-  defp event_label(%Gibbering.Events.Engine.PhaseTransitioned{} = e) do
+  defp event_label(%GibberingEngine.Events.PhaseTransitioned{} = e) do
     "Phase: #{e.from_phase} → #{e.to_phase}"
   end
 
@@ -961,18 +964,18 @@ defmodule GibberingWeb.GameLive do
     "Item equipped: #{e.item_key} in #{e.slot}"
   end
 
-  defp event_label(%Gibbering.Events.Engine.HPAdjusted{} = e) do
+  defp event_label(%GibberingEngine.Events.HPAdjusted{} = e) do
     "#{e.entity_name} HP: #{e.old_hp} → #{e.new_hp}"
   end
 
-  defp event_label(%Gibbering.Events.Engine.ContainerOpened{}), do: "Container opened"
+  defp event_label(%GibberingEngine.Events.ContainerOpened{}), do: "Container opened"
 
-  defp event_label(%Gibbering.Events.Engine.ResourceConsumed{} = e) do
+  defp event_label(%GibberingEngine.Events.ResourceConsumed{} = e) do
     "#{e.entity_name}: #{e.resource_key} −#{e.amount_used} (#{e.remaining} left)"
   end
 
-  defp event_label(%Gibbering.Events.Engine.LogEntryRevealed{}), do: nil
-  defp event_label(%Gibbering.Events.Engine.LogEntryHidden{}), do: nil
+  defp event_label(%GibberingEngine.Events.LogEntryRevealed{}), do: nil
+  defp event_label(%GibberingEngine.Events.LogEntryHidden{}), do: nil
 
   defp event_label(%FreeformRolled{} = e) do
     results_str =
@@ -1021,7 +1024,7 @@ defmodule GibberingWeb.GameLive do
     ]
   end
 
-  defp event_parts(%Gibbering.Events.Engine.EntityMoved{} = e) do
+  defp event_parts(%GibberingEngine.Events.EntityMoved{} = e) do
     {fx, fy} = e.from
     {tx, ty} = e.to
 
@@ -1039,12 +1042,12 @@ defmodule GibberingWeb.GameLive do
     [{:entity_link, e.entity_id, e.entity_name}, {:text, ": #{e.condition_id} removed"}]
   end
 
-  defp event_parts(%Gibbering.Events.Engine.TurnAdvanced{to_entity_id: id, to_entity_name: name})
+  defp event_parts(%GibberingEngine.Events.TurnAdvanced{to_entity_id: id, to_entity_name: name})
        when not is_nil(id) do
     [{:text, "Turn → "}, {:entity_link, id, name}]
   end
 
-  defp event_parts(%Gibbering.Events.Engine.TurnAdvanced{}), do: [{:text, "Turn → end of round"}]
+  defp event_parts(%GibberingEngine.Events.TurnAdvanced{}), do: [{:text, "Turn → end of round"}]
 
   defp event_parts(%Gibbering.Events.DnD5e.ItemTaken{} = e) do
     [{:entity_link, e.actor_id, "actor"}, {:text, " takes #{e.item_key} ×#{e.quantity}"}]
@@ -1054,7 +1057,7 @@ defmodule GibberingWeb.GameLive do
     [{:entity_link, e.actor_id, "actor"}, {:text, " equips #{e.item_key} (#{e.slot})"}]
   end
 
-  defp event_parts(%Gibbering.Events.Engine.HPAdjusted{} = e) do
+  defp event_parts(%GibberingEngine.Events.HPAdjusted{} = e) do
     [{:entity_link, e.entity_id, e.entity_name}, {:text, " HP: #{e.old_hp} → #{e.new_hp}"}]
   end
 
@@ -1553,7 +1556,7 @@ defmodule GibberingWeb.GameLive do
   def entity_sprite(%{entity: _} = assigns) do
     ~H"""
     <g transform={"translate(#{@x}, #{@y})"}>
-      {Phoenix.HTML.raw(Gibbering.Engine.AppearanceArchetype.render_body(@entity, @appearances))}
+      {Phoenix.HTML.raw(GibberingEngine.ActorAppearance.render_body(@entity, @appearances))}
     </g>
     """
   end

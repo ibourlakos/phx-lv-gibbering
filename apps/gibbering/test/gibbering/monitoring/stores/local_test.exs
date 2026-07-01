@@ -2,8 +2,8 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
   use ExUnit.Case, async: false
 
   alias Gibbering.Monitoring.Stores.Local
-  alias Gibbering.Events.EventBatch
-  alias Gibbering.Events.Engine.SessionEnded
+  alias GibberingEngine.Events.EventBatch
+  alias GibberingEngine.Events.SessionEnded
   alias Gibbering.Rulesets.DnD5e.RulesetState
 
   # Stores.Local uses named ETS tables. We start the GenServer directly here
@@ -71,7 +71,7 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
     test "returns entity count and phase after receiving an EventBatch", %{pid: pid} do
       state = %Gibbering.Engine.State{
         campaign_id: 42,
-        entities: %{1 => %{}, 2 => %{}},
+        actors: %{1 => %{}, 2 => %{}},
         ruleset_state: %RulesetState{phase: :in_combat},
         turn_order: [],
         active_index: 0
@@ -96,7 +96,7 @@ defmodule Gibbering.Monitoring.Stores.LocalTest do
     test "removes scene info when session ends", %{pid: pid} do
       state = %Gibbering.Engine.State{
         campaign_id: 7,
-        entities: %{1 => %{}},
+        actors: %{1 => %{}},
         ruleset_state: %RulesetState{phase: :exploration},
         turn_order: [],
         active_index: 0

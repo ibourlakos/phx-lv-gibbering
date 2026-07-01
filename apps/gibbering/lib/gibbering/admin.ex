@@ -6,7 +6,8 @@ defmodule Gibbering.Admin do
   alias Gibbering.Repo
   alias Gibbering.Admin.{SupportUser, AuditLog}
   alias Gibbering.Accounts.User
-  alias Gibbering.{Campaign, CampaignMember, Character, EventBus}
+  alias Gibbering.{Campaign, CampaignMember, Character}
+  alias GibberingEngine.EventBus
 
   @doc "Creates a support user. Returns `{:ok, user}` or `{:error, changeset}`."
   def create_support_user(attrs) do

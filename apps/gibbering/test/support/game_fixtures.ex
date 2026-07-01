@@ -124,7 +124,7 @@ defmodule Gibbering.GameFixtures do
       y_extent: height,
       tile_size: 32,
       grid_tiles: tiles,
-      entities: entities,
+      actors: entities,
       actor_id: nil,
       valid_moves: [],
       turn_order: [@hero_id],
@@ -156,8 +156,8 @@ defmodule Gibbering.GameFixtures do
       state = with_entity(state, monster_id(), hp: 1, tags: ["destructible"])
   """
   def with_entity(state, id, attrs) do
-    entity = Map.merge(state.entities[id], Map.new(attrs))
-    %{state | entities: Map.put(state.entities, id, entity)}
+    entity = Map.merge(state.actors[id], Map.new(attrs))
+    %{state | actors: Map.put(state.actors, id, entity)}
   end
 
   @doc """

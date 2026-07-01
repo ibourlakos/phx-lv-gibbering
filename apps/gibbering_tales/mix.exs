@@ -17,6 +17,8 @@ defmodule GibberingTales.MixProject do
   end
 
   defp deps do
-    []
+    [
+      {:gibbering_engine, in_umbrella: true}
+    ]
   end
 end

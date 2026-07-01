@@ -1,7 +1,8 @@
 # #169 · Engine decomposition Phase 2b — Engine extraction
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-07-01
+**Closed:** 2026-07-01
 **Priority:** high
 **Tags:** architecture
 

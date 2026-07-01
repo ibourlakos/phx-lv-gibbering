@@ -29,7 +29,7 @@ defmodule Gibbering.Application do
   # whenever the application is updated.
   defp metrics_store_child do
     adapter =
-      Application.get_env(:gibbering, Gibbering.Monitoring.MetricsStore, [])
+      Application.get_env(:gibbering_engine, GibberingEngine.Monitoring.MetricsStore, [])
       |> Keyword.get(:adapter, Gibbering.Monitoring.Stores.Local)
 
     if adapter == Gibbering.Monitoring.Stores.Local do

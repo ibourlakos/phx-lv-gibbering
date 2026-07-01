@@ -133,7 +133,7 @@ defmodule Gibbering.Data.ItemsTest do
   end
 
   describe "all/0 — modifiers (issue #128)" do
-    alias Gibbering.Engine.RuleModifier
+    alias GibberingEngine.RuleModifier
 
     test "every item carries a modifiers list" do
       for {key, item} <- Items.all() do

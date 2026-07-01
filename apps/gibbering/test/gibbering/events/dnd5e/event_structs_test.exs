@@ -22,13 +22,13 @@ defmodule Gibbering.Events.DnD5e.EventStructsTest do
   ]
 
   describe "all DnD5e event structs" do
-    test "each module implements Gibbering.Events.Upcaster" do
+    test "each module implements GibberingEngine.Events.Upcaster" do
       for mod <- @all_modules do
         behaviours =
           mod.module_info(:attributes) |> Keyword.get_values(:behaviour) |> List.flatten()
 
-        assert Gibbering.Events.Upcaster in behaviours,
-               "#{mod} does not implement Gibbering.Events.Upcaster"
+        assert GibberingEngine.Events.Upcaster in behaviours,
+               "#{mod} does not implement GibberingEngine.Events.Upcaster"
       end
     end
 

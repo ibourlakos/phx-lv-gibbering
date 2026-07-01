@@ -1,7 +1,7 @@
 defmodule Gibbering.Rulesets.DnD5e.ConditionTest do
   use ExUnit.Case, async: true
 
-  alias Gibbering.Engine.RuleModifier
+  alias GibberingEngine.RuleModifier
   alias Gibbering.Rulesets.DnD5e.Condition
 
   @all_ids [

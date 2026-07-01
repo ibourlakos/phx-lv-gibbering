@@ -12,7 +12,7 @@ defmodule Gibbering.Rulesets.DnD5e.ModifierPipeline do
   """
 
   alias Gibbering.Data.{Classes, Items, Races}
-  alias Gibbering.Engine.RuleModifier
+  alias GibberingEngine.RuleModifier
   alias Gibbering.Rulesets.DnD5e.{Condition, Predicate}
 
   # ---------------------------------------------------------------------------

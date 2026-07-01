@@ -6,9 +6,9 @@ pending_initiative_rolls = Gibbering.Engine.State.pending_initiative_rolls(state
 map_h = state.y_extent
 map_w = state.x_extent
 active_id = Gibbering.Engine.State.active_hero_id(state)
-active_entity = active_id && state.entities[active_id]
+active_entity = active_id && state.actors[active_id]
 
-iso = GibberingWeb.IsoProjection
+iso = GibberingEngine.Projection.Isometric
 
 svg_w = iso.svg_width(map_w, map_h)
 svg_h = iso.svg_height(map_w, map_h)
@@ -19,7 +19,7 @@ svg_h = iso.svg_height(map_w, map_h)
     else: {div(svg_w, 2), div(svg_h, 2)}
 
 sorted_tiles = Enum.sort_by(state.grid_tiles, fn {{gx, gy}, _} -> iso.depth_key(gx, gy) end)
-sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e.y) end) %>
+sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y) end) %>
 
 <%!--
   Outer wrapper: DiceRoll hook anchor + full-viewport container.
@@ -696,7 +696,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     <%= if @active_tab == :dm and @is_dm do %>
       <div class="flex-1 flex flex-col min-h-0">
         <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
-          <%= for {eid, entity} <- state.entities do %>
+          <%= for {eid, entity} <- state.actors do %>
             <% is_hidden = MapSet.member?(hidden_entities, eid) %>
             <div class={["rounded text-xs", is_hidden && "opacity-50"]}>
               <div class="flex items-center gap-1 bg-gray-800/80 rounded px-1.5 py-1">
@@ -895,7 +895,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
           <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Initiative</div>
             <%= for {entry_id, idx} <- Enum.with_index(state.turn_order) do %>
-              <% entry = state.entities[entry_id] %>
+              <% entry = state.actors[entry_id] %>
               <% is_active = idx == state.active_index %>
               <% ini_val = Map.get(initiative_values || %{}, entry_id) %>
               <div class={[
@@ -938,7 +938,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
               </div>
             <% end %>
 
-            <%= for {eid, entity} <- state.entities, eid not in state.turn_order do %>
+            <%= for {eid, entity} <- state.actors, eid not in state.turn_order do %>
               <button
                 phx-click="dm_add_to_order"
                 phx-value-id={eid}
@@ -983,7 +983,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
     Explicitly triggered from the DM entity catalog. Not rendered for players.
   --%>
   <%= if @is_dm and @dm_intervene_entity_id do %>
-    <% intervene_entity = state.entities[@dm_intervene_entity_id] %>
+    <% intervene_entity = state.actors[@dm_intervene_entity_id] %>
     <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center;">
       <div class="bg-gray-800 border border-gray-600 rounded-lg p-5 max-w-xs w-full mx-4">
         <div class="flex items-center justify-between mb-4">
@@ -1257,7 +1257,7 @@ sorted_entities = Enum.sort_by(state.entities, fn {_, e} -> iso.depth_key(e.x, e
 
   <%!-- Container loot panel — shown when the active hero has a container open --%>
   <%= if container_id = Gibbering.Engine.State.open_container_id(@game_state) do %>
-    <% container = @game_state.entities[container_id] %>
+    <% container = @game_state.actors[container_id] %>
     <% items = get_in(container, [:stats, "items"]) || [] %>
     <div
       id="container-panel"

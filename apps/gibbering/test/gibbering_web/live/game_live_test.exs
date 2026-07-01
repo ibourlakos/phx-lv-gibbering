@@ -183,7 +183,7 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_combat_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "monster" && id end)
+      monster_id = Enum.find_value(state.actors, fn {id, e} -> e.type == "monster" && id end)
 
       # Select hero → valid_targets will include the adjacent goblin.
       view |> element("#entity-#{hero_id}") |> render_click()
@@ -194,8 +194,8 @@ defmodule GibberingWeb.GameLiveTest do
       # Attack resolves synchronously via SceneServer: monster either took damage or was destroyed.
       state_after = SceneServer.get_state(game_id)
 
-      assert state_after.entities[monster_id] == nil or
-               state_after.entities[monster_id].hp < state.entities[monster_id].hp
+      assert state_after.actors[monster_id] == nil or
+               state_after.actors[monster_id].hp < state.actors[monster_id].hp
     end
   end
 
@@ -318,8 +318,8 @@ defmodule GibberingWeb.GameLiveTest do
       view |> element("[phx-click='dm_end_confirm']") |> render_click()
       view |> element("[phx-click='dm_end']") |> render_click()
 
-      assert_receive %Gibbering.Events.EventBatch{
-                       events: [%Gibbering.Events.Engine.SessionEnded{} | _]
+      assert_receive %GibberingEngine.Events.EventBatch{
+                       events: [%GibberingEngine.Events.SessionEnded{} | _]
                      },
                      500
     end
@@ -333,8 +333,8 @@ defmodule GibberingWeb.GameLiveTest do
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        %Gibbering.Events.EventBatch{
-          events: [%Gibbering.Events.Engine.SessionEnded{campaign_id: game_id}]
+        %GibberingEngine.Events.EventBatch{
+          events: [%GibberingEngine.Events.SessionEnded{campaign_id: game_id}]
         }
       )
 
@@ -368,7 +368,7 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_dm_game(conn)
       SceneServer.start_session(game_id)
       state = SceneServer.get_state(game_id)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       view
       |> element("[phx-click='dm_add_to_order'][phx-value-id='#{monster_id}']")
@@ -394,7 +394,7 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_dm_game(conn)
       SceneServer.start_session(game_id)
       state = SceneServer.get_state(game_id)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       # Add monster so there are 2 entries, then move it up
       SceneServer.add_to_turn_order(game_id, monster_id)
@@ -424,12 +424,12 @@ defmodule GibberingWeb.GameLiveTest do
       hero_id = State.active_hero_id(state)
 
       # Broadcast a batch with a modified state snapshot — entity renamed.
-      renamed = put_in(state.entities[hero_id].name, "BroadcastHero")
+      renamed = put_in(state.actors[hero_id].name, "BroadcastHero")
 
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        %Gibbering.Events.EventBatch{state_snapshot: renamed}
+        %GibberingEngine.Events.EventBatch{state_snapshot: renamed}
       )
 
       html = render(view)
@@ -455,7 +455,7 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_dm_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      original_hp = state.entities[hero_id].hp
+      original_hp = state.actors[hero_id].hp
 
       view |> element("[phx-click='switch_tab'][phx-value-tab='dm']") |> render_click()
 
@@ -467,7 +467,7 @@ defmodule GibberingWeb.GameLiveTest do
       |> element("#intervene-hp-#{hero_id}")
       |> render_submit(%{entity_id: hero_id, delta: "-3"})
 
-      new_hp = SceneServer.get_state(game_id).entities[hero_id].hp
+      new_hp = SceneServer.get_state(game_id).actors[hero_id].hp
       assert new_hp == max(original_hp - 3, 0)
     end
 
@@ -486,7 +486,7 @@ defmodule GibberingWeb.GameLiveTest do
       |> element("#intervene-cond-#{hero_id}")
       |> render_submit(%{entity_id: hero_id, condition: "poisoned"})
 
-      assert :poisoned in SceneServer.get_state(game_id).entities[hero_id].conditions
+      assert :poisoned in SceneServer.get_state(game_id).actors[hero_id].conditions
     end
 
     test "dm_toggle_visibility event hides entity from player view", %{conn: conn} do
@@ -612,7 +612,7 @@ defmodule GibberingWeb.GameLiveTest do
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        %Gibbering.Events.EventBatch{state_snapshot: updated_state}
+        %GibberingEngine.Events.EventBatch{state_snapshot: updated_state}
       )
     end
 
@@ -750,10 +750,10 @@ defmodule GibberingWeb.GameLiveTest do
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        %Gibbering.Events.EventBatch{
+        %GibberingEngine.Events.EventBatch{
           state_snapshot: State.set_awaiting_roll(state, {:attack, nil}),
           events: [
-            %Gibbering.Events.Engine.RollRequired{
+            %GibberingEngine.Events.RollRequired{
               entity_id: entity_id,
               roll_type: :attack,
               dice_expression: "1d20",
@@ -770,7 +770,7 @@ defmodule GibberingWeb.GameLiveTest do
       Phoenix.PubSub.broadcast(
         Gibbering.PubSub,
         SceneServer.topic(game_id),
-        %Gibbering.Events.EventBatch{
+        %GibberingEngine.Events.EventBatch{
           state_snapshot: State.clear_pending_roll(state)
         }
       )
@@ -808,7 +808,7 @@ defmodule GibberingWeb.GameLiveTest do
       {view, game_id} = mount_combat_game(conn)
       state = SceneServer.get_state(game_id)
       hero_id = State.active_hero_id(state)
-      monster_id = state.entities |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
+      monster_id = state.actors |> Enum.find(fn {_, e} -> e.type == "monster" end) |> elem(0)
 
       SceneServer.select_entity(game_id, hero_id)
       # Put server into awaiting_roll state via direct API
@@ -903,7 +903,7 @@ defmodule GibberingWeb.GameLiveTest do
 
       # Movement was not consumed
       state_after = SceneServer.get_state(game_id)
-      mr = get_in(state_after.entities[hero_id], [:action_economy, :movement_remaining])
+      mr = get_in(state_after.actors[hero_id], [:action_economy, :movement_remaining])
       assert mr == 30
     end
 
@@ -968,8 +968,8 @@ defmodule GibberingWeb.GameLiveTest do
       {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
 
       state = SceneServer.get_state(game_id)
-      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
-      hero_hp = state.entities[hero_id].hp
+      hero_id = Enum.find_value(state.actors, fn {id, e} -> e.type == "hero" && id end)
+      hero_hp = state.actors[hero_id].hp
 
       # HPAdjusted defaults to visibility: :dm_only
       SceneServer.dm_adjust_hp(game_id, hero_id, -3)
@@ -983,8 +983,8 @@ defmodule GibberingWeb.GameLiveTest do
       {dm_view, game_id} = mount_dm_game(conn)
 
       state = SceneServer.get_state(game_id)
-      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
-      hero_hp = state.entities[hero_id].hp
+      hero_id = Enum.find_value(state.actors, fn {id, e} -> e.type == "hero" && id end)
+      hero_hp = state.actors[hero_id].hp
 
       SceneServer.dm_adjust_hp(game_id, hero_id, -3)
 
@@ -1002,8 +1002,8 @@ defmodule GibberingWeb.GameLiveTest do
       start_supervised!({SceneServer, game_id})
 
       state = SceneServer.get_state(game_id)
-      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
-      hero = state.entities[hero_id]
+      hero_id = Enum.find_value(state.actors, fn {id, e} -> e.type == "hero" && id end)
+      hero = state.actors[hero_id]
 
       dm_conn = log_in_user(build_conn(), dm_user)
       player_conn = log_in_user(conn, player_user)
@@ -1024,7 +1024,7 @@ defmodule GibberingWeb.GameLiveTest do
       start_supervised!({SceneServer, game_id})
 
       state = SceneServer.get_state(game_id)
-      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero_id = Enum.find_value(state.actors, fn {id, e} -> e.type == "hero" && id end)
 
       player_conn = log_in_user(conn, player_user)
       {:ok, player_view, _} = live(player_conn, "/game/#{game_id}")
@@ -1044,7 +1044,7 @@ defmodule GibberingWeb.GameLiveTest do
       start_supervised!({SceneServer, game_id})
 
       state = SceneServer.get_state(game_id)
-      hero_id = Enum.find_value(state.entities, fn {id, e} -> e.type == "hero" && id end)
+      hero_id = Enum.find_value(state.actors, fn {id, e} -> e.type == "hero" && id end)
 
       dm_conn = log_in_user(build_conn(), dm_user)
       {:ok, dm_view, _} = live(dm_conn, "/game/#{game_id}")

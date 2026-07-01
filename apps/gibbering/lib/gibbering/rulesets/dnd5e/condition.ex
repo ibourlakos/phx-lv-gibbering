@@ -16,7 +16,7 @@ defmodule Gibbering.Rulesets.DnD5e.Condition do
   the `{:entity_is_incapacitated}` predicate before any roll is attempted.
   """
 
-  alias Gibbering.Engine.RuleModifier
+  alias GibberingEngine.RuleModifier
 
   @enforce_keys [:id, :name]
   defstruct [:id, :name, :description, modifiers: []]
