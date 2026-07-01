@@ -30,7 +30,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 |---|---|---|---|
 | [#172](172-hud-struct-design.md) | HUD struct design — `%GibberingEngine.HUD{}` and `Ruleset.hud/1` callback | `architecture` `discovery` `rendering` `ui` | medium |
 | [#173](173-gamelive-hud-extraction.md) | GameLive HUD extraction — render from `%HUD{}` instead of raw Engine.State | `architecture` `ui` `rendering` | medium |
-| [#168](168-phase2a-umbrella-scaffold.md) | Engine decomposition Phase 2a — Umbrella scaffold | `architecture` `ops` | high |
 | [#169](169-phase2b-engine-extraction.md) | Engine decomposition Phase 2b — Engine extraction | `architecture` | high |
 | [#170](170-phase2c-tales-domain-extraction.md) | Engine decomposition Phase 2c — Tales domain extraction | `architecture` | high |
 | [#171](171-phase2d-web-admin-extraction.md) | Engine decomposition Phase 2d — Web + Admin app extraction | `architecture` `admin` | high |
@@ -97,6 +96,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#168](168-phase2a-umbrella-scaffold.md) | Engine decomposition Phase 2a — Umbrella scaffold | `architecture` `ops` |
 | [#167](167-phase2-umbrella-conversion-discovery.md) | Engine decomposition Phase 2 — Umbrella conversion discovery | `architecture` `discovery` `ops` |
 | [#163](163-engine-phase1-ruleset-state-field.md) | Engine decomposition Phase 1 — `ruleset_state: term()` opaque field in Engine.State | `architecture` |
 | [#162](162-engine-phase0-namespace-cleanup.md) | Engine decomposition Phase 0 — namespace cleanup (RuleModifier move, Events split) | `architecture` |
