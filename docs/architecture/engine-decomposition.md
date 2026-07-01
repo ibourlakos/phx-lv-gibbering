@@ -2,7 +2,7 @@
 
 Working document tracking the planned separation of the reusable game engine from its D&D 5e implementation. Companion to [bounded-contexts.md](bounded-contexts.md) and [ruleset-behaviour.md](ruleset-behaviour.md).
 
-**Status**: Phase 0 complete (2026-06-30). Phase 1 (#163) in progress. Updated as decisions are made.
+**Status**: Phase 0 complete (2026-06-30). Phase 1 complete (2026-07-01, #163). Updated as decisions are made.
 
 ---
 
@@ -96,23 +96,41 @@ This is the single highest-value structural change — it removes 10 fields from
 
 ### Recommended: Umbrella Application
 
-Convert the project to a Mix umbrella with three apps:
+Convert the project to a Mix umbrella with four apps:
 
 ```
 gibbering_umbrella/
   apps/
-    gibbering_engine/        ← pure engine: OTP, SVG pipeline, generic events, ports
-    gibbering_dnd5e/         ← D&D 5e implementation: ruleset, Data.*, Catalogue content, D&D events
-    gibbering/               ← the running application: wires engine + dnd5e, Phoenix web layer
+    gibbering_engine/        ← GibberingEngine — pure Elixir/OTP, no Phoenix dependency
+                                OTP, SVG pipeline, generic events, ports, IsoProjection
+                                Published to Hex.pm when the API stabilizes
+    gibbering_tales/         ← GibberingTales — "The Gibbering Tales" pure Elixir core
+                                D&D 5e ruleset, Data.*, Catalogue schemas, Accounts, Campaigns
+                                No Phoenix dependency; shared by both web apps below
+    gibbering_tales_web/     ← GibberingTalesWeb — player/DM Phoenix app
+                                GameLive, LobbyLive, CampaignPrepLive, CharactersLive, etc.
+                                Public-facing deployment
+    gibbering_tales_admin/   ← GibberingTalesAdmin — support/moderation Phoenix app
+                                Admin CRUD, LiveDashboard, support_users auth, audit log
+                                Internal/VPN-only deployment
+```
+
+Dependency graph:
+```
+gibbering_tales_web   → gibbering_tales → gibbering_engine
+gibbering_tales_admin → gibbering_tales → gibbering_engine
 ```
 
 **Why umbrella over simple namespace reorganization:**
-- Compile-time enforcement: `gibbering_engine` cannot import `gibbering_dnd5e` — the dependency is one-way
-- The toy card game becomes `apps/gibbering_card/` in the same umbrella, proving the engine works without D&D
+- Compile-time enforcement: `gibbering_engine` cannot import `gibbering_tales` — the dependency is strictly one-way
+- `gibbering_tales` is the reference implementation; both web apps prove the seam is real
 - Dependency graph is explicit in `mix.exs`
+- Admin and game apps can be deployed and scaled independently
 
-**Why not a separate Hex package yet:**
-- Too early; the engine API will change frequently as D&D features drive it
+**External game developers:**
+- They do not touch the umbrella; they depend on `{:gibbering_engine, "~> 1.0"}` from Hex.pm
+- They implement their own web layer; `gibbering_tales_web` is the reference pattern
+- Publish `gibbering_engine` to Hex when the API stabilizes (not yet — engine API still changes frequently)
 - Umbrella gives separation without premature publication
 
 ### Migration path (incremental, no big-bang rewrite)
@@ -122,15 +140,20 @@ gibbering_umbrella/
    - Moved generic events to `Events.Engine.*`, D&D events to `Events.DnD5e.*`
    - Added `@moduledoc` to all event structs stating layer, emitter, and signal
 
-2. **Phase 1 — State boundary:**
+2. **Phase 1 — State boundary (complete ✓ 2026-07-01):**
    - Add `ruleset_state: term()` to `Engine.State`
    - Move D&D-specific fields out of State into a `%DnD5e.RulesetState{}` struct stored in `ruleset_state`
    - Update all SceneServer and Rules call sites
 
 3. **Phase 2 — Umbrella conversion:**
    - `mix new gibbering_engine --module GibberingEngine` in `apps/`
-   - Move engine modules; update deps
-   - Verify `gibbering_dnd5e` compiles with `gibbering_engine` as dependency only
+   - `mix new gibbering_tales --module GibberingTales` in `apps/`
+   - `mix phx.new gibbering_tales_web --module GibberingTalesWeb --no-ecto` in `apps/`
+   - `mix phx.new gibbering_tales_admin --module GibberingTalesAdmin --no-ecto` in `apps/`
+   - Move engine modules into `gibbering_engine`; move D&D ruleset + domain into `gibbering_tales`
+   - Move `GibberingWeb.*` LiveViews into `gibbering_tales_web`; admin modules into `gibbering_tales_admin`
+   - Move `IsoProjection` from `GibberingWeb` to `GibberingEngine` (pure math, no Phoenix dep)
+   - Verify `gibbering_tales` compiles with only `gibbering_engine` as dependency
 
 4. **Phase 3 — Toy game (concept proof):**
    - `apps/gibbering_duels/` — a simple 2-player card-placement game on a 5×5 grid
@@ -151,7 +174,7 @@ A minimal card-placement game to concept-proof the engine:
 - **Events**: Only generic engine events — `EntityMoved`, `HpAdjusted`, `TurnAdvanced`, `SessionEnded`
 - **Rendering**: Same SpriteCompositor pipeline with custom card appearances
 
-If the engine can host this without needing to import anything from `gibbering_dnd5e`, the decomposition is clean.
+If the engine can host this without needing to import anything from `gibbering_tales`, the decomposition is clean.
 
 ---
 
@@ -177,9 +200,13 @@ The one coupling to clean: `SpriteCompositor` currently calls `ConditionBadge.re
 ## Open Questions
 
 - [ ] Does `Engine.Rules` movement cost (5 ft/tile) need to be a ruleset callback, or is a configurable tile cost sufficient?
-- [ ] How does the umbrella handle the Phoenix web layer — does it live in `gibbering` (the app) or `gibbering_engine` (the engine)? (Recommendation: web layer stays in `gibbering`; engine is pure Elixir, no Phoenix dependency)
-- [ ] `IsoProjection` lives in `GibberingWeb` — should it move to `GibberingEngine`? (Recommendation: yes — it's a pure math module with no Phoenix dependency; the engine should own its projection geometry)
 - [ ] Phase machine: is the generic engine's phase model `{:lobby, :active, :paused, :ended}` with ruleset-defined sub-phases, or is it a fully custom state machine per ruleset?
+
+## Resolved Questions
+
+- [x] **Web layer placement:** `gibbering_engine` has no Phoenix dependency. The web layer lives in `gibbering_tales_web` (player/DM) and `gibbering_tales_admin` (admin), both separate Phoenix apps that depend on `gibbering_tales` for domain logic.
+- [x] **Admin separation:** Admin app (`gibbering_tales_admin`) is a separate Phoenix deployment — different auth pipeline (`support_users`), internal/VPN-only exposure, independent release cadence.
+- [x] **`IsoProjection` placement:** Moves to `gibbering_engine` — pure math module with no Phoenix dependency; the engine owns its projection geometry.
 
 ---
 

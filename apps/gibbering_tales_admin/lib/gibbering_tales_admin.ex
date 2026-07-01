@@ -1,0 +1,2 @@
+defmodule GibberingTalesAdmin do
+end

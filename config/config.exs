@@ -1,11 +1,9 @@
-# This file is responsible for configuring your application
-# and its dependencies with the aid of the Config module.
-#
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
-
-# General application configuration
 import Config
+
+# Umbrella-root shared configuration.
+# Per-app OTP atom blocks live below; adjust as code migrates into each app.
+
+# --- :gibbering (transitional monolith app) ---
 
 config :gibbering,
   ecto_repos: [Gibbering.Repo],
@@ -15,7 +13,6 @@ config :gibbering, Gibbering.Monitoring.MetricsStore, adapter: Gibbering.Monitor
 
 config :gibbering, Gibbering.EventBus, adapter: Gibbering.EventBus.PubSub
 
-# Configure the endpoint
 config :gibbering, GibberingWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
@@ -26,17 +23,16 @@ config :gibbering, GibberingWeb.Endpoint,
   pubsub_server: Gibbering.PubSub,
   live_view: [signing_salt: "JpFlCZDK"]
 
-# Configure esbuild (the version is required)
+# assets/ moved to apps/gibbering/assets/ as part of umbrella scaffold
 config :esbuild,
   version: "0.25.4",
   gibbering: [
     args:
       ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
-    cd: Path.expand("../assets", __DIR__),
+    cd: Path.expand("../apps/gibbering/assets", __DIR__),
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]
 
-# Configure tailwind (the version is required)
 config :tailwind,
   version: "4.1.12",
   gibbering: [
@@ -44,17 +40,47 @@ config :tailwind,
       --input=assets/css/app.css
       --output=priv/static/assets/css/app.css
     ),
-    cd: Path.expand("..", __DIR__)
+    cd: Path.expand("../apps/gibbering", __DIR__)
   ]
 
-# Configure Elixir's Logger
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
+# --- :gibbering_engine (stub — populated in Phase 2b) ---
+
+config :gibbering_engine,
+  event_bus_adapter: nil,
+  metrics_store_adapter: nil
+
+# --- :gibbering_tales (stub — populated in Phase 2c) ---
+
+config :gibbering_tales, ecto_repos: []
+
+# --- :gibbering_tales_web (stub — populated in Phase 2d) ---
+
+config :gibbering_tales_web, GibberingTalesWeb.Endpoint,
+  url: [host: "localhost"],
+  adapter: Bandit.PhoenixAdapter,
+  render_errors: [
+    formats: [html: GibberingTalesWeb.ErrorHTML, json: GibberingTalesWeb.ErrorJSON],
+    layout: false
+  ],
+  pubsub_server: GibberingTales.PubSub,
+  live_view: [signing_salt: "JpFlCZDK"]
+
+# --- :gibbering_tales_admin (stub — populated in Phase 2d) ---
+
+config :gibbering_tales_admin, GibberingTalesAdmin.Endpoint,
+  url: [host: "localhost"],
+  adapter: Bandit.PhoenixAdapter,
+  render_errors: [
+    formats: [html: GibberingTalesAdmin.ErrorHTML, json: GibberingTalesAdmin.ErrorJSON],
+    layout: false
+  ],
+  pubsub_server: GibberingTalesAdmin.PubSub,
+  live_view: [signing_salt: "AdminSalt1"]
+
 import_config "#{config_env()}.exs"

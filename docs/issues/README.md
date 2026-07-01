@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 167 (see `counter`)
+**Next issue number:** 174 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -28,6 +28,12 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#172](172-hud-struct-design.md) | HUD struct design — `%GibberingEngine.HUD{}` and `Ruleset.hud/1` callback | `architecture` `discovery` `rendering` `ui` | medium |
+| [#173](173-gamelive-hud-extraction.md) | GameLive HUD extraction — render from `%HUD{}` instead of raw Engine.State | `architecture` `ui` `rendering` | medium |
+| [#168](168-phase2a-umbrella-scaffold.md) | Engine decomposition Phase 2a — Umbrella scaffold | `architecture` `ops` | high |
+| [#169](169-phase2b-engine-extraction.md) | Engine decomposition Phase 2b — Engine extraction | `architecture` | high |
+| [#170](170-phase2c-tales-domain-extraction.md) | Engine decomposition Phase 2c — Tales domain extraction | `architecture` | high |
+| [#171](171-phase2d-web-admin-extraction.md) | Engine decomposition Phase 2d — Web + Admin app extraction | `architecture` `admin` | high |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
@@ -91,6 +97,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#167](167-phase2-umbrella-conversion-discovery.md) | Engine decomposition Phase 2 — Umbrella conversion discovery | `architecture` `discovery` `ops` |
 | [#163](163-engine-phase1-ruleset-state-field.md) | Engine decomposition Phase 1 — `ruleset_state: term()` opaque field in Engine.State | `architecture` |
 | [#162](162-engine-phase0-namespace-cleanup.md) | Engine decomposition Phase 0 — namespace cleanup (RuleModifier move, Events split) | `architecture` |
 | [#164](164-lobby-live-test-coverage.md) | LobbyLive test coverage — character assignment, readiness gate, session start | `ops` `ui` |

@@ -46,8 +46,9 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 31 | [31-freeform-dice-tray.md](docs/brainstorming/31-freeform-dice-tray.md) | Freeform dice tray — player-initiated multi-die roll, die picker UI, sequential stagger animation, always-public event feed | open |
 | 32 | [32-gibbering-duels-concept.md](docs/brainstorming/32-gibbering-duels-concept.md) | GibberingDuels concept game — engine decomposition proof, minimal 2-player card-placement game implementing GibberingEngine.Ruleset with zero D&D imports | open |
 | 33 | [33-visual-regression-testing.md](docs/brainstorming/33-visual-regression-testing.md) | Visual regression testing strategy — Playwright screenshots, SVG-to-PNG pixel diffing, property-based geometric invariants; trade-off comparison for five approaches | open |
+| 34 | [34-actor-vs-entity-terminology.md](docs/brainstorming/34-actor-vs-entity-terminology.md) | Actor vs Entity terminology — runtime scene participant vs persistent domain object; engine concern update; OTP naming caveat | open |
 
-Next brainstorm number: 34 (see `docs/brainstorming/counter`).
+Next brainstorm number: 35 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 
