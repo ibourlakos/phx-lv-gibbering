@@ -1,7 +1,8 @@
 # #173 · GameLive HUD extraction — render from `%HUD{}` instead of raw Engine.State
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-07-01
+**Closed:** 2026-07-02
 **Priority:** medium
 **Tags:** architecture, ui, rendering
 
@@ -44,10 +45,16 @@ Gated on #172 (HUD struct design) and WP-S completing.
 
 ## Acceptance criteria
 
-- [ ] `GibberingTales.HUD.build/2` exists and is covered by unit tests
-- [ ] `GameLive` templates contain no direct reads of `ruleset_state` fields
-- [ ] `GameLive` templates contain no hardcoded D&D action names or condition strings
-- [ ] `@hud.action_bar`, `@hud.overlays`, `@hud.prompts`, `@hud.status_strip` drive the four main HUD areas
-- [ ] DM and player roles produce different `action_bar` content from the same `build/2` call
-- [ ] All existing GameLive LiveView tests pass
-- [ ] `mix precommit` passes
+- [x] `GibberingTalesWeb.HUD.build/2` exists and is covered by unit tests (12 tests)
+- [x] `GameLive` templates contain no direct reads of `ruleset_state` fields
+- [x] `GameLive` templates contain no hardcoded D&D action names or condition strings
+- [x] `@hud.action_bar`, `@hud.overlays`, `@hud.prompts`, `@hud.status_strip` drive the four main HUD areas
+- [x] DM and player roles produce different `action_bar` content from the same `build/2` call
+- [x] All existing GameLive LiveView tests pass
+- [x] `mix precommit` passes
+
+## Implementation notes
+
+Builder lives in `GibberingTalesWeb.HUD` (not `GibberingTales.HUD`) due to dependency constraint:
+`Engine.State` is defined in `gibbering_tales_web`, so the builder that reads it must also live there.
+See #172 decision record for full rationale.

@@ -1,7 +1,8 @@
 # #172 · HUD struct design — `%GibberingEngine.HUD{}` and `Ruleset.hud/1` callback
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-07-01
+**Closed:** 2026-07-02
 **Priority:** medium
 **Tags:** architecture, discovery, rendering, ui
 
@@ -49,10 +50,27 @@ Ephemeral UI state (`dm_panel`, `panel_subject`) stays in LiveView socket assign
 
 ---
 
+---
+
+## Decision record (closed 2026-07-02)
+
+**Option B adopted.** `GibberingEngine.HUD` is a pure data struct (shared vocabulary) defined in `gibbering_engine`. It is populated by a `GibberingTalesWeb.HUD.build/2` helper in `gibbering_tales_web` — not via a `SceneServer` callback and not in `gibbering_tales`.
+
+**Dependency constraint:** The issue initially proposed `GibberingTales.HUD` in `gibbering_tales`, but `Engine.State` (the runtime struct that `build/2` reads) lives in `gibbering_tales_web`. Moving `Engine.State` to `gibbering_tales` is out of scope for #173; placing the builder in `gibbering_tales_web` respects the current dependency order.
+
+**Role-gating:** `build(state, viewer_role)` returns different `action_bar` content per role. DM receives an empty action bar from the builder; player receives the ruleset's `action_buttons/2` output. DM-specific tools (session controls, initiatives, interventions) remain in the DM controls panel, driven directly by socket assigns, not the HUD.
+
+**Boundary:**
+- HUD covers: `action_bar`, `overlays` (move tiles + attack targets), `prompts` (empty for now — roll prompt stays event-driven in socket), `status_strip` (entity conditions)
+- Ephemeral UI state stays in socket assigns: `panel_subject`, `dm_panel`, `dm_intervene_entity_id`, `roll_prompt`, `selected_spell`
+- DM-only state (`hidden_entity_ids`, `initiative_values`, `pending_initiative_rolls`) moves from template locals to socket assigns — no longer read directly from `ruleset_state` in the template
+
+**Derived implementation issue:** #173 (implements `GibberingTalesWeb.HUD.build/2` and refactors `GameLive` templates).
+
 ## Acceptance criteria
 
-- [ ] `%GibberingEngine.HUD{}` struct fields are specified and justified
-- [ ] Computation site decision (engine callback vs. Tales helper vs. LiveView) is made and documented
-- [ ] Role-gating approach (player vs DM HUD) is decided
-- [ ] Boundary between HUD data and ephemeral LiveView state is drawn
-- [ ] At least one implementation issue is derived (#173 or replacement)
+- [x] `%GibberingEngine.HUD{}` struct fields are specified and justified
+- [x] Computation site decision (engine callback vs. Tales helper vs. LiveView) is made and documented
+- [x] Role-gating approach (player vs DM HUD) is decided
+- [x] Boundary between HUD data and ephemeral LiveView state is drawn
+- [x] At least one implementation issue is derived (#173)
