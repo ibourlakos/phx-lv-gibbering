@@ -1,0 +1,67 @@
+/*
+  Gibbering Engine — DST-inspired colour palette
+  (#98 Art Direction Reference)
+
+  Technique notes:
+  - Outlines: stroke="#0a0a0a" stroke-width="3" on closed SVG paths
+    (near-black rather than pure black for a slightly warmer hand-drawn feel)
+  - Texture: <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2">
+    + <feColorMatrix> to desaturate + darken, composited with feBlend mode="multiply"
+  - Tile fill: muted, slightly warm darks — grass is dark green-brown, not bright
+  - Selective colour pops on magic/fire only; terrain stays desaturated
+  - HP bars use traffic-light colours (green→yellow→red) but muted variants
+*/
+
+:root {
+  /* --- Scene / world --- */
+  --bg:               #111827;   /* very dark blue-grey, page/SVG background       */
+  --outline:          #0a0a0a;   /* near-black outlines on all shapes               */
+
+  /* --- Terrain fills --- */
+  --terrain-grass:    #1c3010;   /* dark muted green; base grass tile               */
+  --terrain-grass-alt:#1f3a12;   /* alternating checker shade (subtle, not bright)  */
+  --terrain-stone:    #2a2422;   /* dark grey-brown; cobble / cave floor            */
+  --terrain-water:    #12263a;   /* dark teal; river / pool                         */
+  --terrain-sand:     #3a2e14;   /* dark warm tan; desert / beach                   */
+  --terrain-void:     #0a0a0a;   /* pure black; impassable / out-of-bounds          */
+
+  /* --- Entity / token --- */
+  --token-hero:       #1d3354;   /* dark navy body fill; player characters          */
+  --token-hero-head:  #24406a;   /* slightly lighter for head circle                */
+  --token-monster:    #3b1010;   /* dark maroon body fill; enemies                  */
+  --token-monster-head:#4a1414;  /* slightly lighter for monster head               */
+  --token-npc:        #2e2818;   /* dark brown body; neutral NPCs                   */
+
+  /* --- Accent colours (selective pops) --- */
+  --accent-magic:     #7c3aed;   /* purple; arcane spells, magic glows              */
+  --accent-magic-bright:#a855f7; /* brighter purple for spell-target highlights     */
+  --accent-fire:      #c2410c;   /* deep orange-red; fire spells, torches           */
+  --accent-fire-bright:#f97316;  /* bright orange for fire highlight                */
+  --accent-selection: #ffffff;   /* white selection ring; high contrast             */
+  --accent-active-turn:#f59e0b;  /* amber dashed ring; whose turn it is             */
+  --accent-move:      #3b82f6;   /* blue move-overlay fill (at 25% opacity)         */
+  --accent-target:    #ef4444;   /* red attack-target highlight                     */
+
+  /* --- HP bar --- */
+  --hp-high:          #16a34a;   /* green; > 50% HP                                 */
+  --hp-mid:           #ca8a04;   /* yellow; 25–50% HP                               */
+  --hp-low:           #dc2626;   /* red; < 25% HP                                   */
+  --hp-bg:            #1f2937;   /* dark grey HP bar background                     */
+
+  /* --- UI panels (HTML overlays) --- */
+  --panel-bg:         rgba(15, 20, 30, 0.92);   /* semi-opaque dark blue-grey       */
+  --panel-border:     #374151;                   /* medium grey border               */
+  --panel-text:       #d1d5db;                   /* light grey body text             */
+  --panel-text-muted: #6b7280;                   /* dim grey labels                  */
+  --panel-text-bright:#f9fafb;                   /* near-white headings              */
+
+  /* --- Tile constants (SVG units) ---
+     These are the authoritative tile dimension constants.
+     Match IsoProjection module: tile_w=64, tile_h=32.
+  */
+  --tile-w:           64;        /* diamond width in SVG units                      */
+  --tile-h:           32;        /* diamond height in SVG units (tile_w / 2)        */
+  --sprite-box:       64;        /* entity bounding box (square, billboard)         */
+  --stroke-outline:   3;         /* standard outline stroke-width                   */
+  --stroke-thin:      1;         /* tile grid lines                                 */
+}

@@ -1,7 +1,8 @@
 # #171 · Engine decomposition Phase 2d — Web + Admin app extraction
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-07-01
+**Closed:** 2026-07-01
 **Priority:** high
 **Tags:** architecture, admin
 

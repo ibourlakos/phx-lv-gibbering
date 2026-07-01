@@ -1,0 +1,1319 @@
+<% state = @game_state
+phase = GibberingTalesWeb.Engine.State.phase(state)
+hidden_entities = GibberingTales.Rulesets.DnD5e.RulesetState.hidden_entities(state.ruleset_state)
+initiative_values = GibberingTales.Rulesets.DnD5e.RulesetState.initiative_values(state.ruleset_state)
+pending_initiative_rolls = GibberingTalesWeb.Engine.State.pending_initiative_rolls(state)
+map_h = state.y_extent
+map_w = state.x_extent
+active_id = GibberingTalesWeb.Engine.State.active_hero_id(state)
+active_entity = active_id && state.actors[active_id]
+
+iso = GibberingEngine.Projection.Isometric
+
+svg_w = iso.svg_width(map_w, map_h)
+svg_h = iso.svg_height(map_w, map_h)
+
+{center_sx, center_sy} =
+  if active_entity,
+    do: iso.to_screen(active_entity.x, active_entity.y, map_w, map_h),
+    else: {div(svg_w, 2), div(svg_h, 2)}
+
+sorted_tiles = Enum.sort_by(state.grid_tiles, fn {{gx, gy}, _} -> iso.depth_key(gx, gy) end)
+sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y) end) %>
+
+<%!--
+  Outer wrapper: DiceRoll hook anchor + full-viewport container.
+  All fixed-position children are stacked via z-index layers per #97 spec.
+--%>
+<div
+  id="game-board"
+  phx-hook="DiceRoll"
+  phx-window-keydown="escape_pressed"
+  phx-key="Escape"
+  style="position:relative; width:100vw; height:100vh; overflow:hidden;"
+>
+  <%!--
+    z-35: Left inspection panel — fixed, full height, collapsed when nothing is inspected.
+  --%>
+  <% panel_content = inspect_content(@panel_subject, @game_state, @is_dm) %>
+  <%= if panel_content do %>
+    <div
+      id="left-panel"
+      style="position:fixed; top:0; left:0; bottom:0; width:220px; z-index:35; overflow-y:auto; pointer-events:auto;"
+      class="bg-gray-900/95 border-r border-gray-700 flex flex-col"
+    >
+      <div class="flex items-center justify-between px-3 py-2 border-b border-gray-700 sticky top-0 bg-gray-900/95 z-10">
+        <span class="text-xs text-gray-500 uppercase tracking-widest">Inspect</span>
+        <button phx-click="dismiss_panel" class="text-gray-500 hover:text-white leading-none">
+          ✕
+        </button>
+      </div>
+      <div class="p-3 flex flex-col gap-3 text-xs">
+        <%= case panel_content do %>
+          <% {:entity, entity, is_dm} -> %>
+            <div class="font-bold text-gray-100 text-sm">{entity.name}</div>
+            <%= if entity.type == "hero" do %>
+              <div class="text-gray-400">
+                {String.capitalize(entity.class || "?")} · {String.capitalize(entity.race || "?")} · Lv {entity.level ||
+                  1}
+              </div>
+              <div>
+                <div class="flex justify-between text-gray-400 mb-1">
+                  <span>HP</span>
+                  <span>{entity.hp}/{entity.max_hp}</span>
+                </div>
+                <div class="h-2 bg-gray-700 rounded overflow-hidden">
+                  <div
+                    class="h-full rounded"
+                    style={"width:#{hp_percent(entity.hp, entity.max_hp)}%; background:#{hp_bar_color(entity.hp, entity.max_hp)};"}
+                  />
+                </div>
+                <%= if entity.temp_hp > 0 do %>
+                  <div class="text-sky-400 mt-0.5">+{entity.temp_hp} temp HP</div>
+                <% end %>
+              </div>
+              <div class="flex gap-3">
+                <div>
+                  <div class="text-gray-500">AC</div>
+                  <div class="text-gray-100 font-mono">{entity[:armor_class] || "?"}</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Speed</div>
+                  <div class="text-gray-100 font-mono">{entity.speed || 30}ft</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Prof</div>
+                  <div class="text-gray-100 font-mono">+{prof_bonus(entity.level)}</div>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-1">
+                <%= for {abbr, key} <- [
+                      {"STR", "strength"}, {"DEX", "dexterity"}, {"CON", "constitution"},
+                      {"INT", "intelligence"}, {"WIS", "wisdom"}, {"CHA", "charisma"}
+                    ] do %>
+                  <% score = (entity.stats || %{})[key] || 10 %>
+                  <div class="bg-gray-800 rounded p-1 text-center">
+                    <div class="text-gray-500 text-[10px]">{abbr}</div>
+                    <div class="text-gray-100 font-bold">{score}</div>
+                    <div class="text-gray-400">{format_modifier(ability_modifier(score))}</div>
+                  </div>
+                <% end %>
+              </div>
+              <%= if (entity.conditions || []) != [] do %>
+                <div>
+                  <div class="text-gray-500 mb-1">Conditions</div>
+                  <div class="flex flex-wrap gap-1">
+                    <%= for cond_id <- entity.conditions do %>
+                      <span class="bg-orange-900/60 border border-orange-700 rounded px-1.5 py-0.5 text-orange-300">
+                        {cond_id}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              <% weapon = (entity.stats || %{})["equipped_weapon"] %>
+              <%= if weapon do %>
+                <div>
+                  <div class="text-gray-500 mb-0.5">Equipped</div>
+                  <div class="text-gray-200">{weapon["key"] || "—"}</div>
+                  <%= if weapon["damage_dice"] do %>
+                    <div class="text-gray-400 font-mono">
+                      {weapon["damage_dice"]} {weapon["damage_type"]}
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            <% else %>
+              <%!-- Creature --%>
+              <div class="text-gray-400">{monster_type_label(entity)}</div>
+              <div>
+                <%= if is_dm do %>
+                  <div class="flex justify-between text-gray-400 mb-1">
+                    <span>HP</span>
+                    <span class="flex items-center gap-1">
+                      {entity.hp}/{entity.max_hp} <.dm_badge />
+                    </span>
+                  </div>
+                <% else %>
+                  <div class="text-gray-400 mb-1">HP</div>
+                <% end %>
+                <div class="h-2 bg-gray-700 rounded overflow-hidden">
+                  <div
+                    class="h-full rounded"
+                    style={"width:#{hp_percent(entity.hp, entity.max_hp)}%; background:#{hp_bar_color(entity.hp, entity.max_hp)};"}
+                  />
+                </div>
+                <%= if entity.temp_hp > 0 do %>
+                  <div class="text-sky-400 mt-0.5">+{entity.temp_hp} temp HP</div>
+                <% end %>
+              </div>
+              <%= if is_dm do %>
+                <div class="flex gap-3">
+                  <div>
+                    <div class="text-gray-500 flex items-center gap-1">AC <.dm_badge /></div>
+                    <div class="text-gray-100 font-mono">{entity[:armor_class] || "?"}</div>
+                  </div>
+                  <div>
+                    <div class="text-gray-500 flex items-center gap-1">Speed <.dm_badge /></div>
+                    <div class="text-gray-100 font-mono">{entity.speed || 30}ft</div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-gray-500 mb-1 flex items-center gap-1">
+                    Ability Scores <.dm_badge />
+                  </div>
+                  <div class="grid grid-cols-3 gap-1">
+                    <%= for {abbr, key} <- [
+                          {"STR", "strength"}, {"DEX", "dexterity"}, {"CON", "constitution"},
+                          {"INT", "intelligence"}, {"WIS", "wisdom"}, {"CHA", "charisma"}
+                        ] do %>
+                      <% score = (entity.stats || %{})[key] || 10 %>
+                      <div class="bg-gray-800 rounded p-1 text-center">
+                        <div class="text-gray-500 text-[10px]">{abbr}</div>
+                        <div class="text-gray-100 font-bold">{score}</div>
+                        <div class="text-gray-400">
+                          {format_modifier(ability_modifier(score))}
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              <%= if (entity.conditions || []) != [] do %>
+                <div>
+                  <div class="text-gray-500 mb-1">Conditions</div>
+                  <div class="flex flex-wrap gap-1">
+                    <%= for cond_id <- entity.conditions do %>
+                      <span class="bg-orange-900/60 border border-orange-700 rounded px-1.5 py-0.5 text-orange-300">
+                        {cond_id}
+                      </span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          <% {:tile, x, y, tile} -> %>
+            <div class="font-bold text-gray-100 text-sm">Tile ({x}, {y})</div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Texture</span>
+                <span class="text-gray-200">{tile.texture}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Walkable</span>
+                <span class={
+                  if (tile.movement || %{})["walk"] && (tile.movement || %{})["walk"] > 0,
+                    do: "text-green-400",
+                    else: "text-red-400"
+                }>
+                  {if (tile.movement || %{})["walk"] && (tile.movement || %{})["walk"] > 0,
+                    do: "Yes",
+                    else: "No"}
+                </span>
+              </div>
+              <%= if cost = (tile.movement || %{})["walk"] do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Move cost</span>
+                  <span class="text-gray-200 font-mono">{cost}%</span>
+                </div>
+              <% end %>
+              <%= if tile.decoration do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Decoration</span>
+                  <span class="text-gray-200">{tile.decoration}</span>
+                </div>
+              <% end %>
+            </div>
+          <% {:fallen_entity, _entity_id} -> %>
+            <div class="text-gray-500 italic text-xs">
+              <div class="text-red-400 font-semibold mb-1">Fallen</div>
+              Entity has been removed from the scene. Full stat block available once entity
+              removal snapshots are added (future issue).
+            </div>
+          <% {:spell_cast, event} -> %>
+            <div class="font-bold text-gray-100 text-sm">{event.spell_key}</div>
+            <div class="flex flex-col gap-1.5">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Cast by</span>
+                <button
+                  phx-click="inspect_entity"
+                  phx-value-id={event.caster_id}
+                  class="text-blue-400 hover:underline text-xs"
+                >
+                  {event.caster_name}
+                </button>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Target</span>
+                <button
+                  phx-click="inspect_entity"
+                  phx-value-id={event.target_id}
+                  class="text-blue-400 hover:underline text-xs"
+                >
+                  {event.target_name}
+                </button>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Outcome</span>
+                <span class="text-gray-200">{event.outcome}</span>
+              </div>
+              <%= if event.roll do %>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Roll</span>
+                  <span class="text-gray-200">{event.roll}</span>
+                </div>
+              <% end %>
+            </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%!--
+    z-0: SVG game scene — fixed, full viewport.
+    viewBox defines the coordinate space; PanZoom hook preserves it across LV patches.
+  --%>
+  <svg
+    id="game-svg"
+    phx-hook="PanZoom"
+    phx-click="deselect"
+    viewBox={"0 0 #{svg_w} #{svg_h}"}
+    preserveAspectRatio="xMidYMid meet"
+    data-svg-w={svg_w}
+    data-svg-h={svg_h}
+    data-center-sx={center_sx}
+    data-center-sy={center_sy}
+    data-follow="true"
+    style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; cursor:grab;"
+  >
+    <%!-- Layer 1: Ground tiles — clickable to inspect when no entity/overlay is on top --%>
+    <%= for {{x, y}, tile} <- state.grid_tiles do %>
+      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+      {Phoenix.HTML.raw(
+        GibberingTalesWeb.TileRenderer.render_tile(
+          tile,
+          x,
+          y,
+          iso.diamond_points(sx, sy),
+          @appearances
+        )
+      )}
+    <% end %>
+
+    <%!-- Layer 2: Tile decorations (depth-sorted) --%>
+    <%= for {{x, y}, tile} <- sorted_tiles do %>
+      <%= if dec = Map.get(tile, :decoration) do %>
+        <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+        <% {dx, dy} = iso.sprite_pos(sx, sy) %>
+        <.decoration_sprite decoration={dec} x={dx} y={dy} />
+      <% end %>
+    <% end %>
+
+    <%!-- Layer 3: Entities (depth-sorted, hidden entities filtered for players) --%>
+    <% visible_entities =
+      if @is_dm,
+        do: sorted_entities,
+        else:
+          Enum.reject(sorted_entities, fn {id, _} ->
+            MapSet.member?(hidden_entities, id)
+          end) %>
+    <%= for {id, entity} <- visible_entities do %>
+      <% is_active = id == active_id && phase == :in_combat %>
+      <% is_selected = id == state.actor_id %>
+      <% is_target = id in @valid_targets %>
+      <% is_spell_target = id in @spell_targets %>
+      <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
+      <% {ix, iy} = iso.sprite_pos(sx, sy) %>
+
+      <g
+        id={"entity-#{id}"}
+        data-entity-id={id}
+        data-entity-type={entity.type}
+        phx-click={
+          cond do
+            is_spell_target -> "cast_spell"
+            is_target -> "attack"
+            true -> "select_entity"
+          end
+        }
+        phx-value-id={id}
+        style={"cursor: #{cond do
+          is_spell_target -> "crosshair"
+          is_target -> "crosshair"
+          entity.type == "hero" -> "pointer"
+          true -> "default"
+        end};"}
+      >
+        <%!-- Target highlight --%>
+        <%= if is_target do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="rgba(231,76,60,0.35)"
+            stroke="#e74c3c"
+            stroke-width="2"
+          />
+        <% end %>
+
+        <%!-- Spell target highlight --%>
+        <%= if is_spell_target do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="rgba(192,80,255,0.3)"
+            stroke="#c050ff"
+            stroke-width="2"
+            stroke-dasharray="4 3"
+          />
+        <% end %>
+
+        <%!-- Selected ring --%>
+        <%= if is_selected do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2.5"
+          />
+        <% end %>
+
+        <%!-- Active turn dashed ring --%>
+        <%= if is_active && !is_selected do %>
+          <polygon
+            points={iso.diamond_points(sx, sy)}
+            fill="none"
+            stroke="#f1c40f"
+            stroke-width="2"
+            stroke-dasharray="4 3"
+            data-highlight-type="active-turn"
+          />
+        <% end %>
+
+        <%!-- Sprite body (named geometry or fallback rect) --%>
+        <.entity_sprite
+          sprite={entity.sprite}
+          x={ix}
+          y={iy}
+          body_color={entity_body_color(@appearances, entity.sprite)}
+          entity={entity}
+          appearances={@appearances}
+        />
+
+        <%!-- Compositor overlays: selection ring (active entity) + HP bar --%>
+        <g transform={"translate(#{ix}, #{iy})"}>
+          {Phoenix.HTML.raw(
+            SpriteCompositor.compose(entity, @appearances,
+              selected: is_active,
+              show_body: false,
+              viewer_role: if(@is_dm, do: :dm, else: :player)
+            )
+          )}
+        </g>
+
+        <%!-- Movement-exhausted badge — shown when movement_remaining == 0 on the active entity's turn --%>
+        <%= if is_active && (get_in(entity, [:action_economy, :movement_remaining]) || 0) == 0 do %>
+          <g transform={"translate(#{ix + 24}, #{iy + 24})"}>
+            <circle
+              cx="0"
+              cy="0"
+              r="7"
+              fill="#ef4444"
+              stroke="#1f2937"
+              stroke-width="1.5"
+              data-movement-badge
+            />
+            <text
+              x="0"
+              y="4"
+              text-anchor="middle"
+              font-size="9"
+              font-weight="bold"
+              fill="white"
+              font-family="sans-serif"
+            >
+              M
+            </text>
+          </g>
+        <% end %>
+      </g>
+    <% end %>
+
+    <%!--
+      Layer 4: Move overlay — rendered AFTER entities so diamonds are always visible.
+      Painter's algorithm: overlays on top means tall entity sprites cannot occlude them.
+      Valid-move tiles are never occupied, so pointer-events on these polygons don't
+      conflict with entity click targets.
+    --%>
+    <%= for {x, y} <- state.valid_moves do %>
+      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+      <% cost_tier = Map.get(state.valid_move_costs || %{}, {x, y}, :normal) %>
+      <% {fill, stroke} =
+        case cost_tier do
+          :difficult -> {"rgba(251,191,36,0.35)", "#fbbf24"}
+          _ -> {"rgba(74,222,128,0.35)", "#4ade80"}
+        end %>
+      <% path_ft =
+        if active_entity,
+          do: max(abs(active_entity.x - x), abs(active_entity.y - y)) * 5,
+          else: 0 %>
+      <polygon
+        points={iso.diamond_points(sx, sy)}
+        fill={fill}
+        stroke={stroke}
+        stroke-width="1.5"
+        phx-click="move"
+        phx-value-x={x}
+        phx-value-y={y}
+        data-move-overlay="true"
+        data-move-cost={cost_tier}
+        style="cursor: pointer;"
+      >
+        <title>{path_ft} ft</title>
+      </polygon>
+    <% end %>
+  </svg>
+
+  <%!--
+    z-30: Turn order strip — top-centre, screen-anchored.
+    Container is pointer-events:none; inner panel is pointer-events:auto.
+  --%>
+  <div style="position:fixed; top:0; left:0; right:0; z-index:30; display:flex; justify-content:center; padding-top:0.5rem; pointer-events:none;">
+    <div
+      class="bg-gray-900/90 border border-gray-700 rounded-lg px-4 py-1.5 text-sm flex items-center gap-3"
+      style="pointer-events:auto;"
+    >
+      <span class="text-gray-500 text-xs uppercase tracking-widest">Turn</span>
+      <span class="font-bold text-yellow-400">
+        {if active_entity, do: active_entity.name, else: "—"}
+      </span>
+      <span class="text-xs text-gray-600 font-mono">[{phase}]</span>
+    </div>
+  </div>
+
+  <%!--
+    z-20: Action bar — bottom-centre, screen-anchored.
+    End Turn + spell selection buttons.
+  --%>
+  <div style="position:fixed; bottom:0; left:0; right:0; z-index:20; display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding-bottom:1.25rem; pointer-events:none;">
+    <%!-- Action buttons — declared by the active ruleset for the current entity --%>
+    <% action_btns = ruleset_action_buttons(active_entity, state) %>
+    <%= if action_btns != [] do %>
+      <div class="flex gap-2 flex-wrap justify-center" style="pointer-events:auto;">
+        <%= for btn <- action_btns do %>
+          <% btn_disabled = Map.get(btn, :disabled, false) %>
+          <button
+            phx-click={if btn_disabled, do: nil, else: btn.event}
+            phx-value-key={btn.value["key"]}
+            disabled={btn_disabled}
+            class={[
+              "text-sm rounded-lg px-3 py-1.5 flex items-center gap-1 border transition-colors",
+              btn_disabled &&
+                "opacity-40 cursor-not-allowed bg-gray-800/60 text-gray-500 border-gray-700",
+              !btn_disabled && @selected_spell == btn.value["key"] &&
+                "bg-purple-700/90 text-white border-purple-400 ring-1 ring-purple-400",
+              !btn_disabled && @selected_spell != btn.value["key"] &&
+                "bg-gray-800/90 hover:bg-gray-700/90 text-gray-200 border-gray-600"
+            ]}
+          >
+            <span>{btn.label}</span>
+            <%= if btn[:sublabel] && btn.sublabel != "" do %>
+              <span class="text-xs text-gray-400">{btn.sublabel}</span>
+            <% end %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+
+    <button
+      phx-click="end_turn"
+      class="bg-gray-700/90 hover:bg-gray-600/90 text-white text-sm font-bold rounded-lg px-8 py-2 border border-gray-500"
+      style="pointer-events:auto;"
+    >
+      End Turn
+    </button>
+  </div>
+
+  <%!--
+    z-35: Right panel — full-height, screen-anchored.
+    Events tab (all roles) + DM Catalogue tab (DM only).
+    Symmetric with the left inspection panel.
+  --%>
+  <div
+    class="flex flex-col bg-gray-950/95 border-l border-gray-800"
+    style="position:fixed; top:0; right:0; bottom:0; width:220px; z-index:35; pointer-events:auto;"
+  >
+    <%!-- Tab strip --%>
+    <div class="flex border-b border-gray-800 flex-shrink-0">
+      <button
+        phx-click="switch_tab"
+        phx-value-tab="events"
+        class={[
+          "flex-1 py-2 text-xs font-medium tracking-wide transition-colors relative",
+          (@active_tab == :events && "text-gray-100 border-b-2 border-indigo-500 -mb-px") ||
+            "text-gray-500 hover:text-gray-300"
+        ]}
+      >
+        Events
+        <%= if @unread_count > 0 and @active_tab != :events do %>
+          <span class="ml-1 bg-indigo-600 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
+            {@unread_count}
+          </span>
+        <% end %>
+      </button>
+      <%= if @is_dm do %>
+        <button
+          phx-click="switch_tab"
+          phx-value-tab="dm"
+          class={[
+            "flex-1 py-2 text-xs font-medium tracking-wide transition-colors",
+            (@active_tab == :dm && "text-gray-100 border-b-2 border-indigo-500 -mb-px") ||
+              "text-gray-500 hover:text-gray-300"
+          ]}
+        >
+          DM
+        </button>
+      <% end %>
+    </div>
+
+    <%!-- Events tab --%>
+    <%= if @active_tab == :events do %>
+      <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
+        <%= if @is_dm do %>
+          <%!-- DM feed: all events with effective-visibility colouring and eye-icon reveal affordance --%>
+          <% overrides = GibberingTalesWeb.Events.EventFeedProjection.fold(@event_log) %>
+          <%= for event <- @event_log do %>
+            <% parts = event_parts(event) %>
+            <%= if parts != [] do %>
+              <% eff_vis =
+                GibberingTalesWeb.Events.EventFeedProjection.effective_visibility(event, overrides) %>
+              <div class={[
+                "text-xs mb-0.5 flex items-start justify-between gap-1",
+                (eff_vis == :dm_only && "text-gray-500") || "text-gray-300"
+              ]}>
+                <span class="flex-1 flex flex-wrap gap-x-0.5">
+                  <%= for part <- parts do %>
+                    <%= case part do %>
+                      <% {:text, txt} -> %>
+                        <span>{txt}</span>
+                      <% {:entity_link, id, name} -> %>
+                        <button
+                          phx-click="inspect_entity"
+                          phx-value-id={id}
+                          class="text-blue-400 hover:underline"
+                        >
+                          {name}
+                        </button>
+                      <% {:tile_link, tx, ty, label} -> %>
+                        <button
+                          phx-click="inspect_tile"
+                          phx-value-x={tx}
+                          phx-value-y={ty}
+                          class="text-teal-400 hover:underline"
+                        >
+                          {label}
+                        </button>
+                      <% {:spell_link, event_id, key} -> %>
+                        <button
+                          phx-click="inspect_spell_cast"
+                          phx-value-event_id={event_id}
+                          class="text-purple-400 hover:underline"
+                        >
+                          {key}
+                        </button>
+                    <% end %>
+                  <% end %>
+                </span>
+                <%= if event.visibility == :dm_only do %>
+                  <%= if eff_vis == :revealed do %>
+                    <button
+                      phx-click="hide_log_entry"
+                      phx-value-event_id={event.event_id}
+                      class="text-purple-400 hover:text-purple-300 flex-shrink-0"
+                      title="Hide from players"
+                    >
+                      👁
+                    </button>
+                  <% else %>
+                    <button
+                      phx-click="reveal_log_entry"
+                      phx-value-event_id={event.event_id}
+                      class="text-gray-600 hover:text-purple-400 flex-shrink-0"
+                      title="Reveal to players"
+                    >
+                      👁
+                    </button>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        <% else %>
+          <%!-- Player feed: public + revealed events with disclosure marker and active links --%>
+          <%= for {event, vis} <- GibberingTalesWeb.Events.EventFeedProjection.player_visible(@event_log) do %>
+            <% parts = event_parts(event) %>
+            <%= if parts != [] do %>
+              <div class="text-xs text-gray-300 mb-0.5 flex items-start gap-1 flex-wrap">
+                <%= if vis == :revealed do %>
+                  <span class="text-purple-400 flex-shrink-0" title="DM revealed">👁</span>
+                <% end %>
+                <%= for part <- parts do %>
+                  <%= case part do %>
+                    <% {:text, txt} -> %>
+                      <span>{txt}</span>
+                    <% {:entity_link, id, name} -> %>
+                      <button
+                        phx-click="inspect_entity"
+                        phx-value-id={id}
+                        class="text-blue-400 hover:underline"
+                      >
+                        {name}
+                      </button>
+                    <% {:tile_link, tx, ty, label} -> %>
+                      <button
+                        phx-click="inspect_tile"
+                        phx-value-x={tx}
+                        phx-value-y={ty}
+                        class="text-teal-400 hover:underline"
+                      >
+                        {label}
+                      </button>
+                    <% {:spell_link, event_id, key} -> %>
+                      <button
+                        phx-click="inspect_spell_cast"
+                        phx-value-event_id={event_id}
+                        class="text-purple-400 hover:underline"
+                      >
+                        {key}
+                      </button>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%!-- DM tab (DM only) — active entity catalog + placement picker placeholder --%>
+    <%= if @active_tab == :dm and @is_dm do %>
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
+          <%= for {eid, entity} <- state.actors do %>
+            <% is_hidden = MapSet.member?(hidden_entities, eid) %>
+            <div class={["rounded text-xs", is_hidden && "opacity-50"]}>
+              <div class="flex items-center gap-1 bg-gray-800/80 rounded px-1.5 py-1">
+                <button
+                  phx-click="inspect_entity"
+                  phx-value-id={eid}
+                  class="flex-1 text-left min-w-0"
+                >
+                  <div class="font-medium text-gray-100 truncate">{entity.name}</div>
+                  <div class="text-gray-400 font-mono text-[10px]">
+                    {entity.hp}/{entity.max_hp} HP
+                  </div>
+                </button>
+                <button
+                  phx-click="dm_toggle_visibility"
+                  phx-value-id={eid}
+                  class={[
+                    "flex-shrink-0 text-sm px-0.5",
+                    (is_hidden && "text-gray-600") || "text-gray-400 hover:text-gray-200"
+                  ]}
+                  title={if is_hidden, do: "Show entity", else: "Hide entity"}
+                >
+                  👁
+                </button>
+                <button
+                  phx-click="open_dm_intervene"
+                  phx-value-id={eid}
+                  class="flex-shrink-0 text-gray-500 hover:text-orange-400 px-0.5"
+                  title="Intervene"
+                >
+                  ⚔
+                </button>
+              </div>
+              <%= if (entity.conditions || []) != [] do %>
+                <div class="flex flex-wrap gap-0.5 px-1.5 pt-0.5">
+                  <%= for cond_id <- entity.conditions do %>
+                    <span class="bg-orange-900/50 text-orange-300 rounded px-1 py-0.5 text-[10px]">
+                      {cond_id}
+                    </span>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="flex-shrink-0 border-t border-gray-800 p-2 text-xs text-gray-600 italic">
+          Entity placement — coming in #132
+        </div>
+      </div>
+    <% end %>
+
+    <%!-- Freeform dice tray (all players, not DM) --%>
+    <%= if not @is_dm do %>
+      <% any_selected = Enum.any?(@freeform_dice, fn {_die, count} -> count > 0 end) %>
+      <div class="flex-shrink-0 border-t border-gray-800 p-2">
+        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1.5">Roll dice</div>
+        <div class="grid grid-cols-4 gap-1 mb-1.5">
+          <%= for die <- ~w(d4 d6 d8 d10 d12 d20 d100) do %>
+            <% count = @freeform_dice[die] %>
+            <div class="relative">
+              <button
+                phx-click="freeform_dice_inc"
+                phx-value-die={die}
+                class={[
+                  "w-full text-xs rounded px-1 py-1 font-mono font-bold transition-colors",
+                  (count > 0 && "bg-indigo-700 hover:bg-indigo-600 text-white") ||
+                    "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                ]}
+              >
+                {die}
+              </button>
+              <%= if count > 0 do %>
+                <button
+                  phx-click="freeform_dice_dec"
+                  phx-value-die={die}
+                  class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-indigo-500 hover:bg-red-500 text-white text-xs leading-none flex items-center justify-center"
+                  title={"Remove one #{die}"}
+                >
+                  {count}
+                </button>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="flex gap-1">
+          <button
+            phx-click="freeform_roll"
+            disabled={not any_selected}
+            class={[
+              "flex-1 text-xs rounded px-2 py-1 font-bold transition-colors",
+              (any_selected && "bg-yellow-600 hover:bg-yellow-500 text-white") ||
+                "bg-gray-800 text-gray-600 cursor-not-allowed"
+            ]}
+          >
+            Roll
+          </button>
+          <%= if any_selected do %>
+            <button
+              phx-click="freeform_dice_clear"
+              class="text-xs rounded px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-400 transition-colors"
+            >
+              Clear
+            </button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%!-- Auto-roll toggle (player with campaign_character) — bottom of right panel --%>
+    <%= if not @is_dm and not is_nil(@campaign_character) do %>
+      <div class="flex-shrink-0 border-t border-gray-800 p-2">
+        <button phx-click="toggle_auto_roll" class="flex items-center gap-2 w-full text-left">
+          <div class={[
+            "w-7 h-4 rounded-full flex-shrink-0 transition-colors relative",
+            (@auto_roll && "bg-indigo-600") || "bg-gray-600"
+          ]}>
+            <div class={[
+              "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform",
+              (@auto_roll && "translate-x-3.5") || "translate-x-0.5"
+            ]}>
+            </div>
+          </div>
+          <span class="text-xs text-gray-300">Auto-roll dice</span>
+        </button>
+      </div>
+    <% end %>
+  </div>
+
+  <%!--
+    z-50: DM controls panel — top-right, screen-anchored.
+    Session controls, interventions, per-entity tools, initiative.
+    Scrollable so it fits the full entity list regardless of viewport height.
+  --%>
+  <%= if @is_dm do %>
+    <div style="position:fixed; top:2.5rem; right:0; z-index:50; padding:0.5rem; pointer-events:none; max-height:calc(100vh - 3rem);">
+      <div
+        class="flex flex-col gap-2 overflow-y-auto"
+        style="width:11rem; max-height:calc(100vh - 3rem); pointer-events:auto;"
+      >
+        <%!-- Session controls --%>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+          <div class="text-xs text-gray-500 uppercase tracking-wide">Session</div>
+          <%= if phase == :lobby do %>
+            <button
+              phx-click="dm_start"
+              class="bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded px-2 py-1"
+            >
+              Start Session
+            </button>
+          <% end %>
+          <%= if phase in [:exploration, :initiative_rolling, :in_combat] do %>
+            <button
+              phx-click="dm_pause"
+              class="bg-yellow-700 hover:bg-yellow-600 text-white text-xs rounded px-2 py-1"
+            >
+              Pause
+            </button>
+          <% end %>
+          <%= if phase == :paused do %>
+            <button
+              phx-click="dm_resume"
+              class="bg-green-700 hover:bg-green-600 text-white text-xs font-bold rounded px-2 py-1"
+            >
+              Resume
+            </button>
+          <% end %>
+          <%= if phase != :lobby do %>
+            <button
+              phx-click="dm_end_confirm"
+              class="bg-red-900 hover:bg-red-800 text-white text-xs rounded px-2 py-1"
+            >
+              End Session
+            </button>
+          <% end %>
+        </div>
+
+        <%!-- Interventions --%>
+        <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+          <div class="text-xs text-gray-500 uppercase tracking-wide">Interventions</div>
+          <button
+            phx-click="dm_open_broadcast"
+            class="bg-yellow-800 hover:bg-yellow-700 text-white text-xs rounded px-2 py-1"
+          >
+            Broadcast
+          </button>
+          <button
+            phx-click="dm_open_whisper"
+            class="bg-purple-800 hover:bg-purple-700 text-white text-xs rounded px-2 py-1"
+          >
+            Whisper
+          </button>
+        </div>
+
+        <%!-- Initiative panel (shown when session is active) --%>
+        <%= if phase != :lobby do %>
+          <div class="bg-gray-900/90 border border-gray-700 rounded p-2 flex flex-col gap-1.5">
+            <div class="text-xs text-gray-500 uppercase tracking-wide">Initiative</div>
+            <%= for {entry_id, idx} <- Enum.with_index(state.turn_order) do %>
+              <% entry = state.actors[entry_id] %>
+              <% is_active = idx == state.active_index %>
+              <% ini_val = Map.get(initiative_values || %{}, entry_id) %>
+              <div class={[
+                "flex items-center gap-1 text-xs rounded px-1.5 py-0.5",
+                (is_active && "bg-yellow-900 border border-yellow-600") || "bg-gray-800"
+              ]}>
+                <span class="flex-1 truncate">{(entry && entry.name) || "?"}</span>
+                <%= if ini_val do %>
+                  <span class="text-gray-400 font-mono w-5 text-center">{ini_val}</span>
+                <% end %>
+                <button
+                  phx-click="dm_roll_initiative"
+                  phx-value-id={entry_id}
+                  class="text-blue-400 hover:text-blue-300"
+                  title="Roll initiative"
+                >
+                  d
+                </button>
+                <button
+                  phx-click="dm_move_up"
+                  phx-value-id={entry_id}
+                  class="text-gray-400 hover:text-white"
+                >
+                  ↑
+                </button>
+                <button
+                  phx-click="dm_move_down"
+                  phx-value-id={entry_id}
+                  class="text-gray-400 hover:text-white"
+                >
+                  ↓
+                </button>
+                <button
+                  phx-click="dm_remove_from_order"
+                  phx-value-id={entry_id}
+                  class="text-red-500 hover:text-red-400"
+                >
+                  ×
+                </button>
+              </div>
+            <% end %>
+
+            <%= for {eid, entity} <- state.actors, eid not in state.turn_order do %>
+              <button
+                phx-click="dm_add_to_order"
+                phx-value-id={eid}
+                class="text-left text-xs text-green-400 hover:text-green-300 px-1.5 py-0.5 bg-gray-800 rounded"
+              >
+                + {entity.name}
+              </button>
+            <% end %>
+
+            <%= if phase == :initiative_rolling do %>
+              <button
+                phx-click="dm_end_initiative_rolling"
+                class={[
+                  "text-white text-xs rounded px-2 py-0.5 mt-0.5",
+                  (MapSet.size(pending_initiative_rolls) > 0 &&
+                     "bg-gray-500 cursor-not-allowed opacity-60") ||
+                    "bg-green-700 hover:bg-green-600"
+                ]}
+                title={
+                  if MapSet.size(pending_initiative_rolls) > 0,
+                    do: "Waiting for #{MapSet.size(pending_initiative_rolls)} player(s)",
+                    else: "Start combat"
+                }
+              >
+                Start Combat
+              </button>
+            <% end %>
+            <button
+              phx-click="dm_force_end_turn"
+              class="bg-gray-700 hover:bg-gray-600 text-white text-xs rounded px-2 py-0.5 mt-0.5"
+            >
+              Force End Turn
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%!--
+    z-100: DM intervention panel — entity-scoped HP and condition overrides.
+    Explicitly triggered from the DM entity catalog. Not rendered for players.
+  --%>
+  <%= if @is_dm and @dm_intervene_entity_id do %>
+    <% intervene_entity = state.actors[@dm_intervene_entity_id] %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-5 max-w-xs w-full mx-4">
+        <div class="flex items-center justify-between mb-4">
+          <div class="font-bold text-white text-sm">
+            Intervene — {(intervene_entity && intervene_entity.name) || "Entity"}
+          </div>
+          <button phx-click="close_dm_intervene" class="text-gray-400 hover:text-white text-sm">
+            ✕
+          </button>
+        </div>
+        <div class="flex flex-col gap-4">
+          <form
+            id={"intervene-hp-#{@dm_intervene_entity_id}"}
+            phx-submit="dm_adjust_hp"
+            class="flex flex-col gap-1.5"
+          >
+            <input type="hidden" name="entity_id" value={@dm_intervene_entity_id} />
+            <label class="text-xs text-gray-400 uppercase tracking-wide">HP Adjustment</label>
+            <div class="flex gap-2 items-center">
+              <input
+                name="delta"
+                type="number"
+                placeholder="±HP"
+                class="flex-1 bg-gray-700 text-white rounded px-2 py-1.5 text-sm border border-gray-600 outline-none focus:border-red-500"
+              />
+              <button
+                type="submit"
+                class="bg-red-800 hover:bg-red-700 text-white rounded px-3 py-1.5 text-sm font-medium"
+              >
+                Apply
+              </button>
+            </div>
+            <%= if intervene_entity do %>
+              <div class="text-xs text-gray-500">
+                Current: {intervene_entity.hp}/{intervene_entity.max_hp} HP
+              </div>
+            <% end %>
+          </form>
+          <form
+            id={"intervene-cond-#{@dm_intervene_entity_id}"}
+            phx-submit="dm_apply_condition"
+            class="flex flex-col gap-1.5"
+          >
+            <input type="hidden" name="entity_id" value={@dm_intervene_entity_id} />
+            <label class="text-xs text-gray-400 uppercase tracking-wide">Add Condition</label>
+            <div class="flex gap-2 items-center">
+              <select
+                name="condition"
+                class="flex-1 bg-gray-700 text-white rounded px-2 py-1.5 text-sm border border-gray-600"
+              >
+                <%= for {cond_id, cond_label} <- ruleset_conditions(state) do %>
+                  <option value={cond_id}>{cond_label}</option>
+                <% end %>
+              </select>
+              <button
+                type="submit"
+                class="bg-orange-800 hover:bg-orange-700 text-white rounded px-3 py-1.5 text-sm font-medium"
+              >
+                Add
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!--
+    z-index:100 — System overlays: banners, whispers, modals.
+    These must render above all game and DM panels.
+  --%>
+
+  <%!-- DM broadcast banner — dismissable, visible to all --%>
+  <%= for msg <- @dm_broadcasts do %>
+    <div
+      style="position:fixed; top:3rem; left:50%; transform:translateX(-50%); z-index:100;"
+      class="bg-yellow-800 border border-yellow-500 rounded-lg px-6 py-3 flex items-center gap-4 shadow-xl"
+    >
+      <span class="text-yellow-100 font-medium">{msg}</span>
+      <button phx-click="dm_dismiss_broadcast" class="text-yellow-400 hover:text-white text-xs">
+        &times;
+      </button>
+    </div>
+  <% end %>
+
+  <%!-- Whisper popup — private, only delivered to targeted player --%>
+  <%= for msg <- @dm_whispers do %>
+    <div
+      style="position:fixed; bottom:8rem; right:2rem; z-index:100;"
+      class="bg-purple-900 border border-purple-500 rounded-lg px-6 py-3 flex items-center gap-4 shadow-xl"
+    >
+      <div class="text-xs text-purple-400 font-bold uppercase tracking-wide">Whisper</div>
+      <span class="text-purple-100">{msg}</span>
+      <button phx-click="dm_dismiss_whisper" class="text-purple-400 hover:text-white text-xs">
+        &times;
+      </button>
+    </div>
+  <% end %>
+
+  <%!-- Pause overlay — shown to all clients while session is paused --%>
+  <%= if phase == :paused do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.70); display:flex; align-items:center; justify-content:center; pointer-events:none;">
+      <div class="text-center">
+        <div class="text-5xl font-bold text-yellow-400 mb-3">SESSION PAUSED</div>
+        <div class="text-xl text-gray-300">Waiting for the DM to resume&hellip;</div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Roll prompt overlay — shown when the active player has auto_roll disabled (issue #146) --%>
+  <%= if @roll_prompt do %>
+    <div style="position:fixed; inset:0; z-index:110; background:rgba(0,0,0,0.82); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-xl p-6 max-w-xs w-full mx-4 text-center">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">
+          {String.replace(Atom.to_string(@roll_prompt.roll_type), "_", " ")}
+        </div>
+        <div class="text-2xl font-bold text-white mb-1">{@roll_prompt.context_label}</div>
+        <div class="text-indigo-400 font-mono text-lg mb-6">{@roll_prompt.dice_expression}</div>
+        <button
+          phx-click="roll_submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg py-3 mb-4 text-sm"
+        >
+          Roll
+        </button>
+        <form phx-submit="roll_manual_submit" class="flex gap-2 items-center">
+          <input
+            type="number"
+            name="value"
+            min="1"
+            max="20"
+            placeholder="1–20"
+            class="flex-1 bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white text-sm text-center"
+          />
+          <button
+            type="submit"
+            class="bg-gray-600 hover:bg-gray-500 text-white text-sm rounded-lg px-3 py-2"
+          >
+            Use
+          </button>
+        </form>
+        <div class="text-xs text-gray-600 mt-4">Auto-rolls in 60 s if no response</div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Outcome overlay — full-viewport, blocks all interaction. DM sees Return to Lobby. --%>
+  <%= if phase in [:victory, :defeat] do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.88); display:flex; align-items:center; justify-content:center;">
+      <div class="text-center max-w-md mx-auto px-6">
+        <%= if phase == :victory do %>
+          <div class="text-6xl font-bold text-yellow-400 mb-4">Victory!</div>
+          <div class="text-xl text-gray-300 mb-6">The enemies have been vanquished.</div>
+        <% else %>
+          <div class="text-6xl font-bold text-red-500 mb-4">Defeat&hellip;</div>
+          <div class="text-xl text-gray-300 mb-6">The party has fallen.</div>
+        <% end %>
+        <%= if @round > 0 do %>
+          <div class="text-sm text-gray-500 mb-8">Round {@round}</div>
+        <% end %>
+        <%= if @is_dm do %>
+          <button
+            phx-click="dm_return_to_lobby"
+            class="bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg px-8 py-3 text-sm"
+          >
+            Return to Lobby
+          </button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- End session confirmation modal — DM only --%>
+  <%= if @show_end_confirm do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-sm w-full mx-4">
+        <div class="text-lg font-bold text-white mb-2">End Session?</div>
+        <div class="text-gray-300 text-sm mb-5">
+          This will archive the current game state and disconnect all players.
+        </div>
+        <div class="flex gap-3 justify-end">
+          <button
+            phx-click="dm_end_cancel"
+            class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            phx-click="dm_end"
+            class="bg-red-700 hover:bg-red-600 text-white rounded px-4 py-2 text-sm font-bold"
+          >
+            End Session
+          </button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- DM broadcast compose modal --%>
+  <%= if @dm_panel == :broadcast do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.60); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="text-lg font-bold text-white mb-3">Broadcast Message</div>
+        <form phx-submit="dm_broadcast">
+          <input
+            name="text"
+            type="text"
+            placeholder="Message to all players…"
+            autofocus
+            class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-4 border border-gray-500 focus:outline-none focus:border-yellow-500"
+          />
+          <div class="flex gap-3 justify-end">
+            <button
+              type="button"
+              phx-click="dm_close_panel"
+              class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-yellow-700 hover:bg-yellow-600 text-white font-bold rounded px-4 py-2 text-sm"
+            >
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- DM whisper compose modal --%>
+  <%= if @dm_panel == :whisper do %>
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.60); display:flex; align-items:center; justify-content:center;">
+      <div class="bg-gray-800 border border-gray-600 rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="text-lg font-bold text-white mb-3">Whisper</div>
+        <form phx-submit="dm_whisper">
+          <select
+            name="user_id"
+            class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3 border border-gray-500"
+          >
+            <%= for member <- GibberingTales.Campaigns.list_members(@game_id) do %>
+              <option value={member.id}>{member.username}</option>
+            <% end %>
+          </select>
+          <input
+            name="text"
+            type="text"
+            placeholder="Private message…"
+            autofocus
+            class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-4 border border-gray-500 focus:outline-none focus:border-purple-500"
+          />
+          <div class="flex gap-3 justify-end">
+            <button
+              type="button"
+              phx-click="dm_close_panel"
+              class="bg-gray-600 hover:bg-gray-500 text-white rounded px-4 py-2 text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="bg-purple-700 hover:bg-purple-600 text-white font-bold rounded px-4 py-2 text-sm"
+            >
+              Whisper
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <% end %>
+
+  <%!-- Container loot panel — shown when the active hero has a container open --%>
+  <%= if container_id = GibberingTalesWeb.Engine.State.open_container_id(@game_state) do %>
+    <% container = @game_state.actors[container_id] %>
+    <% items = get_in(container, [:stats, "items"]) || [] %>
+    <div
+      id="container-panel"
+      style="position:fixed; top:50%; right:16px; transform:translateY(-50%); z-index:80; width:280px;"
+    >
+      <div class="bg-gray-900 border border-yellow-700 rounded-lg p-4 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-yellow-400 font-bold text-sm">
+            {(container && container.name) || "Container"}
+          </div>
+          <button
+            phx-click="close_container"
+            class="text-gray-400 hover:text-white text-xs"
+          >
+            Done
+          </button>
+        </div>
+
+        <%= if items == [] do %>
+          <div class="text-gray-500 text-xs italic">Empty.</div>
+        <% else %>
+          <div class="space-y-2 mb-3">
+            <%= for item_inst <- items do %>
+              <% item_data = GibberingTales.Data.Items.get(item_inst["item_key"]) %>
+              <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1">
+                <div>
+                  <div class="text-white text-xs font-medium">
+                    {(item_data && item_data.name) || item_inst["item_key"]}
+                    {if item_inst["quantity"] > 1, do: "×#{item_inst["quantity"]}"}
+                  </div>
+                  <div class="text-gray-400 text-xs">
+                    {item_data && "#{item_data.weight_pounds} lb"}
+                  </div>
+                </div>
+                <button
+                  phx-click="take_item"
+                  phx-value-container_id={container_id}
+                  phx-value-instance_id={item_inst["instance_id"]}
+                  phx-value-quantity={item_inst["quantity"]}
+                  class="bg-green-700 hover:bg-green-600 text-white text-xs rounded px-2 py-1"
+                >
+                  Take
+                </button>
+              </div>
+            <% end %>
+          </div>
+
+          <button
+            phx-click="take_all"
+            phx-value-container_id={container_id}
+            class="w-full bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold rounded px-3 py-2"
+          >
+            Take All
+          </button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

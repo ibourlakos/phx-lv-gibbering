@@ -6,7 +6,8 @@ defmodule GibberingTales.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      GibberingTales.Repo
+      GibberingTales.Repo,
+      GibberingTales.Catalogue.Cache
     ]
 
     opts = [strategy: :one_for_one, name: GibberingTales.Supervisor]

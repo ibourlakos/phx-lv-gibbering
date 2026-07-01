@@ -1,0 +1,326 @@
+<% campaign = @campaign
+heroes = Enum.filter(campaign.entities, &(&1.type == "hero"))
+me = @current_user
+is_dm = me.id == campaign.dm_id
+my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id end) %>
+
+<div class="min-h-screen bg-gray-900 text-white p-6">
+  <%!-- Header --%>
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Campaign</div>
+        <h1 class="text-3xl font-bold text-yellow-400">{campaign.name}</h1>
+        <p class="text-gray-400 text-sm mt-1">
+          {length(heroes)} adventurer{if length(heroes) != 1, do: "s"} · {campaign.active_map.x_extent}×{campaign.active_map.y_extent} map
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        <a
+          href={"/game/#{campaign.id}"}
+          class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold px-6 py-3 rounded-lg transition-colors"
+        >
+          ▶ Start Game
+        </a>
+      </div>
+    </div>
+
+    <%!-- Your status bar --%>
+    <div class="bg-gray-800 rounded-lg p-3 mb-6 flex items-center gap-3">
+      <div class="w-2 h-2 rounded-full bg-green-400"></div>
+      <span class="text-sm text-gray-300">
+        <%= if my_entity do %>
+          Playing as <span class="text-white font-semibold">{my_entity.name}</span>
+          — {race_label(my_entity.race)} {class_label(my_entity.class)}
+        <% else %>
+          <span class="text-gray-400">Click a character card to claim your seat.</span>
+        <% end %>
+      </span>
+    </div>
+
+    <%!-- Character Cards --%>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <%= for entity <- heroes do %>
+        <% claimed_by = Map.get(entity.stats, "claimed_by")
+        claimer_name = Map.get(entity.stats, "claimed_by_name")
+        is_mine = claimed_by == me.id
+        is_taken = claimed_by != nil and not is_mine
+        is_editing = @editing_id == entity.id
+        hp_pct = if entity.max_hp > 0, do: round(entity.hp / entity.max_hp * 100), else: 0 %>
+
+        <div class={[
+          "rounded-xl border-2 p-4 transition-all",
+          cond do
+            is_mine -> "border-yellow-400 bg-gray-800"
+            is_taken -> "border-gray-600 bg-gray-850 opacity-70"
+            true -> "border-gray-700 bg-gray-800 hover:border-gray-500"
+          end
+        ]}>
+          <%!-- Card header --%>
+          <div class="flex items-start gap-3 mb-3">
+            <%!-- Sprite preview box --%>
+            <div
+              class="rounded-lg flex-shrink-0 overflow-hidden"
+              style={"width:56px;height:56px;background:#{sprite_bg_color(entity.sprite)};"}
+            >
+              <svg width="56" height="56" viewBox="0 0 64 64">
+                <GibberingTalesWeb.GameLive.entity_sprite sprite={entity.sprite} x={0} y={0} />
+              </svg>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-lg leading-tight truncate">{entity.name}</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span
+                  class="text-xs px-2 py-0.5 rounded-full text-white font-medium"
+                  style={"background:#{class_badge_color(entity.class)}"}
+                >
+                  {class_label(entity.class)}
+                </span>
+                <span class="text-xs text-gray-400">{race_label(entity.race)}</span>
+              </div>
+            </div>
+
+            <%!-- Claim badge --%>
+            <%= if is_mine do %>
+              <span class="text-xs bg-yellow-500 text-gray-900 font-bold px-2 py-0.5 rounded-full flex-shrink-0">
+                YOU
+              </span>
+            <% end %>
+            <%= if is_taken do %>
+              <span
+                class="text-xs bg-gray-600 text-gray-300 px-2 py-0.5 rounded-full flex-shrink-0"
+                title={claimer_name}
+              >
+                {claimer_name || "Taken"}
+              </span>
+            <% end %>
+          </div>
+
+          <%!-- Stats row --%>
+          <div class="grid grid-cols-3 gap-1 text-center mb-3">
+            <div class="bg-gray-700 rounded p-1">
+              <div class="text-xs text-gray-400">HP</div>
+              <div class="text-sm font-bold">{entity.hp}/{entity.max_hp}</div>
+            </div>
+            <div class="bg-gray-700 rounded p-1">
+              <div class="text-xs text-gray-400">Speed</div>
+              <div class="text-sm font-bold">{Map.get(entity.stats, "speed", 30)}</div>
+            </div>
+            <div class="bg-gray-700 rounded p-1">
+              <div class="text-xs text-gray-400">
+                {if entity.class == "wizard",
+                  do: "INT",
+                  else: if(entity.class == "rogue", do: "DEX", else: "STR")}
+              </div>
+              <div class="text-sm font-bold">
+                {cond do
+                  entity.class == "wizard" -> Map.get(entity.stats, "intelligence", "—")
+                  entity.class == "rogue" -> Map.get(entity.stats, "dexterity", "—")
+                  true -> Map.get(entity.stats, "strength", "—")
+                end}
+              </div>
+            </div>
+          </div>
+
+          <%!-- HP bar --%>
+          <div class="h-1.5 bg-gray-700 rounded-full mb-3">
+            <div
+              class="h-full rounded-full transition-all"
+              style={"width:#{hp_pct}%;background:#{cond do hp_pct > 60 -> "#2ecc71"; hp_pct > 30 -> "#f39c12"; true -> "#e74c3c" end}"}
+            >
+            </div>
+          </div>
+
+          <%!-- Spells (wizards) --%>
+          <%= if entity.class == "wizard" do %>
+            <div class="flex flex-wrap gap-1 mb-3">
+              <%= for spell <- Map.get(entity.stats, "spells", []) do %>
+                <span class="text-xs bg-purple-900 text-purple-200 px-1.5 py-0.5 rounded">
+                  {spell
+                  |> String.replace("_", " ")
+                  |> String.split()
+                  |> Enum.map(&String.capitalize/1)
+                  |> Enum.join(" ")}
+                </span>
+              <% end %>
+            </div>
+          <% end %>
+
+          <%!-- Edit form (inline) --%>
+          <%= if is_editing do %>
+            <form
+              phx-submit="save_slot"
+              phx-value-entity-id={entity.id}
+              class="space-y-2 mb-3 border-t border-gray-700 pt-3"
+            >
+              <input
+                type="text"
+                name="name"
+                value={@edit_form["name"]}
+                placeholder="Character name"
+                class="w-full bg-gray-700 text-white rounded px-2 py-1 text-sm border border-gray-600 focus:border-yellow-400 outline-none"
+              />
+              <div class="flex gap-2">
+                <select
+                  name="race"
+                  class="flex-1 bg-gray-700 text-white rounded px-2 py-1 text-sm border border-gray-600"
+                >
+                  <%= for {key, race} <- @races do %>
+                    <option value={key} selected={key == @edit_form["race"]}>{race.name}</option>
+                  <% end %>
+                </select>
+                <select
+                  name="class"
+                  class="flex-1 bg-gray-700 text-white rounded px-2 py-1 text-sm border border-gray-600"
+                >
+                  <%= for {key, cls} <- @classes do %>
+                    <option value={key} selected={key == @edit_form["class"]}>{cls.name}</option>
+                  <% end %>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  type="submit"
+                  class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold text-sm rounded px-3 py-1.5"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  phx-click="cancel_edit"
+                  class="bg-gray-600 hover:bg-gray-500 text-white text-sm rounded px-3 py-1.5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          <% end %>
+
+          <%!-- Action buttons --%>
+          <div class="flex gap-2">
+            <%= cond do %>
+              <% is_editing -> %>
+                <%!-- shown above --%>
+              <% is_mine -> %>
+                <button
+                  phx-click="edit_slot"
+                  phx-value-id={entity.id}
+                  class="flex-1 bg-gray-700 hover:bg-gray-600 text-sm rounded px-3 py-1.5"
+                >
+                  Edit
+                </button>
+                <button
+                  phx-click="release_slot"
+                  phx-value-id={entity.id}
+                  class="bg-gray-700 hover:bg-red-800 text-sm rounded px-3 py-1.5"
+                >
+                  Release
+                </button>
+              <% not is_taken and my_entity == nil -> %>
+                <button
+                  phx-click="claim_slot"
+                  phx-value-id={entity.id}
+                  class="flex-1 bg-blue-700 hover:bg-blue-600 text-white text-sm font-medium rounded px-3 py-1.5"
+                >
+                  Play as {entity.name}
+                </button>
+              <% true -> %>
+                <span class="flex-1 text-xs text-gray-500 py-1.5 text-center">
+                  {if is_taken, do: "Seat taken", else: "Claim another slot first"}
+                </span>
+            <% end %>
+
+            <%!-- DM remove --%>
+            <%= if is_dm do %>
+              <button
+                phx-click="remove_slot"
+                phx-value-id={entity.id}
+                class="text-gray-600 hover:text-red-400 text-sm px-2 py-1.5"
+                title="Remove slot (DM)"
+              >
+                ✕
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <%!-- Add slot card — DM only --%>
+      <%= if is_dm do %>
+        <button
+          phx-click="add_slot"
+          class="rounded-xl border-2 border-dashed border-gray-700 p-4 flex flex-col items-center justify-center gap-2 hover:border-gray-500 hover:bg-gray-800 transition-all min-h-40"
+        >
+          <span class="text-4xl text-gray-600">+</span>
+          <span class="text-gray-500 text-sm">Add Character Slot</span>
+        </button>
+      <% end %>
+    </div>
+
+    <%!-- Race & Class Reference --%>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="bg-gray-800 rounded-lg p-4">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">Races</h2>
+        <%= for {key, race} <- @races do %>
+          <div class="mb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-semibold text-white">{race.name}</span>
+              <span class="text-xs text-gray-500">spd {race.speed}</span>
+            </div>
+            <p class="text-xs text-gray-400 mb-1">{race.description}</p>
+            <div class="flex flex-wrap gap-1">
+              <%= for trait <- race.traits do %>
+                <span
+                  class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
+                  title={trait["description"]}
+                >
+                  {trait["name"]}
+                </span>
+              <% end %>
+            </div>
+          </div>
+          <%= if key != List.last(Map.keys(@races)) do %>
+            <div class="border-t border-gray-700 my-2"></div>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="bg-gray-800 rounded-lg p-4">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">
+          Classes
+        </h2>
+        <%= for {key, cls} <- @classes do %>
+          <div class="mb-3">
+            <div class="flex items-center gap-2 mb-1">
+              <span
+                class="font-semibold text-white"
+                style={"color:#{class_badge_color(key)}; filter: brightness(1.4)"}
+              >
+                {cls.name}
+              </span>
+              <span class="text-xs text-gray-500">
+                d{cls.hit_die |> String.trim_leading("d")} HP
+              </span>
+            </div>
+            <p class="text-xs text-gray-400 mb-1">{cls.description}</p>
+            <div class="flex flex-wrap gap-1">
+              <%= for feat <- cls.features do %>
+                <span
+                  class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded"
+                  title={feat["description"]}
+                >
+                  {feat["name"]}
+                </span>
+              <% end %>
+            </div>
+          </div>
+          <%= if key != List.last(Map.keys(@classes)) do %>
+            <div class="border-t border-gray-700 my-2"></div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

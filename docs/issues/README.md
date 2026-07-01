@@ -30,7 +30,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 |---|---|---|---|
 | [#172](172-hud-struct-design.md) | HUD struct design — `%GibberingEngine.HUD{}` and `Ruleset.hud/1` callback | `architecture` `discovery` `rendering` `ui` | medium |
 | [#173](173-gamelive-hud-extraction.md) | GameLive HUD extraction — render from `%HUD{}` instead of raw Engine.State | `architecture` `ui` `rendering` | medium |
-| [#171](171-phase2d-web-admin-extraction.md) | Engine decomposition Phase 2d — Web + Admin app extraction | `architecture` `admin` | high |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
@@ -94,6 +93,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#171](171-phase2d-web-admin-extraction.md) | Engine decomposition Phase 2d — Web + Admin app extraction | `architecture` `admin` |
 | [#170](170-phase2c-tales-domain-extraction.md) | Engine decomposition Phase 2c — Tales domain extraction | `architecture` |
 | [#169](169-phase2b-engine-extraction.md) | Engine decomposition Phase 2b — Engine extraction | `architecture` |
 | [#168](168-phase2a-umbrella-scaffold.md) | Engine decomposition Phase 2a — Umbrella scaffold | `architecture` `ops` |

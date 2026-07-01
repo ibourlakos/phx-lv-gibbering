@@ -1,12 +1,12 @@
-alias Gibbering.{Repo, Campaign, GameMap, GridTile, Entity, CampaignMember}
-alias Gibbering.{Character, CampaignCharacter, CampaignInvitation, CampaignInviteLink}
-alias Gibbering.Engine.GameSession
-alias Gibbering.Accounts
-alias Gibbering.Accounts.User
-alias Gibbering.Admin
-alias Gibbering.Catalogue.{Race, Class, Spell, Monster, Style, Appearance, EntityPreset}
-alias Gibbering.Data.{Races, Classes, Spells, Monsters}
-alias Gibbering.Rulesets.DnD5e.Inventory
+alias GibberingTales.{Repo, Campaign, GameMap, GridTile, Entity, CampaignMember}
+alias GibberingTales.{Character, CampaignCharacter, CampaignInvitation, CampaignInviteLink}
+alias GibberingTales.Engine.GameSession
+alias GibberingTales.Accounts
+alias GibberingTales.Accounts.User
+alias GibberingTalesAdmin.Admin
+alias GibberingTales.Catalogue.{Race, Class, Spell, Monster, Style, Appearance, EntityPreset}
+alias GibberingTales.Data.{Races, Classes, Spells, Monsters}
+alias GibberingTales.Rulesets.DnD5e.Inventory
 
 # ---------------------------------------------------------------------------
 # Catalogue tables (idempotent — skip if already present)
@@ -1009,7 +1009,7 @@ Users (all password: gibbering)
 """)
 
 # Admin support user — dev credentials: admin@gibbering.local / gibbering_admin
-unless Repo.get_by(Gibbering.Admin.SupportUser, email: "admin@gibbering.local") do
+unless Repo.get_by(GibberingTalesAdmin.Admin.SupportUser, email: "admin@gibbering.local") do
   {:ok, _} =
     Admin.create_support_user(%{
       email: "admin@gibbering.local",
