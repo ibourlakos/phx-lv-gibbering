@@ -2,6 +2,7 @@ defmodule GibberingTalesWeb.GameLive do
   use GibberingTalesWeb, :live_view
 
   alias GibberingTalesWeb.Engine.{SceneServer, State, Rules}
+  alias GibberingTalesWeb.HUD
   alias GibberingEngine.SpriteCompositor
   alias GibberingTales.{Campaigns, CampaignCharacters}
   alias GibberingEngine.EventBus
@@ -9,6 +10,7 @@ defmodule GibberingTalesWeb.GameLive do
   alias GibberingTalesWeb.Events.{EventFeedProjection, FreeformRolled}
   alias GibberingTales.Events.Notification.{BroadcastSent, WhisperDelivered}
   alias GibberingEngine.Events.{RollRequired, SessionEnded, TurnAdvanced}
+  alias GibberingTales.Rulesets.DnD5e.RulesetState
 
   @dice_faces %{
     "d4" => 4,
@@ -46,6 +48,7 @@ defmodule GibberingTalesWeb.GameLive do
           campaign = Campaigns.get!(game_id)
           state = SceneServer.get_state(game_id)
           is_dm = campaign.dm_id == user.id
+          viewer_role = if is_dm, do: :dm, else: :player
 
           appearances =
             Catalogue.appearances_for_style(Catalogue.default_style_slug())
@@ -57,10 +60,10 @@ defmodule GibberingTalesWeb.GameLive do
            socket
            |> assign(:game_id, game_id)
            |> assign(:game_state, state)
+           |> assign(:viewer_role, viewer_role)
            |> assign(:is_dm, is_dm)
            |> assign(:appearances, appearances)
            |> assign(:show_end_confirm, false)
-           |> assign(:valid_targets, [])
            |> assign(:selected_spell, nil)
            |> assign(:spell_targets, [])
            |> assign(:log, [])
@@ -79,7 +82,8 @@ defmodule GibberingTalesWeb.GameLive do
            |> assign(:active_tab, :events)
            |> assign(:unread_count, 0)
            |> assign(:dm_intervene_entity_id, nil)
-           |> assign(:freeform_dice, @empty_freeform_dice)}
+           |> assign(:freeform_dice, @empty_freeform_dice)
+           |> assign_hud_and_dm_state(state, viewer_role)}
 
         {:error, reason} ->
           {:ok,
@@ -96,17 +100,19 @@ defmodule GibberingTalesWeb.GameLive do
     new_state = SceneServer.select_entity(socket.assigns.game_id, id)
 
     {:noreply,
-     assign(socket,
-       game_state: new_state,
-       valid_targets: new_state.valid_targets,
-       panel_subject: {:entity, id}
-     )}
+     socket
+     |> assign(game_state: new_state, panel_subject: {:entity, id})
+     |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
   end
 
   @impl true
   def handle_event("deselect", _, socket) do
     new_state = SceneServer.deselect_entity(socket.assigns.game_id)
-    {:noreply, assign(socket, game_state: new_state, valid_targets: [])}
+
+    {:noreply,
+     socket
+     |> assign(:game_state, new_state)
+     |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
   end
 
   @impl true
@@ -175,7 +181,11 @@ defmodule GibberingTalesWeb.GameLive do
 
     if socket.assigns.game_state.valid_moves != [] do
       new_state = SceneServer.cancel_move(socket.assigns.game_id)
-      {:noreply, assign(socket, game_state: new_state)}
+
+      {:noreply,
+       socket
+       |> assign(:game_state, new_state)
+       |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
     else
       {:noreply, socket}
     end
@@ -184,13 +194,21 @@ defmodule GibberingTalesWeb.GameLive do
   @impl true
   def handle_event("activate_move", _, socket) do
     new_state = SceneServer.activate_move(socket.assigns.game_id)
-    {:noreply, assign(socket, game_state: new_state)}
+
+    {:noreply,
+     socket
+     |> assign(:game_state, new_state)
+     |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
   end
 
   @impl true
   def handle_event("cancel_move", _, socket) do
     new_state = SceneServer.cancel_move(socket.assigns.game_id)
-    {:noreply, assign(socket, game_state: new_state)}
+
+    {:noreply,
+     socket
+     |> assign(:game_state, new_state)
+     |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
   end
 
   @impl true
@@ -198,7 +216,10 @@ defmodule GibberingTalesWeb.GameLive do
     new_state =
       SceneServer.move_entity(socket.assigns.game_id, String.to_integer(x), String.to_integer(y))
 
-    {:noreply, assign(socket, game_state: new_state, valid_targets: new_state.valid_targets)}
+    {:noreply,
+     socket
+     |> assign(:game_state, new_state)
+     |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
   end
 
   @impl true
@@ -207,7 +228,11 @@ defmodule GibberingTalesWeb.GameLive do
 
     if game_state.valid_moves != [] do
       new_state = SceneServer.cancel_move(socket.assigns.game_id)
-      {:noreply, assign(socket, game_state: new_state)}
+
+      {:noreply,
+       socket
+       |> assign(:game_state, new_state)
+       |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
     else
       {:noreply,
        assign(socket, panel_subject: {:tile, String.to_integer(x), String.to_integer(y)})}
@@ -229,7 +254,10 @@ defmodule GibberingTalesWeb.GameLive do
       )
 
     if State.awaiting_roll?(new_state) do
-      {:noreply, assign(socket, game_state: new_state)}
+      {:noreply,
+       socket
+       |> assign(:game_state, new_state)
+       |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
     else
       damage =
         if Map.has_key?(new_state.actors, target_id) do
@@ -250,7 +278,8 @@ defmodule GibberingTalesWeb.GameLive do
 
       {:noreply,
        socket
-       |> assign(game_state: new_state, valid_targets: [])
+       |> assign(:game_state, new_state)
+       |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)
        |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
        |> push_event("roll_dice", %{result: dice_result, label: "#{attacker_name} attacks!"})}
     end
@@ -267,7 +296,7 @@ defmodule GibberingTalesWeb.GameLive do
         else: []
 
     {:noreply,
-     assign(socket, selected_spell: spell_key, spell_targets: spell_targets, valid_targets: [])}
+     assign(socket, selected_spell: spell_key, spell_targets: spell_targets)}
   end
 
   @impl true
@@ -288,7 +317,10 @@ defmodule GibberingTalesWeb.GameLive do
       )
 
     if State.awaiting_roll?(new_state) do
-      {:noreply, assign(socket, game_state: new_state)}
+      {:noreply,
+       socket
+       |> assign(:game_state, new_state)
+       |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
     else
       {damage, log_entry} =
         if Map.has_key?(new_state.actors, target_id) do
@@ -306,12 +338,8 @@ defmodule GibberingTalesWeb.GameLive do
 
       {:noreply,
        socket
-       |> assign(
-         game_state: new_state,
-         valid_targets: [],
-         selected_spell: nil,
-         spell_targets: []
-       )
+       |> assign(game_state: new_state, selected_spell: nil, spell_targets: [])
+       |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)
        |> update(:log, fn log -> [log_entry | Enum.take(log, 9)] end)
        |> push_event("roll_dice", %{
          result: dice_result,
@@ -325,12 +353,9 @@ defmodule GibberingTalesWeb.GameLive do
     new_state = SceneServer.end_turn(socket.assigns.game_id)
 
     {:noreply,
-     assign(socket,
-       game_state: new_state,
-       valid_targets: [],
-       selected_spell: nil,
-       spell_targets: []
-     )}
+     socket
+     |> assign(game_state: new_state, selected_spell: nil, spell_targets: [])
+     |> assign_hud_and_dm_state(new_state, socket.assigns.viewer_role)}
   end
 
   @impl true
@@ -730,7 +755,13 @@ defmodule GibberingTalesWeb.GameLive do
       new_socket =
         socket
         |> then(fn s ->
-          if batch.state_snapshot, do: assign(s, game_state: batch.state_snapshot), else: s
+          if batch.state_snapshot do
+            s
+            |> assign(:game_state, batch.state_snapshot)
+            |> assign_hud_and_dm_state(batch.state_snapshot, s.assigns.viewer_role)
+          else
+            s
+          end
         end)
         |> update(:event_log, fn log -> log ++ events end)
 
@@ -825,8 +856,17 @@ defmodule GibberingTalesWeb.GameLive do
 
   defp ensure_game_server(game_id), do: SceneServer.ensure_started(game_id)
 
-  defp ruleset_action_buttons(nil, _state), do: []
-  defp ruleset_action_buttons(entity, state), do: state.ruleset.action_buttons(entity, state)
+  # Rebuilds the HUD and DM-specific assigns derived from engine state.
+  # Called after every game_state update so templates never read ruleset_state directly.
+  defp assign_hud_and_dm_state(socket, state, viewer_role) do
+    rs = state.ruleset_state
+
+    socket
+    |> assign(:hud, HUD.build(state, viewer_role))
+    |> assign(:hidden_entity_ids, RulesetState.hidden_entities(rs))
+    |> assign(:initiative_values, RulesetState.initiative_values(rs))
+    |> assign(:pending_initiative_rolls, RulesetState.pending_initiative_rolls(rs))
+  end
 
   defp ruleset_conditions(state), do: state.ruleset.available_conditions()
 

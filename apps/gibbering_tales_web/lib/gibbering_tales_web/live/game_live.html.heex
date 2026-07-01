@@ -1,8 +1,8 @@
 <% state = @game_state
 phase = GibberingTalesWeb.Engine.State.phase(state)
-hidden_entities = GibberingTales.Rulesets.DnD5e.RulesetState.hidden_entities(state.ruleset_state)
-initiative_values = GibberingTales.Rulesets.DnD5e.RulesetState.initiative_values(state.ruleset_state)
-pending_initiative_rolls = GibberingTalesWeb.Engine.State.pending_initiative_rolls(state)
+hidden_entities = @hidden_entity_ids
+initiative_values = @initiative_values
+pending_initiative_rolls = @pending_initiative_rolls
 map_h = state.y_extent
 map_w = state.x_extent
 active_id = GibberingTalesWeb.Engine.State.active_hero_id(state)
@@ -320,7 +320,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
     <%= for {id, entity} <- visible_entities do %>
       <% is_active = id == active_id && phase == :in_combat %>
       <% is_selected = id == state.actor_id %>
-      <% is_target = id in @valid_targets %>
+      <% is_target = Enum.any?(@hud.overlays, &(&1.kind == :attack_target and &1.entity_id == id)) %>
       <% is_spell_target = id in @spell_targets %>
       <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
       <% {ix, iy} = iso.sprite_pos(sx, sy) %>
@@ -442,17 +442,16 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
       Valid-move tiles are never occupied, so pointer-events on these polygons don't
       conflict with entity click targets.
     --%>
-    <%= for {x, y} <- state.valid_moves do %>
-      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
-      <% cost_tier = Map.get(state.valid_move_costs || %{}, {x, y}, :normal) %>
+    <%= for overlay <- @hud.overlays, overlay.kind in [:move_normal, :move_difficult] do %>
+      <% {sx, sy} = iso.to_screen(overlay.x, overlay.y, map_w, map_h) %>
       <% {fill, stroke} =
-        case cost_tier do
-          :difficult -> {"rgba(251,191,36,0.35)", "#fbbf24"}
+        case overlay.kind do
+          :move_difficult -> {"rgba(251,191,36,0.35)", "#fbbf24"}
           _ -> {"rgba(74,222,128,0.35)", "#4ade80"}
         end %>
       <% path_ft =
         if active_entity,
-          do: max(abs(active_entity.x - x), abs(active_entity.y - y)) * 5,
+          do: max(abs(active_entity.x - overlay.x), abs(active_entity.y - overlay.y)) * 5,
           else: 0 %>
       <polygon
         points={iso.diamond_points(sx, sy)}
@@ -460,10 +459,10 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
         stroke={stroke}
         stroke-width="1.5"
         phx-click="move"
-        phx-value-x={x}
-        phx-value-y={y}
+        phx-value-x={overlay.x}
+        phx-value-y={overlay.y}
         data-move-overlay="true"
-        data-move-cost={cost_tier}
+        data-move-cost={overlay.kind}
         style="cursor: pointer;"
       >
         <title>{path_ft} ft</title>
@@ -493,28 +492,26 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
     End Turn + spell selection buttons.
   --%>
   <div style="position:fixed; bottom:0; left:0; right:0; z-index:20; display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding-bottom:1.25rem; pointer-events:none;">
-    <%!-- Action buttons — declared by the active ruleset for the current entity --%>
-    <% action_btns = ruleset_action_buttons(active_entity, state) %>
-    <%= if action_btns != [] do %>
+    <%!-- Action buttons — populated by GibberingTalesWeb.HUD.build/2 for the active player --%>
+    <%= if @hud.action_bar != [] do %>
       <div class="flex gap-2 flex-wrap justify-center" style="pointer-events:auto;">
-        <%= for btn <- action_btns do %>
-          <% btn_disabled = Map.get(btn, :disabled, false) %>
+        <%= for btn <- @hud.action_bar do %>
           <button
-            phx-click={if btn_disabled, do: nil, else: btn.event}
+            phx-click={if btn.enabled, do: btn.event, else: nil}
             phx-value-key={btn.value["key"]}
-            disabled={btn_disabled}
+            disabled={not btn.enabled}
             class={[
               "text-sm rounded-lg px-3 py-1.5 flex items-center gap-1 border transition-colors",
-              btn_disabled &&
+              not btn.enabled &&
                 "opacity-40 cursor-not-allowed bg-gray-800/60 text-gray-500 border-gray-700",
-              !btn_disabled && @selected_spell == btn.value["key"] &&
+              btn.enabled && @selected_spell == btn.value["key"] &&
                 "bg-purple-700/90 text-white border-purple-400 ring-1 ring-purple-400",
-              !btn_disabled && @selected_spell != btn.value["key"] &&
+              btn.enabled && @selected_spell != btn.value["key"] &&
                 "bg-gray-800/90 hover:bg-gray-700/90 text-gray-200 border-gray-600"
             ]}
           >
             <span>{btn.label}</span>
-            <%= if btn[:sublabel] && btn.sublabel != "" do %>
+            <%= if btn.sublabel && btn.sublabel != "" do %>
               <span class="text-xs text-gray-400">{btn.sublabel}</span>
             <% end %>
           </button>
