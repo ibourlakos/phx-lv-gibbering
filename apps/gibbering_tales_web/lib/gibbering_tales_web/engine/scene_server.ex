@@ -11,6 +11,8 @@ defmodule GibberingTalesWeb.Engine.SceneServer do
 
   use GenServer
 
+  require Logger
+
   import Ecto.Query
   alias GibberingTales.{Repo, Campaign, Entity}
   alias GibberingEngine.EventBus
@@ -242,21 +244,35 @@ defmodule GibberingTalesWeb.Engine.SceneServer do
   def init(game_id) do
     state =
       case Repo.one(from s in GameSession, where: s.game_id == ^game_id) do
-        %GameSession{state: binary} ->
-          loaded = :erlang.binary_to_term(binary, [:safe])
-          struct(State, Map.from_struct(loaded))
+        %GameSession{state: binary} = session ->
+          try do
+            loaded = :erlang.binary_to_term(binary, [:safe])
+            struct(State, Map.from_struct(loaded))
+          catch
+            :error, _ ->
+              Logger.warning(
+                "[SceneServer] game #{game_id}: persisted state is incompatible with current modules — resetting from campaign data"
+              )
+
+              Repo.delete!(session)
+              fresh_state_from_campaign(game_id)
+          end
 
         nil ->
-          campaign =
-            Campaign
-            |> Repo.get!(game_id)
-            |> Repo.preload([:entities, active_map: :tiles])
-
-          presets = Catalogue.entity_presets_map()
-          State.from_campaign(campaign, presets)
+          fresh_state_from_campaign(game_id)
       end
 
     {:ok, state}
+  end
+
+  defp fresh_state_from_campaign(game_id) do
+    campaign =
+      Campaign
+      |> Repo.get!(game_id)
+      |> Repo.preload([:entities, active_map: :tiles])
+
+    presets = Catalogue.entity_presets_map()
+    State.from_campaign(campaign, presets)
   end
 
   # Player actions are blocked while the session is paused or awaiting a roll.
