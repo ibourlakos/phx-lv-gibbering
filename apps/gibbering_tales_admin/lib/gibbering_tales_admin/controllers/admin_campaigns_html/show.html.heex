@@ -1,0 +1,122 @@
+<div class="min-h-screen bg-gray-900 text-white p-8">
+  <div class="max-w-3xl mx-auto">
+    <div class="flex items-center gap-4 mb-6">
+      <a href="campaigns" class="text-gray-400 hover:text-white text-sm">
+        &larr; Campaigns
+      </a>
+      <h1 class="text-2xl font-bold">{@campaign.name}</h1>
+      <span class={[
+        "text-xs font-semibold border rounded px-2 py-0.5",
+        @campaign.status == "active" && "text-green-400 border-green-700",
+        @campaign.status == "ended" && "text-gray-500 border-gray-600",
+        @campaign.status == "lobby" && "text-yellow-400 border-yellow-700"
+      ]}>
+        {@campaign.status}
+      </span>
+    </div>
+
+    <div class="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+      <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="text-gray-400 text-xs uppercase mb-1">ID</dt>
+          <dd class="font-mono">{@campaign.id}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-400 text-xs uppercase mb-1">DM</dt>
+          <dd>{if @campaign.dm, do: @campaign.dm.username, else: "—"}</dd>
+        </div>
+        <div>
+          <dt class="text-gray-400 text-xs uppercase mb-1">Map</dt>
+          <dd>
+            {if @campaign.active_map,
+              do: "#{@campaign.active_map.x_extent} × #{@campaign.active_map.y_extent}",
+              else: "—"}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-gray-400 text-xs uppercase mb-1">Created</dt>
+          <dd class="font-mono text-xs">
+            {Calendar.strftime(@campaign.inserted_at, "%Y-%m-%d %H:%M:%S")}
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <%= if @campaign.status != "ended" do %>
+      <div class="mb-8">
+        <form method="post" action={"campaigns/#{@campaign.id}/force_close"}>
+          <input type="hidden" name="_csrf_token" value={Plug.CSRFProtection.get_csrf_token()} />
+          <div class="flex gap-3 items-end">
+            <div class="flex-1">
+              <label class="text-xs text-gray-400 uppercase block mb-1">Reason</label>
+              <input
+                name="reason"
+                type="text"
+                placeholder="Reason for force-close…"
+                class="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm border border-gray-500 focus:outline-none focus:border-red-500"
+              />
+            </div>
+            <button
+              type="submit"
+              class="bg-red-700 hover:bg-red-600 text-white rounded px-4 py-2 text-sm"
+            >
+              Force Close
+            </button>
+          </div>
+        </form>
+      </div>
+    <% end %>
+
+    <h2 class="text-lg font-semibold mb-3">Members ({length(@campaign.campaign_members)})</h2>
+    <%= if @campaign.campaign_members == [] do %>
+      <p class="text-gray-500 text-sm">No members.</p>
+    <% else %>
+      <ul class="space-y-2">
+        <%= for m <- @campaign.campaign_members do %>
+          <% is_dm = @campaign.dm_id == m.user_id %>
+          <li class="bg-gray-800 border border-gray-700 rounded px-4 py-3 text-sm">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <a href={"users/#{m.user_id}"} class="text-blue-400 hover:text-blue-300">
+                  {if m.user, do: m.user.username, else: "User ##{m.user_id}"}
+                </a>
+                <%= if is_dm do %>
+                  <span class="text-xs text-yellow-400 border border-yellow-700 rounded px-1">
+                    DM
+                  </span>
+                <% end %>
+              </div>
+            </div>
+            <%= if !is_dm && @current_support_user.role in ["moderator", "admin"] do %>
+              <form
+                method="post"
+                action={"campaigns/#{@campaign.id}/remove_member"}
+                class="flex gap-2 items-center"
+              >
+                <input
+                  type="hidden"
+                  name="_csrf_token"
+                  value={Plug.CSRFProtection.get_csrf_token()}
+                />
+                <input type="hidden" name="user_id" value={m.user_id} />
+                <input
+                  name="reason"
+                  type="text"
+                  placeholder="Reason…"
+                  required
+                  class="bg-gray-700 text-white rounded px-2 py-1 text-xs border border-gray-500 focus:outline-none focus:border-red-500 flex-1"
+                />
+                <button
+                  type="submit"
+                  class="bg-red-800 hover:bg-red-700 text-white rounded px-3 py-1 text-xs"
+                >
+                  Remove
+                </button>
+              </form>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+</div>

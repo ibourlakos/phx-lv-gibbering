@@ -1,0 +1,9 @@
+<main>
+  <p :if={Phoenix.Flash.get(@flash, :info)} class="alert alert-info">
+    {Phoenix.Flash.get(@flash, :info)}
+  </p>
+  <p :if={Phoenix.Flash.get(@flash, :error)} class="alert alert-danger">
+    {Phoenix.Flash.get(@flash, :error)}
+  </p>
+  {@inner_content}
+</main>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<!--
+  #97 Layout Prototype — Full-viewport game canvas with overlay z-layer stack.
+  Open in any browser (no JS, no server required).
+
+  Decisions validated here:
+  1. SVG as backdrop: position:fixed, 100vw×100vh, viewBox controlled by JS hook
+  2. Z-layer stack: SVG(0) → HUD(20) → turn-strip(30) → info-panel(40) → DM-panel(50) → system(100)
+  3. HTML/SVG split: world-anchored elements (tiles, entities, HP bars) stay in SVG;
+     screen-anchored UI (action bar, turn order, panels) are fixed HTML
+  4. Pointer-events: SVG gets pointer-events:all; panel containers are pointer-events:none
+     with pointer-events:auto on individual buttons/controls only
+  5. Pan/zoom: purely client-side via viewBox manipulation; server never sees camera position
+  6. LiveView navigation: GameLive uses layout:false (no inner layout) + a game_root.html.heex
+     that suppresses the nav bar and sets body{margin:0;overflow:hidden}
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Layout Prototype — #97</title>
+  <style>
+    /* -----------------------------------------------------------------------
+       Reset: full-bleed, no scroll. The game canvas IS the page.
+    ----------------------------------------------------------------------- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #111; }
+
+    /* -----------------------------------------------------------------------
+       Z-layer constants (document them here for the implementation)
+       z-0:   SVG scene (base)          — position:fixed, full viewport
+       z-10:  world-anchored overlays   — inside SVG (selection ring, move tiles, etc.)
+       z-20:  HUD / action bar          — fixed HTML, bottom
+       z-30:  turn-order strip          — fixed HTML, top
+       z-40:  info/selection panel      — fixed HTML, right side, semi-transparent
+       z-50:  DM controls panel         — fixed HTML, right side, collapsible
+       z-100: system overlays           — pause screen, modals, broadcast banners
+    ----------------------------------------------------------------------- */
+
+    /* --- z-0: SVG game canvas -------------------------------------------- */
+    #scene-svg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      /* pointer-events:all so tile/entity clicks work */
+      pointer-events: all;
+    }
+
+    /* --- Shared overlay base: containers are click-through by default ----- */
+    .overlay {
+      position: fixed;
+      z-index: var(--z);
+      pointer-events: none; /* container passes clicks to SVG below */
+    }
+    /* Individual interactive elements inside overlays opt-in explicitly */
+    .overlay button,
+    .overlay input,
+    .overlay select,
+    .overlay a,
+    .overlay [data-interactive] {
+      pointer-events: auto;
+    }
+
+    /* --- z-20: Action bar — bottom centre --------------------------------- */
+    #action-bar {
+      --z: 20;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .action-btn {
+      background: rgba(17,24,39,0.92);
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      color: #f9fafb;
+      font-size: 13px;
+      font-family: sans-serif;
+      padding: 8px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .action-btn:hover { background: rgba(55,65,81,0.95); }
+    .action-btn.active { border-color: #f59e0b; color: #f59e0b; }
+
+    /* --- z-30: Turn order strip — top ------------------------------------ */
+    #turn-strip {
+      --z: 30;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      background: rgba(17,24,39,0.88);
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+    .turn-token {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: bold; font-family: sans-serif;
+      border: 2px solid transparent;
+      cursor: default;
+    }
+    .turn-token.active { border-color: #f59e0b; }
+    .turn-token.hero { background: #1e3a5f; color: #93c5fd; }
+    .turn-token.monster { background: #3b1212; color: #fca5a5; }
+    .turn-label {
+      font-size: 11px; color: #9ca3af; font-family: sans-serif;
+      margin-right: 4px;
+    }
+
+    /* --- z-40: Info panel — bottom-right --------------------------------- */
+    #info-panel {
+      --z: 40;
+      bottom: 80px; right: 16px;
+      width: 200px;
+      background: rgba(17,24,39,0.92);
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 12px;
+      color: #d1d5db;
+      font-family: sans-serif;
+      font-size: 12px;
+    }
+    #info-panel h3 { font-size: 14px; font-weight: bold; color: #f9fafb; margin-bottom: 8px; }
+    .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .stat-label { color: #9ca3af; }
+    .stat-value { color: #e5e7eb; font-weight: 600; }
+    .hp-bar-bg { background: #374151; border-radius: 4px; height: 6px; margin: 6px 0 10px; overflow: hidden; }
+    .hp-bar-fill { background: #22c55e; height: 100%; border-radius: 4px; }
+
+    /* --- z-50: DM panel — right side, collapsible ------------------------ */
+    #dm-panel {
+      --z: 50;
+      top: 64px; right: 16px;
+      width: 188px;
+      background: rgba(17,24,39,0.94);
+      border: 1px solid #4b5563;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #dm-panel .panel-header {
+      background: rgba(55,65,81,0.8);
+      padding: 8px 12px;
+      font-size: 11px; font-weight: 600; font-family: sans-serif;
+      color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer;
+    }
+    #dm-panel .panel-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .dm-btn {
+      width: 100%;
+      background: rgba(55,65,81,0.7);
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      color: #d1d5db;
+      font-size: 12px; font-family: sans-serif;
+      padding: 6px 10px;
+      cursor: pointer;
+      text-align: left;
+    }
+    .dm-btn:hover { background: rgba(75,85,99,0.8); }
+    .dm-btn.danger { border-color: #7f1d1d; color: #fca5a5; }
+    .dm-btn.danger:hover { background: rgba(127,29,29,0.4); }
+
+    /* --- z-100: System overlays ------------------------------------------ */
+    #broadcast-banner {
+      --z: 100;
+      top: 16px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(120,80,10,0.95);
+      border: 1px solid #d97706;
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: #fef3c7;
+      font-family: sans-serif; font-size: 13px;
+      display: flex; gap: 12px; align-items: center;
+      max-width: 480px;
+    }
+    #pause-overlay {
+      --z: 100;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.72);
+      display: flex; align-items: center; justify-content: center;
+      /* shown: display:flex; hidden: display:none */
+      display: none;
+    }
+    .pause-text { text-align: center; font-family: sans-serif; color: #f9fafb; }
+    .pause-text h1 { font-size: 48px; font-weight: 900; color: #f59e0b; }
+    .pause-text p { font-size: 20px; color: #9ca3af; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- z-0: SVG game scene (placeholder grid) -->
+  <svg id="scene-svg" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+    <rect width="900" height="600" fill="#111827"/>
+    <!-- Placeholder isometric grid (5x5 diamond tiles, 64×32 each) -->
+    <g id="tiles">
+      <!-- Row 0 -->
+      <polygon points="320,64 352,80 320,96 288,80" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="352,80 384,96 352,112 320,96" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="384,96 416,112 384,128 352,112" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="416,112 448,128 416,144 384,128" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="448,128 480,144 448,160 416,144" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <!-- Row 1 -->
+      <polygon points="288,80 320,96 288,112 256,96" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="320,96 352,112 320,128 288,112" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="352,112 384,128 352,144 320,128" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="384,128 416,144 384,160 352,144" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="416,144 448,160 416,176 384,160" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <!-- Row 2 -->
+      <polygon points="256,96 288,112 256,128 224,112" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="288,112 320,128 288,144 256,128" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="320,128 352,144 320,160 288,144" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="352,144 384,160 352,176 320,160" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="384,160 416,176 384,192 352,176" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <!-- Row 3 -->
+      <polygon points="224,112 256,128 224,144 192,128" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="256,128 288,144 256,160 224,144" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="288,144 320,160 288,176 256,160" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="320,160 352,176 320,192 288,176" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="352,176 384,192 352,208 320,192" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <!-- Row 4 -->
+      <polygon points="192,128 224,144 192,160 160,144" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="224,144 256,160 224,176 192,160" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="256,160 288,176 256,192 224,176" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="288,176 320,192 288,208 256,192" fill="#1e3410" stroke="#0f0f0f" stroke-width="1"/>
+      <polygon points="320,192 352,208 320,224 288,208" fill="#1a2e0f" stroke="#0f0f0f" stroke-width="1"/>
+    </g>
+
+    <!-- Entity placeholder (hero at 2,2) -->
+    <!-- Selection diamond ring -->
+    <polygon points="320,128 352,144 320,160 288,144" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+    <!-- Hero token -->
+    <g transform="translate(288, 64)">
+      <!-- HP bar background -->
+      <rect x="4" y="0" width="56" height="5" rx="2" fill="#374151"/>
+      <!-- HP bar fill (80%) -->
+      <rect x="4" y="0" width="45" height="5" rx="2" fill="#22c55e"/>
+      <!-- Body outline -->
+      <rect x="22" y="32" width="20" height="24" rx="3" fill="#1e3a5f" stroke="#0a0a0a" stroke-width="3"/>
+      <!-- Head -->
+      <circle cx="32" cy="24" r="9" fill="#2d4a6e" stroke="#0a0a0a" stroke-width="3"/>
+    </g>
+
+    <!-- Move overlay diamond (tile 2,1) -->
+    <polygon points="352,112 384,128 352,144 320,128"
+      fill="rgba(100,180,255,0.22)" stroke="#64b4ff" stroke-width="1.5" style="cursor:pointer"/>
+    <polygon points="288,112 320,128 288,144 256,128"
+      fill="rgba(100,180,255,0.22)" stroke="#64b4ff" stroke-width="1.5" style="cursor:pointer"/>
+
+    <!-- "SVG only" label -->
+    <text x="600" y="300" fill="#374151" font-size="13" font-family="monospace"
+      text-anchor="middle">world-anchored elements live here</text>
+    <text x="600" y="318" fill="#374151" font-size="11" font-family="monospace"
+      text-anchor="middle">(tiles, entities, HP bars, rings, overlays)</text>
+  </svg>
+
+  <!-- z-30: Turn order strip -->
+  <div id="turn-strip" class="overlay">
+    <span class="turn-label">Turn</span>
+    <div class="turn-token hero active" title="Elara (Fighter) — active">EF</div>
+    <div class="turn-token monster" title="Goblin 1">G1</div>
+    <div class="turn-token hero" title="Dax (Rogue)">DR</div>
+    <div class="turn-token monster" title="Goblin 2">G2</div>
+    <div class="turn-token hero" title="Sylvara (Wizard)">SW</div>
+  </div>
+
+  <!-- z-20: Action bar -->
+  <div id="action-bar" class="overlay">
+    <button class="action-btn active">Move (30 ft)</button>
+    <button class="action-btn">⚔ Attack</button>
+    <button class="action-btn">✦ Spell</button>
+    <button class="action-btn">⊙ Dash</button>
+    <button class="action-btn">▶ End Turn</button>
+  </div>
+
+  <!-- z-40: Info panel (selected entity) -->
+  <div id="info-panel" class="overlay">
+    <h3>Elara</h3>
+    <div class="hp-bar-bg"><div class="hp-bar-fill" style="width:80%"></div></div>
+    <div class="stat-row"><span class="stat-label">HP</span><span class="stat-value">32 / 40</span></div>
+    <div class="stat-row"><span class="stat-label">AC</span><span class="stat-value">16</span></div>
+    <div class="stat-row"><span class="stat-label">Speed</span><span class="stat-value">30 ft</span></div>
+    <div class="stat-row"><span class="stat-label">Action</span><span class="stat-value">✓ available</span></div>
+    <div class="stat-row"><span class="stat-label">Bonus</span><span class="stat-value">✓ available</span></div>
+    <div class="stat-row"><span class="stat-label">Reaction</span><span class="stat-value">✓ available</span></div>
+  </div>
+
+  <!-- z-50: DM panel -->
+  <div id="dm-panel" class="overlay">
+    <div class="panel-header" data-interactive>
+      <span>DM Controls</span>
+      <span style="color:#6b7280; font-size:10px">▼</span>
+    </div>
+    <div class="panel-body">
+      <button class="dm-btn">Pause Session</button>
+      <button class="dm-btn">⚡ Initiative</button>
+      <button class="dm-btn">📢 Broadcast</button>
+      <button class="dm-btn">💬 Whisper</button>
+      <button class="dm-btn">🧿 HP / Condition</button>
+      <button class="dm-btn danger">End Session</button>
+    </div>
+  </div>
+
+  <!-- z-100: Broadcast banner (visible, demo) -->
+  <div id="broadcast-banner" class="overlay">
+    <span>⚠ The trolls have blocked the northern pass!</span>
+    <button style="background:none;border:none;color:#d97706;cursor:pointer;font-size:16px;margin-left:auto">×</button>
+  </div>
+
+  <!-- z-100: Pause overlay (hidden in this demo, set display:flex to show) -->
+  <div id="pause-overlay" class="overlay">
+    <div class="pause-text">
+      <h1>SESSION PAUSED</h1>
+      <p>Waiting for the DM to resume…</p>
+    </div>
+  </div>
+
+</body>
+</html>
