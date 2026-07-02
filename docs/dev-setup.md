@@ -172,6 +172,22 @@ docker volume rm phx-lv-gibbering_deps_cache phx-lv-gibbering_build_cache
 docker compose up -d
 ```
 
+**After refactors that delete Elixir source modules** (e.g. app extractions, renames), restart the dev server. Phoenix's code reloader cannot hot-reload a deleted module — it purges it from memory mid-request, causing `UndefinedFunctionError`. A restart loads the clean build from scratch.
+
+```bash
+docker compose restart app
+# or for a full stop/start:
+docker compose down && docker compose up -d
+```
+
+`mix clean` does not remove beams for deleted sources (Mix only tracks currently-compiled files). If stale beams persist after a restart, wipe the build cache volume:
+
+```bash
+docker compose down
+docker volume rm phx-lv-gibbering_build_cache
+docker compose up -d
+```
+
 > **Why deps are compiled into the image**: `Dockerfile.dev` runs `MIX_ENV=dev mix deps.compile` and `MIX_ENV=test mix deps.compile` so that named volumes (`build_cache`) are seeded with pre-compiled deps on first creation. This avoids a long recompilation step inside the container. The tradeoff is a slower `docker compose build` after `mix.lock` changes.
 
 ---
