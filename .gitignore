@@ -6,7 +6,9 @@ erl_crash.dump
 
 # === Phoenix ===
 /priv/static/assets/
+apps/*/priv/static/assets/
 /priv/static/cache_manifest.json
+apps/*/priv/static/cache_manifest.json
 
 # === Node (Phoenix asset pipeline) ===
 /assets/node_modules/
