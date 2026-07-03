@@ -1,8 +1,16 @@
 # #123 · `Projection` behaviour: define port, implement Isometric + TopDown modules
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-12
+**Closed:** 2026-07-03
 **Priority:** low
 **Tags:** architecture, rendering
+
+> **Closing note (2026-07-03):** the `GibberingEngine.Projection` behaviour and
+> `Projection.Isometric` shipped with #169 (WP-S, Phase 2b), which absorbed this
+> issue's core scope. `Projection.TopDown` was intentionally not built there — it
+> belongs to #124's scope (WP-L), whose sequencing note already says the viewport
+> work "switches the scene SVG to use `Projection.TopDown`". Closed to resolve the
+> tracker contradiction between this file, the issues index, and WP-S/WP-L notes.
 
 Define a `Projection` behaviour as the render-time interface between world coordinates and screen coordinates, extract the existing isometric math into `Projection.Isometric`, and implement `Projection.TopDown`. Audit current rendering code for any world/screen coordinate mixing and decouple it.
 

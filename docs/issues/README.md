@@ -36,7 +36,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#84](084-lod-sprite-detail-levels-for-zoom.md) | LOD sprite detail levels for zoom | `rendering` `architecture` | low |
 | [#121](121-spectator-membership-model.md) | Campaign membership: spectator role and invite flow | `architecture` `gameplay` | low |
 | [#122](122-spectator-session-view.md) | Spectator session view: shared GameLive mount, full-map default, PC-perspective toggle | `architecture` `ui` `gameplay` | low |
-| [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` | low |
 | [#124](124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | `rendering` `ui` `architecture` | low |
 | [#141](141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | `ops` `architecture` | low |
 | [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
@@ -91,6 +90,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` |
 | [#173](173-gamelive-hud-extraction.md) | GameLive HUD extraction — render from `%HUD{}` instead of raw Engine.State | `architecture` `ui` `rendering` |
 | [#172](172-hud-struct-design.md) | HUD struct design — `%GibberingEngine.HUD{}` and computation site decision | `architecture` `discovery` `rendering` `ui` |
 | [#171](171-phase2d-web-admin-extraction.md) | Engine decomposition Phase 2d — Web + Admin app extraction | `architecture` `admin` |
