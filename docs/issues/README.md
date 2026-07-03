@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 174 (see `counter`)
+**Next issue number:** 175 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -46,6 +46,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
 | [#160](160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | `ui` `rendering` `architecture` | medium |
 | [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
+| [#174](174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | `ops` `architecture` | medium |
 
 ---
 
