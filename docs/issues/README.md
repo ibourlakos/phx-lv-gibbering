@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 176 (see `counter`)
+**Next issue number:** 177 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -48,6 +48,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
 | [#174](174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | `ops` `architecture` | medium |
 | [#175](175-campaign-join-endpoint-robustness.md) | Campaign join endpoint: malformed id crashes, missing campaign reports success | `bug` `ui` | low |
+| [#176](176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` leaks atoms on unknown input | `bug` `architecture` | low |
 
 ---
 
