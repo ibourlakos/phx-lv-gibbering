@@ -11,10 +11,11 @@ apps/*/priv/static/assets/
 apps/*/priv/static/cache_manifest.json
 
 # === Node (Phoenix asset pipeline) ===
-/assets/node_modules/
+apps/*/assets/node_modules/
 
 # === Dialyzer ===
 /priv/plts/
+apps/*/priv/plts/
 
 # === Database ===
 *.dump
@@ -34,12 +35,16 @@ apps/*/priv/static/cache_manifest.json
 
 # === Test artifacts ===
 /cover/
+apps/*/cover/
 
 # === Playwright smoke tests ===
-/test/smoke/node_modules/
-/test/smoke/playwright-report/
-/test/smoke/screenshots/*.png
-/test/smoke/screenshots/*.jpg
+# Smoke suite lives in apps/gibbering/test/smoke (see compose.yaml playwright service);
+# location will change when #174 retires the shell app.
+apps/*/test/smoke/node_modules/
+apps/*/test/smoke/playwright-report/
+apps/*/test/smoke/test-results/
+apps/*/test/smoke/screenshots/*.png
+apps/*/test/smoke/screenshots/*.jpg
 
 # === OS ===
 .DS_Store
