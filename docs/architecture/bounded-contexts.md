@@ -2,7 +2,7 @@
 
 > **See also:** [context-map.md](context-map.md) — integration patterns at each seam (relationships, published language, violations).
 
-> **Phase 2 note:** This document reflects current module namespaces (all under `Gibbering.*` / `GibberingWeb.*`). After the umbrella conversion (engine decomposition Phase 2), namespaces will become `GibberingEngine.*`, `GibberingTales.*`, `GibberingTalesWeb.*`, and `GibberingTalesAdmin.*`. This file will be updated at that point. See [engine-decomposition.md](engine-decomposition.md) for the planned structure.
+> **Phase 2 note:** This document reflects current module namespaces (all under `Gibbering.*` / `GibberingTalesWeb.*`). After the umbrella conversion (engine decomposition Phase 2), namespaces will become `GibberingEngine.*`, `GibberingTales.*`, `GibberingTalesWeb.*`, and `GibberingTalesAdmin.*`. This file will be updated at that point. See [engine-decomposition.md](engine-decomposition.md) for the planned structure.
 
 The module structure follows the polytope bounded context decomposition from
 [docs/papers/polytope-architecture.md](../papers/polytope-architecture.md). Each bounded
@@ -14,85 +14,87 @@ EventBus port definition, #109 for the bus classification audit, and
 ## Scene *(Behavioral dimension — core game authority)*
 
 ```
-Gibbering.Engine.SceneServer  ← single-writer authoritative process (1 GenServer per session)
-Gibbering.Engine.State        ← immutable state struct (tiles, entities, selection, turn order)
-Gibbering.Engine.Rules        ← pure functions: movement, targeting, combat
-Gibbering.Engine.GameSession  ← session supervisor / registry entry
-Gibbering.Engine.SpriteCompositor ← sprite composition pipeline
+GibberingTalesWeb.Engine.SceneServer  ← single-writer authoritative process (1 GenServer per session)
+GibberingTalesWeb.Engine.State        ← immutable state struct (tiles, entities, selection, turn order)
+GibberingTalesWeb.Engine.Rules        ← pure functions: movement, targeting, combat
+GibberingTales.Engine.GameSession  ← session supervisor / registry entry
+GibberingEngine.SpriteCompositor ← sprite composition pipeline
 ```
 
-Namespace: `Gibbering.Engine.*` (maps to the Scene bounded context in polytope terms;
-rename to `Gibbering.Scene.*` is a future refactor tracked separately if desired).
+Namespace: `GibberingTalesWeb.Engine.*` for the runtime triad (State, Rules, SceneServer),
+with the session registry in `GibberingTales.Engine.*` (maps to the Scene bounded context
+in polytope terms; extracting a dedicated `Scene` namespace out of the web app is a
+future refactor tracked separately if desired).
 
 ## Rules Engine *(Structural dimension — core domain)*
 
 ```
-Gibbering.Ruleset                        ← behaviour port: any ruleset must implement this
-Gibbering.Engine.RuleModifier            ← generic modifier struct: source, operation, value (engine layer)
-Gibbering.Rulesets.DnD5e                 ← D&D 5e SRD ruleset (Strategy implementation)
-Gibbering.Rulesets.DnD5e.Stats           ← HP, speed, proficiency, stat modifiers
-Gibbering.Rulesets.DnD5e.Spell           ← spell resolution, damage, saving throws
-Gibbering.Rulesets.DnD5e.ModifierPipeline ← Chain of Responsibility over modifiers
-Gibbering.Rulesets.DnD5e.Predicate       ← composable boolean rule conditions
-Gibbering.Rulesets.DnD5e.Condition       ← condition type definitions (Paralyzed, Frightened …)
+GibberingEngine.Ruleset                        ← behaviour port: any ruleset must implement this
+GibberingEngine.RuleModifier            ← generic modifier struct: source, operation, value (engine layer)
+GibberingTales.Rulesets.DnD5e                 ← D&D 5e SRD ruleset (Strategy implementation)
+GibberingTales.Rulesets.DnD5e.Stats           ← HP, speed, proficiency, stat modifiers
+GibberingTales.Rulesets.DnD5e.Spell           ← spell resolution, damage, saving throws
+GibberingTales.Rulesets.DnD5e.ModifierPipeline ← Chain of Responsibility over modifiers
+GibberingTales.Rulesets.DnD5e.Predicate       ← composable boolean rule conditions
+GibberingTales.Rulesets.DnD5e.Condition       ← condition type definitions (Paralyzed, Frightened …)
 ```
 
 ## Content Catalogue *(Structural dimension — core domain)*
 
 ```
-Gibbering.Catalogue           ← context boundary / public API
-Gibbering.Catalogue.Race      ← race definitions with stat bonuses and traits
-Gibbering.Catalogue.Class     ← class definitions with features and base stats
-Gibbering.Catalogue.Spell     ← spell definitions: damage, range, school
-Gibbering.Catalogue.Monster   ← monster stat blocks (SRD-legal subset)
-Gibbering.Catalogue.Appearance ← visual metadata for catalogue entries
-Gibbering.Catalogue.Style     ← display style declarations
-Gibbering.Catalogue.Cache     ← in-process ETS cache over the DB
+GibberingTales.Catalogue           ← context boundary / public API
+GibberingTales.Catalogue.Race      ← race definitions with stat bonuses and traits
+GibberingTales.Catalogue.Class     ← class definitions with features and base stats
+GibberingTales.Catalogue.Spell     ← spell definitions: damage, range, school
+GibberingTales.Catalogue.Monster   ← monster stat blocks (SRD-legal subset)
+GibberingTales.Catalogue.Appearance ← visual metadata for catalogue entries
+GibberingTales.Catalogue.Style     ← display style declarations
+GibberingTales.Catalogue.Cache     ← in-process ETS cache over the DB
 ```
 
-Legacy in-memory reference modules (`Gibbering.Data.Races`, `Gibbering.Data.Classes`,
-`Gibbering.Data.Spells`, `Gibbering.Data.Monsters`, `Gibbering.Data.Items`,
-`Gibbering.Data.Backgrounds`) are internal helpers within the Content Catalogue context;
+Legacy in-memory reference modules (`GibberingTales.Data.Races`, `GibberingTales.Data.Classes`,
+`GibberingTales.Data.Spells`, `GibberingTales.Data.Monsters`, `GibberingTales.Data.Items`,
+`GibberingTales.Data.Backgrounds`) are internal helpers within the Content Catalogue context;
 they pre-date the DB-backed `Catalogue.*` layer and will be migrated or removed over time.
 
 ## Campaign Lifecycle *(Structural dimension — supporting domain)*
 
 ```
-Gibbering.Campaigns           ← context boundary / public API
-Gibbering.Campaign            ← Ecto schema: campaign record
-Gibbering.CampaignCharacter   ← Ecto schema: character-in-campaign join
-Gibbering.CampaignCharacters  ← context operations over CampaignCharacter
-Gibbering.CampaignMember      ← Ecto schema: player membership
-Gibbering.CampaignInvitation  ← Ecto schema: invitation record
-Gibbering.CampaignInvitations ← context operations over invitations
-Gibbering.CampaignInviteLink  ← Ecto schema: shareable invite link
-Gibbering.CampaignInviteLinks ← context operations over invite links
-Gibbering.Character           ← Ecto schema: character sheet
-Gibbering.Characters          ← context operations over characters
+GibberingTales.Campaigns           ← context boundary / public API
+GibberingTales.Campaign            ← Ecto schema: campaign record
+GibberingTales.CampaignCharacter   ← Ecto schema: character-in-campaign join
+GibberingTales.CampaignCharacters  ← context operations over CampaignCharacter
+GibberingTales.CampaignMember      ← Ecto schema: player membership
+GibberingTales.CampaignInvitation  ← Ecto schema: invitation record
+GibberingTales.CampaignInvitations ← context operations over invitations
+GibberingTales.CampaignInviteLink  ← Ecto schema: shareable invite link
+GibberingTales.CampaignInviteLinks ← context operations over invite links
+GibberingTales.Character           ← Ecto schema: character sheet
+GibberingTales.Characters          ← context operations over characters
 ```
 
 ## Identity and Authorization *(Structural dimension — supporting domain)*
 
 ```
-Gibbering.Accounts            ← context boundary / public API (users, sessions, auth)
-Gibbering.Accounts.User       ← Ecto schema: player account
-Gibbering.Admin               ← admin surface of this context (support users, audit)
-Gibbering.Admin.SupportUser   ← Ecto schema: admin credential
-Gibbering.Admin.AuditLog      ← Ecto schema: admin action log
+GibberingTales.Accounts            ← context boundary / public API (users, sessions, auth)
+GibberingTales.Accounts.User       ← Ecto schema: player account
+GibberingTalesAdmin.Admin               ← admin surface of this context (support users, audit)
+GibberingTalesAdmin.Admin.SupportUser   ← Ecto schema: admin credential
+GibberingTalesAdmin.Admin.AuditLog      ← Ecto schema: admin action log
 ```
 
 ## Observability *(Structural dimension — generic domain)*
 
 ```
-Gibbering.Monitoring.MetricsStore         ← behaviour port: metric storage backend
-Gibbering.Monitoring.Stores.Local         ← ETS-backed adapter (production)
-Gibbering.Monitoring.Stores.NoOp          ← no-op adapter (test)
-Gibbering.Monitoring.CampaignMetricSnapshot ← snapshot schema
+GibberingEngine.Monitoring.MetricsStore         ← behaviour port: metric storage backend
+GibberingTalesWeb.Monitoring.Stores.Local         ← ETS-backed adapter (production)
+GibberingEngine.Monitoring.Stores.NoOp          ← no-op adapter (test)
+GibberingTales.Monitoring.CampaignMetricSnapshot ← snapshot schema
 ```
 
 ## Notification *(Structural dimension — generic domain)*
 
-Namespace: `Gibbering.Notification` (assigned; no module exists yet). Currently
+Namespace: `GibberingTales.Notification` (assigned; no module exists yet). Currently
 implemented as direct `Phoenix.PubSub` calls scattered across contexts. A thin
 wrapper module encapsulating those calls is the planned scope, once the EventBus port
 (#108) and bus classification audit (#109) are complete.
@@ -100,15 +102,15 @@ wrapper module encapsulating those calls is the planned scope, once the EventBus
 ## Bus *(Integration dimension — meta-hexagon)*
 
 ```
-Gibbering.EventBus              ← behaviour port: broadcast/2, broadcast_batch/2, subscribe/1, unsubscribe/1
-Gibbering.EventBus.PubSub       ← adapter: Phoenix.PubSub (production + integration tests)
-Gibbering.EventBus.Local        ← adapter: in-memory ETS GenServer (unit tests, no PubSub process)
+GibberingEngine.EventBus              ← behaviour port: broadcast/2, broadcast_batch/2, subscribe/1, unsubscribe/1
+GibberingTalesWeb.EventBus.PubSub       ← adapter: Phoenix.PubSub (production + integration tests)
+GibberingEngine.EventBus.Local        ← adapter: in-memory ETS GenServer (unit tests, no PubSub process)
 ```
 
-All cross-context event broadcasts and subscriptions go through `Gibbering.EventBus`. No bounded
+All cross-context event broadcasts and subscriptions go through `GibberingEngine.EventBus`. No bounded
 context calls `Phoenix.PubSub` directly. The active adapter is selected via application config:
 
-    config :gibbering, Gibbering.EventBus, adapter: Gibbering.EventBus.PubSub
+    config :gibbering, GibberingEngine.EventBus, adapter: GibberingTalesWeb.EventBus.PubSub
 
 Swapping adapters requires no change to any bounded context module. See §3.3, §10.3 of the
 polytope paper for the port/adapter rationale.
@@ -116,44 +118,45 @@ polytope paper for the port/adapter rationale.
 ## Web Adapter *(Presentational dimension)*
 
 ```
-GibberingWeb.Router             ← /  →  /lobby/:id  →  /game/:id
-GibberingWeb.GameLive           ← game board LiveView: event handler + SVG + sprites
-GibberingWeb.LobbyLive          ← party setup LiveView
-GibberingWeb.CampaignPrepLive   ← DM campaign preparation
-GibberingWeb.DashboardLive      ← player dashboard
-GibberingWeb.IsoProjection      ← pure functions: grid→screen coordinate math (2:1 dimetric)
-GibberingWeb.Components.CharacterSprite ← inline SVG sprite components
+GibberingTalesWeb.Router             ← /  →  /lobby/:id  →  /game/:id
+GibberingTalesWeb.GameLive           ← game board LiveView: event handler + SVG + sprites
+GibberingTalesWeb.LobbyLive          ← party setup LiveView
+GibberingTalesWeb.CampaignPrepLive   ← DM campaign preparation
+GibberingTalesWeb.DashboardLive      ← player dashboard
+GibberingEngine.Projection.Isometric      ← pure functions: grid→screen coordinate math (2:1 dimetric)
+GibberingTalesWeb.Components.CharacterSprite ← inline SVG sprite components
 ```
 
 ## Data Pipeline *(Integration dimension — ingestion)*
 
 ```
-Gibbering.Pipeline.LegalGuard   ← WotC Product Identity filter
+GibberingTales.Pipeline.LegalGuard   ← WotC Product Identity filter
 ```
 
 ## Published Language Registry *(Cross-cutting — shared contract)*
 
-`Gibbering.Events.*` is the **Published Language** for all cross-context event contracts.
-It is owned by no single bounded context. Every event type that flows across a context
-boundary on the event bus is defined here. See `docs/papers/polytope-architecture.md` §3.2.
+The `Events` namespaces (`GibberingEngine.Events.*` for generic engine events,
+`GibberingTales.Events.*` for game-specific and notification events) are the
+**Published Language** for all cross-context event contracts. The registry is owned by
+no single bounded context. Every event type that flows across a context boundary on
+the event bus is defined here. See `docs/papers/polytope-architecture.md` §3.2.
 
 ```
-Gibbering.Events                  ← registry root / namespace documentation
-Gibbering.Events.EventBatch       ← batch envelope: command, batch_id, correlation_id, events
-Gibbering.Events.Upcaster         ← behaviour: upcast/2, current_version/0 (event-log migration)
-Gibbering.Events.Decoder          ← decode(module, raw_map) — event-log read path
-Gibbering.Events.Engine.*         ← 10 generic engine events: EntityMoved, TurnAdvanced,
+GibberingEngine.Events.EventBatch       ← batch envelope: command, batch_id, correlation_id, events
+GibberingEngine.Events.Upcaster         ← behaviour: upcast/2, current_version/0 (event-log migration)
+GibberingEngine.Events.Decoder          ← decode(module, raw_map) — event-log read path
+GibberingEngine.Events.*         ← 10 generic engine events: EntityMoved, TurnAdvanced,
                                      PhaseTransitioned, HPAdjusted, ResourceConsumed,
                                      ContainerOpened, RollRequired, SessionEnded,
                                      LogEntryRevealed, LogEntryHidden
-Gibbering.Events.DnD5e.*          ← 7 D&D 5e-specific events: AttackResolved, DamageDealt,
+GibberingTales.Events.DnD5e.*          ← 7 D&D 5e-specific events: AttackResolved, DamageDealt,
                                      SpellCast, ConditionApplied, ConditionRemoved,
                                      ItemEquipped, ItemTaken
-Gibbering.Events.Notification.*   ← out-of-band DM/player message structs: BroadcastSent, WhisperDelivered
+GibberingTales.Events.Notification.*   ← out-of-band DM/player message structs: BroadcastSent, WhisperDelivered
 ```
 
 **Versioning policy (brainstorm #16):** Each event struct declares `@current_version 1` and
-implements `Gibbering.Events.Upcaster`. Fields are never renamed or removed once published
+implements `GibberingEngine.Events.Upcaster`. Fields are never renamed or removed once published
 (additive-only discipline). Breaking changes produce a new event type. Version checking lives
 exclusively in the `Decoder` at the event-log boundary; in-process events are live typed structs.
 
@@ -162,7 +165,7 @@ pattern matching in `handle_info/2` is a compile-time guarantee; shape mismatche
 errors. Formal consumer-driven contract (CDC) testing (e.g. Pact-style per-consumer contract
 files) is deferred until the persistent event log and a multi-process consumer topology are
 introduced. At that point, the `ContractRegistry` described in the polytope treatise §15.2 is
-the appropriate home. Until then, the `Gibbering.Events.Decoder` + `Upcaster` chain is the
+the appropriate home. Until then, the `GibberingEngine.Events.Decoder` + `Upcaster` chain is the
 sole contract enforcement boundary that must be covered by tests.
 
 **Event Storming output:** Brainstorm #15 is the canonical Event Storming record for the scene

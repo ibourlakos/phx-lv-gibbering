@@ -1,6 +1,6 @@
 # Multiplayer
 
-No custom WebSocket code. SceneServer broadcasts `%EventBatch{}` to all LiveViews subscribed to `"game:#{game_id}"` via `Gibbering.EventBus`. Each LiveView re-renders only its diff.
+No custom WebSocket code. SceneServer broadcasts `%EventBatch{}` to all LiveViews subscribed to `"game:#{game_id}"` via `GibberingEngine.EventBus`. Each LiveView re-renders only its diff.
 
 `GameLive` subscribes to two topics on mount:
 

@@ -8,6 +8,12 @@ Formalize the three-space coordinate model from brainstorm #27. This is a
 foundational issue — other spatial systems (traversability, elevation, AoE
 targeting) build on top of it.
 
+> **Namespace note (2026-07-03):** written before the Phase 2 umbrella conversion.
+> `Gibbering.Engine.Coords` below needs re-aiming — likely `GibberingEngine.Coords`
+> (alongside `GibberingEngine.Projection.*`, where `iso_project` now lives), and
+> `Engine.State` is now `GibberingTalesWeb.Engine.State`. Decide placement when
+> picking this up.
+
 **Three coordinate spaces:**
 
 1. **Game grid** — `{x, y, elevation}` integers. Canonical address for all game

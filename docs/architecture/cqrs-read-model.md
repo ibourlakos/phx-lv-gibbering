@@ -17,8 +17,8 @@ history, making `get_state/1` a performance optimisation rather than a necessity
 Two modules currently violate this boundary by calling `get_state/1` outside of mount
 (tracked by #114):
 
-- `Gibbering.Monitoring.Stores.Local` — polls scene state for metrics snapshots
-- `GibberingWeb.Live.Admin.CampaignMonitoringPage` — reads scene state for the admin view
+- `GibberingTalesWeb.Monitoring.Stores.Local` — polls scene state for metrics snapshots
+- `GibberingTalesAdmin.Admin.CampaignMonitoringPage` — reads scene state for the admin view
 
 ## Projections
 
@@ -88,8 +88,8 @@ wholesale. The migration is incremental — both models coexist during transitio
 
 **Phase 1 — define projection structs** (no runtime change)
 
-Create `GibberingWeb.Projections.PlayerView`, `GibberingWeb.Projections.DmView`, and
-`Gibbering.Monitoring.Projection` structs. Each has a `apply(projection, event)` function
+Create `GibberingTalesWeb.Projections.PlayerView`, `GibberingTalesWeb.Projections.DmView`, and
+`GibberingTales.Monitoring.Projection` structs. Each has a `apply(projection, event)` function
 that returns the updated projection given a single typed event. Test these as pure
 functions — no LiveView, no PubSub required.
 
