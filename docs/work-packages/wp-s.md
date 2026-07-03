@@ -1,6 +1,7 @@
 # WP-S · Engine Decomposition Phase 2 — Umbrella Conversion
-**Status:** active
+**Status:** complete
 **Added:** 2026-07-01
+**Completed:** 2026-07-03
 
 Derived from discovery issue #167 (closed). Converts the project to a four-app Mix umbrella. Must complete before WP-T (post-Phase 2 HUD extraction) and before WP-L's #124 (DM top-down viewport) can begin.
 
