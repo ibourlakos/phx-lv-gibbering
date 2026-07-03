@@ -4,20 +4,20 @@
 
 Derived from closed discovery #101. Sequence: rendering infrastructure → DM UI.
 
-**Gated on WP-S (#169):** the `Projection` behaviour and `Projection.Isometric` implementation are introduced in Phase 2b (#169) as part of the engine extraction — `IsoProjection` is moving to the engine anyway, so the behaviour is defined at the same time. #123 is therefore closed by #169 and does not need a separate branch. #124 becomes available once WP-S is complete.
+WP-S is complete (#169 introduced the `Projection` behaviour and renamed `IsoProjection` → `Projection.Isometric`). #123 was closed by #169. #124 is now unblocked.
 
 ## Dependency chain
 
 ```
-WP-S / #169 (Projection behaviour introduced in engine extraction) → #124 (DM top-down viewport)
+WP-S / #169 (Projection behaviour — complete) → #124 (DM top-down viewport — active)
 ```
 
 ## Issues
 
 | # | Title | Priority | Depends on |
 |---|---|---|---|
-| [#123](../issues/123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | low | — Closed by #169 |
-| [#124](../issues/124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | low | WP-S (#169) |
+| [#123](../issues/123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | low | Closed by #169 |
+| [#124](../issues/124-dm-top-down-viewport.md) | DM top-down viewport: toggle, entity circles, grid labels, hover tooltip | low | — |
 
 ## Sequencing
 

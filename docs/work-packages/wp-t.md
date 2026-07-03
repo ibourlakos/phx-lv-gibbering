@@ -1,6 +1,7 @@
 # WP-T · Post-Phase 2 HUD Extraction
-**Status:** active
+**Status:** complete
 **Added:** 2026-07-01
+**Completed:** 2026-07-03
 
 Gated on WP-S (Engine Decomposition Phase 2) completing. Formalises the engine's HUD concern by introducing `%GibberingEngine.HUD{}` and refactoring `GameLive` to render from it rather than reading raw engine state.
 

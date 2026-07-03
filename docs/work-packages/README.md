@@ -14,14 +14,12 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Open Issues |
 |---|---|---|
-| [WP-S](wp-s.md) | Engine Decomposition Phase 2 — Umbrella Conversion | #168 → #169 → #170 → #171 |
-| [WP-F](wp-f.md) | Rendering & Frontend | #84 |
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
 | [WP-R](wp-r.md) | Display Testing & Testability | #153 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
 | [WP-K](wp-k.md) | Spectator Implementation | #121 → #122 |
-| [WP-L](wp-l.md) | DM Projection & Top-Down Viewport | #124 (gated on WP-S) |
-| [WP-T](wp-t.md) | Post-Phase 2 HUD Extraction | #172 → #173 (gated on WP-S) |
+| [WP-L](wp-l.md) | DM Projection & Top-Down Viewport | #124 |
+| [WP-F](wp-f.md) | Rendering & Frontend | #84 |
 | [WP-A](wp-a.md) | Infrastructure & Data Plumbing | #24 |
 
 ---
@@ -38,6 +36,8 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Completed |
 |---|---|---|
+| [WP-S](wp-s.md) | Engine Decomposition Phase 2 — Umbrella Conversion | 2026-07-03 |
+| [WP-T](wp-t.md) | Post-Phase 2 HUD Extraction | 2026-07-03 |
 | [WP-P](wp-p.md) | Minimum Playable Campaign Loop | 2026-06-20 |
 | [WP-O](wp-o.md) | Inspection Panel & Player Event Feed | 2026-06-20 |
 | [WP-M](wp-m.md) | Inventory & Loot System | 2026-06-19 |
@@ -69,15 +69,11 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 ## Active Front
 
 ```
-WP-S:  #168 → #169 → #170 → #171         — top priority; gates WP-L (#124) and WP-T (#172, #173)
-
 WP-Q:  #156 → (#157, #158)               — coordinate model first, then occupancy + elevation
 WP-R:  #153                              — SVG testability (no dependencies)
 WP-B:  #152                              — Action struct refactor (no dependencies)
-WP-F:  #84                               — polish, low priority
 WP-K:  #121 → #122
-
-── gated on WP-S ──────────────────────────────────────────────────────────────
-WP-L:  #124                              — DM top-down viewport (#123 closed by WP-S/#169)
-WP-T:  #172 (discovery) → #173          — HUD extraction; start #173 only after #172 settled
+WP-L:  #124                              — DM top-down viewport (unblocked; WP-S complete)
+WP-F:  #84                               — polish, low priority
+WP-A:  #24                               — JSONB grid consolidation, low priority
 ```
