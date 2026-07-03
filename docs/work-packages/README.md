@@ -66,6 +66,10 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 | [#160](../issues/160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | Medium priority — schedule after WP-Q/WP-B front clears |
 | [#165](../issues/165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor | Follow-on to WP-R's #153 (complete) |
 | [#63](../issues/063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | Ops — optional fourth test layer, independent |
+| [#174](../issues/174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | Medium — Phase 2 leftover; coordinate with #141 (seeds) and #63 (smoke env) |
+| [#175](../issues/175-campaign-join-endpoint-robustness.md) | Campaign join endpoint robustness | Standalone bug; pick up any time |
+| [#176](../issues/176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` atom safety | Standalone bug; pick up any time |
+| [#177](../issues/177-test-compile-warnings-cleanup.md) | Test-compile warnings cleanup | Ops — trivial; includes precommit-gate decision |
 
 ---
 
