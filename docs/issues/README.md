@@ -41,7 +41,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#148](148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | `gameplay` `rules` `architecture` | medium |
 | [#149](149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | `gameplay` `ui` `architecture` | low |
 | [#152](152-action-struct-v1-refactor.md) | Unify weapon attack and spell resolution under `%Action{}` — v1 refactor | `architecture` `rules` `gameplay` | medium |
-| [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` | medium |
 | [#157](157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | `architecture` `gameplay` `rules` | medium |
 | [#158](158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | `architecture` `rendering` `gameplay` | medium |
 | [#160](160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | `ui` `rendering` `architecture` | medium |
@@ -92,6 +91,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` |
 | [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` |
 | [#176](176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` leaks atoms on unknown input | `bug` `architecture` |
 | [#175](175-campaign-join-endpoint-robustness.md) | Campaign join endpoint: malformed id crashes, missing campaign reports success | `bug` `ui` |

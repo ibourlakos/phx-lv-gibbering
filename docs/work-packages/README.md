@@ -14,7 +14,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Open Issues |
 |---|---|---|
-| [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
+| [WP-Q](wp-q.md) | Spatial Model Foundation | #157, #158 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
 | [WP-K](wp-k.md) | Spectator Implementation | #121 → #122 |
 | [WP-L](wp-l.md) | DM Projection & Top-Down Viewport | #124 |
@@ -77,7 +77,7 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 ## Active Front
 
 ```
-WP-Q:  #156 → (#157, #158)               — coordinate model first, then occupancy + elevation
+WP-Q:  #157, #158                        — #156 closed; occupancy + elevation now unblocked, run in parallel
 WP-B:  #152                              — Action struct refactor (no dependencies)
 WP-K:  #121 → #122
 WP-L:  #124                              — DM top-down viewport (unblocked; WP-S complete)

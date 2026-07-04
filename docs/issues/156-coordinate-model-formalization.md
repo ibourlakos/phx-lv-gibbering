@@ -1,6 +1,7 @@
 # #156 · Coordinate model formalization — game grid, SVG space, surface addresses, edge model
-**Status:** open
+**Status:** closed
 **Opened:** 2026-06-19
+**Closed:** 2026-07-05
 **Priority:** medium
 **Tags:** architecture, rendering
 
@@ -13,6 +14,16 @@ targeting) build on top of it.
 > (alongside `GibberingEngine.Projection.*`, where `iso_project` now lives), and
 > `Engine.State` is now `GibberingTalesWeb.Engine.State`. Decide placement when
 > picking this up.
+>
+> **Resolved (2026-07-05):** landed as `GibberingEngine.Coords`
+> (`apps/gibbering_engine/lib/gibbering_engine/coords.ex`), delegating the ground-plane
+> projection math to the existing `GibberingEngine.Projection.Isometric.to_screen/4` and
+> adding the elevation offset on top. `edges` field added to `GibberingTalesWeb.Engine.State`.
+> `maps.edges` is a JSONB column (not a separate table), consistent with the schemaless
+> pattern already used for `stats`/`tags`/`movement` elsewhere in this schema — decoded to
+> the canonical `%{edge_key() => %{type:, open:}}` shape via `Coords.decode_edges/1`.
+> Surface addresses (`{object_id, :top}`) were **not** implemented — no caller needs them
+> yet; deferred until a real consumer exists rather than building speculatively.
 
 **Three coordinate spaces:**
 
@@ -35,9 +46,9 @@ targeting) build on top of it.
 - Edges are populated from map seed data; no DB table for v1
 
 **Acceptance criteria**
-- [ ] `Gibbering.Engine.Coords` module defines `game_grid/3`, `iso_project/4`, and `edge_key/3` (normalised edge address)
-- [ ] `iso_project/4` incorporates elevation with the formula above
-- [ ] `Engine.State` gains an `edges` map field (may be empty for existing maps)
-- [ ] Seeds updated to populate edges for at least one map with walls/doors
-- [ ] All existing coordinate usage in engine and render layers updated to use `Coords` module functions
-- [ ] `mix precommit` passes
+- [x] `Gibbering.Engine.Coords` module defines `game_grid/3`, `iso_project/4`, and `edge_key/3` (normalised edge address)
+- [x] `iso_project/4` incorporates elevation with the formula above
+- [x] `Engine.State` gains an `edges` map field (may be empty for existing maps)
+- [x] Seeds updated to populate edges for at least one map with walls/doors
+- [x] All existing coordinate usage in engine and render layers updated to use `Coords` module functions
+- [x] `mix precommit` passes
