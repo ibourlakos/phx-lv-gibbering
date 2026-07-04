@@ -1,6 +1,7 @@
 # #176 · `DamageType.cast/1` leaks atoms on unknown input
-**Status:** open
+**Status:** closed
 **Opened:** 2026-07-03
+**Closed:** 2026-07-04
 **Priority:** low
 **Tags:** bug, architecture
 
@@ -23,6 +24,6 @@ end
 ```
 
 **Acceptance criteria**
-- [ ] `cast/1` no longer calls `String.to_atom/1`
-- [ ] Behaviour unchanged for valid and invalid inputs (existing tests pass; add a test asserting no atom is created for unknown input if practical)
-- [ ] `mix precommit` passes
+- [x] `cast/1` no longer calls `String.to_atom/1`
+- [x] Behaviour unchanged for valid and invalid inputs (existing tests pass; add a test asserting no atom is created for unknown input if practical)
+- [x] `mix precommit` passes
