@@ -20,6 +20,13 @@ defmodule GibberingTales.DamageTypeTest do
       assert {:error, :unknown} = DamageType.cast("FIRE")
       assert {:error, :unknown} = DamageType.cast("")
     end
+
+    test "does not intern an atom for unknown input" do
+      unique = "unknown_damage_type_#{System.unique_integer([:positive])}"
+
+      assert {:error, :unknown} = DamageType.cast(unique)
+      assert_raise ArgumentError, fn -> String.to_existing_atom(unique) end
+    end
   end
 
   describe "all/0" do
