@@ -28,13 +28,11 @@ cd phx-lv-gibbering
 # 2. Activate Git LFS (once per machine)
 git lfs install
 
-# 3. Copy env file (defaults work out of the box)
-cp .env.example .env
-
-# 4. Build the app image and start all services
+# 3. Build the app image and start all services
+#    (dev env vars are hardcoded in compose.yaml — no .env file needed)
 docker compose up --build
 
-# 5. In a second terminal — create and migrate the database
+# 4. In a second terminal — create and migrate the database
 docker compose exec app mix ecto.setup
 
 # App is now at http://localhost:4000
@@ -206,6 +204,6 @@ docker compose up -d
 | Variable | Default (dev) | Notes |
 |---|---|---|
 | `DATABASE_URL` | `ecto://gibbering:gibbering@db/gibbering_dev` | `db` = Docker service name |
-| `SECRET_KEY_BASE` | see `.env.example` | Generate a real one with `mix phx.gen.secret` |
+| `SECRET_KEY_BASE` | see `compose.yaml` | Generate a real one with `mix phx.gen.secret` |
 | `PHX_HOST` | `localhost` | Change for production |
 | `MIX_ENV` | (not set — Mix defaults to `dev` for server, `test` for `mix test`) | Do not set this globally; let Mix choose per task |

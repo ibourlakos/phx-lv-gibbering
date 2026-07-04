@@ -49,7 +49,7 @@ Architecture docs and issues link to these rather than re-defining terms inline.
 
 ## Open Questions
 
-- ~~Should `Gibbering.Ruleset` be a `behaviour` or a `protocol`?~~ Decided: behaviour (#14 closed)
+- ~~Should `GibberingEngine.Ruleset` be a `behaviour` or a `protocol`?~~ Decided: behaviour (#14 closed)
 - ~~Does fog-of-war calculation belong to the engine or the ruleset?~~ Decided: split — engine owns LOS geometry + SVG mask, ruleset owns vision_range/vision_type (#26 closed)
 - How does a ruleset declare what UI action buttons to render?
 - How should lobby player identity work for same-browser multi-player? (see #18)

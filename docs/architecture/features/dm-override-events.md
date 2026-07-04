@@ -7,7 +7,8 @@ event log is **append-only** — a DM "undo" is a compensating event, not a dele
 
 DM override events follow the same Published Language convention as scene events — each is a
 named struct, not a generic `%DMOverride{type: :foo, payload: ...}` wrapper. The discriminator
-approach is the stringly-typed anti-pattern that `Gibbering.Events.*` exists to replace.
+approach is the stringly-typed anti-pattern that the typed event registry
+(`GibberingEngine.Events.*` / `GibberingTales.Events.*`) exists to replace.
 
 **Reuse existing event types where the semantic matches:**
 
@@ -73,7 +74,7 @@ pattern where `GameLive` guards on `target_player_id == current_user.id`.
 ## Implementation follow-on
 
 Two issues required before any DM override commands are wired up:
-1. Add `actor`, `dm_user_id`, `dm_reason` fields to all `Gibbering.Events.Engine.*` and `Gibbering.Events.DnD5e.*` structs
+1. Add `actor`, `dm_user_id`, `dm_reason` fields to all `GibberingEngine.Events.*` and `GibberingTales.Events.DnD5e.*` structs
    (additive schema change — bump `@current_version` on each struct)
 2. Define the four new DM-only event types listed above
 3. Add DM command handlers to `SceneServer` that produce the appropriate events

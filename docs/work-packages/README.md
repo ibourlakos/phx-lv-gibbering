@@ -15,7 +15,6 @@ Ordered by priority — work at the top before starting work below it.
 | WP | Title | Open Issues |
 |---|---|---|
 | [WP-Q](wp-q.md) | Spatial Model Foundation | #156, #157, #158 |
-| [WP-R](wp-r.md) | Display Testing & Testability | #153 |
 | [WP-B](wp-b.md) | Core Engine Architecture | #15, #152 |
 | [WP-K](wp-k.md) | Spectator Implementation | #121 → #122 |
 | [WP-L](wp-l.md) | DM Projection & Top-Down Viewport | #124 |
@@ -36,6 +35,7 @@ Ordered by priority — work at the top before starting work below it.
 
 | WP | Title | Completed |
 |---|---|---|
+| [WP-R](wp-r.md) | Display Testing & Testability | 2026-07-03 |
 | [WP-S](wp-s.md) | Engine Decomposition Phase 2 — Umbrella Conversion | 2026-07-03 |
 | [WP-T](wp-t.md) | Post-Phase 2 HUD Extraction | 2026-07-03 |
 | [WP-P](wp-p.md) | Minimum Playable Campaign Loop | 2026-06-20 |
@@ -63,6 +63,14 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 | [#141](../issues/141-seeds-decomposition.md) | Decompose seeds.exs into per-concern sub-files | Ops — independent; pick up any time |
 | [#148](../issues/148-aoe-saving-throw-prompts.md) | AoE saving throw prompts — multi-owner concurrent rolls | Post-WP-P; depends on #146 |
 | [#149](../issues/149-npc-dm-roll-visibility.md) | NPC / DM roll visibility | Post-WP-O; depends on #136 |
+| [#160](../issues/160-ui-layer-audit-and-layout-review.md) | UI layer audit — z-index stack and panel layout review | Medium priority — schedule after WP-Q/WP-B front clears |
+| [#165](../issues/165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor | Follow-on to WP-R's #153 (complete) |
+| [#63](../issues/063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | Ops — optional fourth test layer, independent |
+| [#174](../issues/174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | Medium — Phase 2 leftover; coordinate with #141 (seeds) and #63 (smoke env) |
+| [#175](../issues/175-campaign-join-endpoint-robustness.md) | Campaign join endpoint robustness | Standalone bug; pick up any time |
+| [#176](../issues/176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` atom safety | Standalone bug; pick up any time |
+| [#177](../issues/177-test-compile-warnings-cleanup.md) | Test-compile warnings cleanup | Ops — trivial; includes precommit-gate decision |
+| [#178](../issues/178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken post-umbrella | Standalone bug; pick up any time |
 
 ---
 
@@ -70,7 +78,6 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 
 ```
 WP-Q:  #156 → (#157, #158)               — coordinate model first, then occupancy + elevation
-WP-R:  #153                              — SVG testability (no dependencies)
 WP-B:  #152                              — Action struct refactor (no dependencies)
 WP-K:  #121 → #122
 WP-L:  #124                              — DM top-down viewport (unblocked; WP-S complete)

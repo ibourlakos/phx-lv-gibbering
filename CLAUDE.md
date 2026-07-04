@@ -53,11 +53,12 @@ Next brainstorm number: 35 (see `docs/brainstorming/counter`).
 ## Dev Setup (short form)
 
 ```bash
-cp .env.example .env
 docker compose up --build
 docker compose exec app mix ecto.setup
 # http://localhost:4000
 ```
+
+Dev env vars are hardcoded in `compose.yaml` — no `.env` file needed.
 
 See [docs/dev-setup.md](docs/dev-setup.md) for the full reference.
 
@@ -107,4 +108,4 @@ Description.
 - Follow [docs/git-policy.md](docs/git-policy.md) for all commits: conventional commits format (`type(scope): subject`), one logical change per commit, never commit directly to `main`. Binary assets require Git LFS — do not commit them until LFS is configured.
 - Never use `git add -A` or `git add .`. Stage only the specific files relevant to the current change, to avoid sweeping in unrelated untracked files.
 - Tests live in three layers — see [docs/testing.md](docs/testing.md). Always start at the lowest applicable layer (pure functions first). Run `mix precommit` before every code commit (not required for docs-only changes).
-- When starting OTP processes (e.g. `GameServer.init`, `start_link`), check the result and handle stale IDs gracefully rather than raising on bad input.
+- When starting OTP processes (e.g. `SceneServer` `start_link`/`init`), check the result and handle stale IDs gracefully rather than raising on bad input.

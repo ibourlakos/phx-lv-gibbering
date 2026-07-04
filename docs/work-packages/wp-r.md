@@ -1,7 +1,12 @@
 # WP-R · Display Testing & Testability
 
-**Status:** active
+**Status:** complete
+**Completed:** 2026-07-03
 **Source:** brainstorm #20 (display testing strategy)
+
+> **Completion note (2026-07-03):** the WP's single issue #153 closed 2026-06-30;
+> the Floki assertion layer is in place. Follow-on #165 (SVG snapshot suite) was
+> explicitly out of scope here and now lives in the cross-cutting threads table.
 
 Establish the Floki-based SVG assertion layer so that role-gated rendering and
 fog-of-war correctness can be verified automatically rather than via visual review.

@@ -14,19 +14,19 @@ is resolved.
 
 | Context | Module namespace | BCG dimension | Owns |
 |---|---|---|---|
-| Scene | `Gibbering.Engine.*` | Behavioral | Scene state, turn order, entity positions |
-| Rules Engine | `Gibbering.Ruleset` (port) + `Gibbering.Rulesets.DnD5e.*` | Structural — core | Rule callbacks, modifier pipelines, conditions |
-| Content Catalogue | `Gibbering.Catalogue.*` (+ legacy `Gibbering.Data.*`) | Structural — core | Race, class, spell, monster, appearance reference data |
-| Campaign Lifecycle | `Gibbering.Campaigns`, `Gibbering.Campaign`, `Gibbering.Characters.*`, `Gibbering.CampaignCharacter.*`, `Gibbering.CampaignMember`, `Gibbering.CampaignInvitation.*` | Structural — supporting | Campaign records, membership, character templates |
-| Identity & Authorization | `Gibbering.Accounts.*`, `Gibbering.Admin.*` | Structural — supporting | User accounts, admin credentials, audit log |
-| Observability | `Gibbering.Monitoring.*` | Structural — generic | Metrics snapshots, MetricsStore port, adapters |
-| Web Adapter | `GibberingWeb.*` | Presentational | LiveViews, controllers, SVG pipeline, router |
-| Data Pipeline | `Gibbering.Pipeline.*` | Integration — ingestion | LegalGuard filter, SRD data parsing |
-| Bus | `Gibbering.EventBus.*` | Integration — meta | Event broadcast/subscribe port, adapters |
-| Published Language Registry | `Gibbering.Events.*` | Cross-cutting | Shared event struct contracts (owned by no single context) |
+| Scene | `GibberingTalesWeb.Engine.*` + `GibberingTales.Engine.*` | Behavioral | Scene state, turn order, entity positions |
+| Rules Engine | `GibberingEngine.Ruleset` (port) + `GibberingTales.Rulesets.DnD5e.*` | Structural — core | Rule callbacks, modifier pipelines, conditions |
+| Content Catalogue | `GibberingTales.Catalogue.*` (+ legacy `GibberingTales.Data.*`) | Structural — core | Race, class, spell, monster, appearance reference data |
+| Campaign Lifecycle | `GibberingTales.Campaigns`, `GibberingTales.Campaign`, `GibberingTales.Characters.*`, `GibberingTales.CampaignCharacter.*`, `GibberingTales.CampaignMember`, `GibberingTales.CampaignInvitation.*` | Structural — supporting | Campaign records, membership, character templates |
+| Identity & Authorization | `GibberingTales.Accounts.*`, `GibberingTalesAdmin.Admin.*` | Structural — supporting | User accounts, admin credentials, audit log |
+| Observability | `GibberingEngine.Monitoring.*` (port/NoOp) + `GibberingTalesWeb.Monitoring.*` (Local store) + `GibberingTales.Monitoring.*` (snapshots) | Structural — generic | Metrics snapshots, MetricsStore port, adapters |
+| Web Adapter | `GibberingTalesWeb.*` | Presentational | LiveViews, controllers, SVG pipeline, router |
+| Data Pipeline | `GibberingTales.Pipeline.*` | Integration — ingestion | LegalGuard filter, SRD data parsing |
+| Bus | `GibberingEngine.EventBus.*` | Integration — meta | Event broadcast/subscribe port, adapters |
+| Published Language Registry | `GibberingEngine.Events.*` + `GibberingTales.Events.*` | Cross-cutting | Shared event struct contracts (owned by no single context) |
 
-**Notification** (`Gibbering.Events.Notification.*`) is a sub-namespace of the Published Language
-Registry. A thin `Gibbering.Notification` module (no implementation yet) is planned to encapsulate
+**Notification** (`GibberingTales.Events.Notification.*`) is a sub-namespace of the Published Language
+Registry. A thin `GibberingTales.Notification` module (no implementation yet) is planned to encapsulate
 direct `Phoenix.PubSub` calls scattered in the scene and web layers.
 
 ---
@@ -44,7 +44,7 @@ Every edge in the bounded context graph must have an integration pattern. Patter
 | Web Adapter | Campaign Lifecycle | query | Customer-Supplier | C | `Campaigns.*`, `Characters.*`, `CampaignInvitations.*` |
 | Web Adapter | Identity | query | Conformist | C | `Accounts.*` — web layer accepts identity model as-is |
 | Web Adapter | Content Catalogue | query | Customer-Supplier | C | `Catalogue.*` for race/class/spell lookups in lobby |
-| Scene | Rules Engine | call | Customer-Supplier | C | `SceneServer` calls `state.ruleset.callback(...)` via `Gibbering.Ruleset` behaviour |
+| Scene | Rules Engine | call | Customer-Supplier | C | `SceneServer` calls `state.ruleset.callback(...)` via `GibberingEngine.Ruleset` behaviour |
 | Campaign Lifecycle | Identity | query | Conformist | C | Campaign membership links `Accounts.User` without translation |
 | Observability | Bus | subscribe | Published Language | E | Target: subscribe to scene events for metrics (see violations) |
 | Data Pipeline | Content Catalogue | write | Conformist | C | Pipeline writes to Catalogue-owned DB tables; see note below |
@@ -55,7 +55,7 @@ access. This is a soft violation — acceptable while the ingestion path is inte
 but must be formalized before any external data source integration.
 
 **Bus key:**
-- **E** — event bus (`Gibbering.EventBus` → `Phoenix.PubSub`); fan-out ≥ 0, asynchronous.
+- **E** — event bus (`GibberingEngine.EventBus` → `Phoenix.PubSub`); fan-out ≥ 0, asynchronous.
 - **C** — command bus (direct `GenServer.call` or synchronous function call); fan-out = 1.
 
 ---
@@ -68,45 +68,45 @@ All event-typed edges (E) enumerate the exact topics, publishers, and event stru
 
 | Publisher | Event type | Struct |
 |---|---|---|
-| `Engine.SceneServer` | Entity moved | `Gibbering.Events.Engine.EntityMoved` |
-| `Engine.SceneServer` | Turn advanced | `Gibbering.Events.Engine.TurnAdvanced` |
-| `Engine.SceneServer` | Attack resolved | `Gibbering.Events.DnD5e.AttackResolved` |
-| `Engine.SceneServer` | Damage dealt | `Gibbering.Events.DnD5e.DamageDealt` |
-| `Engine.SceneServer` | Entity died | `Gibbering.Events.Engine.EntityDied` |
-| `Engine.SceneServer` | Condition applied | `Gibbering.Events.DnD5e.ConditionApplied` |
-| `Engine.SceneServer` | Condition removed | `Gibbering.Events.DnD5e.ConditionRemoved` |
-| `Engine.SceneServer` | Session started | `Gibbering.Events.Engine.SessionStarted` |
-| `Engine.SceneServer` | Session ended | `Gibbering.Events.Engine.SessionEnded` |
-| `Engine.SceneServer` | DM override applied | `Gibbering.Events.Engine.DmOverrideApplied` |
-| `Engine.SceneServer` | Spell cast | `Gibbering.Events.DnD5e.SpellCast` |
+| `Engine.SceneServer` | Entity moved | `GibberingEngine.Events.EntityMoved` |
+| `Engine.SceneServer` | Turn advanced | `GibberingEngine.Events.TurnAdvanced` |
+| `Engine.SceneServer` | Attack resolved | `GibberingTales.Events.DnD5e.AttackResolved` |
+| `Engine.SceneServer` | Damage dealt | `GibberingTales.Events.DnD5e.DamageDealt` |
+| `Engine.SceneServer` | Entity died | `GibberingEngine.Events.EntityDied` |
+| `Engine.SceneServer` | Condition applied | `GibberingTales.Events.DnD5e.ConditionApplied` |
+| `Engine.SceneServer` | Condition removed | `GibberingTales.Events.DnD5e.ConditionRemoved` |
+| `Engine.SceneServer` | Session started | `GibberingEngine.Events.SessionStarted` |
+| `Engine.SceneServer` | Session ended | `GibberingEngine.Events.SessionEnded` |
+| `Engine.SceneServer` | DM override applied | `GibberingEngine.Events.DmOverrideApplied` |
+| `Engine.SceneServer` | Spell cast | `GibberingTales.Events.DnD5e.SpellCast` |
 
-All are wrapped in `%Gibbering.Events.EventBatch{}` before broadcast.
+All are wrapped in `%GibberingEngine.Events.EventBatch{}` before broadcast.
 
 **Subscribers on `"game:#{id}"`:**
-- `GibberingWeb.GameLive` — projects events into socket assigns for rendering
+- `GibberingTalesWeb.GameLive` — projects events into socket assigns for rendering
 
 ### `"game:#{id}:user:#{uid}"` — Per-user notifications
 
 | Publisher | Event type | Struct |
 |---|---|---|
-| `Engine.SceneServer` | DM broadcast to all | `Gibbering.Events.Notification.BroadcastSent` |
-| `Engine.SceneServer` | Whisper to one player | `Gibbering.Events.Notification.WhisperDelivered` |
+| `Engine.SceneServer` | DM broadcast to all | `GibberingTales.Events.Notification.BroadcastSent` |
+| `Engine.SceneServer` | Whisper to one player | `GibberingTales.Events.Notification.WhisperDelivered` |
 
 Wrapped in `%EventBatch{}`.
 
 **Subscribers on `"game:#{id}:user:#{uid}"`:**
-- `GibberingWeb.GameLive` (each player's socket, per-session)
+- `GibberingTalesWeb.GameLive` (each player's socket, per-session)
 
 ### `"lobby:#{id}"` — UI coordination (intra-web)
 
 | Publisher | Message | Notes |
 |---|---|---|
-| `GibberingWeb.LobbyLive` | `:refresh` | Fan-out to all lobby tabs; no typed event struct |
+| `GibberingTalesWeb.LobbyLive` | `:refresh` | Fan-out to all lobby tabs; no typed event struct |
 
 **Subscribers:** other `LobbyLive` sockets for the same campaign.
 
 This is intra-web coordination; it does not cross a bounded context boundary. No Published Language
-struct is required as long as the publisher and all subscribers remain inside `GibberingWeb.*`.
+struct is required as long as the publisher and all subscribers remain inside `GibberingTalesWeb.*`.
 
 ### `"system:admin"` — Observability metrics
 
@@ -114,7 +114,7 @@ struct is required as long as the publisher and all subscribers remain inside `G
 |---|---|---|
 | `Monitoring.Stores.Local` | raw metrics map | No typed struct yet — see #68, #69 |
 
-**Subscribers:** `GibberingWeb.Live.Admin.CampaignMonitoringPage`
+**Subscribers:** `GibberingTalesAdmin.Admin.CampaignMonitoringPage`
 
 ---
 
@@ -125,8 +125,8 @@ insulate its own internal model from upstream vocabulary changes.
 
 | Consumer | Upstream | ACL status | Notes |
 |---|---|---|---|
-| `GibberingWeb.GameLive` | `Gibbering.Events.Engine.*` | Informal | `handle_info(%EventBatch{events: e}, socket)` projects events into assigns. Not yet a standalone projection module — see #113 |
-| `GibberingWeb.Live.Admin.CampaignMonitoringPage` | `"system:admin"` metrics | None | Receives raw maps; no translation layer. Low risk while this is an internal admin page only |
+| `GibberingTalesWeb.GameLive` | `GibberingEngine.Events.*` | Informal | `handle_info(%EventBatch{events: e}, socket)` projects events into assigns. Not yet a standalone projection module — see #113 |
+| `GibberingTalesAdmin.Admin.CampaignMonitoringPage` | `"system:admin"` metrics | None | Receives raw maps; no translation layer. Low risk while this is an internal admin page only |
 
 When #113 (CQRS read model formalization) is implemented, each event subscriber should have an
 explicit projection module as its ACL boundary. That module owns the translation from Published
@@ -139,7 +139,7 @@ Language structs to the consumer context's internal view model.
 | Caller | Callee | Type | Tracking |
 |---|---|---|---|
 | `Monitoring.Stores.Local` | `Engine.SceneServer.get_state/1` | Command bus — Observability calling Scene directly | #114 |
-| `GibberingWeb.Live.Admin.CampaignMonitoringPage` | `Engine.SceneServer.get_state/1` | Command bus — Web Adapter calling Scene directly for read | #114 |
+| `GibberingTalesAdmin.Admin.CampaignMonitoringPage` | `Engine.SceneServer.get_state/1` | Command bus — Web Adapter calling Scene directly for read | #114 |
 
 **Enforcement rule:** No bounded context may import or call another context's internal modules.
 All cross-context interaction must go through a named seam from the table above (C or E). A
@@ -157,7 +157,7 @@ When this document must change:
 | New bounded context added | Add row to Context Inventory; add all its seams to the Seam Table |
 | New cross-context seam added | Add row to Seam Table; if event-typed, add to the relevant PL Seams section |
 | Seam pattern changes (e.g. Conformist → Customer-Supplier after ACL inserted) | Update Seam Table pattern label; add a one-line note explaining when and why |
-| New event struct added to `Gibbering.Events.*` | Add row to the relevant PL Seams topic table |
+| New event struct added to `GibberingEngine.Events.*` / `GibberingTales.Events.*` | Add row to the relevant PL Seams topic table |
 | Known violation fixed | Remove from violations table; update the relevant seam row if the pattern changed |
 | New violation introduced | Add to violations table with tracking issue |
 
