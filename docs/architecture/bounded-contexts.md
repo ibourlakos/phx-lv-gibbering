@@ -2,7 +2,7 @@
 
 > **See also:** [context-map.md](context-map.md) — integration patterns at each seam (relationships, published language, violations).
 
-> **Phase 2 note:** This document reflects current module namespaces (all under `Gibbering.*` / `GibberingTalesWeb.*`). After the umbrella conversion (engine decomposition Phase 2), namespaces will become `GibberingEngine.*`, `GibberingTales.*`, `GibberingTalesWeb.*`, and `GibberingTalesAdmin.*`. This file will be updated at that point. See [engine-decomposition.md](engine-decomposition.md) for the planned structure.
+> **Phase 2 note:** Updated 2026-07-03 for the post-umbrella namespaces (`GibberingEngine.*`, `GibberingTales.*`, `GibberingTalesWeb.*`, `GibberingTalesAdmin.*`). See [engine-decomposition.md](engine-decomposition.md) for the conversion history and the pre-umbrella names.
 
 The module structure follows the polytope bounded context decomposition from
 [docs/papers/polytope-architecture.md](../papers/polytope-architecture.md). Each bounded
