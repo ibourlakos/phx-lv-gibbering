@@ -70,6 +70,7 @@ Issues with no WP home — standalone bugs, deferred discoveries, independent op
 | [#175](../issues/175-campaign-join-endpoint-robustness.md) | Campaign join endpoint robustness | Standalone bug; pick up any time |
 | [#176](../issues/176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` atom safety | Standalone bug; pick up any time |
 | [#177](../issues/177-test-compile-warnings-cleanup.md) | Test-compile warnings cleanup | Ops — trivial; includes precommit-gate decision |
+| [#178](../issues/178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken post-umbrella | Standalone bug; pick up any time |
 
 ---
 
