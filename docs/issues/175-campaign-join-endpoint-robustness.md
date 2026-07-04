@@ -1,6 +1,7 @@
 # #175 · Campaign join endpoint: malformed id crashes, missing campaign reports success
-**Status:** open
+**Status:** closed
 **Opened:** 2026-07-03
+**Closed:** 2026-07-04
 **Priority:** low
 **Tags:** bug, ui
 
@@ -13,8 +14,8 @@
    discarded — the user sees the "You joined the campaign." flash either way.
 
 **Acceptance criteria**
-- [ ] Non-numeric campaign id → flash error + redirect (no 500)
-- [ ] Nonexistent campaign id → flash error + redirect (no 500, no false success)
-- [ ] `join_campaign/2` returns `{:ok, _} | {:error, _}` and the controller branches on it
-- [ ] Controller tests cover both failure paths
-- [ ] `mix precommit` passes
+- [x] Non-numeric campaign id → flash error + redirect (no 500)
+- [x] Nonexistent campaign id → flash error + redirect (no 500, no false success)
+- [x] `join_campaign/2` returns `{:ok, _} | {:error, _}` and the controller branches on it
+- [x] Controller tests cover both failure paths
+- [x] `mix precommit` passes

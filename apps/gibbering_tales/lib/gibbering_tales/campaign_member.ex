@@ -13,5 +13,6 @@ defmodule GibberingTales.CampaignMember do
     |> cast(attrs, [:campaign_id, :user_id])
     |> validate_required([:campaign_id, :user_id])
     |> unique_constraint([:campaign_id, :user_id])
+    |> foreign_key_constraint(:campaign_id)
   end
 end
