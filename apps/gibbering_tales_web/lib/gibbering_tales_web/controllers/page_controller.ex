@@ -30,16 +30,31 @@ defmodule GibberingTalesWeb.PageController do
   def join(conn, %{"campaign_id" => campaign_id}) do
     user = conn.assigns.current_user
 
-    if user do
-      Campaigns.join_campaign(String.to_integer(campaign_id), user.id)
+    cond do
+      is_nil(user) ->
+        conn
+        |> put_flash(:error, "You must be logged in to join a campaign.")
+        |> redirect(to: "/login")
 
-      conn
-      |> put_flash(:info, "You joined the campaign.")
-      |> redirect(to: "/")
-    else
-      conn
-      |> put_flash(:error, "You must be logged in to join a campaign.")
-      |> redirect(to: "/login")
+      match?({_, ""}, Integer.parse(campaign_id)) ->
+        {id, ""} = Integer.parse(campaign_id)
+
+        case Campaigns.join_campaign(id, user.id) do
+          {:ok, _member} ->
+            conn
+            |> put_flash(:info, "You joined the campaign.")
+            |> redirect(to: "/")
+
+          {:error, _changeset} ->
+            conn
+            |> put_flash(:error, "Could not join that campaign.")
+            |> redirect(to: "/")
+        end
+
+      true ->
+        conn
+        |> put_flash(:error, "Could not join that campaign.")
+        |> redirect(to: "/")
     end
   end
 end
