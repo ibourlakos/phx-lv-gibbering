@@ -50,7 +50,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#175](175-campaign-join-endpoint-robustness.md) | Campaign join endpoint: malformed id crashes, missing campaign reports success | `bug` `ui` | low |
 | [#176](176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` leaks atoms on unknown input | `bug` `architecture` | low |
 | [#177](177-test-compile-warnings-cleanup.md) | Test-compile warnings: unused default args in chest fixtures | `ops` | low |
-| [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` | low |
 
 ---
 
@@ -95,6 +94,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` |
 | [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` |
 | [#173](173-gamelive-hud-extraction.md) | GameLive HUD extraction — render from `%HUD{}` instead of raw Engine.State | `architecture` `ui` `rendering` |
 | [#172](172-hud-struct-design.md) | HUD struct design — `%GibberingEngine.HUD{}` and computation site decision | `architecture` `discovery` `rendering` `ui` |
