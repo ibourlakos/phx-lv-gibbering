@@ -48,7 +48,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#165](165-svg-snapshot-test-suite.md) | SVG snapshot test suite for SpriteCompositor — reference fixtures + approval workflow | `ops` `rendering` | low |
 | [#174](174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | `ops` `architecture` | medium |
 | [#177](177-test-compile-warnings-cleanup.md) | Test-compile warnings: unused default args in chest fixtures | `ops` | low |
-| [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` | low |
 
 ---
 
@@ -93,6 +92,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` |
 | [#176](176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` leaks atoms on unknown input | `bug` `architecture` |
 | [#175](175-campaign-join-endpoint-robustness.md) | Campaign join endpoint: malformed id crashes, missing campaign reports success | `bug` `ui` |
 | [#123](123-projection-behaviour-modules.md) | `Projection` behaviour: Isometric + TopDown modules, renderer audit | `architecture` `rendering` |
