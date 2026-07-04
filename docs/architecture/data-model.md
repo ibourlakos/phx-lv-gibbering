@@ -36,7 +36,8 @@ Managed by `GibberingTales.GameMap`. One row per map (Phase 1: one map per campa
 
 Associations: `belongs_to :campaign, Campaign` · `has_many :tiles, GridTile, foreign_key: :map_id`
 
-`z_extent` is reserved for a future vertical axis (not yet in schema).
+`z_extent` is reserved for a future vertical axis (not yet in schema). See #158 (elevation model) —
+formalizes the integer Z axis and render-sort formula this column will eventually back.
 
 ---
 
@@ -176,7 +177,7 @@ Managed by `GibberingTales.GridTile`. One row per tile cell.
 | `decoration` | string | nullable — `"dead_tree"` \| `"rock_cluster"` \| `"bones"` \| `"grass_tuft"` |
 | `map_id` | integer FK → maps | cascade delete |
 
-No timestamps (bulk-inserted via `Repo.insert_all`). See issue #130 for the planned migration from `walkable` to a JSONB `movement` map for multi-mode movement (walk/climb/swim/fly).
+No timestamps (bulk-inserted via `Repo.insert_all`). See issue #130 for the planned migration from `walkable` to a JSONB `movement` map for multi-mode movement (walk/climb/swim/fly), and #157 for the traversability function that will consume it.
 
 ---
 
@@ -242,7 +243,7 @@ Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not 
 | `x_extent` | integer | tile columns (world-x axis) |
 | `y_extent` | integer | tile rows (world-y axis) |
 | `tile_size` | integer | pixels per tile |
-| `grid_tiles` | `%{{x,y} => tile_map}` | keyed by `{x, y}` integer tuples |
+| `grid_tiles` | `%{{x,y} => tile_map}` | keyed by `{x, y}` integer tuples — issue #156 formalizes this as one plane of a `{x, y, elevation}` game-grid coordinate model |
 | `entities` | `%{id => entity_map}` | keyed by entity DB id |
 | `selected_id` | integer \| nil | currently selected entity |
 | `valid_moves` | `[{x, y}]` | pre-computed move options for selected entity |
@@ -257,6 +258,7 @@ Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not 
 | `previous_phase` | `scene_phase() \| nil` | restored on `:paused → <previous>` transition |
 | `active_effects` | `[active_effect()]` | scene-level effects registry — all conditions, buffs, ability states |
 | `event_log` | `[event()]` | append-only; structural dependency for predicate evaluation |
+| `edges` | `%{{x, y, direction} => %{type: :wall \| :door, open: bool}}` | issue #156 — wall/door model, keyed by normalised edge address |
 
 #### Runtime tile map shape
 
@@ -586,3 +588,6 @@ Static reference data (pure Elixir modules, no DB, no process):
 | [#46](issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
 | [#47](issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
 | [#48](issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |
+| [#156](issues/156-coordinate-model-formalization.md) | No formal coordinate model — `{x, y}` tuples used ad hoc across `grid_tiles`, `entities`, and `State`; no `elevation` axis, no edge/wall model, no shared `Coords` module |
+| [#157](issues/157-tile-occupancy-model.md) | No tile occupancy taxonomy or computed traversability function — `grid_tiles.walkable` is a single boolean |
+| [#158](issues/158-elevation-model.md) | No elevation axis on entities or tiles; `maps.z_extent` reserved but unused; no `iso_project` elevation term |
