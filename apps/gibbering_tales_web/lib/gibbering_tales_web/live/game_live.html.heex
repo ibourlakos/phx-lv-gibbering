@@ -9,13 +9,16 @@ active_id = GibberingTalesWeb.Engine.State.active_hero_id(state)
 active_entity = active_id && state.actors[active_id]
 
 iso = GibberingEngine.Projection.Isometric
+coords = GibberingEngine.Coords
+project_opts = %{map_w: map_w, map_h: map_h}
+to_screen = fn x, y -> coords.iso_project(x, y, 0, project_opts) end
 
 svg_w = iso.svg_width(map_w, map_h)
 svg_h = iso.svg_height(map_w, map_h)
 
 {center_sx, center_sy} =
   if active_entity,
-    do: iso.to_screen(active_entity.x, active_entity.y, map_w, map_h),
+    do: to_screen.(active_entity.x, active_entity.y),
     else: {div(svg_w, 2), div(svg_h, 2)}
 
 sorted_tiles = Enum.sort_by(state.grid_tiles, fn {{gx, gy}, _} -> iso.depth_key(gx, gy) end)
@@ -288,7 +291,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
   >
     <%!-- Layer 1: Ground tiles — clickable to inspect when no entity/overlay is on top --%>
     <%= for {{x, y}, tile} <- state.grid_tiles do %>
-      <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+      <% {sx, sy} = to_screen.(x, y) %>
       {Phoenix.HTML.raw(
         GibberingTalesWeb.TileRenderer.render_tile(
           tile,
@@ -303,7 +306,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
     <%!-- Layer 2: Tile decorations (depth-sorted) --%>
     <%= for {{x, y}, tile} <- sorted_tiles do %>
       <%= if dec = Map.get(tile, :decoration) do %>
-        <% {sx, sy} = iso.to_screen(x, y, map_w, map_h) %>
+        <% {sx, sy} = to_screen.(x, y) %>
         <% {dx, dy} = iso.sprite_pos(sx, sy) %>
         <.decoration_sprite decoration={dec} x={dx} y={dy} />
       <% end %>
@@ -322,7 +325,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
       <% is_selected = id == state.actor_id %>
       <% is_target = Enum.any?(@hud.overlays, &(&1.kind == :attack_target and &1.entity_id == id)) %>
       <% is_spell_target = id in @spell_targets %>
-      <% {sx, sy} = iso.to_screen(entity.x, entity.y, map_w, map_h) %>
+      <% {sx, sy} = to_screen.(entity.x, entity.y) %>
       <% {ix, iy} = iso.sprite_pos(sx, sy) %>
 
       <g
@@ -443,7 +446,7 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
       conflict with entity click targets.
     --%>
     <%= for overlay <- @hud.overlays, overlay.kind in [:move_normal, :move_difficult] do %>
-      <% {sx, sy} = iso.to_screen(overlay.x, overlay.y, map_w, map_h) %>
+      <% {sx, sy} = to_screen.(overlay.x, overlay.y) %>
       <% {fill, stroke} =
         case overlay.kind do
           :move_difficult -> {"rgba(251,191,36,0.35)", "#fbbf24"}

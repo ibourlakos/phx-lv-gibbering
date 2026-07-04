@@ -4,6 +4,7 @@ defmodule GibberingTalesWeb.Engine.State do
   # dnd5e.ex and state.ex are recompiled together; suppress cross-file undefined warning
   @compile {:no_warn_undefined, GibberingTales.Rulesets.DnD5e}
 
+  alias GibberingEngine.Coords
   alias GibberingTales.Campaign
   alias GibberingTales.Rulesets.DnD5e.{RulesetState, Stats}
 
@@ -18,6 +19,8 @@ defmodule GibberingTalesWeb.Engine.State do
     :tile_size,
     # %{{x, y} => %{texture: string, movement: map, decoration: string | nil}}
     :grid_tiles,
+    # %{{x, y, :south | :east} => %{type: :wall | :door, open: bool}} — see GibberingEngine.Coords
+    :edges,
     # %{id => %{name, type, sprite, x, y, hp, max_hp, tags, stats}}
     :actors,
     # integer | nil
@@ -105,6 +108,7 @@ defmodule GibberingTalesWeb.Engine.State do
       y_extent: map.y_extent,
       tile_size: map.tile_size,
       grid_tiles: tiles,
+      edges: Coords.decode_edges(map.edges || %{}),
       actors: entities,
       actor_id: nil,
       valid_moves: [],

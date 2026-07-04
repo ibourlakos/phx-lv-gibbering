@@ -688,6 +688,15 @@ tiles2 =
     }
   end
 
+# A stone door gates the west chamber's entrance into the open corridor —
+# closed by default; players interact with it to reveal the guarded crossing.
+# Key format matches GibberingEngine.Coords.edge_key/3: "x,y,south|east".
+Repo.update!(
+  GameMap.changeset(map2, %{
+    edges: %{"4,6,east" => %{"type" => "door", "open" => false}}
+  })
+)
+
 Repo.insert_all(GridTile, tiles2)
 
 # ── Heroes ──────────────────────────────────────────────────────────────────

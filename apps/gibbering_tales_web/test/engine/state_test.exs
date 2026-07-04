@@ -116,7 +116,8 @@ defmodule GibberingTalesWeb.Engine.StateTest do
           x_extent: 2,
           y_extent: 1,
           tile_size: 32,
-          tiles: tiles
+          tiles: tiles,
+          edges: %{"1,0,east" => %{"type" => "wall", "open" => false}}
         },
         entities: entities
       }
@@ -126,6 +127,8 @@ defmodule GibberingTalesWeb.Engine.StateTest do
       assert state.map_id == 1
       assert state.x_extent == 2
       assert state.y_extent == 1
+
+      assert state.edges == %{{1, 0, :east} => %{type: :wall, open: false}}
 
       assert state.grid_tiles[{0, 0}] == %{
                texture: "grass",
