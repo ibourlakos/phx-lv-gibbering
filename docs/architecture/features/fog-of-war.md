@@ -24,7 +24,7 @@ geometry, and the engine must not hardcode D&D vision rules.
   — determines whether darkness, magical darkness, or concealment applies. The engine passes
   this type to the LOS calculation to decide whether blocked-by-darkness tiles count.
 
-See [ruleset-behaviour.md](../ruleset-behaviour.md) for the full `Gibbering.Ruleset` callback list.
+See [ruleset-behaviour.md](../ruleset-behaviour.md) for the full `GibberingEngine.Ruleset` callback list.
 
 ## Why not ruleset-owned `visible_tiles/2`?
 
@@ -37,7 +37,7 @@ Rules Engine context must not reach into the Scene context's data model.
 When fog of war is first implemented, follow this model:
 1. Add `blocks_sight: boolean` to the tile struct (engine data, no ruleset involvement)
 2. Implement `Engine.Rules.line_of_sight?/3` as a geometric ray-cast
-3. Add `vision_range/1` and `vision_type/1` to `Gibbering.Ruleset` with D&D 5e defaults
+3. Add `vision_range/1` and `vision_type/1` to `GibberingEngine.Ruleset` with D&D 5e defaults
 4. Compute `visible_tiles` inside `SceneServer` after each command; store in `Engine.State`
 5. `GameLive` reads `state_snapshot.visible_tiles` and applies the SVG mask — no extra
    subscriptions, no separate calculation in the web layer

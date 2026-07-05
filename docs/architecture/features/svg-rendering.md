@@ -2,7 +2,7 @@
 
 ## Projection
 
-The game uses **2:1 dimetric isometric** projection (the same camera angle as Don't Starve Together). All coordinate math lives in `GibberingWeb.IsoProjection` as pure functions.
+The game uses **2:1 dimetric isometric** projection (the same camera angle as Don't Starve Together). All coordinate math lives in `GibberingEngine.Projection.Isometric` as pure functions.
 
 Grid `(x, y)` → screen `(sx, sy)` with origin offset:
 ```
@@ -27,11 +27,11 @@ Each tile is a diamond `<polygon>` (4 points: top / right / bottom / left). Enti
 
 ## Sprite strategy
 
-Sprites are **inline SVG paths** defined as public function components in `GibberingWeb.GameLive`, dispatched by `entity.sprite` (string key). Being public allows the lobby card preview to reuse them. Current sprite keys follow the `"{race}_{class}"` convention for player characters (e.g. `"elf_wizard"`, `"gnome_rogue"`); NPCs and objects use freeform keys (`"rock"`).
+Sprites are **inline SVG paths** defined as public function components in `GibberingTalesWeb.GameLive`, dispatched by `entity.sprite` (string key). Being public allows the lobby card preview to reuse them. Current sprite keys follow the `"{race}_{class}"` convention for player characters (e.g. `"elf_wizard"`, `"gnome_rogue"`); NPCs and objects use freeform keys (`"rock"`).
 
 No raster files — no asset pipeline, no LFS, no license risk at this stage. The entity's `sprite` field is the hook point for future raster sprites (`<image href="/images/sprites/<key>.png">`).
 
-> **TODO (see #19):** sprite components should be extracted to a dedicated `GibberingWeb.Components.EntitySprites` module rather than living in a LiveView.
+> **TODO (see #19):** sprite components should be extracted to a dedicated `GibberingTalesWeb.Components.EntitySprites` module rather than living in a LiveView.
 
 Key CSS: `image-rendering: pixelated` on the root `<svg>` for crisp scaling when raster sprites arrive.
 

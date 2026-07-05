@@ -4,7 +4,7 @@
 / (home)  →  /lobby/:id  →  /game/:id
 ```
 
-The lobby (`GibberingWeb.LobbyLive`) is a LiveView where players claim character slots before the game starts:
+The lobby (`GibberingTalesWeb.LobbyLive`) is a LiveView where players claim character slots before the game starts:
 
 1. Each browser session gets a player identity (currently derived from the session CSRF token — see #18 for the known limitation).
 2. A player clicks **Play as [name]** to claim a hero entity slot.

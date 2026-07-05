@@ -1,0 +1,43 @@
+defmodule GibberingEngine.Events.PhaseTransitioned do
+  @moduledoc """
+  Layer: engine (generic — no D&D concepts).
+  Emitted by: SceneServer, when the scene transitions between phases.
+  Signals: the scene has moved from from_phase to to_phase (e.g. :lobby → :active, :active → :ended).
+  """
+
+  @current_version 1
+
+  @behaviour GibberingEngine.Events.Upcaster
+
+  @type t :: %__MODULE__{
+          event_id: String.t(),
+          event_type: atom(),
+          schema_version: pos_integer(),
+          occurred_at: DateTime.t(),
+          correlation_id: String.t(),
+          causation_id: String.t(),
+          sequence_number: non_neg_integer(),
+          visibility: :public | :dm_only | :revealed,
+          from_phase: atom(),
+          to_phase: atom()
+        }
+
+  defstruct [
+    :event_id,
+    :occurred_at,
+    :correlation_id,
+    :causation_id,
+    :sequence_number,
+    :from_phase,
+    :to_phase,
+    event_type: :phase_transitioned,
+    schema_version: @current_version,
+    visibility: :public
+  ]
+
+  @impl GibberingEngine.Events.Upcaster
+  def current_version, do: @current_version
+
+  @impl GibberingEngine.Events.Upcaster
+  def upcast(_from_version, raw_map), do: raw_map
+end

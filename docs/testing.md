@@ -6,33 +6,67 @@ This document explains the testing strategy for the Gibbering Engine: what to te
 
 ## The mental model
 
-The hardest part of testing a game engine isn't the code — it's knowing *what* to prove. The rule: **test behavior, not implementation**. Don't test that a particular line ran; test that the game did the right thing.
+The hardest part of testing a game engine isn't the code — it's knowing *what to prove*. The rule: **test behavior, not implementation**. Don't test that a particular line ran; test that the game did the right thing.
 
-For this project the boundary is especially clear: the engine (`Rules`, `State`) is pure Elixir data — no I/O, no processes — which means it can be tested like arithmetic. Only the outer layers (`GameServer`, `GameLive`) touch the DB or start processes.
+The boundary is especially clear: the engine (`Rules`, `State`) is pure Elixir data — no I/O, no processes — which means it can be tested like arithmetic. Only the outer layers (`SceneServer`, `GameLive`) touch the DB or start processes.
+
+---
+
+## Umbrella layout
+
+Tests live in the app they belong to:
+
+| App | Test root | What lives here |
+|---|---|---|
+| `apps/gibbering_engine/` | `test/` | Layer 1: pure `Rules`, `State`, `Pipeline` logic |
+| `apps/gibbering_tales/` | `test/` | Domain context tests: Accounts, Campaigns, Catalogue, Inventory |
+| `apps/gibbering_tales_web/` | `test/` | Layer 2: `SceneServer`; Layer 3: LiveView, controller, SVG |
+| `apps/gibbering_tales_admin/` | `test/` | Admin controllers, plugs, admin context |
+
+Run all apps from the umbrella root:
+
+```bash
+docker compose exec app mix test
+```
+
+Run a single app:
+
+```bash
+docker compose exec app mix test --app gibbering_engine
+docker compose exec app mix test --app gibbering_tales_web
+```
+
+Run a specific file or line:
+
+```bash
+docker compose exec app mix test apps/gibbering_tales_web/test/engine/scene_server_test.exs
+docker compose exec app mix test apps/gibbering_tales_web/test/engine/scene_server_test.exs:42
+```
 
 ---
 
 ## The three layers
 
 ```
-Layer 1 · Pure logic   ──  Rules, State, Parser, LegalGuard
-Layer 2 · GenServer    ──  GameServer (DB-backed, process lifecycle)
-Layer 3 · LiveView     ──  GameLive (full HTTP + WebSocket stack)
+Layer 1 · Pure logic   ──  Rules, State, Parser, LegalGuard       (gibbering_engine)
+Layer 2 · GenServer    ──  SceneServer (DB-backed, process)        (gibbering_tales_web)
+Layer 3 · LiveView     ──  GameLive, admin controllers             (gibbering_tales_web / gibbering_tales_admin)
 ```
 
-Start every new feature at Layer 1. Only add Layer 2/3 tests when you specifically need to prove that processes or the web layer behave correctly.
+Start every new feature at Layer 1. Only add Layer 2/3 tests when you specifically need to prove processes or the web layer behave correctly.
 
 ---
 
 ## Layer 1: Pure logic
 
-**Files:** `test/engine/rules_test.exs`, `test/engine/state_test.exs`
+**App:** `gibbering_engine`  
+**Files:** `apps/gibbering_engine/test/engine/rules_test.exs`, `state_test.exs`
 
 No DB. No process. No setup. Just call functions.
 
 ```elixir
-use ExUnit.Case, async: true   # safe to parallelize
-import Gibbering.GameFixtures  # build_state/1, with_entity/3, with_tile/3
+use ExUnit.Case, async: true   # always safe to parallelize at this layer
+import GibberingTalesWeb.EngineFixtures  # build_state/1, with_entity/3, with_tile/3
 ```
 
 ### How to build test state
@@ -49,10 +83,12 @@ state = with_entity(state, monster_id(), hp: 1, tags: ["destructible"])
 state = with_tile(state, {2, 1}, walkable: false)
 ```
 
+These helpers live in `apps/gibbering_tales_web/test/support/engine_fixtures.ex` (`GibberingTalesWeb.EngineFixtures`). They are in `gibbering_tales_web` rather than `gibbering_engine` because they depend on `GibberingTalesWeb.Engine.State` and `GibberingTales.Rulesets.*`, which belong to higher-level apps.
+
 ### What to test here
 
 - Every branching condition in `Rules` — reachability, adjacency, obstruction, destruction.
-- Every `State` transform — `advance_turn/1`, `from_campaign/1`, `active_hero_id/1`.
+- Every `State` transform — `advance_turn/1`, `from_campaign/2`, `active_hero_id/1`.
 - Edge cases: empty turn order, single-tile map, zero hp, no valid moves.
 
 ### What NOT to test here
@@ -63,31 +99,31 @@ state = with_tile(state, {2, 1}, walkable: false)
 
 ---
 
-## Layer 2: GenServer (GameServer)
+## Layer 2: GenServer (SceneServer)
 
-**File:** `test/engine/game_server_test.exs`
+**App:** `gibbering_tales_web`  
+**File:** `apps/gibbering_tales_web/test/engine/scene_server_test.exs`
 
-Tests that prove the `GameServer` API behaves correctly end-to-end, including DB load on init and PubSub broadcasting.
+Tests that prove the `SceneServer` API behaves correctly end-to-end, including DB load on init and PubSub broadcasting.
 
 ```elixir
-use Gibbering.DataCase, async: false   # shared sandbox — other processes can use the connection
+use GibberingTalesWeb.DataCase, async: false   # shared sandbox — SceneServer process needs DB access
+import GibberingTalesWeb.EngineFixtures
 ```
 
 ### Setup pattern
 
 ```elixir
 defp start_server do
-  game_id = insert_campaign()           # insert Campaign + tiles + entities into sandbox DB
-  start_supervised!({GameServer, game_id})  # supervised by the test; cleaned up automatically
+  game_id = insert_campaign()                   # inserts Campaign + tiles + entities into sandbox DB
+  start_supervised!({SceneServer, game_id})     # supervised by the test; stopped automatically
   game_id
 end
 ```
 
-`insert_campaign/1` (from `GameFixtures`) inserts a minimal campaign with the same layout as `build_state/1`. Use `System.unique_integer` names to keep tests independent.
-
 ### Why `async: false`?
 
-`GameServer.init/1` runs in a spawned process that needs to query the DB. With `async: false` the sandbox runs in *shared mode*, which lets any spawned process use the same checkout without explicit `allow/3` calls.
+`SceneServer.init/1` runs in a spawned process that needs to query the DB. With `async: false` the sandbox runs in *shared mode*, which lets any spawned process use the same checkout without explicit `allow/3` calls.
 
 ### What to test here
 
@@ -105,12 +141,13 @@ end
 
 ## Layer 3: LiveView
 
-**File:** `test/gibbering_web/live/game_live_test.exs`
+**App:** `gibbering_tales_web`  
+**File:** `apps/gibbering_tales_web/test/gibbering_tales_web/live/game_live_test.exs`
 
 Tests that the browser-facing layer renders correctly and wires events to the game.
 
 ```elixir
-use GibberingWeb.ConnCase, async: false
+use GibberingTalesWeb.ConnCase, async: false
 import Phoenix.LiveViewTest
 ```
 
@@ -120,7 +157,7 @@ import Phoenix.LiveViewTest
 {:ok, view, _html} = live(conn, "/game/#{game_id}")
 ```
 
-You drive the view with `element/2` + `render_click/1`:
+Drive the view with `element/2` + `render_click/1`:
 
 ```elixir
 view |> element("[phx-click='select_entity'][phx-value-id='#{hero_id}']") |> render_click()
@@ -130,10 +167,10 @@ assert_move_overlay(html)
 
 ### SVG assertion conventions
 
-Import `GibberingWeb.SVGAssertions` (built on [Floki](https://github.com/philss/floki)) to assert SVG structure via `data-*` attributes rather than fill/stroke colour strings. Colour-based assertions are brittle: a palette tweak breaks every test that matches `fill="#ef4444"`. Data attribute assertions survive visual changes.
+Import `GibberingTalesWeb.SVGAssertions` (built on [Floki](https://github.com/philss/floki)) to assert SVG structure via `data-*` attributes rather than fill/stroke colour strings. Colour-based assertions are brittle: a palette tweak breaks every test that matches `fill="#ef4444"`. Data attribute assertions survive visual changes.
 
 ```elixir
-import GibberingWeb.SVGAssertions
+import GibberingTalesWeb.SVGAssertions
 
 # Entity presence / fog of war
 assert_entity_visible(html, entity_id)
@@ -163,7 +200,7 @@ refute_decoration(html, "bones")
 assert_condition_badge(html, "poisoned")
 ```
 
-Use `=~` only for text content (entity names, log messages, UI labels) — Floki has no `:contains` equivalent and these strings don't risk false-positive colour matches.
+Use `=~` only for text content (entity names, log messages, UI labels).
 
 #### HP bucket labels
 
@@ -207,7 +244,7 @@ assert_hp_exact(render(dm_view), hero_id, 20, 20)
 refute_hp_exact(render(player_view), hero_id)
 ```
 
-Both views share the same `SceneServer` process. State changes (HP adjust, toggle visibility) made via one view are reflected in the other on next `render/1` call.
+Both views share the same `SceneServer` process. State changes made via one view are reflected in the other on the next `render/1` call.
 
 ### What to test here
 
@@ -224,6 +261,22 @@ Both views share the same `SceneServer` process. State changes (HP adjust, toggl
 
 ---
 
+## Test support modules
+
+| Module | Location | What it provides |
+|---|---|---|
+| `GibberingTalesWeb.EngineFixtures` | `apps/gibbering_tales_web/test/support/engine_fixtures.ex` | `build_state/1`, `hero_id/0`, `monster_id/0`, `with_entity/3`, `with_tile/3`, `insert_campaign/0` |
+| `GibberingTalesWeb.ConnCase` | `apps/gibbering_tales_web/test/support/conn_case.ex` | `@endpoint`, `log_in_user/2`, sandbox setup |
+| `GibberingTalesWeb.DataCase` | `apps/gibbering_tales_web/test/support/data_case.ex` | Repo sandbox for `GibberingTales.Repo` |
+| `GibberingTalesWeb.SVGAssertions` | `apps/gibbering_tales_web/test/support/svg_assertions.ex` | Floki-based SVG helpers |
+| `GibberingTales.DataCase` | `apps/gibbering_tales/test/support/data_case.ex` | Repo sandbox for domain schemas |
+| `GibberingTales.AccountsFixtures` | `apps/gibbering_tales/test/support/accounts_fixtures.ex` | `register_user/0`, `user_fixture/1` |
+| `GibberingTales.GameFixtures` | `apps/gibbering_tales/test/support/game_fixtures.ex` | `insert_campaign/1` for domain-layer tests |
+| `GibberingTalesAdmin.ConnCase` | `apps/gibbering_tales_admin/test/support/conn_case.ex` | Admin endpoint, `log_in_support_user/2` |
+| `GibberingTalesAdmin.DataCase` | `apps/gibbering_tales_admin/test/support/data_case.ex` | Sandbox for both `GibberingTalesAdmin.Repo` and `GibberingTales.Repo` |
+
+---
+
 ## Running tests
 
 All commands go through Docker:
@@ -232,11 +285,14 @@ All commands go through Docker:
 # Run the full suite
 docker compose exec app mix test
 
-# Run a single file
-docker compose exec app mix test test/engine/rules_test.exs
+# Run a single app
+docker compose exec app mix test --app gibbering_engine
 
-# Run a single test by line number
-docker compose exec app mix test test/engine/rules_test.exs:42
+# Run a specific file
+docker compose exec app mix test apps/gibbering_tales_web/test/engine/scene_server_test.exs
+
+# Run a specific test by line number
+docker compose exec app mix test apps/gibbering_tales_web/test/engine/scene_server_test.exs:42
 
 # Run only tagged tests (e.g. @tag :slow)
 docker compose exec app mix test --only slow
@@ -250,37 +306,25 @@ docker compose exec app mix precommit
 ## TDD workflow (recommended)
 
 1. **Branch** from `main`: `feat/<name>` or `fix/<name>`.
-2. **Write the test first.** Start at Layer 1 if you're adding game logic. Start at Layer 2 if it's a GameServer flow change. Layer 3 last.
-3. **Watch it fail.** `mix test test/engine/rules_test.exs` should show a red failure.
+2. **Write the test first.** Start at Layer 1 if you're adding game logic. Start at Layer 2 if it's a SceneServer flow change. Layer 3 last.
+3. **Watch it fail.** Run the test file directly — fast feedback.
 4. **Make it pass.** Write the minimum production code.
 5. **Refactor.** Clean up without breaking the test.
-6. **Run `mix precommit`** before pushing. It runs `compile --warnings-as-errors`, `format`, and the full test suite.
+6. **Run `mix precommit`** before pushing. It runs `compile --warnings-as-errors`, `deps.unlock --unused`, `format`, `check.docs`, and the full test suite.
 
 ---
 
 ## Decision guide: which layer?
 
-| Question | Layer |
-|---|---|
-| "Does the movement algorithm respect walls?" | 1 (Rules) |
-| "Does advance_turn clear selected_id?" | 1 (State) |
-| "Does the LegalGuard filter block 'Beholder'?" | 1 (Pipeline) |
-| "Does attacking via the API remove a 0-HP monster?" | 2 (GameServer) |
-| "Does a PubSub message reach a subscribed LiveView?" | 2 (GameServer) |
-| "Does clicking the hero show the move overlay?" | 3 (LiveView) |
-| "Does the end-turn button clear the move overlay?" | 3 (LiveView) |
+| Question | Layer | App |
+|---|---|---|
+| "Does the movement algorithm respect walls?" | 1 (Rules) | `gibbering_engine` |
+| "Does advance_turn clear selected_id?" | 1 (State) | `gibbering_engine` |
+| "Does the LegalGuard filter block 'Beholder'?" | 1 (Pipeline) | `gibbering_engine` |
+| "Does attacking via the API remove a 0-HP monster?" | 2 (SceneServer) | `gibbering_tales_web` |
+| "Does a PubSub message reach a subscribed LiveView?" | 2 (SceneServer) | `gibbering_tales_web` |
+| "Does clicking the hero show the move overlay?" | 3 (LiveView) | `gibbering_tales_web` |
+| "Does the end-turn button clear the move overlay?" | 3 (LiveView) | `gibbering_tales_web` |
+| "Does the admin suspend endpoint work?" | 3 (Controller) | `gibbering_tales_admin` |
 
 When in doubt, go one layer lower. Layer 1 tests are the cheapest, fastest, and most precise.
-
----
-
-## Fixtures reference
-
-| Helper | What it does |
-|---|---|
-| `build_state(opts)` | In-memory `%State{}` — 5×5 map, hero at (2,2), monster at (3,3) |
-| `hero_id()` | The default hero id used by `build_state/1` |
-| `monster_id()` | The default monster id used by `build_state/1` |
-| `with_entity(state, id, attrs)` | Merge atom attrs into an entity map |
-| `with_tile(state, {x,y}, attrs)` | Merge attrs into a grid tile |
-| `insert_campaign(attrs)` | Insert a Campaign + tiles + entities into the sandbox DB |

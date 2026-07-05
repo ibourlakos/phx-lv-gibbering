@@ -26,10 +26,19 @@ RUN wget -qO /tmp/elixir-ls.zip \
     rm /tmp/elixir-ls.zip && \
     echo "" | MIX_ENV=prod elixir /home/app/.elixir-ls/quiet_install.exs > /dev/null
 
-# Deps cached separately from source so rebuilds are fast.
-# Pre-compile for both dev and test so the build_cache volume is seeded
-# with compiled deps on first mount — avoids long recompilation on fresh volumes.
+# Copy umbrella root manifest and all per-app manifests before deps.get so
+# Mix can resolve dependencies for the full app graph in one pass.
 COPY --chown=app:app mix.exs mix.lock ./
+RUN mkdir -p apps/gibbering \
+             apps/gibbering_engine \
+             apps/gibbering_tales \
+             apps/gibbering_tales_web \
+             apps/gibbering_tales_admin
+COPY --chown=app:app apps/gibbering/mix.exs apps/gibbering/mix.exs
+COPY --chown=app:app apps/gibbering_engine/mix.exs apps/gibbering_engine/mix.exs
+COPY --chown=app:app apps/gibbering_tales/mix.exs apps/gibbering_tales/mix.exs
+COPY --chown=app:app apps/gibbering_tales_web/mix.exs apps/gibbering_tales_web/mix.exs
+COPY --chown=app:app apps/gibbering_tales_admin/mix.exs apps/gibbering_tales_admin/mix.exs
 RUN mix deps.get
 RUN MIX_ENV=dev mix deps.compile
 RUN MIX_ENV=test mix deps.compile

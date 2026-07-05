@@ -13,9 +13,9 @@ The two sets of message types are disjoint — nothing crosses both buses.
 | `"game:#{id}"` | `Engine.SceneServer` | `%EventBatch{}` | Scene event cascade ✅ |
 | `"notifications:#{id}"` | `Engine.SceneServer` | `%BroadcastSent{}` | DM narrative broadcast ✅ |
 | `"notifications:#{id}"` | `Engine.SceneServer` | `%WhisperDelivered{}` | DM private whisper ✅ |
-| `"game:#{id}:user:#{uid}"` | `Gibbering.Admin` | `{:ejected, reason}` | Admin notification ✅ |
+| `"game:#{id}:user:#{uid}"` | `GibberingTalesAdmin.Admin` | `{:ejected, reason}` | Admin notification ✅ |
 | `"system:admin"` | `Monitoring.Stores.Local` | metrics map | Observability event ✅ |
-| `"lobby:#{id}"` | `GibberingWeb.LobbyLive` | `:refresh` | UI coordination (intra-web) ✅ |
+| `"lobby:#{id}"` | `GibberingTalesWeb.LobbyLive` | `:refresh` | UI coordination (intra-web) ✅ |
 
 **Command bus (C) — direct GenServer / function calls between contexts:**
 
@@ -33,7 +33,7 @@ The two sets of message types are disjoint — nothing crosses both buses.
 | Caller | Callee | Issue |
 |---|---|---|
 | `Monitoring.Stores.Local` | `Engine.SceneServer.get_state` | #114 — Observability queries Scene directly; should subscribe to events |
-| `GibberingWeb.Live.Admin.CampaignMonitoringPage` | `Engine.SceneServer.get_state` | #114 — Admin reads Scene directly; same fix |
+| `GibberingTalesAdmin.Admin.CampaignMonitoringPage` | `Engine.SceneServer.get_state` | #114 — Admin reads Scene directly; same fix |
 
 The violation of `GameLive` calling `Engine.Rules.valid_targets` directly was fixed in #109:
 `valid_targets` is now computed inside SceneServer and included in `Engine.State`, so callers

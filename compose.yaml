@@ -9,6 +9,7 @@ services:
       PHX_HOST: localhost
     ports:
       - "4000:4000"
+      - "4001:4001"
     volumes:
       - .:/app
       - deps_cache:/app/deps
@@ -31,7 +32,7 @@ services:
       - smoke
     working_dir: /smoke
     volumes:
-      - ./test/smoke:/smoke
+      - ./apps/gibbering/test/smoke:/smoke
     environment:
       BASE_URL: http://app:4000
     command: >

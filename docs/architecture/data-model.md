@@ -8,7 +8,7 @@ Two distinct layers: **persistent** (PostgreSQL via Ecto) and **runtime** (in-me
 
 ### `users`
 
-Managed by `Gibbering.Accounts.User`.
+Managed by `GibberingTales.Accounts.User`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -23,7 +23,7 @@ The `password` field is a virtual (cast-only) field; it never reaches the DB. DM
 
 ### `maps`
 
-Managed by `Gibbering.GameMap`. One row per map (Phase 1: one map per campaign).
+Managed by `GibberingTales.GameMap`. One row per map (Phase 1: one map per campaign).
 
 | Column | Type | Notes |
 |---|---|---|
@@ -36,13 +36,14 @@ Managed by `Gibbering.GameMap`. One row per map (Phase 1: one map per campaign).
 
 Associations: `belongs_to :campaign, Campaign` · `has_many :tiles, GridTile, foreign_key: :map_id`
 
-`z_extent` is reserved for a future vertical axis (not yet in schema).
+`z_extent` is reserved for a future vertical axis (not yet in schema). See #158 (elevation model) —
+formalizes the integer Z axis and render-sort formula this column will eventually back.
 
 ---
 
 ### `campaigns`
 
-Managed by `Gibbering.Campaign`.
+Managed by `GibberingTales.Campaign`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -59,7 +60,7 @@ Associations: `belongs_to :dm, User` · `belongs_to :active_map, GameMap` · `ha
 
 ### `campaign_members`
 
-Join table. Managed by `Gibbering.CampaignMember`. Context: `Gibbering.Campaigns`.
+Join table. Managed by `GibberingTales.CampaignMember`. Context: `GibberingTales.Campaigns`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -76,7 +77,7 @@ Membership gates access: `/lobby/:id` and `/game/:id` redirect non-members to `/
 
 ### `races`
 
-Managed by `Gibbering.Catalogue.Race`. Primary key is `key` (string). Seeded from `Gibbering.Data.Races.seed_data/0`. Runtime reads go through `Gibbering.Catalogue.Cache`.
+Managed by `GibberingTales.Catalogue.Race`. Primary key is `key` (string). Seeded from `GibberingTales.Data.Races.seed_data/0`. Runtime reads go through `GibberingTales.Catalogue.Cache`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -93,7 +94,7 @@ Managed by `Gibbering.Catalogue.Race`. Primary key is `key` (string). Seeded fro
 
 ### `classes`
 
-Managed by `Gibbering.Catalogue.Class`. Primary key is `key` (string). Seeded from `Gibbering.Data.Classes.seed_data/0`.
+Managed by `GibberingTales.Catalogue.Class`. Primary key is `key` (string). Seeded from `GibberingTales.Data.Classes.seed_data/0`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -116,7 +117,7 @@ Managed by `Gibbering.Catalogue.Class`. Primary key is `key` (string). Seeded fr
 
 ### `spells`
 
-Managed by `Gibbering.Catalogue.Spell`. Primary key is `key` (string). Seeded from `Gibbering.Data.Spells.seed_data/0`.
+Managed by `GibberingTales.Catalogue.Spell`. Primary key is `key` (string). Seeded from `GibberingTales.Data.Spells.seed_data/0`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -138,7 +139,7 @@ Managed by `Gibbering.Catalogue.Spell`. Primary key is `key` (string). Seeded fr
 
 ### `monsters`
 
-Managed by `Gibbering.Catalogue.Monster`. Primary key is `key` (string = Open5e slug). Populated by `mix gibbering.ingest` (Open5e API, CC-BY-4.0). Runtime reads via `Gibbering.Catalogue.Cache`.
+Managed by `GibberingTales.Catalogue.Monster`. Primary key is `key` (string = Open5e slug). Populated by `mix gibbering.ingest` (Open5e API, CC-BY-4.0). Runtime reads via `GibberingTales.Catalogue.Cache`.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -164,7 +165,7 @@ Indexes on `monster_type` and `challenge_rating` for encounter-building queries.
 
 ### `grid_tiles`
 
-Managed by `Gibbering.GridTile`. One row per tile cell.
+Managed by `GibberingTales.GridTile`. One row per tile cell.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -176,13 +177,13 @@ Managed by `Gibbering.GridTile`. One row per tile cell.
 | `decoration` | string | nullable — `"dead_tree"` \| `"rock_cluster"` \| `"bones"` \| `"grass_tuft"` |
 | `map_id` | integer FK → maps | cascade delete |
 
-No timestamps (bulk-inserted via `Repo.insert_all`). See issue #130 for the planned migration from `walkable` to a JSONB `movement` map for multi-mode movement (walk/climb/swim/fly).
+No timestamps (bulk-inserted via `Repo.insert_all`). See issue #130 for the planned migration from `walkable` to a JSONB `movement` map for multi-mode movement (walk/climb/swim/fly), and #157 for the traversability function that will consume it.
 
 ---
 
 ### `entities`
 
-Managed by `Gibbering.Entity`. Stores both player characters and map objects.
+Managed by `GibberingTales.Entity`. Stores both player characters and map objects.
 
 | Column | Type | Notes |
 |---|---|---|
@@ -226,10 +227,10 @@ The `stats` map is intentionally schemaless so any ruleset can store what it nee
 
 ## Runtime Layer (SceneServer in-memory)
 
-`Gibbering.Engine.SceneServer` (planned rename of `GameServer` — see issue #36) holds one
-`%Gibbering.Engine.State{}` struct per running scene, keyed by `campaign_id` in a `Registry`.
+`GibberingTalesWeb.Engine.SceneServer` (planned rename of `GameServer` — see issue #36) holds one
+`%GibberingTalesWeb.Engine.State{}` struct per running scene, keyed by `campaign_id` in a `Registry`.
 
-### `%Gibbering.Engine.State{}`
+### `%GibberingTalesWeb.Engine.State{}`
 
 Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not persisted back to DB between turns** (see open issue #12).
 
@@ -242,7 +243,7 @@ Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not 
 | `x_extent` | integer | tile columns (world-x axis) |
 | `y_extent` | integer | tile rows (world-y axis) |
 | `tile_size` | integer | pixels per tile |
-| `grid_tiles` | `%{{x,y} => tile_map}` | keyed by `{x, y}` integer tuples |
+| `grid_tiles` | `%{{x,y} => tile_map}` | keyed by `{x, y}` integer tuples — issue #156 formalizes this as one plane of a `{x, y, elevation}` game-grid coordinate model |
 | `entities` | `%{id => entity_map}` | keyed by entity DB id |
 | `selected_id` | integer \| nil | currently selected entity |
 | `valid_moves` | `[{x, y}]` | pre-computed move options for selected entity |
@@ -257,6 +258,7 @@ Hydrated from the DB on `SceneServer.init/1` via `State.from_campaign/1`. **Not 
 | `previous_phase` | `scene_phase() \| nil` | restored on `:paused → <previous>` transition |
 | `active_effects` | `[active_effect()]` | scene-level effects registry — all conditions, buffs, ability states |
 | `event_log` | `[event()]` | append-only; structural dependency for predicate evaluation |
+| `edges` | `%{{x, y, direction} => %{type: :wall \| :door, open: bool}}` | issue #156 — wall/door model, keyed by normalised edge address |
 
 #### Runtime tile map shape
 
@@ -318,7 +320,7 @@ These modules define constant D&D 5e data. Current modules are consulted only du
 character setup. Planned modules (`RuleModifier`, `Condition`, `Spell`) will be queried by the
 rules engine at resolution time.
 
-### `Gibbering.Data.Races`
+### `GibberingTales.Data.Races`
 
 Key: string (`"human"` / `"elf"` / `"gnome"`). Value shape:
 
@@ -333,7 +335,7 @@ Key: string (`"human"` / `"elf"` / `"gnome"`). Value shape:
 }
 ```
 
-### `Gibbering.Data.Classes`
+### `GibberingTales.Data.Classes`
 
 Key: string (`"fighter"` / `"wizard"` / `"rogue"`). Value shape:
 
@@ -350,7 +352,7 @@ Key: string (`"fighter"` / `"wizard"` / `"rogue"`). Value shape:
 }
 ```
 
-### `Gibbering.Data.Spells`
+### `GibberingTales.Data.Spells`
 
 Key: atom (e.g. `:fire_bolt`, `:magic_missile`). Value shape:
 
@@ -369,11 +371,11 @@ Key: atom (e.g. `:fire_bolt`, `:magic_missile`). Value shape:
 }
 ```
 
-See issue #41 for the planned migration to `%Gibbering.Rulesets.DnD5e.Spell{}` struct below.
+See issue #41 for the planned migration to `%GibberingTales.Rulesets.DnD5e.Spell{}` struct below.
 
 ---
 
-### Planned: `Gibbering.Rulesets.DnD5e.Spell` (issue #41)
+### Planned: `GibberingTales.Rulesets.DnD5e.Spell` (issue #41)
 
 Replaces the flat map in `Data.Spells`:
 
@@ -389,7 +391,7 @@ defstruct [:key, :name, :level, :school, :casting_time, :range, :components,
 
 ---
 
-### `Gibbering.Engine.RuleModifier` (implemented; formerly `Rulesets.DnD5e.RuleModifier`, issue #40)
+### `GibberingEngine.RuleModifier` (implemented; formerly `Rulesets.DnD5e.RuleModifier`, issue #40)
 
 The engine's rule representation — no DB, pure Elixir data:
 
@@ -415,7 +417,7 @@ but not yet folded by `apply_modifiers` — AC/attack math still flows through `
 
 ---
 
-### Planned: `Gibbering.Rulesets.DnD5e.Condition` (issue #42)
+### Planned: `GibberingTales.Rulesets.DnD5e.Condition` (issue #42)
 
 Static definition of every SRD condition — no DB:
 
@@ -437,7 +439,7 @@ is the static definition consulted when building those entries.
 
 ---
 
-### Planned: `Gibbering.Rulesets.DnD5e.Stats` (issue #38)
+### Planned: `GibberingTales.Rulesets.DnD5e.Stats` (issue #38)
 
 Pure stat computation — no DB, no process:
 
@@ -483,14 +485,14 @@ Ecto schema when full inventory is needed.
 ### WorldObject & inventory model (issues #80, #126)
 
 Items exist in two contexts, both stored as **item-instance lists** inside `stats` JSONB —
-no separate items table. Helpers and read accessors live in `Gibbering.Rulesets.DnD5e.Inventory`.
+no separate items table. Helpers and read accessors live in `GibberingTales.Rulesets.DnD5e.Inventory`.
 
 **Item instance shape** (uniform for both contexts):
 
 ```elixir
 %{
   "instance_id" => "9f1c…",   # UUID — distinguishes otherwise-identical stacks/uniques
-  "item_key"    => "shortsword", # key into Gibbering.Data.Items
+  "item_key"    => "shortsword", # key into GibberingTales.Data.Items
   "quantity"    => 1
 }
 ```
@@ -520,10 +522,10 @@ loop (#127) and the `:equipped_items` modifier source (#128) respectively.
 
 ---
 
-### `Gibbering.Ruleset` behaviour (issue #39, closes #14)
+### `GibberingEngine.Ruleset` behaviour (issue #39, closes #14)
 
-All `DnD5e.*` modules live under `Gibbering.Rulesets.DnD5e.*` and the top-level module
-implements the `Gibbering.Ruleset` behaviour, providing a single entry point for the engine:
+All `DnD5e.*` modules live under `GibberingTales.Rulesets.DnD5e.*` and the top-level module
+implements the `GibberingEngine.Ruleset` behaviour, providing a single entry point for the engine:
 
 ```elixir
 @callback collect_modifiers(entity_map(), trigger(), eval_context()) :: [RuleModifier.t()]
@@ -558,8 +560,8 @@ users
           └── event_log              (append-only; predicate evaluator structural dep)
 
 Static reference data (pure Elixir modules, no DB, no process):
-  Gibbering.Data.{Races, Classes, Spells}           ← lobby use only (current)
-  Gibbering.Rulesets.DnD5e.{Stats, Spell,
+  GibberingTales.Data.{Races, Classes, Spells}           ← lobby use only (current)
+  GibberingTales.Rulesets.DnD5e.{Stats, Spell,
     RuleModifier, Condition}                         ← planned; engine queries at resolution time
 ```
 
@@ -576,7 +578,7 @@ Static reference data (pure Elixir modules, no DB, no process):
 | [#36](issues/036-scene-phase-state-machine.md) | `GameServer` has no phase field; no scene state machine; rename to `SceneServer` |
 | [#37](issues/037-runtime-entity-map-extensions.md) | Runtime entity map missing `action_economy`, `resources`, `conditions` extensions |
 | [#38](issues/038-dnd5e-stats-module.md) | No derived stat computation (`ability_modifier`, `proficiency_bonus`, `armor_class`) |
-| [#39](issues/039-ruleset-behaviour.md) | No `Gibbering.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
+| [#39](issues/039-ruleset-behaviour.md) | No `GibberingEngine.Ruleset` behaviour; rules engine is not ruleset-swappable (see #14) |
 | [#40](issues/040-rule-modifier-predicate-evaluator.md) | No `RuleModifier` struct or predicate evaluator — rules hardcoded in `Rules` module |
 | [#41](issues/041-spell-struct.md) | `Data.Spells` is a flat map; no `%Spell{}` struct with structured fields |
 | [#42](issues/042-condition-struct.md) | No `%Condition{}` struct; conditions not applied to entities at runtime |
@@ -586,3 +588,6 @@ Static reference data (pure Elixir modules, no DB, no process):
 | [#46](issues/046-equipped-item-jsonb.md) | No equipped weapon/armor in `stats` JSONB; no seed data |
 | [#47](issues/047-migrate-features-to-rule-modifiers.md) | `Data.Classes`/`Data.Races` features are inert text; not migrated to `%RuleModifier{}` |
 | [#48](issues/048-saving-throw-pipeline.md) | No saving throw pipeline; AoE and save-based spells cannot be resolved |
+| [#156](issues/156-coordinate-model-formalization.md) | No formal coordinate model — `{x, y}` tuples used ad hoc across `grid_tiles`, `entities`, and `State`; no `elevation` axis, no edge/wall model, no shared `Coords` module |
+| [#157](issues/157-tile-occupancy-model.md) | No tile occupancy taxonomy or computed traversability function — `grid_tiles.walkable` is a single boolean |
+| [#158](issues/158-elevation-model.md) | No elevation axis on entities or tiles; `maps.z_extent` reserved but unused; no `iso_project` elevation term |

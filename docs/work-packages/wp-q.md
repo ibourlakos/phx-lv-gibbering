@@ -13,7 +13,7 @@ and the logical elevation axis. These three issues form a strict dependency chai
 
 | # | Title | Depends on |
 |---|---|---|
-| [#156](../issues/156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | — |
+| [#156](../issues/156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | — (closed 2026-07-05) |
 | [#157](../issues/157-tile-occupancy-model.md) | Tile occupancy model — 5-category taxonomy, traversability function, entry triggers | #156 |
 | [#158](../issues/158-elevation-model.md) | Elevation model — integer Z, render sort, iso_project formula, staircase objects | #156 |
 
@@ -22,20 +22,20 @@ and the logical elevation axis. These three issues form a strict dependency chai
 ## Sequencing
 
 ```
-#156 (coordinate model + edge model)
+#156 (coordinate model + edge model)  ✅ closed 2026-07-05
   ├─→ #157 (traversability — uses edge keys from #156)
   └─→ #158 (elevation — uses iso_project formula from #156)
 ```
 
-`#157` and `#158` can run in parallel once `#156` is done.
+`#157` and `#158` can now run in parallel — `#156` is done.
 
 ---
 
 ## Active Front
 
 ```
-#156  ──→  #157
-      └──→  #158
+#157  (unblocked)
+#158  (unblocked)
 ```
 
 ---
