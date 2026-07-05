@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 180 (see `counter`)
+**Next issue number:** 181 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -48,6 +48,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#174](174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | `ops` `architecture` | medium |
 | [#177](177-test-compile-warnings-cleanup.md) | Test-compile warnings: unused default args in chest fixtures | `ops` | low |
 | [#179](179-ai-workflow-docs-subtree-extraction.md) | Extract AI workflow docs/config into a reusable subtree | `discovery` `architecture` `ops` | low |
+| [#180](180-appearance-pipeline-unification-and-styles.md) | Unify entity appearance rendering, specialize biped silhouettes, add style-templated Carbot look | `rendering` `architecture` | medium |
 
 ---
 
