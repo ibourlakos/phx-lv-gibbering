@@ -1093,19 +1093,22 @@ unless Repo.get_by(Style, slug: "dst") do
     {"half_orc_fighter", "default", %{"body_color" => "#3a6020"}},
     # Monster sprites (fallback rects — named SVGs pending)
     # goblin has a second "dead" appearance to demonstrate one-to-many (see #132)
-    {"goblin", "default", %{"body_color" => "#5a7a30"}},
-    {"goblin", "dead", %{"body_color" => "#3a4a20"}},
-    {"skeleton", "default", %{"body_color" => "#d8d0b0"}},
-    {"zombie", "default", %{"body_color" => "#5a6a3a"}},
-    {"kobold", "default", %{"body_color" => "#8b3a1a"}},
+    # goblin/kobold/orc/bugbear, skeleton/zombie, and ogre/troll carry an explicit
+    # "silhouette" override so they render as their specialized biped_upright build
+    # rather than the default :humanoid silhouette (see #180).
+    {"goblin", "default", %{"body_color" => "#5a7a30", "silhouette" => "goblinoid"}},
+    {"goblin", "dead", %{"body_color" => "#3a4a20", "silhouette" => "goblinoid"}},
+    {"skeleton", "default", %{"body_color" => "#d8d0b0", "silhouette" => "undead_gaunt"}},
+    {"zombie", "default", %{"body_color" => "#5a6a3a", "silhouette" => "undead_gaunt"}},
+    {"kobold", "default", %{"body_color" => "#8b3a1a", "silhouette" => "goblinoid"}},
     {"bandit", "default", %{"body_color" => "#6b5540"}},
     {"cultist", "default", %{"body_color" => "#4a2060"}},
     {"guard", "default", %{"body_color" => "#607890"}},
     {"wolf", "default", %{"body_color" => "#706050", "archetype" => "quadruped"}},
-    {"orc", "default", %{"body_color" => "#3a6030"}},
-    {"bugbear", "default", %{"body_color" => "#5a5030"}},
-    {"ogre", "default", %{"body_color" => "#7a6040"}},
-    {"troll", "default", %{"body_color" => "#3a6838"}}
+    {"orc", "default", %{"body_color" => "#3a6030", "silhouette" => "goblinoid"}},
+    {"bugbear", "default", %{"body_color" => "#5a5030", "silhouette" => "goblinoid"}},
+    {"ogre", "default", %{"body_color" => "#7a6040", "silhouette" => "giant"}},
+    {"troll", "default", %{"body_color" => "#3a6838", "silhouette" => "giant"}}
   ]
 
   for {key, state, data} <- tile_appearances do
@@ -1134,5 +1137,48 @@ unless Repo.get_by(Style, slug: "dst") do
 
   IO.puts(
     "Seeded DST style with #{length(tile_appearances)} tile and #{length(entity_appearances)} entity appearances"
+  )
+
+  # Carbot Animations–inspired style: bold black outlines, chibi/big-head proportions,
+  # flat saturated colors. Original artwork authored in
+  # apps/gibbering_tales/priv/appearance_templates/carbot/ — not a trace or copy of any
+  # specific Carbot artwork (see #180). Reuses the same colors/coverage as DST; the
+  # per-style silhouette differs entirely in the SVG template geometry, not here.
+  {:ok, carbot} =
+    Repo.insert(%Style{
+      slug: "carbot",
+      name: "Carbot-inspired",
+      description:
+        "Bold black outlines, chibi big-head proportions, flat saturated colors — an original, inspired-by take, not a trace of any specific Carbot artwork.",
+      inserted_at: now,
+      updated_at: now
+    })
+
+  for {key, state, data} <- tile_appearances do
+    Repo.insert!(%Appearance{
+      style_id: carbot.id,
+      content_type: "tile",
+      content_key: key,
+      state: state,
+      data: data,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+
+  for {key, state, data} <- entity_appearances do
+    Repo.insert!(%Appearance{
+      style_id: carbot.id,
+      content_type: "entity",
+      content_key: key,
+      state: state,
+      data: data,
+      inserted_at: now,
+      updated_at: now
+    })
+  end
+
+  IO.puts(
+    "Seeded Carbot style with #{length(tile_appearances)} tile and #{length(entity_appearances)} entity appearances"
   )
 end

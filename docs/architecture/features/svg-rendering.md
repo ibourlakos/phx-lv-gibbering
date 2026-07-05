@@ -27,11 +27,18 @@ Each tile is a diamond `<polygon>` (4 points: top / right / bottom / left). Enti
 
 ## Sprite strategy
 
-Sprites are **inline SVG paths** defined as public function components in `GibberingTalesWeb.GameLive`, dispatched by `entity.sprite` (string key). Being public allows the lobby card preview to reuse them. Current sprite keys follow the `"{race}_{class}"` convention for player characters (e.g. `"elf_wizard"`, `"gnome_rogue"`); NPCs and objects use freeform keys (`"rock"`).
+All entity sprites render through one pipeline (unified in #180 — the old per-`"{race}_{class}"` hardcoded heex clauses are gone):
+
+1. `GibberingTalesWeb.Components.EntitySprites.entity_sprite/1` (extracted from `GameLive` per the long-parked #19 TODO) is the single call site, reused by both the game board and the lobby card preview.
+2. It resolves `entity.sprite` → `archetype` + `silhouette` via `GibberingEngine.ActorAppearance` (content-agnostic: archetype/silhouette resolution, socket offsets, per-facing layer order, facing/flip, size-category scaling — no knowledge of any specific game's art).
+3. `ActorAppearance.render_body/4` composes the resolved layers by calling an **injected renderer callback** per layer — the actual SVG markup is game-specific content and lives outside the engine (see [engine-decomposition.md](../engine-decomposition.md)).
+4. `GibberingTales.Catalogue.TemplateStore` is that renderer: it compiles `.svg.eex` files from `apps/gibbering_tales/priv/appearance_templates/<style>/<archetype>/<silhouette>/<facing>/<layer>.svg.eex` into functions at build time, falling back to the `"dst"` style for any (archetype, silhouette, facing, layer) combination a style hasn't authored.
+
+Current sprite keys follow the `"{race}_{class}"` convention for player characters (e.g. `"elf_wizard"`, `"gnome_rogue"`); NPCs and objects use freeform keys (`"rock"`). Within `:biped_upright`, a `silhouette` (`:humanoid`, `:goblinoid`, `:undead_gaunt`, `:giant`) gives distinct body-plan proportions to different sprite keys instead of one generic recolored shape.
+
+Two styles exist today: `"dst"` (the original ink/outline look) and `"carbot"` (bold outlines, chibi big-head proportions — an original, inspired-by take, not a trace of any specific artwork). Style selection is DB-driven (`Catalogue.Style`/`Catalogue.appearances_for_style/1`); in dev, `GameLive`'s `?style=<slug>` query param overrides `Catalogue.default_style_slug/0` for local preview.
 
 No raster files — no asset pipeline, no LFS, no license risk at this stage. The entity's `sprite` field is the hook point for future raster sprites (`<image href="/images/sprites/<key>.png">`).
-
-> **TODO (see #19):** sprite components should be extracted to a dedicated `GibberingTalesWeb.Components.EntitySprites` module rather than living in a LiveView.
 
 Key CSS: `image-rendering: pixelated` on the root `<svg>` for crisp scaling when raster sprites arrive.
 

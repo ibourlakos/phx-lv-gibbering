@@ -48,7 +48,6 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 | [#174](174-retire-legacy-gibbering-shell-app.md) | Retire the legacy `apps/gibbering` shell app | `ops` `architecture` | medium |
 | [#177](177-test-compile-warnings-cleanup.md) | Test-compile warnings: unused default args in chest fixtures | `ops` | low |
 | [#179](179-ai-workflow-docs-subtree-extraction.md) | Extract AI workflow docs/config into a reusable subtree | `discovery` `architecture` `ops` | low |
-| [#180](180-appearance-pipeline-unification-and-styles.md) | Unify entity appearance rendering, specialize biped silhouettes, add style-templated Carbot look | `rendering` `architecture` | medium |
 
 ---
 
@@ -93,6 +92,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#180](180-appearance-pipeline-unification-and-styles.md) | Unify entity appearance rendering, specialize biped silhouettes, add style-templated Carbot look | `rendering` `architecture` |
 | [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` |
 | [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` |
 | [#176](176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` leaks atoms on unknown input | `bug` `architecture` |

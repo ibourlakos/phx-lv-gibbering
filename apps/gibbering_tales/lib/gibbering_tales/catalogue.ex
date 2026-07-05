@@ -25,6 +25,9 @@ defmodule GibberingTales.Catalogue do
 
   def default_style_slug, do: "dst"
 
+  @doc "True if a Style row exists with the given slug."
+  def style_slug_valid?(slug), do: Repo.exists?(from s in Style, where: s.slug == ^slug)
+
   # Returns %{{"content_type", "content_key", "state"} => data} for the given style slug.
   # The state key is always present; "default" means the base appearance.
   # Unknown slugs return an empty map; callers must supply their own fallback values.

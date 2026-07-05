@@ -1,0 +1,2 @@
+<ellipse cx="32" cy="44" rx="14" ry="16" fill="<%= assigns.color %>" opacity="0.85"/>
+<path d="M32,12 Q28,4 32,2" stroke="<%= assigns.color %>" fill="none" stroke-width="4" stroke-linecap="round"/>

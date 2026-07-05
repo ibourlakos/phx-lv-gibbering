@@ -1,0 +1,2 @@
+<rect x="22" y="42" width="8" height="18" rx="3" fill="<%= assigns.color %>"/>
+<rect x="34" y="42" width="8" height="18" rx="3" fill="<%= assigns.color %>"/>

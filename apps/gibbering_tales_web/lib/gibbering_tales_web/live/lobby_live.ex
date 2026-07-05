@@ -1,6 +1,8 @@
 defmodule GibberingTalesWeb.LobbyLive do
   use GibberingTalesWeb, :live_view
 
+  import GibberingTalesWeb.Components.EntitySprites
+
   alias GibberingTales.Repo
   alias GibberingTales.{Campaign, Entity, Campaigns}
   alias GibberingTales.Catalogue.Cache, as: Catalogue
@@ -32,7 +34,12 @@ defmodule GibberingTalesWeb.LobbyLive do
        |> assign(:editing_id, nil)
        |> assign(:edit_form, %{})
        |> assign(:races, Catalogue.races_map())
-       |> assign(:classes, Catalogue.classes_map())}
+       |> assign(:classes, Catalogue.classes_map())
+       |> assign(:style_slug, GibberingTales.Catalogue.default_style_slug())
+       |> assign(
+         :appearances,
+         GibberingTales.Catalogue.appearances_for_style(GibberingTales.Catalogue.default_style_slug())
+       )}
     end
   end
 

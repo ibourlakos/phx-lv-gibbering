@@ -12,6 +12,8 @@ Extract a self-contained game engine that can host a second game (e.g., a simple
 
 Appearance/display elements are intentionally **vertical** — the rendering pipeline (SpriteCompositor, AppearanceArchetype, IsoProjection) is generic engine code; the sprites and appearance records that feed it are game-specific content. This vertical split is already the right model and does not need to change.
 
+**File placement follows the same split (#180):** DB-backed content (`Catalogue.Style`/`Catalogue.Appearance` rows) has always lived in `gibbering_tales`. File-based content — e.g. `GibberingTales.Catalogue.TemplateStore` and `apps/gibbering_tales/priv/appearance_templates/**/*.svg.eex` — follows the same rule and lives in `gibbering_tales` too, never in `gibbering_engine` (which must stay content-free and eventually Hex-publishable) and not in either Phoenix app unless the content is genuinely Phoenix/LiveView-specific (e.g. HEEx templates). `GibberingEngine.ActorAppearance.render_body/4` takes an injected renderer callback rather than depending on `TemplateStore` directly, so the engine never needs to know a template file exists.
+
 ---
 
 ## Classification: What is Generic Today

@@ -390,14 +390,13 @@ sorted_entities = Enum.sort_by(state.actors, fn {_, e} -> iso.depth_key(e.x, e.y
           />
         <% end %>
 
-        <%!-- Sprite body (named geometry or fallback rect) --%>
+        <%!-- Sprite body --%>
         <.entity_sprite
-          sprite={entity.sprite}
           x={ix}
           y={iy}
-          body_color={entity_body_color(@appearances, entity.sprite)}
           entity={entity}
           appearances={@appearances}
+          style_slug={@style_slug}
         />
 
         <%!-- Compositor overlays: selection ring (active entity) + HP bar --%>

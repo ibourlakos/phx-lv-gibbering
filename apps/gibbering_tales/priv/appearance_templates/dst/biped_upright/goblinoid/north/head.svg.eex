@@ -1,0 +1,3 @@
+<circle cx="32" cy="14" r="10" fill="<%= assigns.color %>" opacity="0.9"/>
+<polygon points="20,10 12,4 22,16" fill="<%= assigns.color %>" opacity="0.9"/>
+<polygon points="44,10 52,4 42,16" fill="<%= assigns.color %>" opacity="0.9"/>

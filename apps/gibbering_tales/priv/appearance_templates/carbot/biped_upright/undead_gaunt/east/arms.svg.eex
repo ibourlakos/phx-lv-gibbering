@@ -1,0 +1,1 @@
+<ellipse cx="43" cy="27" rx="4" ry="7" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round"/>

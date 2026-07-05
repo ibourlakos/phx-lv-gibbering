@@ -65,7 +65,13 @@ my_entity = Enum.find(heroes, fn e -> Map.get(e.stats, "claimed_by") == me.id en
               style={"width:56px;height:56px;background:#{sprite_bg_color(entity.sprite)};"}
             >
               <svg width="56" height="56" viewBox="0 0 64 64">
-                <GibberingTalesWeb.GameLive.entity_sprite sprite={entity.sprite} x={0} y={0} />
+                <.entity_sprite
+                  x={0}
+                  y={0}
+                  entity={Map.from_struct(entity)}
+                  appearances={@appearances}
+                  style_slug={@style_slug}
+                />
               </svg>
             </div>
 
