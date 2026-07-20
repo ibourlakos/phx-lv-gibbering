@@ -1,0 +1,1 @@
+<rect x="10" y="15" width="44" height="30" rx="10" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>

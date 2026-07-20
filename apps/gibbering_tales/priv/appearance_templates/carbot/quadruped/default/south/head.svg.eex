@@ -1,0 +1,6 @@
+<ellipse cx="32" cy="25" rx="14" ry="12" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round"/>
+<ellipse cx="32" cy="33" rx="7" ry="5" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>
+<polygon points="22,16 20,7 28,16" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round"/>
+<polygon points="42,16 44,7 36,16" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="26" cy="23" r="2.5" fill="#111"/>
+<circle cx="38" cy="23" r="2.5" fill="#111"/>

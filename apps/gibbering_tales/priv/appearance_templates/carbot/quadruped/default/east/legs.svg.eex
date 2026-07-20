@@ -1,0 +1,4 @@
+<rect x="15" y="50" width="7" height="12" rx="3" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>
+<rect x="26" y="50" width="7" height="12" rx="3" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>
+<rect x="36" y="50" width="7" height="12" rx="3" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>
+<rect x="46" y="50" width="7" height="12" rx="3" fill="<%= assigns.color %>" stroke="#0a0a0a" stroke-width="3" stroke-linejoin="round" opacity="0.9"/>

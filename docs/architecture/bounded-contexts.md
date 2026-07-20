@@ -50,6 +50,9 @@ GibberingTales.Catalogue.Monster   ← monster stat blocks (SRD-legal subset)
 GibberingTales.Catalogue.Appearance ← visual metadata for catalogue entries
 GibberingTales.Catalogue.Style     ← display style declarations
 GibberingTales.Catalogue.Cache     ← in-process ETS cache over the DB
+GibberingTales.Catalogue.TemplateStore ← compiles per-style .svg.eex appearance templates
+                                          (apps/gibbering_tales/priv/appearance_templates/),
+                                          feeds GibberingEngine.ActorAppearance.render_body/4
 ```
 
 Legacy in-memory reference modules (`GibberingTales.Data.Races`, `GibberingTales.Data.Classes`,

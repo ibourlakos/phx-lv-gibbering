@@ -31,6 +31,44 @@ defmodule GibberingEngine.ActorAppearanceTest do
     end
   end
 
+  # --- silhouette_for/3 ---
+
+  describe "silhouette_for/3" do
+    test "resolves goblinoid sprites" do
+      for sprite <- ["goblin", "kobold", "orc", "bugbear"] do
+        assert ActorAppearance.silhouette_for(sprite, :biped_upright, %{}) == :goblinoid
+      end
+    end
+
+    test "resolves undead_gaunt sprites" do
+      for sprite <- ["skeleton", "zombie"] do
+        assert ActorAppearance.silhouette_for(sprite, :biped_upright, %{}) == :undead_gaunt
+      end
+    end
+
+    test "resolves giant sprites" do
+      for sprite <- ["ogre", "troll"] do
+        assert ActorAppearance.silhouette_for(sprite, :biped_upright, %{}) == :giant
+      end
+    end
+
+    test "defaults to humanoid for unlisted biped_upright sprites" do
+      assert ActorAppearance.silhouette_for("human_fighter", :biped_upright, %{}) == :humanoid
+      assert ActorAppearance.silhouette_for("guard", :biped_upright, %{}) == :humanoid
+    end
+
+    test "appearance data 'silhouette' key overrides the static map" do
+      assert ActorAppearance.silhouette_for("goblin", :biped_upright, %{"silhouette" => "giant"}) ==
+               :giant
+    end
+
+    test "non-biped_upright archetypes always resolve to :default" do
+      assert ActorAppearance.silhouette_for("wolf", :quadruped, %{}) == :default
+      assert ActorAppearance.silhouette_for("goblin", :swarm, %{"silhouette" => "goblinoid"}) ==
+               :default
+    end
+  end
+
   # --- canonical_facing/1 ---
 
   describe "canonical_facing/1" do
@@ -71,6 +109,12 @@ defmodule GibberingEngine.ActorAppearanceTest do
   # --- layer_order/2 ---
 
   describe "layer_order/2" do
+    test "biped_upright layers always start with :shadow" do
+      for facing <- [:south, :north, :east] do
+        assert hd(ActorAppearance.layer_order(:biped_upright, facing)) == :shadow
+      end
+    end
+
     test "biped_upright south: shield comes after torso (in front)" do
       order = ActorAppearance.layer_order(:biped_upright, :south)
       torso_idx = Enum.find_index(order, &(&1 == :torso))
@@ -110,9 +154,15 @@ defmodule GibberingEngine.ActorAppearanceTest do
     end
   end
 
-  # --- render_body/2 ---
+  # --- render_body/4 ---
+  #
+  # ActorAppearance is content-agnostic: it resolves archetype/silhouette/facing/layer
+  # order and composes whatever `render_layer_fun` returns per layer. These tests use a
+  # stub renderer (not GibberingTales.Catalogue.TemplateStore, which lives in a downstream
+  # app and would invert the dependency direction) to verify the structural composition:
+  # layer ordering, facing/flip, and size scaling.
 
-  describe "render_body/2" do
+  describe "render_body/4" do
     defp make_entity(sprite, opts \\ []) do
       %{
         sprite: sprite,
@@ -125,88 +175,85 @@ defmodule GibberingEngine.ActorAppearanceTest do
       %{{"entity", sprite, "default"} => data}
     end
 
-    test "returns a non-empty SVG string for a generic biped" do
-      entity = make_entity("goblin")
-      result = ActorAppearance.render_body(entity, %{})
-      assert is_binary(result)
-      assert result != ""
+    defp stub_render(style, archetype, silhouette, facing, layer, assigns) do
+      "<#{layer} style=#{style} archetype=#{archetype} silhouette=#{silhouette} facing=#{facing} color=#{assigns.color}/>"
     end
 
-    test "biped south render contains a head circle" do
+    test "concatenates layers in layer_order sequence" do
       entity = make_entity("goblin", facing: :south)
-      result = ActorAppearance.render_body(entity, %{})
-      assert result =~ "<circle"
+      result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
+
+      order = ActorAppearance.layer_order(:biped_upright, :south)
+      layer_positions = Enum.map(order, &{&1, :binary.match(result, "<#{&1} ") |> elem(0)})
+
+      assert layer_positions == Enum.sort_by(layer_positions, &elem(&1, 1)),
+             "layers should appear in layer_order sequence"
     end
 
-    test "biped north render does not show face (no eyes)" do
-      entity = make_entity("goblin", facing: :north)
-      result = ActorAppearance.render_body(entity, %{})
-      refute result =~ ~s(fill="#333")
+    test "resolves goblin to biped_upright/goblinoid and threads them into the callback" do
+      entity = make_entity("goblin")
+      result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
+      assert result =~ "archetype=biped_upright"
+      assert result =~ "silhouette=goblinoid"
     end
 
-    test "quadruped (wolf) renders polygon ears" do
-      entity = make_entity("wolf", facing: :east)
-
-      appearances =
-        appearances_for("wolf", %{"body_color" => "#706050", "archetype" => "quadruped"})
-
-      result = ActorAppearance.render_body(entity, appearances)
-      assert result =~ "<polygon"
-    end
-
-    test "west facing wraps in scaleX flip transform" do
+    test "west facing wraps in scaleX flip transform, uses east geometry" do
       entity = make_entity("goblin", facing: :west)
-      result = ActorAppearance.render_body(entity, %{})
+      result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
       assert result =~ ~s[transform="scale(-1,1) translate(-64,0)"]
+      assert result =~ "facing=east"
     end
 
     test "east facing does not add a flip transform" do
       entity = make_entity("goblin", facing: :east)
-      result = ActorAppearance.render_body(entity, %{})
+      result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
       refute result =~ "scale(-1,1)"
     end
 
     test "large size wraps in scale(1.5) transform" do
       entity = make_entity("goblin", size: :large)
-      result = ActorAppearance.render_body(entity, %{})
+      result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
       assert result =~ ~s[transform="scale(1.5)"]
     end
 
     test "medium size has no scale transform" do
       entity = make_entity("goblin", size: :medium)
-      result = ActorAppearance.render_body(entity, %{})
+      result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
       refute result =~ "scale("
     end
 
     test "uses body_color from appearances" do
       entity = make_entity("goblin")
       appearances = appearances_for("goblin", %{"body_color" => "#ff0000"})
-      result = ActorAppearance.render_body(entity, appearances)
-      assert result =~ "#ff0000"
+      result = ActorAppearance.render_body(entity, appearances, "dst", &stub_render/6)
+      assert result =~ "color=#ff0000"
     end
 
     test "entity without :facing field defaults to south" do
       entity = %{sprite: "goblin", size: :medium}
-      south_result = ActorAppearance.render_body(entity, %{})
-      explicit_south = ActorAppearance.render_body(Map.put(entity, :facing, :south), %{})
+      south_result = ActorAppearance.render_body(entity, %{}, "dst", &stub_render/6)
+
+      explicit_south =
+        ActorAppearance.render_body(Map.put(entity, :facing, :south), %{}, "dst", &stub_render/6)
+
       assert south_result == explicit_south
     end
 
-    test "swarm archetype renders circles (dots)" do
+    test "passes the requested style_slug through to the callback" do
+      entity = make_entity("goblin")
+      result = ActorAppearance.render_body(entity, %{}, "carbot", &stub_render/6)
+      assert result =~ "style=carbot"
+    end
+
+    test "swarm archetype resolves silhouette :default" do
       entity = make_entity("rat_swarm")
 
       appearances =
         appearances_for("rat_swarm", %{"archetype" => "swarm", "body_color" => "#4a3a2a"})
 
-      result = ActorAppearance.render_body(entity, appearances)
-      circle_count = result |> String.split("<circle") |> length() |> Kernel.-(1)
-      assert circle_count >= 5, "swarm should render multiple dot circles"
-    end
-
-    test "structure archetype renders without head circle" do
-      entity = make_entity("chest")
-      result = ActorAppearance.render_body(entity, %{})
-      refute result =~ ~s(fill="#c9a87c")
+      result = ActorAppearance.render_body(entity, appearances, "dst", &stub_render/6)
+      assert result =~ "archetype=swarm"
+      assert result =~ "silhouette=default"
     end
   end
 end

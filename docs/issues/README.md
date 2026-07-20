@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 180 (see `counter`)
+**Next issue number:** 182 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -28,6 +28,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#181](181-catalogue-test-seed-state-conflict.md) | `GibberingTales.CatalogueTest` conflicts with seeded test DB state | `bug` `ops` | medium |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
 | [#6](006-raster-sprite-pipeline.md) | Raster sprite asset pipeline | `ops` `rendering` `legal` | low |
@@ -92,6 +93,7 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags |
 |---|---|---|
+| [#180](180-appearance-pipeline-unification-and-styles.md) | Unify entity appearance rendering, specialize biped silhouettes, add style-templated Carbot look | `rendering` `architecture` |
 | [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` |
 | [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` |
 | [#176](176-damage-type-cast-atom-safety.md) | `DamageType.cast/1` leaks atoms on unknown input | `bug` `architecture` |

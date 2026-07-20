@@ -1,0 +1,1 @@
+<ellipse cx="32" cy="44" rx="14" ry="16" fill="<%= assigns.color %>"/>
