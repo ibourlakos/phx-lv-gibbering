@@ -151,6 +151,29 @@ questions below for what's still unresolved before this becomes an issue.
   current templates are hand-authored per style deliberately (art direction control per #98);
   not proposing to replace that.
 
+## Related brainstorms and issues
+
+- **[34-actor-vs-entity-terminology.md](34-actor-vs-entity-terminology.md)** (open) — directly
+  overlapping surface: proposes renaming/reframing `AppearanceArchetype` → `ActorAppearance` as
+  the engine's game-agnostic composable-visual-layer model. Any skeleton/socket work here lands
+  in that same module — settle #34's naming/scope first, or at least in lockstep, so this
+  brainstorm's proposals don't get authored against a name that's about to change.
+- **[085-content-creation-tools-design.md](../issues/085-content-creation-tools-design.md)**
+  (open) — scopes an item editor with "preview rendering (render the content using the live
+  SVG pipeline)." A role-based socket model changes what an item editor needs to capture (role
+  preference list, per-role transform overrides) — worth a cross-reference once #85's editor
+  scoping resumes, so socket/role authoring isn't designed twice.
+- **[120-items-data-population.md](../issues/120-items-data-population.md)** (deferred, blocked
+  on #80) — populates `Data.Items` with ≥20 SRD items and per-item appearance records. Once
+  un-deferred, item records should carry the role preference list this brainstorm proposes
+  (`shield: [grip_primary, mount_dorsal]`) from the start rather than retrofitting 20+ items
+  later.
+- **#98 / #99 / #155 / #180** (all closed) — see "What already exists" above; this brainstorm
+  extends that lineage rather than replacing it.
+- **#128** (closed) — `RuleModifier` equip mechanics; explicitly *not* the same concern (rules
+  vs. visual attachment) but the item-side data shape (`Data.Items` gaining a `modifiers` field)
+  is the precedent for where a role preference list would similarly live.
+
 ## Status
 
 Open. Not settled — no decisions table yet. Revisit once the open questions above have
