@@ -47,8 +47,9 @@ Brainstorming files live in [`docs/brainstorming/`](docs/brainstorming/). See th
 | 33 | [33-visual-regression-testing.md](docs/brainstorming/33-visual-regression-testing.md) | Visual regression testing strategy — Playwright screenshots, SVG-to-PNG pixel diffing, property-based geometric invariants; trade-off comparison for five approaches | open |
 | 34 | [34-actor-vs-entity-terminology.md](docs/brainstorming/34-actor-vs-entity-terminology.md) | Actor vs Entity terminology — runtime scene participant vs persistent domain object; engine concern update; OTP naming caveat | open |
 | 35 | [35-proportion-driven-skeleton-and-attachment-sockets.md](docs/brainstorming/35-proportion-driven-skeleton-and-attachment-sockets.md) | Proportion-driven skeleton and attachment sockets — continuous proportion params, derived socket map, item attachment rotation | open |
+| 36 | [36-ai-memory-hygiene-from-ploi-reacher.md](docs/brainstorming/36-ai-memory-hygiene-from-ploi-reacher.md) | AI memory hygiene — context-budget tiers, agent-behavior charter, brainstorm/issue lifecycle discipline (mini epic, adopted from ploi-reacher) | open |
 
-Next brainstorm number: 36 (see `docs/brainstorming/counter`).
+Next brainstorm number: 37 (see `docs/brainstorming/counter`).
 
 ## Dev Setup (short form)
 

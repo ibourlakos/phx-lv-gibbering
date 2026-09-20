@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 195 (see `counter`)
+**Next issue number:** 198 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -28,6 +28,9 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#197](197-brainstorm-lifecycle-ending-states-and-evacuation-gate.md) | Brainstorm lifecycle: ending states + evacuation gate script | `ops` `architecture` | medium |
+| [#196](196-agent-behavior-charter.md) | Agent-behavior charter — docs/agent-behavior.md | `ops` `architecture` | medium |
+| [#195](195-context-budget-tiers-claude-md.md) | Context-budget tiers for CLAUDE.md — push-full/push-head/pull, enforced size cap | `ops` `architecture` | medium |
 | [#194](194-github-issues-port-discovery.md) | GitHub Issues port — discovery | `discovery` `ops` | low |
 | [#193](193-doc-rot-stale-references.md) | Doc rot: stale file references across workflow/testing docs | `ops` | low |
 | [#192](192-credo-ungated.md) | Credo configured but not gated — findings rot silently | `ops` | low |
