@@ -1,6 +1,6 @@
 # Issue Tracker
 
-**Next issue number:** 182 (see `counter`)
+**Next issue number:** 194 (see `counter`)
 
 One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only — no issue content lives here.
 
@@ -28,6 +28,18 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 | # | Title | Tags | Priority |
 |---|---|---|---|
+| [#193](193-doc-rot-stale-references.md) | Doc rot: stale file references across workflow/testing docs | `ops` | low |
+| [#192](192-credo-ungated.md) | Credo configured but not gated — findings rot silently | `ops` | low |
+| [#191](191-freeform-roll-bypasses-single-writer-contract.md) | `freeform_roll` broadcasts directly on SceneServer's topic, violating single-writer contract | `bug` `architecture` | medium |
+| [#190](190-ci-github-actions.md) | No CI — add GitHub Actions running `mix precommit` | `ops` `architecture` | medium |
+| [#189](189-state-snapshot-leaks-hidden-entities.md) | `state_snapshot` broadcasts full unfiltered state to every subscriber | `security` `architecture` `gameplay` | medium |
+| [#188](188-edges-not-enforced-in-movement.md) | Walls/doors (`State.edges`) decoded but never enforced in movement | `bug` `architecture` `gameplay` `rules` | medium |
+| [#187](187-difficult-terrain-cost-not-enforced.md) | `movement_cost_ft` is dead code — difficult terrain never charged | `bug` `gameplay` `rules` `architecture` | medium |
+| [#186](186-fresh-clone-boot-crash-loop.md) | Fresh-clone boot crash-loop: `Catalogue.Cache` queries before migrations run | `bug` `ops` | medium |
+| [#185](185-take-all-items-destroys-items-on-partial-failure.md) | `take_all_items` can silently destroy items on partial failure | `bug` `gameplay` | medium |
+| [#184](184-submit-roll-ownership-check.md) | `submit_roll` does not check who the pending roll belongs to | `bug` `security` `architecture` | medium |
+| [#183](183-stale-roll-timers-not-cancelled.md) | Stale roll timers not cancelled on submit | `bug` `architecture` `rules` | medium |
+| [#182](182-nil-target-crash-paths.md) | Nil-target crash paths in attack/spell/condition handlers | `bug` `architecture` | medium |
 | [#181](181-catalogue-test-seed-state-conflict.md) | `GibberingTales.CatalogueTest` conflicts with seeded test DB state | `bug` `ops` | medium |
 | [#63](063-playwright-smoke-tests.md) | Playwright smoke test suite + smoke Docker environment | `ops` `architecture` | low |
 | [#85](085-content-creation-tools-design.md) | Content creation tools — design and scope | `discovery` `architecture` `ui` `admin` | low |
