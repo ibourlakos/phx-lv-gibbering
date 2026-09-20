@@ -22,6 +22,7 @@ Tests live in the app they belong to:
 | `apps/gibbering_tales/` | `test/` | Domain context tests: Accounts, Campaigns, Catalogue, Inventory |
 | `apps/gibbering_tales_web/` | `test/` | Layer 2: `SceneServer`; Layer 3: LiveView, controller, SVG |
 | `apps/gibbering_tales_admin/` | `test/` | Admin controllers, plugs, admin context |
+| `apps/gibbering_tales/` | `test/gibbering_tales/docs/` | Meta/repo-hygiene tests — assert a property of a repo doc, not game behaviour (e.g. CLAUDE.md's size cap) |
 
 Run all apps from the umbrella root:
 
@@ -258,6 +259,14 @@ Both views share the same `SceneServer` process. State changes made via one view
 
 - Pixel-perfect SVG layout — that's visual review.
 - Game logic — already tested in Layers 1 and 2.
+
+---
+
+## Meta / repo-hygiene tests
+
+Not a game layer. Asserts a property of the repo itself (a doc's size, a config's shape) rather than game or web behaviour. Currently one example: `apps/gibbering_tales/test/gibbering_tales/docs/claude_md_budget_test.exs`, which enforces CLAUDE.md's push-full byte cap (see [docs/ai-memory.md](ai-memory.md)).
+
+Lives under `apps/gibbering_tales/test/gibbering_tales/docs/` — this umbrella has no root-level `test/`, and `gibbering_tales` is the domain app with no game-engine or web-rendering ties, making it the least-wrong home for a repo-wide meta concern. Reconsider if this category grows beyond a file or two.
 
 ---
 
