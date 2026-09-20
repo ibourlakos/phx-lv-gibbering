@@ -1,7 +1,8 @@
 # #195 · Context-budget tiers for CLAUDE.md — push-full/push-head/pull, enforced size cap
 
-**Status:** open
+**Status:** closed
 **Opened:** 2026-09-20
+**Closed:** 2026-09-20
 **Priority:** medium
 **Tags:** ops, architecture
 
@@ -26,8 +27,12 @@ See brainstorm #36 (`docs/brainstorming/36-ai-memory-hygiene-from-ploi-reacher.m
 
 ## Acceptance criteria
 
-- [ ] `docs/ai-memory.md` written: tier taxonomy + escalation order, linked from CLAUDE.md's Docs TOC
-- [ ] Brainstorming log table moved out of CLAUDE.md into `docs/brainstorming/README.md`; CLAUDE.md keeps a one-line pointer
-- [ ] Issue-tracker instructions moved out of CLAUDE.md into `docs/issues/README.md`; CLAUDE.md keeps a one-line pointer
-- [ ] ExUnit test added asserting CLAUDE.md stays under a measured byte cap; wired into `mix precommit`
-- [ ] `docs/workflow.md` Path [G] notes the cap-test exception for CLAUDE.md edits
+- [x] `docs/ai-memory.md` written: tier taxonomy + escalation order, linked from CLAUDE.md's Docs TOC
+- [x] Brainstorming log table moved out of CLAUDE.md into `docs/brainstorming/README.md`; CLAUDE.md keeps a one-line pointer
+- [x] Issue-tracker instructions moved out of CLAUDE.md into `docs/issues/README.md`; CLAUDE.md keeps a one-line pointer
+- [x] ExUnit test added asserting CLAUDE.md stays under a measured byte cap; wired into `mix precommit`
+- [x] `docs/workflow.md` Path [G] notes the cap-test exception for CLAUDE.md edits
+
+## Outcome
+
+CLAUDE.md: 9,650 → 3,893 bytes. Cap set at 5,000 bytes (post-demotion size + ~20% headroom). The byte-cap test lives at `apps/gibbering_tales/test/gibbering_tales/docs/claude_md_budget_test.exs`, documented as a new "meta/repo-hygiene" test category in `docs/testing.md` (no existing layer fit a doc-property assertion). Verified the test fails correctly when CLAUDE.md exceeds the cap, and passes at the current size. `mix precommit` run clean aside from pre-existing unrelated failures (`CharactersLiveTest`, `LobbyLiveTest` — confirmed present on `main` before this branch).

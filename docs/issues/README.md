@@ -63,7 +63,6 @@ Description.
 |---|---|---|---|
 | [#197](197-brainstorm-lifecycle-ending-states-and-evacuation-gate.md) | Brainstorm lifecycle: ending states + evacuation gate script | `ops` `architecture` | medium |
 | [#196](196-agent-behavior-charter.md) | Agent-behavior charter — docs/agent-behavior.md | `ops` `architecture` | medium |
-| [#195](195-context-budget-tiers-claude-md.md) | Context-budget tiers for CLAUDE.md — push-full/push-head/pull, enforced size cap | `ops` `architecture` | medium |
 | [#194](194-github-issues-port-discovery.md) | GitHub Issues port — discovery | `discovery` `ops` | low |
 | [#193](193-doc-rot-stale-references.md) | Doc rot: stale file references across workflow/testing docs | `ops` | low |
 | [#192](192-credo-ungated.md) | Credo configured but not gated — findings rot silently | `ops` | low |
@@ -142,6 +141,7 @@ Description.
 
 | # | Title | Tags |
 |---|---|---|
+| [#195](195-context-budget-tiers-claude-md.md) | Context-budget tiers for CLAUDE.md — push-full/push-head/pull, enforced size cap | `ops` `architecture` |
 | [#180](180-appearance-pipeline-unification-and-styles.md) | Unify entity appearance rendering, specialize biped silhouettes, add style-templated Carbot look | `rendering` `architecture` |
 | [#156](156-coordinate-model-formalization.md) | Coordinate model formalization — game grid, SVG space, surface addresses, edge model | `architecture` `rendering` |
 | [#178](178-heroicons-tailwind-path-broken-post-umbrella.md) | Heroicons tailwind plugin path broken after umbrella conversion | `bug` `ui` `ops` |
