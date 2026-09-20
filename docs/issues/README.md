@@ -6,6 +6,39 @@ One file per issue: `docs/issues/<N>-<slug>.md`. This file is the index only —
 
 ---
 
+## Lifecycle
+
+- **Counter:** `counter` (plain integer — next number to use)
+- **One file per issue:** `docs/issues/<N>-<slug>.md` (all issues kept regardless of status)
+- **Statuses:** `open` (backlog) → `in-progress` (active branch) → `closed`; `deferred` (intentionally parked), `blocked` (external dependency), `cancelled` (won't do) are side-tracks that can return to `open` when resolved
+
+**To add an issue:** read `counter`, use that number, create `docs/issues/<N>-<slug>.md`, increment `counter`, add a row to the Open Issues table below, commit as `chore: add issue #N`.
+**To close an issue:** change `**Status:** open` → `**Status:** closed`, add `**Closed:** YYYY-MM-DD`, move its row from Open to Closed below, commit as `chore: close issue #N`.
+**To defer an issue:** change status → `deferred`, add `**Deferred because:** <reason>`, move its row to Deferred, commit as `chore: defer issue #N`.
+**To block an issue:** change status → `blocked`, add `**Blocked by:** <issue # or description>`, move its row to Blocked, commit as `chore: block issue #N`.
+**To cancel an issue:** change status → `cancelled`, add `**Cancelled:** YYYY-MM-DD` and `**Cancelled because:** <reason>`, move its row to Cancelled, commit as `chore: cancel issue #N`.
+
+Issue file format (`docs/issues/<N>-<slug>.md`):
+```
+# #N · Title
+**Status:** open | in-progress | deferred | blocked | cancelled | closed
+**Opened:** YYYY-MM-DD
+**Closed:** YYYY-MM-DD              ← only when closed
+**Deferred because:** <reason>      ← only when deferred
+**Blocked by:** <issue # or desc>   ← only when blocked
+**Cancelled:** YYYY-MM-DD           ← only when cancelled
+**Cancelled because:** <reason>     ← only when cancelled
+**Priority:** high | medium | low
+**Tags:** tag1, tag2
+
+Description.
+
+**Acceptance criteria**
+- [ ] ...
+```
+
+---
+
 ## Tags
 
 | Tag | Scope |

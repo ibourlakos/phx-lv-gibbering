@@ -325,6 +325,8 @@ Two sub-tracks based on structural impact:
 **Commit prefix:** `docs(scope): …`  
 **No issue required** for routine maintenance. Open one only if the work is large enough to need acceptance criteria tracked separately.
 
+**CLAUDE.md exception:** a change touching `CLAUDE.md` still runs the CLAUDE.md byte-cap test (`apps/gibbering_tales/test/gibbering_tales/docs/claude_md_budget_test.exs`, see [docs/ai-memory.md](ai-memory.md)) even under this no-`mix precommit` path — that test exists specifically to guard the file being edited, so a docs-only edit to CLAUDE.md is the one case where a single targeted `docker compose exec app mix test apps/gibbering_tales/test/gibbering_tales/docs/claude_md_budget_test.exs` is expected before commit.
+
 ---
 
 ## Quick reference
