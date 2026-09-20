@@ -18,6 +18,17 @@ the one piece that chat surfaced which is **not** yet covered: a true skeleton w
 proportion-aware attachment points, so equipment renders attached to a unit correctly instead
 of being baked into per-archetype template art.
 
+**Mesh and skeleton are not the same axis, and it's worth being precise about that up front.**
+"Mesh" answers a rendering-technology question — what the geometry is made of (vertices/
+triangles vs. flat SVG paths). "Skeleton" answers an authoring/attachment question — a named
+hierarchy of anchor points that geometry hangs off of and that other things (items) attach to.
+A skeleton requires no mesh at all: a hierarchy of named 2D anchor points that SVG shapes and
+item templates both key off of is a skeleton with zero 3D content. What's out of scope here is
+mesh (see Non-goals); skeleton-as-attachment-hierarchy is squarely in scope and is the actual
+subject of this brainstorm. The existing socket map (below) is already a primitive, flat
+version of a skeleton — named anchors, but no parent/child hierarchy and no cross-archetype
+resolution.
+
 ## What already exists (don't re-solve this)
 
 - **`AppearanceArchetype`** (#155, #180 — closed): archetype (`biped_upright`, `quadruped`,
@@ -43,6 +54,45 @@ a weapon sit in `hand_r`" across arbitrary proportion variation. Adding a 5th si
 means hand-authoring a new template tree per style; there's no way to get a "big-headed gnome"
 and a "broad-shouldered death knight" out of the *same* silhouette by turning knobs.
 
+## Role-based socket resolution (cross-archetype attachment)
+
+Prompted by a concrete case: a shield usable the normal way by a humanoid (gripped in a hand)
+but also mountable on a bear (`quadruped`), on its back or flank — two topologically different
+skeletons, different natural mount points, same item. Naively this is
+O(items × archetypes) of hand-tuned special cases. The practice that avoids that, drawn from
+how existing engine/rig tooling (Unreal socket tags, Source engine attachment points, Unity's
+Humanoid avatar retargeting, 2D skeletal tools like Spine) handles this class of problem:
+
+1. **Sockets are named by semantic role, not by a specific bone.** `grip_primary`,
+   `mount_dorsal` (back), `mount_lateral` (flank) — not `hand_r` directly. Each skeleton
+   publishes its own role → local-bone mapping. A biped exposes `grip_primary → hand_r`; a
+   quadruped has no `grip_primary` but exposes `mount_dorsal → torso_top` and
+   `mount_lateral → flank_r`.
+2. **A socket is a transform, not a point.** Position *and* rotation *and* scale — not just
+   `{dx, dy}`. A shield gripped in a hand orients edge-out; mounted on a back it lies flat,
+   rotated ~90° from the grip orientation. Without an orientation basis per socket, every new
+   mount context needs a hand-tuned rotation hack; with one, the item's geometry stays a single
+   asset and the socket supplies the reorientation.
+3. **Items declare which roles they support, in fallback preference order** — not the other
+   way around. `shield: [grip_primary, mount_dorsal]`. The skeleton/render pipeline has zero
+   built-in knowledge of "shield" as a concept, matching how this codebase already keeps styles
+   and archetypes content-agnostic (#98/#99/#180). A shield with no valid grip on a bear falls
+   through automatically to `mount_dorsal` — no special-casing "shield on bear" anywhere.
+4. **Different body plans get different bone vocabularies, unified only at the role layer.**
+   `biped_upright` and `quadruped` don't (and shouldn't) share bone names — a bear has no
+   `hand_r` to force a shield into. The vocabularies stay separate; roles are the only shared
+   surface between them.
+5. **This turns an O(items × creatures) authoring problem into O(items) + O(creatures).**
+   Adding a new body plan means authoring its role→bone map once; every existing item whose
+   role list includes a role that new skeleton supports just works, no per-pair authoring.
+6. **Composes with proportion params (see below):** sockets are defined in *normalized* local
+   space (e.g. a fraction along a limb or of torso width) and scaled into actual offsets by the
+   proportion profile at render time — the same socket definition works for a big-headed gnome
+   and a broad-shouldered death knight without per-character tuning.
+
+This section is descriptive of the target practice, not a settled decision yet — see open
+questions below for what's still unresolved before this becomes an issue.
+
 ## Open questions
 
 - **Is a jointed skeleton worth it for 2D SVG, or is the existing socket-map-per-facing model
@@ -67,11 +117,21 @@ and a "broad-shouldered death knight" out of the *same* silhouette by turning kn
   profile, but compute it from a smaller set of proportion parameters instead of hand-placing
   every socket per silhouette per style. This keeps `.svg.eex` template authoring unchanged
   for artists while making socket placement derivable instead of duplicated per style.
-- **Item attachment: rotation, not just position?** A sword in `hand_r` may need a facing-
-  dependent rotation/flip in addition to an offset (DeepSeek's "slight rotation offset" wobble
-  note applies here too — a weapon sitting at a perfect 90° reads as stiffer than one with a
-  few degrees of cant). Current socket map is position-only (`{dx, dy}`); worth deciding if
-  rotation belongs in the same tuple or a separate field.
+- **Item attachment: rotation, not just position?** Settled in direction, not in schema: per
+  the role-based resolution section above, a socket should carry a full local transform
+  (offset + rotation + optional flip/scale), not just `{dx, dy}` — needed both for cross-
+  archetype mounting (grip vs. back-mount orientation differ) and for per-facing cant (a sword
+  sitting at a perfect 90° reads stiffer than one with a few degrees of cant, per the DeepSeek
+  "wobble" note). Still open: does this live as a 3rd/4th tuple element on the existing map, or
+  a small struct (`%Socket{offset: {dx,dy}, rotation: deg, flip: bool}`) — struct is likely
+  cleaner once role-based fallback and normalized/proportion-scaled coordinates are in play.
+- **Role vocabulary and fallback list format:** where do per-archetype role→bone maps and
+  per-item role preference lists live — on `AppearanceArchetype` (engine-side, content-
+  agnostic per `docs/architecture/engine-decomposition.md`) vs. on `Data.Items` (content-side,
+  alongside the existing `modifiers` field from #128)? Likely items own their role preference
+  list (content) and each archetype owns its role→bone map (engine, since it's about body-plan
+  topology, not any specific item) — mirrors the existing split between `ActorAppearance`
+  (engine) and `TemplateStore`/seed data (content) from #180.
 - **Palette/proportion authoring discipline** (secondary, smaller than the skeleton question):
   DeepSeek's "4–6 colors max, one dominant + one accent + skin + outline" and "exaggerate one
   or two proportion features, not all of them" are authoring *guidelines*, not schema changes.
